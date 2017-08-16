@@ -1,0 +1,68 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.2.5.RELEASE")
+    }
+
+}
+apply plugin: 'java'
+apply plugin: 'spring-boot'
+apply plugin: 'war'
+
+if(target== 'dev'){
+  copy {
+        from "src/dev/resources/connect.txt"
+       into "src/main/resources/"
+ }
+ copy {
+     from "src/dev/RelatedRecords.java"
+     into "src/main/java/org/mskcc/limsrest/staticstrings/"
+ }
+}
+else {
+   copy {
+        from "src/production/resources/connect.txt"
+       into "src/main/resources/"
+   }
+   copy {
+     from "src/production/RelatedRecords.java"
+     into "src/main/java/org/mskcc/limsrest/staticstrings/"
+   }
+}
+
+war{
+   baseName = 'LimsRest'
+}
+
+jar {
+    baseName = 'lims-rest-service'
+    version =  '0.1.0'
+}
+
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+configurations {
+    providedRuntime
+}
+
+dependencies {
+    compile 'javax.servlet:jstl:1.2'
+    compile("org.springframework.boot:spring-boot-starter-web")
+    compile("org.springframework.boot:spring-boot-starter-security")
+    compile group: 'com.google.guava', name: 'guava', version: '18.+'
+    compile fileTree(dir: 'libs', include: '*.jar')
+    testCompile 'io.rest-assured:rest-assured:3.0.1'
+    testCompile("junit:junit")
+    providedRuntime("org.springframework.boot:spring-boot-starter-tomcat")
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.3'
+}
