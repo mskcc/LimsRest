@@ -22,7 +22,7 @@ public class AssignedProcessCreator {
         assignedProcessMap.put(DT_AssignedProcess.PROCESS_STEP_NUMBER, assignedProcess.getStepNumber());
         assignedProcessMap.put(DT_AssignedProcess.PROCESS_NAME, assignedProcess.getName());
         assignedProcessMap.put(DT_AssignedProcess.OTHER_SAMPLE_ID, cmoSampleId);
-        assignedProcessMap.put(DT_AssignedProcess.STATUS, String.format("Ready for - %s", assignedProcess.getWorkflowName()));
+        assignedProcessMap.put(DT_AssignedProcess.STATUS, assignedProcess.getStatus());
         assignedProcessMap.put(DT_AssignedProcess.SAMPLE_RECORD_ID, sample.getRecordId());
         assignedProcessMap.put(DT_AssignedProcess.REQUEST_RECORD_ID, requestRecordIds);
 

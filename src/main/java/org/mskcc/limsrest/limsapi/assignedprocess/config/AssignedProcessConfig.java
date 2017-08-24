@@ -8,5 +8,5 @@ import org.mskcc.domain.AssignedProcess;
 public interface AssignedProcessConfig {
     DataRecord getSample() throws Exception;
 
-    AssignedProcess getProcessToAssign() throws Exception;
+    AssignedProcess getProcessToAssign();
 }

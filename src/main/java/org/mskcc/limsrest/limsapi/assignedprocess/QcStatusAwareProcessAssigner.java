@@ -3,6 +3,7 @@ package org.mskcc.limsrest.limsapi.assignedprocess;
 import com.velox.api.datarecord.*;
 import com.velox.api.user.User;
 import com.velox.sloan.cmo.staticstrings.datatypes.DT_AssignedProcess;
+import com.velox.sloan.cmo.staticstrings.datatypes.DT_Sample;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.AssignedProcess;
@@ -26,16 +27,33 @@ public class QcStatusAwareProcessAssigner {
     }
 
     public void assign(DataRecordManager dataRecordManager, User user, DataRecord seqQc, String status) {
+        DataRecord sample = null;
         try {
-            AssignedProcessConfig assignedProcessConfig = assignedProcessConfigFactory.getProcessAssigner(status, dataRecordManager, seqQc, user);
+            AssignedProcessConfig assignedProcessConfig = assignedProcessConfigFactory.getProcessAssignerConfig(status, dataRecordManager, seqQc, user);
 
-            DataRecord sample = assignedProcessConfig.getSample();
+            sample = assignedProcessConfig.getSample();
             DataRecord assignedProcess = addAssignedProcess(dataRecordManager, user, assignedProcessConfig);
+            changeSampleStatus(sample, assignedProcessConfig, user);
 
             addSampleAsChild(user, sample, assignedProcess);
         } catch (Exception e) {
-            log.warn(String.format("Unable to assign process with status: %s", status));
+            String sampleId = tryToGetSampleId(user, sample);
+            log.warn(String.format("Unable to assign process with status: %s for sample: %s", status, sampleId));
         }
+    }
+
+    private String tryToGetSampleId(User user, DataRecord sample) {
+        String sampleId = "";
+        if(sample != null) {
+            try {
+                sampleId = sample.getStringVal(DT_Sample.SAMPLE_ID, user);
+            } catch (Exception ommited) {}
+        }
+        return sampleId;
+    }
+
+    private void changeSampleStatus(DataRecord sample, AssignedProcessConfig assignedProcessConfig, User user) throws Exception {
+        sample.setDataField(DT_Sample.EXEMPLAR_SAMPLE_STATUS, assignedProcessConfig.getProcessToAssign().getStatus(), user);
     }
 
     private DataRecord addAssignedProcess(DataRecordManager dataRecordManager, User user, AssignedProcessConfig assignedProcessConfig) throws Exception {

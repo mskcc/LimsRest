@@ -8,9 +8,10 @@ import org.mskcc.limsrest.limsapi.assignedprocess.config.AssignedProcessConfig;
 
 public class RepoolSampleAssignedAssignedProcessConfig implements AssignedProcessConfig {
     private final DataRecord sample;
+    private final QcParentSampleRetriever qcParentSampleRetriever = new QcParentSampleRetriever();
 
     public RepoolSampleAssignedAssignedProcessConfig(User user, DataRecord qc) throws Exception {
-        sample = QcParentSampleRetriever.retrieve(user, qc);
+        sample = qcParentSampleRetriever.retrieve(qc, user);
     }
 
     @Override

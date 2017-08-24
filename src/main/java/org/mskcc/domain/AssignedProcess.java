@@ -34,4 +34,8 @@ public enum AssignedProcess {
     public String getWorkflowName() {
         return workflow.getName();
     }
+
+    public String getStatus() {
+        return String.format("Ready for - %s", getWorkflowName());
+    }
 }

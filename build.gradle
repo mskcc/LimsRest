@@ -12,28 +12,28 @@ apply plugin: 'spring-boot'
 apply plugin: 'war'
 
 if(target== 'dev'){
-  copy {
+    copy {
         from "src/dev/resources/connect.txt"
-       into "src/main/resources/"
- }
- copy {
-     from "src/dev/RelatedRecords.java"
-     into "src/main/java/org/mskcc/limsrest/staticstrings/"
- }
+        into "src/main/resources/"
+    }
+    copy {
+        from "src/dev/RelatedRecords.java"
+        into "src/main/java/org/mskcc/limsrest/staticstrings/"
+    }
 }
 else {
-   copy {
+    copy {
         from "src/production/resources/connect.txt"
-       into "src/main/resources/"
-   }
-   copy {
-     from "src/production/RelatedRecords.java"
-     into "src/main/java/org/mskcc/limsrest/staticstrings/"
-   }
+        into "src/main/resources/"
+    }
+    copy {
+        from "src/production/RelatedRecords.java"
+        into "src/main/java/org/mskcc/limsrest/staticstrings/"
+    }
 }
 
 war{
-   baseName = 'LimsRest'
+    baseName = 'LimsRest'
 }
 
 jar {
@@ -50,6 +50,8 @@ targetCompatibility = 1.8
 
 configurations {
     providedRuntime
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
 }
 
 dependencies {
@@ -71,5 +73,32 @@ task wrapper(type: Wrapper) {
 bootRun {
     if (System.getProperty('DEBUG', 'false') == 'true')
         jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5006'
+}
+
+tasks.withType(Test) {
+    testLogging {
+        events "standardOut", "started", "passed", "skipped", "failed"
+    }
+}
+
+sourceSets {
+    integrationTest {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+            srcDir file('src/integration-test/java')
+        }
+        resources.srcDir file('src/integration-test/resources')
+    }
+}
+
+task integrationTest(type: Test) {
+    if (System.getProperty('DEBUG', 'false') == 'true')
+        jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5006'
+
+    testClassesDir = sourceSets.integrationTest.output.classesDir
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    description = "Integration Tests"
+    outputs.upToDateWhen { false }
 }
 
