@@ -12,28 +12,28 @@ apply plugin: 'spring-boot'
 apply plugin: 'war'
 
 if(target== 'dev'){
-  copy {
+    copy {
         from "src/dev/resources/connect.txt"
-       into "src/main/resources/"
- }
- copy {
-     from "src/dev/RelatedRecords.java"
-     into "src/main/java/org/mskcc/limsrest/staticstrings/"
- }
+        into "src/main/resources/"
+    }
+    copy {
+        from "src/dev/RelatedRecords.java"
+        into "src/main/java/org/mskcc/limsrest/staticstrings/"
+    }
 }
 else {
-   copy {
+    copy {
         from "src/production/resources/connect.txt"
-       into "src/main/resources/"
-   }
-   copy {
-     from "src/production/RelatedRecords.java"
-     into "src/main/java/org/mskcc/limsrest/staticstrings/"
-   }
+        into "src/main/resources/"
+    }
+    copy {
+        from "src/production/RelatedRecords.java"
+        into "src/main/java/org/mskcc/limsrest/staticstrings/"
+    }
 }
 
 war{
-   baseName = 'LimsRest'
+    baseName = 'LimsRest'
 }
 
 jar {
@@ -45,11 +45,13 @@ repositories {
     mavenCentral()
 }
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 configurations {
     providedRuntime
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
 }
 
 dependencies {
@@ -60,9 +62,43 @@ dependencies {
     compile fileTree(dir: 'libs', include: '*.jar')
     testCompile 'io.rest-assured:rest-assured:3.0.1'
     testCompile("junit:junit")
-    providedRuntime("org.springframework.boot:spring-boot-starter-tomcat")
+    testCompile("org.mockito:mockito-core:1.10.19")
+    compile("org.springframework.boot:spring-boot-starter-tomcat")
 }
 
 task wrapper(type: Wrapper) {
     gradleVersion = '2.3'
 }
+
+bootRun {
+    if (System.getProperty('DEBUG', 'false') == 'true')
+        jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5006'
+}
+
+tasks.withType(Test) {
+    testLogging {
+        events "standardOut", "started", "passed", "skipped", "failed"
+    }
+}
+
+sourceSets {
+    integrationTest {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+            srcDir file('src/integration-test/java')
+        }
+        resources.srcDir file('src/integration-test/resources')
+    }
+}
+
+task integrationTest(type: Test) {
+    if (System.getProperty('DEBUG', 'false') == 'true')
+        jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5006'
+
+    testClassesDir = sourceSets.integrationTest.output.classesDir
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    description = "Integration Tests"
+    outputs.upToDateWhen { false }
+}
+
