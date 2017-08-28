@@ -1,6 +1,6 @@
 package org.mskcc.domain;
 
-import org.mskcc.limsrest.utils.Constants;
+import org.mskcc.limsrest.staticstrings.Constants;
 
 public enum Workflow {
     POOLING_OF_SAMPLE_LIBRARIES_FOR_SEQUENCING(Constants.POOLING_OF_SAMPLE_LIBRARIES_FOR_SEQUENCING, 1),

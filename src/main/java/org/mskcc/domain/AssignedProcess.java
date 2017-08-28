@@ -1,6 +1,6 @@
 package org.mskcc.domain;
 
-import org.mskcc.limsrest.utils.Constants;
+import org.mskcc.limsrest.staticstrings.Constants;
 
 public enum AssignedProcess {
     WHOLE_EXOME_CAPTURE(

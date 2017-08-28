@@ -9,10 +9,7 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sapioutils.client.standalone.VeloxConnectionException;
 import com.velox.sloan.cmo.staticstrings.datatypes.DT_AssignedProcess;
 import com.velox.sloan.cmo.staticstrings.datatypes.DT_Sample;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.mskcc.domain.QCStatus;
 import org.mskcc.limsrest.limsapi.assignedprocess.AssignedProcessCreator;
 import org.mskcc.limsrest.limsapi.assignedprocess.QcParentSampleRetriever;
@@ -39,22 +36,18 @@ public class QcStatusAwareProcessAssignerTest {
     private final QcParentSampleRetriever qcParentSampleRetriever = new QcParentSampleRetriever();
     private QcStatusAwareProcessAssigner qcStatusAwareProcessAssigner;
 
-    @BeforeClass
-    public static void init() throws VeloxConnectionException {
+    @Before
+    public void init() throws VeloxConnectionException {
         veloxConnection = new VeloxConnection(connectionFile);
-//        veloxConnection.open();
+        veloxConnection.open();
         dataRecordManager = veloxConnection.getDataRecordManager();
         user = veloxConnection.getUser();
-    }
-
-    @AfterClass
-    public static void tearDown() throws Exception {
-        veloxConnection.close();
-    }
-
-    @Before
-    public void setUp() throws Exception {
         qcStatusAwareProcessAssigner = new QcStatusAwareProcessAssigner(configFactory, processCreator);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        veloxConnection.close();
     }
 
     @Test

@@ -1,4 +1,4 @@
-package org.mskcc.limsrest.utils;
+package org.mskcc.limsrest.staticstrings;
 
 public class Constants {
     public static final String POOLING_OF_SAMPLE_LIBRARIES_FOR_SEQUENCING = "Pooling of Sample Libraries for Sequencing";
