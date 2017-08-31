@@ -4,11 +4,17 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.sun.org.apache.xerces.internal.parsers.SecurityConfiguration;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.*;
-import org.mskcc.limsrest.limsapi.assignedprocess.config.AssignedProcessConfigFactory;
 import org.mskcc.limsrest.limsapi.assignedprocess.AssignedProcessCreator;
 import org.mskcc.limsrest.limsapi.assignedprocess.QcStatusAwareProcessAssigner;
+import org.mskcc.limsrest.limsapi.assignedprocess.config.AssignedProcessConfigFactory;
+import org.mskcc.limsrest.limsapi.cmoinfo.converter.SimpleStringToSampleCmoIdConverter;
+import org.mskcc.limsrest.limsapi.cmoinfo.converter.StringToSampleCmoIdConverter;
+import org.mskcc.limsrest.limsapi.cmoinfo.formatter.CellLineCmoSampleIdFormatter;
+import org.mskcc.limsrest.limsapi.cmoinfo.formatter.PatientCmoSampleIdFormatter;
+import org.mskcc.limsrest.limsapi.cmoinfo.retriever.*;
 import org.mskcc.limsrest.web.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -215,7 +221,57 @@ public class App extends SpringBootServletInitializer {
     @Bean
     @Scope("request")
     public PromoteBanked promoteBanked() {
-        return new PromoteBanked();
+        return new PromoteBanked(patientCmoSampleIdRetriever(), cellLineSampleIdRetriever());
+    }
+
+    @Bean
+    @Scope("request")
+    @Qualifier("patientCmoSampleIdRetriever")
+    public CmoSampleIdRetriever patientCmoSampleIdRetriever() {
+        return new CmoSampleIdRetrieverByBankedSample(patientCmoSampleIdResolver(), patientCmoSampleIdFormatter());
+    }
+
+    @Bean
+    @Scope("request")
+    @Qualifier("cellLineCmoSampleIdRetriever")
+    public CmoSampleIdRetriever cellLineSampleIdRetriever() {
+        return new CmoSampleIdRetrieverByBankedSample(cellLineCmoSampleIdResolver(), cellLineCmoSampleIdFormatter());
+    }
+
+    @Bean
+    @Scope("request")
+    public CellLineCmoSampleIdFormatter cellLineCmoSampleIdFormatter() {
+        return new CellLineCmoSampleIdFormatter();
+    }
+
+    @Bean
+    @Scope("request")
+    public PatientSampleCountRetriever patientSampleCountRetriever() {
+        return new PatientSampleCountRetriever(stringToCmoIdConverter());
+    }
+
+    @Bean
+    @Scope("request")
+    public StringToSampleCmoIdConverter stringToCmoIdConverter() {
+        return new SimpleStringToSampleCmoIdConverter();
+    }
+
+    @Bean
+    @Scope("request")
+    public CellLineCmoSampleIdResolver cellLineCmoSampleIdResolver() {
+        return new CellLineCmoSampleIdResolver();
+    }
+
+    @Bean
+    @Scope("request")
+    public PatientCmoSampleIdFormatter patientCmoSampleIdFormatter() {
+        return new PatientCmoSampleIdFormatter();
+    }
+
+    @Bean
+    @Scope("request")
+    public PatientCmoSampleIdResolver patientCmoSampleIdResolver() {
+        return new PatientCmoSampleIdResolver(patientSampleCountRetriever());
     }
 
     @Bean

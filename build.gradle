@@ -77,7 +77,7 @@ bootRun {
 
 tasks.withType(Test) {
     testLogging {
-        events "standardOut", "started", "passed", "skipped", "failed"
+        events "standardOut", "standardError", "started", "passed", "skipped", "failed"
     }
 }
 
