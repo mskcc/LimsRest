@@ -17,7 +17,6 @@ build/*
 logs/
 
 src/dev/
-src/test/
 src/production/
 src/webapp/
 src/main/resources/
