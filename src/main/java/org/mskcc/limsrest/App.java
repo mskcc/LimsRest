@@ -1,7 +1,6 @@
 package org.mskcc.limsrest;
 
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.sun.org.apache.xerces.internal.parsers.SecurityConfiguration;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.*;
 import org.mskcc.limsrest.limsapi.assignedprocess.AssignedProcessCreator;
