@@ -100,7 +100,7 @@ public class GetDelivered extends LimsTask
         List<DataRecord> recentDeliveries =  null;
         if(time == -1){
            searchPoint = now + offset; 
-           List<DataRecord> unreviewed = dataRecordManager.queryDataRecords("SeqAnalysisSampleQC", "DateCreated >  1484508629000 AND SeqQCStatus != 'Passed' AND SeqQCStatus != 'Failed'", user);
+           List<DataRecord> unreviewed = dataRecordManager.queryDataRecords("SeqAnalysisSampleQC", "DateCreated >  1484508629000 AND SeqQCStatus != 'Passed' AND SeqQCStatus not like 'Failed%'", user);
            List<List<DataRecord>> parentSamples = dataRecordManager.getParentsOfType(unreviewed, "Sample", user);  
            List<String> reqIds = new LinkedList<>();
            for(List<DataRecord> samples : parentSamples){

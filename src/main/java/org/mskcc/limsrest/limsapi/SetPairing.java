@@ -51,12 +51,16 @@ public class SetPairing  extends LimsTask
   String requestId;
   String tumorId;
   String normalId;
+  String tIgoId;
+  String nIgoId;
 
-  public void init(String igoUser, String requestId, String tumorId, String normalId){ 
+  public void init(String igoUser, String requestId, String tumorId, String normalId, String tumorIgoId, String normalIgoId){ 
     this.igoUser = igoUser;
     this.requestId = requestId; 
     this.tumorId = tumorId;
     this.normalId = normalId;
+    this.tIgoId = tumorIgoId;
+    this.nIgoId = normalIgoId;
   }
  //execute the velox call
 
@@ -76,30 +80,44 @@ public class SetPairing  extends LimsTask
     String tumorIgoId = "";
     String normalIgoId = "";
     for(DataRecord sample : children){
-        String cmoInfoId = "";
-        DataRecord[] cmoInfos = sample.getChildrenOfType("SampleCMOInfoRecords", user);
-        if(cmoInfos.length > 0){
-           try{ cmoInfoId = cmoInfos[0].getStringVal("CorrectedCMOID", user); } catch(NullPointerException npe){}
-        } else{
-          try{ cmoInfoId = sample.getStringVal("OtherSampelId", user); } catch(NullPointerException npe){}
-        }
-        if(tumorId.equals(cmoInfoId)){
-           tumorIgoId = sample.getStringVal("SampleId", user);
-           if(!"Tumor".equals(sample.getPickListVal("TumorOrNormal", user))){
-                throw new LimsException(tumorId + " is not a tumor");
-           }
-        } else if(normalId.equals(cmoInfoId)){
-           normalIgoId = sample.getStringVal("SampleId", user);
-           if(!"Normal".equals(sample.getPickListVal("TumorOrNormal", user))){
-                throw new LimsException(normalId + " is not a normal");
-           }
+        if(normalId != null && tumorId != null){ 
+            String cmoInfoId = "";
+            DataRecord[] cmoInfos = sample.getChildrenOfType("SampleCMOInfoRecords", user);
+            if(cmoInfos.length > 0){
+               try{ cmoInfoId = cmoInfos[0].getStringVal("CorrectedCMOID", user); } catch(NullPointerException npe){}
+            } else{
+               try{ cmoInfoId = sample.getStringVal("OtherSampleId", user); } catch(NullPointerException npe){}
+            }
+            if(tumorId.equals(cmoInfoId)){
+               tumorIgoId = sample.getStringVal("SampleId", user);
+               if(!"Tumor".equals(sample.getPickListVal("TumorOrNormal", user))){
+                  throw new LimsException(tumorId + " is not a tumor");
+               }
+            } else if(normalId.equals(cmoInfoId)){
+               normalIgoId = sample.getStringVal("SampleId", user);
+               if(!"Normal".equals(sample.getPickListVal("TumorOrNormal", user))){
+                   throw new LimsException(normalId + " is not a normal");
+               }
+            }
+        } else if(nIgoId != null && tIgoId != null){
+             if(nIgoId.equals(sample.getStringVal("SampleId", user))){
+                normalIgoId = nIgoId;
+                if(!"Normal".equals(sample.getPickListVal("TumorOrNormal", user))){
+                   throw new LimsException(normalId + " is not a normal");
+                }
+             } else if(tIgoId.equals(sample.getStringVal("SampleId", user) )){
+                tumorIgoId = tIgoId; 
+                 if(!"Tumor".equals(sample.getPickListVal("TumorOrNormal", user))){
+                    throw new LimsException(tumorId + " is not a tumor");
+                 }
+             }
         }
      }
      if(tumorIgoId.equals("")){
-         throw new LimsException(tumorId + " does not match any samples in " + requestId);
+         throw new LimsException(tumorId + "/" + tIgoId+ " does not match any samples in " + requestId);
      }
      if(normalIgoId.equals("")){
-         throw new LimsException(normalId + " does not match any samples in " + requestId);
+         throw new LimsException(normalId + "/" + nIgoId +" does not match any samples in " + requestId);
      }
      List<DataRecord> matchedPairing =  dataRecordManager.queryDataRecords("PairingInfo", "TumorId = '" + tumorIgoId +  "'", user);
      HashMap<String, Object> pairingFields = new HashMap<>();
@@ -119,7 +137,7 @@ public class SetPairing  extends LimsTask
           StringWriter sw = new StringWriter();
           PrintWriter pw = new PrintWriter(sw);
           e.printStackTrace(pw);
-           return Messages.ERROR_IN +  " setting pairing: " + e.getMessage() + "\nTRACE: " + sw.toString();   
+           return Messages.ERROR_IN +  " setting pairing: " + e.getMessage() ;   
   
   }
 

@@ -1,7 +1,6 @@
 package org.mskcc.limsrest;
 
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.sun.org.apache.xerces.internal.parsers.SecurityConfiguration;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.*;
 import org.mskcc.limsrest.limsapi.assignedprocess.AssignedProcessCreator;
@@ -25,6 +24,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.env.Environment;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+
 
 //@SpringBootApplication
 @Configuration

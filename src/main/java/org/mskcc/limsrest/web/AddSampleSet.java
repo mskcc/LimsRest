@@ -37,7 +37,8 @@ public class AddSampleSet {
     public String getContent(@RequestParam(value="sample", required=false) String[] sample, @RequestParam(value="igoId", required=false) String[] igoId,
                                @RequestParam(value="user") String user, @RequestParam(value="pair", required=false) String[] pair,  @RequestParam(value="category", required=false) String[] category,
                                @RequestParam(value="project", required=false) String[] request, @RequestParam(value="igoUser") String igoUser, @RequestParam(value="validate", defaultValue="false") String validate,
-                               @RequestParam(value="setName", required=false) String name, @RequestParam(value="mapName", required=false) String mapName) {
+                               @RequestParam(value="setName", required=false) String name, @RequestParam(value="mapName", required=false) String mapName, 
+                               @RequestParam(value="baitSet", required=false) String baitSet, @RequestParam(value="primeRecipe", required=false) String primeRecipe) {
        log.info("Adding to sample set " + name + " at a request by user " + user);
        Whitelists wl = new Whitelists();
         if(sample != null){ //samples here are not standard format, as they are of form REQUESTID:SAMPLEID
@@ -64,12 +65,18 @@ public class AddSampleSet {
                     return "FAILURE: project is not using a valid format";
             }
         }
+        if(!wl.textMatches(baitSet)){
+           return "FAILURE: baitSet is not using a valid format";
+        }
+        if(!wl.textMatches(primeRecipe)){
+           return "FAILURE: primeRecipe is not using a valid format";
+        }
 
        boolean val  = false;
        if(validate.equalsIgnoreCase("true")){
           val = true;
        }
-      task.init(igoUser, name, mapName, request, sample, igoId, pair, category, true);       
+      task.init(igoUser, name, mapName, request, sample, igoId, pair, category, baitSet, primeRecipe, true);       
        Future<Object> result = connQueue.submitTask(task);
        String returnCode = "";
        try{
@@ -79,7 +86,7 @@ public class AddSampleSet {
           StringWriter sw = new StringWriter();
           PrintWriter pw = new PrintWriter(sw);
           e.printStackTrace(pw);
-          returnCode = "ERROR IN ADDING TO SAMPLE SET: " + e.getMessage() + " TRACE: " + sw.toString(); 
+          returnCode = "ERROR IN ADDING TO SAMPLE SET: " + e.getMessage(); 
        }
        return returnCode;
     }

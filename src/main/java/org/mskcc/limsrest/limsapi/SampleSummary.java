@@ -44,6 +44,7 @@ public class SampleSummary {
    private long dropOffDate;
    private Long readNumber;
    private Long recordId;
+   private Integer coverage;
    private String concentrationUnits;
    private String plateId;
    public SampleSummary(){
@@ -187,6 +188,10 @@ public class SampleSummary {
 
   public void setRequestedReadNumber(long readNum){
     this.readNumber = readNum;
+  }
+
+  public void setCoverageTarget(int coverage){
+     this.coverage = coverage;
   }
 
   public void setRunType(String runType){
@@ -441,6 +446,11 @@ public class SampleSummary {
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public Long getRequestedNumberOfReads(){
      return readNumber;
+   }
+
+   @JsonInclude(JsonInclude.Include.NON_EMPTY)
+   public Integer getCoverageTarget(){
+      return coverage;
    }
 
    @JsonInclude(JsonInclude.Include.NON_EMPTY)

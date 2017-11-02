@@ -39,7 +39,7 @@ public class SetQcStatus {
                              @RequestParam(value="project", required=false) String request, @RequestParam(value="sample", required=false) String sample,
                              @RequestParam(value="run", required=false) String run, @RequestParam(value="qcType", defaultValue="Seq") String qcType,
                              @RequestParam(value="analyst", required=false) String analyst, @RequestParam(value="note", required=false) String note,
-                             @RequestParam(value="user", defaultValue="") String user){
+                             @RequestParam(value="fastqPath", required=false) String fastqPath, @RequestParam(value="user", defaultValue="") String user){
        log.info("Starting to seq Qc status to " + status + "for service" + user);
        Whitelists wl = new Whitelists();
        if(!wl.requestMatches(request)){
@@ -47,7 +47,10 @@ public class SetQcStatus {
        }
        if(!wl.textMatches(status)){
             return "FAILURE: The status is not using a valid format. " + wl.textFormatText();
-        }
+       }
+       if(!wl.filePathMatches(fastqPath)){
+            return "FAILURE: The fastq path is not using a valid format. " + wl.filePathFormatText();
+       }
        if(!qcType.equals("Seq") && !qcType.equals("Post")){
           return "ERROR: The only valid qc types for this service are Seq and Post";
        }
@@ -60,7 +63,7 @@ public class SetQcStatus {
        if(recordId != null){
           record = Long.parseLong(recordId);
        }
-       task.init(record, status, request, sample, run, qcType, analyst, note);
+       task.init(record, status, request, sample, run, qcType, analyst, note, fastqPath);
        Future<Object> result = connQueue.submitTask(task);
        String returnCode = "";
        try{

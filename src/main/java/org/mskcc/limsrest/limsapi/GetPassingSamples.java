@@ -76,11 +76,13 @@ public class GetPassingSamples extends LimsTask
         List<DataRecord> pqcs = r.getDescendantsOfType("PostSeqAnalysisQC", this.user); //this should be more resistant than SeqAnalysisSampleQC was initially to ending up a child of a parent Request
         for(DataRecord pqc : pqcs){
             try{
-                id2PostQcStatus.put(pqc.getStringVal("OtherSampleId", user), pqc.getPickListVal("PostSeqQCStatus", user));
+                String pqcRunFolder = pqc.getStringVal("SequencerRunFolder", user);
+                pqcRunFolder = pqcRunFolder.replaceFirst("_[A-Z][0-9]{1,2}$", "");
+                id2PostQcStatus.put(pqc.getStringVal("OtherSampleId", user) + "_" +  pqcRunFolder, pqc.getPickListVal("PostSeqQCStatus", user));
             } catch(NullPointerException npe){}
         }
         HashMap<String, String> originalName2CorrectedName = new HashMap<>();
-        List<DataRecord> cmoInfos = this.dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "RequestId = '" + this.project + "'", this.user);
+        List<DataRecord> cmoInfos = r.getDescendantsOfType("SampleCMOInfoRecords", user);  //this.dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "RequestId = '" + this.project + "'", this.user);
         for(DataRecord cmoInfo : cmoInfos){
             originalName2CorrectedName.put(cmoInfo.getStringVal("OtherSampleId", this.user), cmoInfo.getStringVal("CorrectedCMOID", this.user));
         }
@@ -118,7 +120,11 @@ public class GetPassingSamples extends LimsTask
           } else{
             try{ status = qc.getSelectionVal("SeqQCStatus", user); } catch(NullPointerException npe){}
           }
-          if((!status.equals("Passed") && !status.equals("Required-Additional-Reads")) || (id2PostQcStatus.containsKey(parentId) && !id2PostQcStatus.get(parentId).equals("Passed"))){
+          String qcRunFolder = "";
+          try{
+             qcRunFolder = qc.getStringVal("SequencerRunFolder", user).replaceFirst("_[A-Z][0-9]{1,2}$",  "");
+          } catch(NullPointerException npe){}
+          if((!status.equals("Passed")) || (id2PostQcStatus.containsKey(parentId + "_" + qcRunFolder) && !id2PostQcStatus.get(parentId  +"_" + qcRunFolder).equals("Passed"))){
              continue;
           }
           qcSummary.setQcStatus(status);
@@ -133,8 +139,10 @@ public class GetPassingSamples extends LimsTask
             ss.addCmoId(parentId);
             try{  ss.addExpName((String)parentFields.get("UserSampleID")); } catch(NullPointerException npe){}
             try{ 
-               if(originalName2CorrectedName.get((String)parentFields.get("OtherSampleId")).equals((String)parentFields.get("OtherSampleId"))){
+               if(originalName2CorrectedName.containsKey((String)parentFields.get("OtherSampleId")) && !originalName2CorrectedName.get((String)parentFields.get("OtherSampleId")).equals((String)parentFields.get("OtherSampleId"))){
                       ss.setCorrectedCmoId(originalName2CorrectedName.get((String)parentFields.get("OtherSampleId")));
+               } else{
+                   ss.setCorrectedCmoId((String)parentFields.get("OtherSampleId"));
                }
             } catch(NullPointerException npe){}
           }

@@ -32,7 +32,7 @@ public class GetProject {
 
 
     @RequestMapping("/getPmProject")
-    public List<RequestSummary> getContent(@RequestParam(value="project") String[] project) {
+    public List<RequestSummary> getContent(@RequestParam(value="project") String[] project, @RequestParam(value="filter", defaultValue="false") String filter) {
         Whitelists wl = new Whitelists();
         List<RequestSummary> rss = new LinkedList<>();
         StringBuffer sb = new StringBuffer();
@@ -49,7 +49,7 @@ public class GetProject {
         }
         log.info("Starting get PM project for projects: " + sb.toString());
 
-       task.init(project);
+       task.init(project, filter.toLowerCase());
        Future<Object> result = connQueue.submitTask(task);
        try{
          rss = (List<RequestSummary>)result.get();

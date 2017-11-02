@@ -29,6 +29,7 @@ import com.velox.sapioutils.client.standalone.VeloxTask;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.mskcc.limsrest.staticstrings.GeneralStaticStrings;
 /**
  * Find all studies/projects and list them 
  *     */
@@ -58,7 +59,7 @@ public class ListStudies extends LimsTask {
           try{
             String pm = "";
             try{ pm = requests[i].getStringVal("ProjectManager", user); } catch(NullPointerException npe){}
-            if(!cmoOnly || (cmoOnly && !pm.equals(""))){
+            if(!cmoOnly || (cmoOnly && (!pm.equals("") && !pm.equals(GeneralStaticStrings.NO_PM)))){
                RequestSummary rs = new RequestSummary(requests[i].getStringVal("RequestId", user));     
                rs.setRecordId(requests[i].getRecordId());
                ps.addRequestSummary(rs);

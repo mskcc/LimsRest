@@ -51,12 +51,16 @@ public class AddOrCreateSet  extends LimsTask
   String igoUser;
   String setName;
   String mapName;
+  String baitSet;
+  String primeRecipe;
   boolean validate;
 
-  public void init(String igoUser, String setName, String mapName, String[] requests, String[] samples, String[] igoIds, String[] pairs, String[] categories, boolean validate){
+  public void init(String igoUser, String setName, String mapName, String[] requests, String[] samples, String[] igoIds, String[] pairs, String[] categories, String baitSet, String primeRecipe, boolean validate){
     this.igoUser = igoUser;
     this.setName = setName;
     this.mapName = mapName;
+    this.baitSet = baitSet;
+    this.primeRecipe = primeRecipe;
     if(requests != null)
         this.requestIds = requests.clone();
     if(samples != null)
@@ -124,6 +128,9 @@ public class AddOrCreateSet  extends LimsTask
         List names = dataRecordManager.getValueList(descSamples, "SampleId", user);
         for(Object name : names){
            nameSet.add((String) name);
+        }
+        for(String igoId : igoIds){
+           nameSet.add(igoId);
         }
     }
     for(int i = 0; i < normalPairing.length; i++){
@@ -232,7 +239,7 @@ public class AddOrCreateSet  extends LimsTask
           StringWriter sw = new StringWriter();
           PrintWriter pw = new PrintWriter(sw);
           e.printStackTrace(pw);
-           return "ERROR IN WRITING SET INFORMATION: " + e.getMessage() + "TRACE: " + sw.toString();   
+           return "FAILURE: " + e.getMessage();
   
   }
 
