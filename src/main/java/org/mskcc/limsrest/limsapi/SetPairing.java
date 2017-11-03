@@ -89,12 +89,20 @@ public class SetPairing  extends LimsTask
                try{ cmoInfoId = sample.getStringVal("OtherSampleId", user); } catch(NullPointerException npe){}
             }
             if(tumorId.equals(cmoInfoId)){
-               tumorIgoId = sample.getStringVal("SampleId", user);
+               try{
+                   tumorIgoId = sample.getStringVal("SampleId", user);
+               } catch(NullPointerException npe){
+                  throw new LimsException("Sample matching " + cmoInfoId + " has no sampled id. This is a critically bad condition in the lims");
+               }
                if(!"Tumor".equals(sample.getPickListVal("TumorOrNormal", user))){
                   throw new LimsException(tumorId + " is not a tumor");
                }
             } else if(normalId.equals(cmoInfoId)){
-               normalIgoId = sample.getStringVal("SampleId", user);
+               try{
+                   normalIgoId = sample.getStringVal("SampleId", user);
+               } catch(NullPointerException npe){
+                   throw new LimsException("Sample matching " + cmoInfoId + " has no sampled id. This is a critically bad condition in the lims");
+               }
                if(!"Normal".equals(sample.getPickListVal("TumorOrNormal", user))){
                    throw new LimsException(normalId + " is not a normal");
                }
