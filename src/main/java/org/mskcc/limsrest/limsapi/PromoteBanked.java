@@ -158,8 +158,7 @@ public class PromoteBanked extends LimsTask {
                     String reqServiceId = "";
                     try {
                         reqServiceId = possibleRequest.getStringVal("IlabRequest", user);
-                    } catch (NullPointerException npe) {
-                    }
+                    } catch (NullPointerException npe) {}
                     if (serviceId.equals(reqServiceId)) {
                         req = possibleRequest;
                         requestId = req.getStringVal("RequestId", user);
@@ -196,8 +195,7 @@ public class PromoteBanked extends LimsTask {
                     if (currentId > maxId) {
                         maxId = currentId;
                     }
-                } catch (NullPointerException npe) {
-                }
+                } catch (NullPointerException npe) {}
             }
             int offset = 1;
             HashMap<String, DataRecord> plateId2Plate = new HashMap<>();
@@ -240,7 +238,7 @@ public class PromoteBanked extends LimsTask {
         }
         log.info("uuiding");
         UuidGenerator uuidGen = new UuidGenerator();
-        String uuid;
+        String uuid = "UUID_ERROR";
         try {
             uuid = uuidGen.integerToUUID(Integer.parseInt(util.getNextBankedId()), 32);
         } catch (IOException e) {
@@ -335,6 +333,7 @@ public class PromoteBanked extends LimsTask {
             Map<String, Object> cmoFields = new HashMap<>();
             cmoFields.put("UserSampleID", otherSampleId);
             cmoFields.put("CorrectedCMOID", otherSampleId);
+            cmoFields.put(VeloxConstants.OTHER_SAMPLE_ID, bankedFields.get(VeloxConstants.OTHER_SAMPLE_ID));
             cmoFields.put("AltId", bankedFields.get("AltId"));
             cmoFields.put("CmoPatientId", bankedFields.get("PatientId"));
             cmoFields.put("CollectionYear", bankedFields.get("CollectionYear"));
@@ -346,7 +345,8 @@ public class PromoteBanked extends LimsTask {
             cmoFields.put("Preservation", bankedFields.get("Preservation"));
             cmoFields.put("Species", bankedFields.get("Species"));
             cmoFields.put("TumorType", bankedFields.get("TumorType"));
-            cmoFields.put(VeloxConstants.OTHER_SAMPLE_ID, bankedFields.get(VeloxConstants.OTHER_SAMPLE_ID));
+            cmoFields.put("RequestId", requestId);
+            cmoFields.put("SampleId", newIgoId);
 
             promotedSample.addChild("SampleCMOInfoRecords", cmoFields, user);
 
@@ -373,8 +373,7 @@ public class PromoteBanked extends LimsTask {
             }
             promotedSample.addChild("SeqRequirement", srFields, user);
 
-        } catch (NullPointerException npe) {
-        }
+        } catch (NullPointerException npe) {}
     }
 
     private String getCmoSampleId(DataRecord bankedSample, Map<String, Object> bankedFields) throws NotFound, RemoteException, IoError {

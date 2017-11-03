@@ -25,6 +25,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.core.env.Environment;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
+
 //@SpringBootApplication
 @Configuration
 @EnableAutoConfiguration

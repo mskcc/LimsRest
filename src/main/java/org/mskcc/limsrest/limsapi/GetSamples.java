@@ -49,10 +49,14 @@ public class GetSamples  extends LimsTask
   private Log log = LogFactory.getLog(GetSamples.class);
 
   protected String[] projects;
-
-  public void init(final String[] projects){
+  private boolean filter;
+  public void init(final String[] projects, final String filter){
     if(projects != null)
         this.projects = projects.clone();
+    this.filter = false;
+    if("true".equals(filter)){
+       this.filter = true;
+    }
   }
 
  //execute the velox call
@@ -82,7 +86,21 @@ public class GetSamples  extends LimsTask
     sb.append(")");
     List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId in " + sb.toString()  , user);
     List<Map<String, Object>> requestFields = dataRecordManager.getFieldsForRecords(requestList, user);
+    List<List<Map<String, Object>>> descendantCmoFields =  dataRecordManager.getFieldsForDescendantsOfType(requestList, "SampleCMOInfoRecords",  user);
+    HashMap<String, String> originalName2CorrectedName = new HashMap<>();
+    for(List<Map<String, Object>> cmoInfoReq : descendantCmoFields){
+        for(Map<String, Object> cmoInfo : cmoInfoReq){
+            if(originalName2CorrectedName.containsKey(cmoInfo.get("OtherSampleId")) && !originalName2CorrectedName.get(cmoInfo.get("OtherSampleId")).equals(cmoInfo.get("CorrectedCMOID"))){
+                originalName2CorrectedName.put((String)cmoInfo.get("OtherSampleId"), "AMBIGUOUS");
+            } else{
+                originalName2CorrectedName.put((String)cmoInfo.get("OtherSampleId"), (String)cmoInfo.get("CorrectedCMOID"));
+            }            
+        }
+    }
     List<List<Map<String, Object>>> descendantSampleFields =  dataRecordManager.getFieldsForDescendantsOfType(requestList, "Sample",  user);
+    if(filter){
+        descendantSampleFields = dataRecordManager.getFieldsForChildrenOfType(requestList, "Sample",  user);
+    }
     for(int i = 0;i < requestFields.size(); i++){
         String project = (String)(requestFields.get(i).get("RequestId"));
         String igoBase = project.split("_")[0];
@@ -98,9 +116,17 @@ public class GetSamples  extends LimsTask
                     continue;
                 }
                 SampleSummary ss = new SampleSummary();
-                annotateSampleSummary(ss, sampleFields);
-                rs.addSample(ss);
 
+
+                annotateSampleSummary(ss, sampleFields);
+                try{
+                   if(originalName2CorrectedName.containsKey((String)sampleFields.get("OtherSampleId"))){
+                      ss.setCorrectedCmoId(originalName2CorrectedName.get((String)sampleFields.get("OtherSampleId")));
+                   } else{
+                      ss.setCorrectedCmoId((String)sampleFields.get("OtherSampleId"));
+                   }
+                } catch(NullPointerException npe){}
+                rs.addSample(ss);
         }
         rss.add(rs);
     }

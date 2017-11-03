@@ -198,6 +198,11 @@ public class GetSampleQc extends LimsTask
                ss.setRequestedReadNumber(0);
              }
              try{
+                ss.setCoverageTarget((int)requirements[0].getIntegerVal("CoverageTarget", this.user));
+            } catch(NullPointerException npe){
+               ss.setCoverageTarget(0);
+             }
+             try{
                log.info("getting run type");
                log.info(requirements[0].getPickListVal("SequencingRunType", this.user));
                ss.setRunType(requirements[0].getPickListVal("SequencingRunType", this.user));

@@ -43,7 +43,8 @@ public class PairingInfo {
     @RequestMapping(value="/pairingInfo",  method = RequestMethod.POST)
     public ResponseEntity<String> getContent(@RequestParam(value="request") String request, @RequestParam(value="igoUser") String igoUser, 
                            @RequestParam(value="user") String user, 
-                           @RequestParam(value="tumorId") String tumorId, @RequestParam(value="normalId") String normalId){
+                           @RequestParam(value="tumorId", required=false) String tumorId, @RequestParam(value="normalId", required=false) String normalId,
+                           @RequestParam(value="tumorIgoId", required=false) String tumorIgoId, @RequestParam(value="normalIgoId", required=false) String normalIgoId){
         
        Whitelists wl = new Whitelists();
        if(!wl.textMatches(igoUser))
@@ -51,13 +52,20 @@ public class PairingInfo {
        if(!wl.requestMatches(request)){
            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("requestId is not using a valid format. " + wl.requestFormatText()); 
         } 
-        if(!wl.textMatches(tumorId)){
+        if(tumorId != null && !wl.textMatches(tumorId)){
            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("tumorId is not using a valid format. " + wl.textFormatText());
         }
-        if(!wl.textMatches(normalId)){
+        if(normalId != null && !wl.textMatches(normalId)){
            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("normalId is not using a valid format. " + wl.textFormatText());
         }
-       task.init(igoUser, request, tumorId, normalId); 
+        if(tumorIgoId != null && !wl.sampleMatches(tumorIgoId)){
+           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("tumorIgoId is not using a valid format. " + wl.sampleFormatText());
+        }
+        if(normalIgoId != null && !wl.sampleMatches(normalIgoId)){
+           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("normalIgoId is not using a valid format. " + wl.sampleFormatText());
+        }
+       log.info("starting pairing with request " + request + " tumorId " + tumorId + " normalId " + normalId + " tumorIgoId " + tumorIgoId + " normalIgoId " + normalIgoId);
+       task.init(igoUser, request, tumorId, normalId, tumorIgoId, normalIgoId); 
                          
        Future<Object> result = connQueue.submitTask(task);
        String returnCode = "";

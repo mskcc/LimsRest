@@ -13,6 +13,7 @@ public class Whitelists{
     Pattern containsALetter;
     Pattern genericParamPattern;
     Pattern picklistPattern;
+    Pattern filePathPattern;
     Pattern servicePattern;
     Pattern specialParamPattern;
 
@@ -22,6 +23,7 @@ public class Whitelists{
         containsALetter = Pattern.compile(".*[a-zA-Z].*");
         picklistPattern = Pattern.compile("^[A-Za-z0-9 ()/-]+$");
         genericParamPattern = Pattern.compile("^[ A-Za-z0-9_'.+-]+$");
+        filePathPattern = Pattern.compile("^[A-Za-z0-9_/.-]*$");
         servicePattern = Pattern.compile("^(IGO|igo|iGO|iGo)[-_][0-9]{4,8}$");
         specialParamPattern = Pattern.compile("^[ A-Za-z0-9_'().+-]+$");
     }
@@ -43,6 +45,16 @@ public class Whitelists{
         if(request == null || request.equals("NULL"))
             return true;
         return requestPattern.matcher(request).matches();
+   }
+
+   public String filePathFormatText(){
+       return "The format must be a valid unix file path";
+   }
+
+   public boolean filePathMatches(String path){
+       if(path == null || path.equals("NULL"))
+           return true;
+       return filePathPattern.matcher(path).matches();
    }
 
    public String sampleFormatText(){

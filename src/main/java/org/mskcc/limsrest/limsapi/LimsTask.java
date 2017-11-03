@@ -76,109 +76,83 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
             Map<String, Object> qcFields = qc.getFields(user);
             try {
                 qcSummary.setRecordId((Long) qcFields.get("RecordId"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setSampleName((String) qcFields.get("OtherSampleId"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setBaitSet((String) qcFields.get("BaitSet"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setMskq((Double) qcFields.get("Mskq"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setMeanTargetCoverage((Double) qcFields.get("MeanCoverage"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setPercentAdapters((Double) qcFields.get("PercentAdapters"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setPercentDuplication((Double) qcFields.get("PercentDuplication"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setPercentOffBait((Double) qcFields.get("PercentOffBait"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setPercentTarget10x((Double) qcFields.get("PercentTarget10X"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setPercentTarget30x((Double) qcFields.get("PercentTarget30X"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setPercentTarget100x((Double) qcFields.get("PercentTarget100X"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setReadsDuped((Long) qcFields.get("ReadPairDupes"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setReadsExamined((Long) qcFields.get("ReadsExamined"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setTotalReads((Long) qcFields.get("TotalReads"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setUnmapped((Long) qcFields.get("UnmappedDupes"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setUnpairedReadsExamined((Long) qcFields.get("UnpairedReads"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
 
             try {
                 qcSummary.setZeroCoveragePercent((Double) qcFields.get("ZeroCoveragePercent"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setRun((String) qcFields.get("SequencerRunFolder"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setReviewed((Boolean) qcFields.get("Reviewed"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setQcStatus((String) qcFields.get("SeqQCStatus"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setPercentRibosomalBases((Double) qcFields.get("PercentRibosomalBases"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setPercentCodingBases((Double) qcFields.get("PercentCodingBases"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setPercentUtrBases((Double) qcFields.get("PercentUtrBases"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setPercentIntronicBases((Double) qcFields.get("PercentIntronicBases"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setPercentIntergenicBases((Double) qcFields.get("PercentIntergenicBases"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
             try {
                 qcSummary.setPercentMrnaBases((Double) qcFields.get("PercentMrnaBases"));
-            } catch (NullPointerException npe) {
-            }
+            } catch (NullPointerException npe) {}
         } catch (Throwable e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);

@@ -26,12 +26,13 @@ public class ToggleSampleQcStatus extends LimsTask {
     String run;
     String analyst;
     String note;
+    String fastqPath;
     boolean isSeqQc = true;
 
     @Autowired
     private QcStatusAwareProcessAssigner qcStatusAwareProcessAssigner;
 
-    public void init(long recordId, String status, String requestId, String correctedSampleId, String run, String qcType, String analyst, String note) {
+    public void init(long recordId, String status, String requestId, String correctedSampleId, String run, String qcType, String analyst, String note, String fastqPath) {
         this.recordId = recordId;
         this.status = status;
         this.requestId = requestId;
@@ -39,6 +40,7 @@ public class ToggleSampleQcStatus extends LimsTask {
         this.run = run;
         this.analyst = analyst;
         this.note = note;
+        this.fastqPath = fastqPath;
         if ("Post".equals(qcType)) {
             isSeqQc = false;
         }
@@ -76,8 +78,7 @@ public class ToggleSampleQcStatus extends LimsTask {
                                 matchedSample = childSamples[i];
                             }
                         }
-                    } catch (NullPointerException npe) {
-                    }
+                    } catch (NullPointerException npe){}
                 }
                 if (matchedSample == null) {
                     return "Invalid corrected sample id";
@@ -97,13 +98,11 @@ public class ToggleSampleQcStatus extends LimsTask {
                                 String oldNote = "";
                                 try {
                                     oldNote = pqc.getStringVal("Note", user);
-                                } catch (NullPointerException npe) {
-                                }
+                                } catch (NullPointerException npe){}
                                 pqc.setDataField("Note", oldNote + "\n" + note, user);
                             }
                         }
-                    } catch (NullPointerException npe) {
-                    }
+                    } catch (NullPointerException npe){}
                 }
                 if (matchCount == 0) {
                     return "ERROR: Failed to match a triplet with project, sample id and run id" + requestId + "," + sampleId + "," + run;
