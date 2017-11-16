@@ -8,6 +8,7 @@ import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.utilities.SloanCMOUtils;
 import com.velox.sloan.cmo.utilities.UuidGenerator;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.CorrectedCmoSampleView;
@@ -16,6 +17,7 @@ import org.mskcc.domain.sample.CmoSampleInfo;
 import org.mskcc.domain.sample.HumanSamplePredicate;
 import org.mskcc.limsrest.limsapi.cmoinfo.CorrectedCmoSampleIdGenerator;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverter;
+import org.mskcc.limsrest.staticstrings.Constants;
 import org.mskcc.limsrest.staticstrings.Messages;
 import org.mskcc.limsrest.staticstrings.RelatedRecords;
 import org.mskcc.util.CommonUtils;
@@ -30,10 +32,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.rmi.RemoteException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -231,7 +230,7 @@ public class PromoteBanked extends LimsTask {
             log.info(e.getMessage() + " TRACE: " + sw.toString());
 
             MultiValueMap<String, String> headers = new HttpHeaders();
-            headers.add("Errors", Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + e.getMessage());
+            headers.add(Constants.ERRORS, Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + e.getMessage());
 
             return new ResponseEntity<>(headers, HttpStatus.OK);
         } catch (Exception e) {
@@ -241,25 +240,28 @@ public class PromoteBanked extends LimsTask {
             log.info(e.getMessage() + " TRACE: " + sw.toString());
 
             MultiValueMap<String, String> headers = new HttpHeaders();
-            headers.add("Errors", Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + e.toString() + ": " + e
+            headers.add(Constants.ERRORS, Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + e.toString() + ": " + e
                     .getMessage());
 
             return new ResponseEntity<>(headers, HttpStatus.OK);
         }
 
         MultiValueMap<String, String> headers = new HttpHeaders();
-        headers.add("Warnings", getErrors());
+        headers.add(Constants.WARNINGS, getErrors());
+        headers.add(Constants.STATUS, Messages.SUCCESS);
 
         return new ResponseEntity<>(headers, HttpStatus.OK);
     }
 
     private String getErrors() {
         StringBuilder message = new StringBuilder();
-        for (Map.Entry<String, String> sampleIdToErrors : errors.entries()) {
-            message.append(String.format("Banked sample %s errors: \n%s\n", sampleIdToErrors.getKey(),
-                    sampleIdToErrors.getValue().join(System
-                            .lineSeparator())));
+
+        for (String sampleId : errors.keySet()) {
+            Collection<String> errorMessages = errors.get(sampleId);
+            message.append(String.format("Banked sample %s errors: \n%s\n", sampleId,
+                    StringUtils.join(errorMessages, System.lineSeparator())));
         }
+
         return message.toString();
     }
 
