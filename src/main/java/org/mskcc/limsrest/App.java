@@ -1,20 +1,32 @@
 package org.mskcc.limsrest;
 
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.sun.org.apache.xerces.internal.parsers.SecurityConfiguration;
+import org.mskcc.domain.sample.BankedSample;
+import org.mskcc.domain.sample.Sample;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.*;
 import org.mskcc.limsrest.limsapi.assignedprocess.AssignedProcessCreator;
 import org.mskcc.limsrest.limsapi.assignedprocess.QcStatusAwareProcessAssigner;
 import org.mskcc.limsrest.limsapi.assignedprocess.config.AssignedProcessConfigFactory;
-import org.mskcc.limsrest.limsapi.cmoinfo.converter.SimpleStringToSampleCmoIdConverter;
-import org.mskcc.limsrest.limsapi.cmoinfo.converter.StringToSampleCmoIdConverter;
-import org.mskcc.limsrest.limsapi.cmoinfo.formatter.CellLineCmoSampleIdFormatter;
-import org.mskcc.limsrest.limsapi.cmoinfo.formatter.PatientCmoSampleIdFormatter;
+import org.mskcc.limsrest.limsapi.cmoinfo.CorrectedCmoSampleIdGenerator;
+import org.mskcc.limsrest.limsapi.cmoinfo.SampleTypeCorrectedCmoSampleIdGenerator;
+import org.mskcc.limsrest.limsapi.cmoinfo.cellline.CellLineCmoSampleIdFormatter;
+import org.mskcc.limsrest.limsapi.cmoinfo.cellline.CellLineCmoSampleIdResolver;
+import org.mskcc.limsrest.limsapi.cmoinfo.converter.BankedSampleToCorrectedCmoSampleIdConverter;
+import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverter;
+import org.mskcc.limsrest.limsapi.cmoinfo.converter.FormatAwareCorrectedCmoIdConverterFactory;
+import org.mskcc.limsrest.limsapi.cmoinfo.converter.SampleToCorrectedCmoIdConverter;
+import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceSampleAbbreviationRetriever;
+import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdFormatter;
+import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdResolver;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.*;
+import org.mskcc.limsrest.limsapi.converter.SampleRecordToSampleConverter;
 import org.mskcc.limsrest.web.*;
+import org.mskcc.util.notificator.Notificator;
+import org.mskcc.util.notificator.SlackNotificator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -29,10 +41,22 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 //@SpringBootApplication
 @Configuration
 @EnableAutoConfiguration
-@PropertySource("classpath:/connect.txt")
+@PropertySource({"classpath:/connect.txt", "classpath:/slack.properties"})
 public class App extends SpringBootServletInitializer {
     @Autowired
     private Environment env;
+
+    @Value("${webhookUrl}")
+    private String webhookUrl;
+
+    @Value("${channel}")
+    private String channel;
+
+    @Value("${user}")
+    private String user;
+
+    @Value("${icon}")
+    private String icon;
 
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
@@ -221,21 +245,34 @@ public class App extends SpringBootServletInitializer {
     @Bean
     @Scope("request")
     public PromoteBanked promoteBanked() {
-        return new PromoteBanked(patientCmoSampleIdRetriever(), cellLineSampleIdRetriever());
+        return new PromoteBanked(bankedSampleToCorrectedCmoSampleIdConverter(),
+                sampleTypeCorrectedCmoSampleIdGenerator());
+    }
+
+    @Bean
+    @Scope("request")
+    public Notificator slackNotificator() {
+        return new SlackNotificator(webhookUrl, channel, user, icon);
+    }
+
+    @Bean
+    @Scope("request")
+    public CorrectedCmoIdConverter<BankedSample> bankedSampleToCorrectedCmoSampleIdConverter() {
+        return new BankedSampleToCorrectedCmoSampleIdConverter();
     }
 
     @Bean
     @Scope("request")
     @Qualifier("patientCmoSampleIdRetriever")
     public CmoSampleIdRetriever patientCmoSampleIdRetriever() {
-        return new CmoSampleIdRetrieverByBankedSample(patientCmoSampleIdResolver(), patientCmoSampleIdFormatter());
+        return new FormattedCmoSampleIdRetriever(patientCmoSampleIdResolver(), patientCmoSampleIdFormatter());
     }
 
     @Bean
     @Scope("request")
     @Qualifier("cellLineCmoSampleIdRetriever")
     public CmoSampleIdRetriever cellLineSampleIdRetriever() {
-        return new CmoSampleIdRetrieverByBankedSample(cellLineCmoSampleIdResolver(), cellLineCmoSampleIdFormatter());
+        return new FormattedCmoSampleIdRetriever(cellLineCmoSampleIdResolver(), cellLineCmoSampleIdFormatter());
     }
 
     @Bean
@@ -246,14 +283,14 @@ public class App extends SpringBootServletInitializer {
 
     @Bean
     @Scope("request")
-    public PatientSampleCountRetriever patientSampleCountRetriever() {
-        return new PatientSampleCountRetriever(stringToCmoIdConverter());
+    public SampleCounterRetriever patientSampleCountRetriever() {
+        return new IncrementalSampleCounterRetriever(stringToPatientCmoIdConverterFactory());
     }
 
     @Bean
     @Scope("request")
-    public StringToSampleCmoIdConverter stringToCmoIdConverter() {
-        return new SimpleStringToSampleCmoIdConverter();
+    public FormatAwareCorrectedCmoIdConverterFactory stringToPatientCmoIdConverterFactory() {
+        return new FormatAwareCorrectedCmoIdConverterFactory(sampleTypeAbbreviationRetriever());
     }
 
     @Bean
@@ -271,7 +308,33 @@ public class App extends SpringBootServletInitializer {
     @Bean
     @Scope("request")
     public PatientCmoSampleIdResolver patientCmoSampleIdResolver() {
-        return new PatientCmoSampleIdResolver(patientSampleCountRetriever());
+        return new PatientCmoSampleIdResolver(patientSampleCountRetriever(), sampleTypeAbbreviationRetriever());
+    }
+
+    @Bean
+    @Scope("request")
+    public SampleAbbreviationRetriever sampleTypeAbbreviationRetriever() {
+        return new CspaceSampleAbbreviationRetriever();
+    }
+
+    @Bean
+    @Scope("request")
+    public CorrectedCmoSampleIdGenerator sampleTypeCorrectedCmoSampleIdGenerator() {
+        return new SampleTypeCorrectedCmoSampleIdGenerator(cmoSampleIdRetrieverFactory(), patientSamplesRetriever(),
+                slackNotificator());
+    }
+
+    @Bean
+    @Scope("request")
+    public PatientSamplesRetriever patientSamplesRetriever() {
+        return new PatientSamplesWithCmoInfoRetriever(sampleToCorrectedCmoIdConverter(),
+                sampleRecordToSampleConverter());
+    }
+
+    @Bean
+    @Scope("request")
+    public CmoSampleIdRetrieverFactory cmoSampleIdRetrieverFactory() {
+        return new CmoSampleIdRetrieverFactory(patientCmoSampleIdRetriever(), cellLineSampleIdRetriever());
     }
 
     @Bean
@@ -374,6 +437,31 @@ public class App extends SpringBootServletInitializer {
     @Scope("request")
     public PairingInfo pairingInfo() {
         return new PairingInfo(connectionQueue(), setPairing());
+    }
+
+    @Bean
+    @Scope("request")
+    public GetCorrectedSampleCmoId getCorrectedSampleCmoId() {
+        return new GetCorrectedSampleCmoId(connectionQueue(), generateSampleCmoIdTask());
+    }
+
+    @Bean
+    @Scope("request")
+    public GenerateSampleCmoIdTask generateSampleCmoIdTask() {
+        return new GenerateSampleCmoIdTask(sampleTypeCorrectedCmoSampleIdGenerator(), sampleToCorrectedCmoIdConverter
+                (), sampleRecordToSampleConverter());
+    }
+
+    @Bean
+    @Scope("request")
+    public SampleRecordToSampleConverter sampleRecordToSampleConverter() {
+        return new SampleRecordToSampleConverter();
+    }
+
+    @Bean
+    @Scope("request")
+    public CorrectedCmoIdConverter<Sample> sampleToCorrectedCmoIdConverter() {
+        return new SampleToCorrectedCmoIdConverter();
     }
 
     @Bean
