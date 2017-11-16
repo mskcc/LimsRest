@@ -2,6 +2,7 @@ package org.mskcc.limsrest.limsapi.cmoinfo;
 
 import org.hamcrest.object.IsCompatibleType;
 import org.junit.Test;
+import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleId;
 import org.mskcc.util.TestUtils;
 
 import java.util.Optional;

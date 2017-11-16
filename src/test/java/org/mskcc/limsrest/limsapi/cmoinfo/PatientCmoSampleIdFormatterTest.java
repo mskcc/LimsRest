@@ -1,7 +1,8 @@
 package org.mskcc.limsrest.limsapi.cmoinfo;
 
 import org.junit.Test;
-import org.mskcc.limsrest.limsapi.cmoinfo.formatter.PatientCmoSampleIdFormatter;
+import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleId;
+import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdFormatter;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;

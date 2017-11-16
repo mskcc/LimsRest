@@ -2,13 +2,16 @@ package org.mskcc.limsrest.limsapi.cmoinfo;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mskcc.domain.BankedSample;
+import org.mskcc.domain.CorrectedCmoSampleView;
 import org.mskcc.domain.sample.NucleicAcid;
 import org.mskcc.domain.sample.SampleClass;
 import org.mskcc.domain.sample.SampleOrigin;
 import org.mskcc.domain.sample.SpecimenType;
-import org.mskcc.limsrest.limsapi.cmoinfo.retriever.PatientCmoSampleIdResolver;
-import org.mskcc.limsrest.limsapi.cmoinfo.retriever.PatientSampleCountRetriever;
+import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceSampleAbbreviationRetriever;
+import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleId;
+import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdResolver;
+import org.mskcc.limsrest.limsapi.cmoinfo.retriever.IncrementalSampleCounterRetriever;
+import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleAbbreviationRetriever;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -23,24 +26,28 @@ import static org.mskcc.util.TestUtils.assertThrown;
 
 public class PatientCmoSampleIdResolverTest {
     private PatientCmoSampleIdResolver patientCmoSampleIdResolver;
-    private BankedSample bankedSample;
-    private PatientSampleCountRetriever countRetriever = mock(PatientSampleCountRetriever.class);
+    private CorrectedCmoSampleView sample;
+    private IncrementalSampleCounterRetriever countRetriever = mock(IncrementalSampleCounterRetriever.class);
+    private String requestId = "6543w2_O";
+    private String sampleId = "s43222";
+    private SampleAbbreviationRetriever sampleTypeAbbreviationRetriever = new CspaceSampleAbbreviationRetriever();
 
     @Before
     public void setUp() throws Exception {
-        patientCmoSampleIdResolver = new PatientCmoSampleIdResolver(countRetriever);
-        bankedSample = new BankedSample();
-        when(countRetriever.retrieve(any(), any())).thenReturn(1l);
+        patientCmoSampleIdResolver = new PatientCmoSampleIdResolver(countRetriever, sampleTypeAbbreviationRetriever);
+        sample = new CorrectedCmoSampleView(sampleId);
+        when(countRetriever.retrieve(any(), any())).thenReturn(1);
     }
 
     @Test
     public void whenPatientIdIsNull_shouldThrowAnException() throws Exception {
         //given
-        bankedSample.setSampleClass(SampleClass.UNKNOWN_TUMOR.getValue());
-        bankedSample.setNucleicAcidType(NucleicAcid.DNA.getValue());
+        sample.setSampleClass(SampleClass.UNKNOWN_TUMOR);
+        sample.setNucleidAcid(NucleicAcid.DNA);
 
         //when
-        Optional<Exception> exception = assertThrown(() -> patientCmoSampleIdResolver.resolve(bankedSample, Collections.emptyList()));
+        Optional<Exception> exception = assertThrown(() -> patientCmoSampleIdResolver.resolve(sample, Collections
+                .emptyList(), requestId));
 
         //then
         assertThat(exception.isPresent(), is(true));
@@ -49,12 +56,13 @@ public class PatientCmoSampleIdResolverTest {
     @Test
     public void whenPatientIdIsEmpty_shouldThrowAnException() throws Exception {
         //given
-        bankedSample.setPatientId("");
-        bankedSample.setSampleClass(SampleClass.UNKNOWN_TUMOR.getValue());
-        bankedSample.setNucleicAcidType(NucleicAcid.DNA.getValue());
+        sample.setPatientId("");
+        sample.setSampleClass(SampleClass.UNKNOWN_TUMOR);
+        sample.setNucleidAcid(NucleicAcid.DNA);
 
         //when
-        Optional<Exception> exception = assertThrown(() -> patientCmoSampleIdResolver.resolve(bankedSample, Collections.emptyList()));
+        Optional<Exception> exception = assertThrown(() -> patientCmoSampleIdResolver.resolve(sample, Collections
+                .emptyList(), requestId));
 
         //then
         assertThat(exception.isPresent(), is(true));
@@ -63,11 +71,11 @@ public class PatientCmoSampleIdResolverTest {
     @Test
     public void whenSampleClassIsNull_shouldThrowAnException() throws Exception {
         //given
-        bankedSample.setPatientId(getRandomPatientId());
-        bankedSample.setNucleicAcidType(NucleicAcid.DNA.getValue());
+        sample.setPatientId(getRandomPatientId());
+        sample.setNucleidAcid(NucleicAcid.DNA);
 
         //when
-        Optional<Exception> exception = assertThrown(() -> patientCmoSampleIdResolver.resolve(bankedSample, Collections.emptyList()));
+        Optional<Exception> exception = assertThrown(() -> patientCmoSampleIdResolver.resolve(sample, Collections.emptyList(), requestId));
 
         //then
         assertThat(exception.isPresent(), is(true));
@@ -76,12 +84,12 @@ public class PatientCmoSampleIdResolverTest {
     @Test
     public void whenSampleClassIsEmpty_shouldThrowAnException() throws Exception {
         //given
-        bankedSample.setPatientId(getRandomPatientId());
-        bankedSample.setSampleClass("");
-        bankedSample.setNucleicAcidType(NucleicAcid.DNA.getValue());
+        sample.setPatientId(getRandomPatientId());
+        sample.setSampleClass(null);
+        sample.setNucleidAcid(NucleicAcid.DNA);
 
         //when
-        Optional<Exception> exception = assertThrown(() -> patientCmoSampleIdResolver.resolve(bankedSample, Collections.emptyList()));
+        Optional<Exception> exception = assertThrown(() -> patientCmoSampleIdResolver.resolve(sample, Collections.emptyList(), requestId));
 
         //then
         assertThat(exception.isPresent(), is(true));
@@ -90,11 +98,11 @@ public class PatientCmoSampleIdResolverTest {
     @Test
     public void whenNucleicAcidIsNull_shouldThrowAnException() throws Exception {
         //given
-        bankedSample.setPatientId(getRandomPatientId());
-        bankedSample.setSampleClass(SampleClass.ADJACENT_TISSUE.getValue());
+        sample.setPatientId(getRandomPatientId());
+        sample.setSampleClass(SampleClass.ADJACENT_TISSUE);
 
         //when
-        Optional<Exception> exception = assertThrown(() -> patientCmoSampleIdResolver.resolve(bankedSample, Collections.emptyList()));
+        Optional<Exception> exception = assertThrown(() -> patientCmoSampleIdResolver.resolve(sample, Collections.emptyList(), requestId));
 
         //then
         assertThat(exception.isPresent(), is(true));
@@ -103,12 +111,12 @@ public class PatientCmoSampleIdResolverTest {
     @Test
     public void whenNucleicAcidIsEmpty_shouldThrowAnException() throws Exception {
         //given
-        bankedSample.setPatientId(getRandomPatientId());
-        bankedSample.setSampleClass(SampleClass.ADJACENT_TISSUE.getValue());
-        bankedSample.setNucleicAcidType("");
+        sample.setPatientId(getRandomPatientId());
+        sample.setSampleClass(SampleClass.ADJACENT_TISSUE);
+        sample.setNucleidAcid(null);
 
         //when
-        Optional<Exception> exception = assertThrown(() -> patientCmoSampleIdResolver.resolve(bankedSample, Collections.emptyList()));
+        Optional<Exception> exception = assertThrown(() -> patientCmoSampleIdResolver.resolve(sample, Collections.emptyList(), requestId));
 
         //then
         assertThat(exception.isPresent(), is(true));
@@ -140,20 +148,21 @@ public class PatientCmoSampleIdResolverTest {
 
     private void assertCmoSampleIdBySpecimenByOrigin(String patientId, NucleicAcid nucleicAcid, SpecimenType specimenType, SampleOrigin sampleOrigin) {
         //given
-        BankedSample sample = new BankedSample();
+        CorrectedCmoSampleView sample = new CorrectedCmoSampleView("sampleId");
         sample.setPatientId(patientId);
-        sample.setSpecimenType(specimenType.getValue());
-        sample.setNucleicAcidType(nucleicAcid.getValue());
-        sample.setSampleOrigin(sampleOrigin.getValue());
+        sample.setSpecimenType(specimenType);
+        sample.setNucleidAcid(nucleicAcid);
+        sample.setSampleOrigin(sampleOrigin);
 
         //when
-        PatientCmoSampleId cmoSampleId = patientCmoSampleIdResolver.resolve(sample, Collections.emptyList());
+        PatientCmoSampleId cmoSampleId = patientCmoSampleIdResolver.resolve(sample, Collections.emptyList(), requestId);
 
         //then
         assertThat(cmoSampleId.getPatientId(), is(patientId));
-        assertThat(cmoSampleId.getSampleTypeAbbr(), is(PatientCmoSampleIdResolver.getSampleOriginToAbbreviation().get(sampleOrigin)));
-        assertThat(cmoSampleId.getSampleCount(), is(1l));
-        assertThat(cmoSampleId.getNucleicAcid(), is(PatientCmoSampleIdResolver.getNucleicAcidToAbbreviation().get(nucleicAcid)));
+        assertThat(cmoSampleId.getSampleTypeAbbr(), is(CspaceSampleAbbreviationRetriever
+                .getSampleOriginToAbbreviation().get(sampleOrigin)));
+        assertThat(cmoSampleId.getSampleCount(), is(1));
+        assertThat(cmoSampleId.getNucleicAcid(), is(CspaceSampleAbbreviationRetriever.getNucleicAcidToAbbreviation().get(nucleicAcid)));
     }
 
     @Test
@@ -167,54 +176,57 @@ public class PatientCmoSampleIdResolverTest {
         assertCmoSampleIdBySampleClass(getRandomPatientId(), NucleicAcid.DNA, SpecimenType.SALIVA, SampleClass.ADJACENT_TISSUE);
     }
 
-    private void assertCmoSampleIdBySampleClass(String patientId, NucleicAcid nucleicAcid, SpecimenType specimenType, SampleClass sampleClass) {
+    private void assertCmoSampleIdBySampleClass(String patientId, NucleicAcid nucleicAcid, SpecimenType specimenType,
+                                                SampleClass sampleClass) {
         //given
-        BankedSample sample = new BankedSample();
+        CorrectedCmoSampleView sample = new CorrectedCmoSampleView("sampleId");
         sample.setPatientId(patientId);
-        sample.setSpecimenType(specimenType.getValue());
-        sample.setNucleicAcidType(nucleicAcid.getValue());
-        sample.setSampleClass(sampleClass.getValue());
+        sample.setSpecimenType(specimenType);
+        sample.setNucleidAcid(nucleicAcid);
+        sample.setSampleClass(sampleClass);
 
         //when
-        PatientCmoSampleId cmoSampleId = patientCmoSampleIdResolver.resolve(sample, Collections.emptyList());
+        PatientCmoSampleId cmoSampleId = patientCmoSampleIdResolver.resolve(sample, Collections.emptyList(), requestId);
 
         //then
         assertThat(cmoSampleId.getPatientId(), is(patientId));
-        assertThat(cmoSampleId.getSampleTypeAbbr(), is(PatientCmoSampleIdResolver.getSampleClassToAbbreviation().get(sampleClass)));
-        assertThat(cmoSampleId.getSampleCount(), is(1l));
-        assertThat(cmoSampleId.getNucleicAcid(), is(PatientCmoSampleIdResolver.getNucleicAcidToAbbreviation().get(nucleicAcid)));
+        assertThat(cmoSampleId.getSampleTypeAbbr(), is(CspaceSampleAbbreviationRetriever.getSampleClassToAbbreviation
+                ().get(sampleClass)));
+        assertThat(cmoSampleId.getSampleCount(), is(1));
+        assertThat(cmoSampleId.getNucleicAcid(), is(CspaceSampleAbbreviationRetriever.getNucleicAcidToAbbreviation().get(nucleicAcid)));
     }
 
     private void assertCmoSampleIdBySpecimen(String patientId, NucleicAcid nucleicAcid, SpecimenType specimenType) {
         //given
-        BankedSample sample = new BankedSample();
+        CorrectedCmoSampleView sample = new CorrectedCmoSampleView("sampleId");
         sample.setPatientId(patientId);
-        sample.setSpecimenType(specimenType.getValue());
-        sample.setNucleicAcidType(nucleicAcid.getValue());
+        sample.setSpecimenType(specimenType);
+        sample.setNucleidAcid(nucleicAcid);
 
         //when
-        PatientCmoSampleId cmoSampleId = patientCmoSampleIdResolver.resolve(sample, Collections.emptyList());
+        PatientCmoSampleId cmoSampleId = patientCmoSampleIdResolver.resolve(sample, Collections.emptyList(), requestId);
 
         //then
         assertThat(cmoSampleId.getPatientId(), is(patientId));
-        assertThat(cmoSampleId.getSampleTypeAbbr(), is(PatientCmoSampleIdResolver.getSpecimenTypeToAbbreviation().get(specimenType)));
-        assertThat(cmoSampleId.getSampleCount(), is(1l));
-        assertThat(cmoSampleId.getNucleicAcid(), is(PatientCmoSampleIdResolver.getNucleicAcidToAbbreviation().get(nucleicAcid)));
+        assertThat(cmoSampleId.getSampleTypeAbbr(), is(CspaceSampleAbbreviationRetriever
+                .getSpecimenTypeToAbbreviation().get(specimenType)));
+        assertThat(cmoSampleId.getSampleCount(), is(1));
+        assertThat(cmoSampleId.getNucleicAcid(), is(CspaceSampleAbbreviationRetriever.getNucleicAcidToAbbreviation().get(nucleicAcid)));
     }
 
     @Test
     public void whenSampleClassIsCellFreeAndSampleOriginIsNull_shouldThrowAnException() throws Exception {
         //given
         String patientId = getRandomPatientId();
-        String cellFreeSampleClass = SampleClass.CELL_FREE.getValue();
-        String nucleicAcid = NucleicAcid.DNA.getValue();
+        SampleClass cellFreeSampleClass = SampleClass.CELL_FREE;
+        NucleicAcid nucleicAcid = NucleicAcid.DNA;
 
-        bankedSample.setPatientId(patientId);
-        bankedSample.setSampleClass(cellFreeSampleClass);
-        bankedSample.setNucleicAcidType(nucleicAcid);
+        sample.setPatientId(patientId);
+        sample.setSampleClass(cellFreeSampleClass);
+        sample.setNucleidAcid(nucleicAcid);
 
         //when
-        Optional<Exception> exception = assertThrown(() -> patientCmoSampleIdResolver.resolve(bankedSample, Collections.emptyList()));
+        Optional<Exception> exception = assertThrown(() -> patientCmoSampleIdResolver.resolve(sample, Collections.emptyList(), requestId));
 
         //then
         assertThat(exception.isPresent(), is(true));
@@ -224,16 +236,16 @@ public class PatientCmoSampleIdResolverTest {
     public void whenSampleClassIsCellFreeAndSampleOriginIsEmpty_shouldThrowAnException() throws Exception {
         //given
         String patientId = getRandomPatientId();
-        String cellFreeSampleClass = SampleClass.CELL_FREE.getValue();
-        String nucleicAcid = NucleicAcid.DNA.getValue();
+        SampleClass cellFreeSampleClass = SampleClass.CELL_FREE;
+        NucleicAcid nucleicAcid = NucleicAcid.DNA;
 
-        bankedSample.setPatientId(patientId);
-        bankedSample.setSampleClass(cellFreeSampleClass);
-        bankedSample.setNucleicAcidType(nucleicAcid);
-        bankedSample.setSampleOrigin("");
+        sample.setPatientId(patientId);
+        sample.setSampleClass(cellFreeSampleClass);
+        sample.setNucleidAcid(nucleicAcid);
+        sample.setSampleOrigin(null);
 
         //when
-        Optional<Exception> exception = assertThrown(() -> patientCmoSampleIdResolver.resolve(bankedSample, Collections.emptyList()));
+        Optional<Exception> exception = assertThrown(() -> patientCmoSampleIdResolver.resolve(sample, Collections.emptyList(), requestId));
 
         //then
         assertThat(exception.isPresent(), is(true));
@@ -247,22 +259,22 @@ public class PatientCmoSampleIdResolverTest {
         SampleOrigin sampleOrigin = SampleOrigin.CEREBROSPINAL_FLUID;
         NucleicAcid nucleicAcid = NucleicAcid.DNA;
 
-        bankedSample.setPatientId(patientId);
-        bankedSample.setSampleClass(sampleClass.getValue());
-        bankedSample.setNucleicAcidType(nucleicAcid.getValue());
-        bankedSample.setSampleOrigin(sampleOrigin.getValue());
-        bankedSample.setSpecimenType(SpecimenType.BIOPSY.getValue());
+        sample.setPatientId(patientId);
+        sample.setSampleClass(sampleClass);
+        sample.setNucleidAcid(nucleicAcid);
+        sample.setSampleOrigin(sampleOrigin);
+        sample.setSpecimenType(SpecimenType.BIOPSY);
 
         //when
-        PatientCmoSampleId cmoSampleId = patientCmoSampleIdResolver.resolve(bankedSample, Collections.emptyList());
+        PatientCmoSampleId cmoSampleId = patientCmoSampleIdResolver.resolve(sample, Collections.emptyList(), requestId);
 
         //then
-        String sampleClassByOrigin = PatientCmoSampleIdResolver.getSampleOriginToAbbreviation().get(sampleOrigin);
-        String nucleicAcidShortcut = PatientCmoSampleIdResolver.getNucleicAcidToAbbreviation().get(nucleicAcid);
+        String sampleClassByOrigin = CspaceSampleAbbreviationRetriever.getSampleOriginToAbbreviation().get(sampleOrigin);
+        String nucleicAcidShortcut = CspaceSampleAbbreviationRetriever.getNucleicAcidToAbbreviation().get(nucleicAcid);
 
         assertThat(cmoSampleId.getPatientId(), is(patientId));
         assertThat(cmoSampleId.getSampleTypeAbbr(), is(sampleClassByOrigin));
-        assertThat(cmoSampleId.getSampleCount(), is(1l));
+        assertThat(cmoSampleId.getSampleCount(), is(1));
         assertThat(cmoSampleId.getNucleicAcid(), is(nucleicAcidShortcut));
     }
 

@@ -7,4 +7,6 @@ public class Constants {
     public static final String WHOLE_EXOME_CAPTURE = "Whole Exome Capture";
     public static final String PRE_SEQUENCING_POOLING_OF_LIBRARIES1 = "Pre-Sequencing Pooling of Libraries";
     public static final String IMPACT_HEME_PACT_OR_CUSTOM_CAPTURE = "IMPACT/HemePACT or Custom Capture";
+    public static final int SAMPLE_COUNT_MAX_VALUE = 999;
+    public static final int SAMPLE_COUNT_MIN_VALUE = 0;
 }
