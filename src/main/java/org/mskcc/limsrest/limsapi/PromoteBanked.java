@@ -288,7 +288,7 @@ public class PromoteBanked extends LimsTask {
         }
         log.info("uuiding");
         UuidGenerator uuidGen = new UuidGenerator();
-        String uuid = "UUID_ERROR";
+        String uuid;
         try {
             uuid = uuidGen.integerToUUID(Integer.parseInt(util.getNextBankedId()), 32);
         } catch (IOException e) {
