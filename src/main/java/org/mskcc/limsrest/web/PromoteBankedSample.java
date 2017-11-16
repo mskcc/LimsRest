@@ -6,6 +6,7 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.LimsException;
 import org.mskcc.limsrest.limsapi.PromoteBanked;
+import org.mskcc.limsrest.staticstrings.Constants;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -75,8 +76,8 @@ public class PromoteBankedSample {
             log.info("Waiting for result");
             returnCode = (ResponseEntity<String>) result.get();
 
-            if (returnCode.getHeaders().containsKey("Errors") && !dryrun.equals("true")) {
-                throw new LimsException(StringUtils.join(returnCode.getHeaders().get("Errors"), ","));
+            if (returnCode.getHeaders().containsKey(Constants.ERRORS) && !dryrun.equals("true")) {
+                throw new LimsException(StringUtils.join(returnCode.getHeaders().get(Constants.ERRORS), ","));
             }
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
