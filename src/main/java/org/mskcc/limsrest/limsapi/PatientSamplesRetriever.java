@@ -1,0 +1,12 @@
+package org.mskcc.limsrest.limsapi;
+
+import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.user.User;
+import org.mskcc.domain.CorrectedCmoSampleView;
+
+import java.util.List;
+
+public interface PatientSamplesRetriever {
+    List<CorrectedCmoSampleView> retrieve(String patientId, DataRecordManager dataRecordManager, User user) throws
+            LimsException;
+}

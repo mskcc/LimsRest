@@ -1,7 +1,8 @@
 package org.mskcc.limsrest.limsapi.cmoinfo.converter;
 
-import org.mskcc.limsrest.limsapi.cmoinfo.PatientCmoSampleId;
+import org.mskcc.domain.CorrectedCmoSampleView;
+import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleId;
 
 public interface StringToSampleCmoIdConverter {
-    PatientCmoSampleId convert(String sampleCmoIdString);
+    PatientCmoSampleId convert(CorrectedCmoSampleView correctedCmoSampleView);
 }

@@ -1,10 +1,11 @@
 package org.mskcc.limsrest.limsapi.cmoinfo.retriever;
 
-import org.mskcc.domain.BankedSample;
+import org.mskcc.domain.CorrectedCmoSampleView;
 import org.mskcc.limsrest.limsapi.cmoinfo.CmoSampleId;
 
 import java.util.List;
 
 public interface CmoSampleIdResolver<T extends CmoSampleId> {
-    T resolve(BankedSample bankedSample, List<String> patientCmoSampleIds);
+    T resolve(CorrectedCmoSampleView correctedCmoSampleView, List<CorrectedCmoSampleView> patientSamples, String
+            requestId);
 }
