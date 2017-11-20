@@ -1,3 +1,6 @@
+group 'org.mskcc.limsrest'
+version '1.0.0-SNAPSHOT'
+
 buildscript {
     repositories {
         mavenCentral()
@@ -17,13 +20,22 @@ if(target== 'dev'){
         into "src/main/resources/"
     }
     copy {
+        from "src/dev/resources/slack.properties"
+        into "src/main/resources/"
+    }
+    copy {
         from "src/dev/RelatedRecords.java"
         into "src/main/java/org/mskcc/limsrest/staticstrings/"
     }
+
 }
 else {
     copy {
         from "src/production/resources/connect.txt"
+        into "src/main/resources/"
+    }
+    copy {
+        from "src/production/resources/slack.properties"
         into "src/main/resources/"
     }
     copy {
@@ -33,7 +45,7 @@ else {
 }
 
 war{
-    baseName = 'LimsRest'
+    baseName = 'LimsRest##'
 }
 
 jar {
@@ -43,6 +55,7 @@ jar {
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 sourceCompatibility = 1.8
@@ -55,15 +68,19 @@ configurations {
 }
 
 dependencies {
-    compile 'javax.servlet:jstl:1.2'
-    compile("org.springframework.boot:spring-boot-starter-web")
-    compile("org.springframework.boot:spring-boot-starter-security")
-    compile group: 'com.google.guava', name: 'guava', version: '18.+'
-    compile fileTree(dir: 'libs', include: '*.jar')
-    testCompile 'io.rest-assured:rest-assured:3.0.1'
-    testCompile("junit:junit")
-    testCompile("org.mockito:mockito-core:1.10.19")
-    providedRuntime("org.springframework.boot:spring-boot-starter-tomcat")
+    providedRuntime ("org.springframework.boot:spring-boot-starter-tomcat")
+
+    compile ("org.springframework.boot:spring-boot-starter-web")
+    compile ("org.springframework.boot:spring-boot-starter-security")
+    compile ('javax.servlet:jstl:1.2')
+    compile (group: 'com.google.guava', name: 'guava', version: '18.+')
+    compile (group: 'org.mskcc.common', name:'common-domain', version: '2.0.0-SNAPSHOT')
+    compile fileTree (dir: 'libs', include: '*.jar')
+
+    testCompile ('io.rest-assured:rest-assured:3.0.1')
+    testCompile ("junit:junit")
+    testCompile ("org.mockito:mockito-core:1.10.19")
+    testCompile (group: 'org.springframework', name: 'spring-test', version: '4.1.7.RELEASE')
 }
 
 task wrapper(type: Wrapper) {
@@ -73,11 +90,34 @@ task wrapper(type: Wrapper) {
 bootRun {
     if (System.getProperty('DEBUG', 'false') == 'true')
         jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5006'
+    systemProperty 'server.port', '5007'
 }
 
 tasks.withType(Test) {
     testLogging {
-        events "standardOut", "standardError", "started", "passed", "skipped", "failed"
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+
+        showExceptions true
+        exceptionFormat "full"
+        showCauses true
+        showStackTraces true
+
+        // set options for log level DEBUG and INFO
+        debug {
+            events "started", "passed", "skipped", "failed", "standardOut", "standardError"
+            exceptionFormat "full"
+        }
+        info.events = debug.events
+        info.exceptionFormat = debug.exceptionFormat
+
+        afterSuite { desc, result ->
+            if (!desc.parent) { // will match the outermost suite
+                def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+                def startItem = '|  ', endItem = '  |'
+                def repeatLength = startItem.length() + output.length() + endItem.length()
+                println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+            }
+        }
     }
 }
 

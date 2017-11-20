@@ -1,23 +1,32 @@
 package org.mskcc.limsrest.limsapi;
 
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.velox.api.datarecord.*;
 import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.utilities.SloanCMOUtils;
 import com.velox.sloan.cmo.utilities.UuidGenerator;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.domain.BankedSample;
-import org.mskcc.domain.sample.SpecimenType;
-import org.mskcc.limsrest.limsapi.cmoinfo.retriever.CmoSampleIdRetriever;
+import org.mskcc.domain.CorrectedCmoSampleView;
+import org.mskcc.domain.sample.BankedSample;
+import org.mskcc.domain.sample.CmoSampleInfo;
+import org.mskcc.domain.sample.HumanSamplePredicate;
+import org.mskcc.limsrest.limsapi.cmoinfo.CorrectedCmoSampleIdGenerator;
+import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverter;
+import org.mskcc.limsrest.staticstrings.Constants;
 import org.mskcc.limsrest.staticstrings.Messages;
 import org.mskcc.limsrest.staticstrings.RelatedRecords;
-import org.mskcc.util.VeloxConstants;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.mskcc.util.CommonUtils;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.util.MultiValueMap;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -28,35 +37,34 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * A queued task that takes banked ids, a service id and optionally a request  and project. It will create the project and request if needed, then it transforms the banked samples to real samples
+ * A queued task that takes banked ids, a service id and optionally a request  and project. It will create the
+ * project and request if needed, then it transforms the banked samples to real samples
  *
  * @author Aaron Gabow
  */
 @Service
 public class PromoteBanked extends LimsTask {
+    private static final Log log = LogFactory.getLog(PromoteBanked.class);
+
+    private final CorrectedCmoIdConverter<BankedSample> bankedSampleToCorrectedCmoSampleIdConverter;
+    private final CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator;
+    private final HumanSamplePredicate humanSamplePredicate = new HumanSamplePredicate();
     String[] bankedIds;
     String requestId;
     String serviceId;
     String projectId;
     String igoUser;
     boolean dryrun = false;
+    private Multimap<String, String> errors = HashMultimap.create();
 
-    private Log log = LogFactory.getLog(PromoteBanked.class);
-
-    @Autowired
-    @Qualifier("patientCmoSampleIdRetriever")
-    private CmoSampleIdRetriever patientCmoSampleIdRetriever;
-
-    @Autowired
-    @Qualifier("cellLineCmoSampleIdRetriever")
-    private CmoSampleIdRetriever cellLineCmoSampleIdRetriever;
-
-    public PromoteBanked(CmoSampleIdRetriever patientCmoSampleIdRetriever, CmoSampleIdRetriever cellLineCmoSampleIdRetriever) {
-        this.patientCmoSampleIdRetriever = patientCmoSampleIdRetriever;
-        this.cellLineCmoSampleIdRetriever = cellLineCmoSampleIdRetriever;
+    public PromoteBanked(CorrectedCmoIdConverter<BankedSample> bankedSampleToCorrectedCmoSampleIdConverter,
+                         CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator) {
+        this.bankedSampleToCorrectedCmoSampleIdConverter = bankedSampleToCorrectedCmoSampleIdConverter;
+        this.correctedCmoSampleIdGenerator = correctedCmoSampleIdGenerator;
     }
 
-    public void init(String[] bankedIds, String projectId, String requestId, String serviceId, String igoUser, String dryrun) {
+    public void init(String[] bankedIds, String projectId, String requestId, String serviceId, String igoUser, String
+            dryrun) {
         this.bankedIds = bankedIds;
         this.projectId = projectId;
         this.requestId = requestId;
@@ -70,12 +78,13 @@ public class PromoteBanked extends LimsTask {
     //execute the velox call
     @PreAuthorize("hasRole('ADMIN')")
     @Override
-    public Object execute(VeloxConnection conn) {
+    public ResponseEntity<String> execute(VeloxConnection conn) {
         if (dryrun) {
             String nextRequest = "";
             if (requestId.equals("NULL") && projectId.equals("NULL")) {
                 try {
-                    List<DataRecord> mappedReq = dataRecordManager.queryDataRecords("Request", "IlabRequest = '" + serviceId + "'", user);
+                    List<DataRecord> mappedReq = dataRecordManager.queryDataRecords("Request", "IlabRequest = '" +
+                            serviceId + "'", user);
                     if (mappedReq.size() > 0) {
                         DataRecord req = mappedReq.get(0);
                         String requestId = req.getStringVal("RequestId", user);
@@ -91,13 +100,16 @@ public class PromoteBanked extends LimsTask {
             } else {
                 nextRequest = "Promoting to a new request in project " + projectId;
             }
-            return nextRequest;
+
+            return ResponseEntity.ok(nextRequest);
         }
         try {
-            List<DataRecord> validBarcodeList = dataRecordManager.queryDataRecords("IndexAssignment", "IndexType != 'IDT_TRIM'", user);
+            List<DataRecord> validBarcodeList = dataRecordManager.queryDataRecords("IndexAssignment", "IndexType != " +
+                    "'IDT_TRIM'", user);
             HashMap<String, String> barcodeId2Sequence = new HashMap<>();
             for (DataRecord knownBarcode : validBarcodeList) {
-                barcodeId2Sequence.put(knownBarcode.getStringVal("IndexId", user), knownBarcode.getStringVal("IndexTag", user));
+                barcodeId2Sequence.put(knownBarcode.getStringVal("IndexId", user), knownBarcode.getStringVal
+                        ("IndexTag", user));
             }
             StringBuffer sb = new StringBuffer();
             for (int i = 0; i < bankedIds.length - 1; i++) {
@@ -109,21 +121,24 @@ public class PromoteBanked extends LimsTask {
             sb.append(bankedIds[bankedIds.length - 1]);
             sb.append("'");
 
-            List<DataRecord> bankedList = dataRecordManager.queryDataRecords("BankedSample", "RecordId in (" + sb.toString() + ") order by transactionId, rowIndex", user);
+            List<DataRecord> bankedList = dataRecordManager.queryDataRecords("BankedSample", "RecordId in (" + sb
+                    .toString() + ") order by transactionId, rowIndex", user);
             SloanCMOUtils util = new SloanCMOUtils(managerContext);
 
             DataRecord req = null;
             //THREAD WARNING: Not thread safe. Depends on the queue being single consumer thread to handle concurency
             if (requestId.equals("NULL") && projectId.equals("NULL")) {
                 try {
-                    List<DataRecord> mappedReq = dataRecordManager.queryDataRecords("Request", "IlabRequest = '" + serviceId + "'", user);
+                    List<DataRecord> mappedReq = dataRecordManager.queryDataRecords("Request", "IlabRequest = '" +
+                            serviceId + "'", user);
                     if (mappedReq.size() > 0) {
                         req = mappedReq.get(0);
                         requestId = req.getStringVal("RequestId", user);
                     } else {
                         requestId = util.getNextProjectId();
                         DataRecord proj = null;
-                        List<DataRecord> projs = dataRecordManager.queryDataRecords("Directory", "DirectoryName = 'Projects'", user);
+                        List<DataRecord> projs = dataRecordManager.queryDataRecords("Directory", "DirectoryName = " +
+                                "'Projects'", user);
                         if (projs.size() > 0) {
                             proj = projs.get(0).addChild("Project", user);
                         } else {
@@ -135,21 +150,21 @@ public class PromoteBanked extends LimsTask {
                         reqFields.put("IlabRequest", serviceId);
                         reqFields.put("ProjectId", requestId);
                         req = proj.addChild("Request", reqFields, user);
-
-
                     }
                 } catch (Exception e) {
                     throw new LimsException("Unable to create a new request for this project: " + e.getMessage());
                 }
             } else if (!requestId.equals("NULL")) {
-                List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
+                List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" +
+                        requestId + "'", user);
                 if (requestList.size() == 0) {
                     throw new LimsException("There is no request with id '" + requestId + "'");
                 }
                 req = requestList.get(0);
             } else {
-                log.info("Adding based off project id");
-                List<DataRecord> projectList = dataRecordManager.queryDataRecords("Project", "ProjectId = '" + projectId + "'", user);
+                log.info("Adding based off project id: " + projectId);
+                List<DataRecord> projectList = dataRecordManager.queryDataRecords("Project", "ProjectId = '" +
+                        projectId + "'", user);
                 if (projectList.size() == 0) {
                     throw new LimsException("There is no project with id '" + projectId + "'");
                 }
@@ -165,7 +180,7 @@ public class PromoteBanked extends LimsTask {
                     }
                 }
                 if (req == null) {
-                    log.info("Adding a new request for project" + projectId);
+                    log.info("Adding a new request for project: " + projectId);
                     try {
                         requestId = util.getNextRequestId(projectId);
                         log.info("request id " + requestId);
@@ -200,51 +215,89 @@ public class PromoteBanked extends LimsTask {
             int offset = 1;
             HashMap<String, DataRecord> plateId2Plate = new HashMap<>();
             for (DataRecord bankedSample : bankedList) {
-                createRecords(bankedSample, req, requestId, barcodeId2Sequence, plateId2Plate, existentIds, maxId, offset);
+                createRecords(bankedSample, req, requestId, barcodeId2Sequence, plateId2Plate, existentIds, maxId,
+                        offset);
                 offset++;
                 bankedSample.setDataField("Promoted", Boolean.TRUE, user);
                 bankedSample.setDataField("RequestId", requestId, user);
             }
             dataRecordManager.storeAndCommit(igoUser + "  promoted the banked samples " + sb.toString(), user);
-        } catch (InvalidValue | AlreadyExists | NotFound | IoError | RemoteException | ServerException | LimsException e) {
+        } catch (InvalidValue | AlreadyExists | NotFound | IoError | RemoteException | ServerException |
+                LimsException | CommonUtils.NullOrEmptyException e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
             log.info(e.getMessage() + " TRACE: " + sw.toString());
-            return Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + e.getMessage();
 
+            MultiValueMap<String, String> headers = new HttpHeaders();
+            headers.add(Constants.ERRORS, Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + e.getMessage());
+
+            return new ResponseEntity<>(headers, HttpStatus.OK);
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
             log.info(e.getMessage() + " TRACE: " + sw.toString());
-            return Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + e.toString() + ": " + e.getMessage();
+
+            MultiValueMap<String, String> headers = new HttpHeaders();
+            headers.add(Constants.ERRORS, Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + e.toString() + ": " + e
+                    .getMessage());
+
+            return new ResponseEntity<>(headers, HttpStatus.OK);
         }
-        return Messages.SUCCESS;
+
+        MultiValueMap<String, String> headers = new HttpHeaders();
+        headers.add(Constants.WARNINGS, getErrors());
+        headers.add(Constants.STATUS, Messages.SUCCESS);
+
+        return new ResponseEntity<>(headers, HttpStatus.OK);
     }
 
-    public void createRecords(DataRecord bankedSample, DataRecord req, String requestId, HashMap<String, String> barcodeId2Sequence, HashMap<String, DataRecord> plateId2Plate, HashSet<String> existentIds, int maxExistentId, int offset) throws LimsException, InvalidValue, AlreadyExists, NotFound, IoError, RemoteException, ServerException {
-        SloanCMOUtils util = new SloanCMOUtils(managerContext);
-        Map<String, Object> bankedFields = bankedSample.getFields(user);
-        if (bankedFields.get("Promoted") != null && (boolean) bankedFields.get("Promoted")) {
-            throw new LimsException("Trying to promote a banked sample that has already been promoted to sample");
+    private String getErrors() {
+        StringBuilder message = new StringBuilder();
+
+        for (String sampleId : errors.keySet()) {
+            Collection<String> errorMessages = errors.get(sampleId);
+            message.append(String.format("Banked sample %s errors: \n%s\n", sampleId,
+                    StringUtils.join(errorMessages, System.lineSeparator())));
         }
 
-        String otherSampleId = getCmoSampleId(bankedSample, bankedFields);
-        bankedSample.setDataField(VeloxConstants.OTHER_SAMPLE_ID, otherSampleId, user);
+        return message.toString();
+    }
+
+    public void createRecords(DataRecord bankedSampleRecord, DataRecord req, String requestId, HashMap<String,
+            String> barcodeId2Sequence, HashMap<String, DataRecord> plateId2Plate, HashSet<String> existentIds, int
+                                      maxExistentId, int offset) throws LimsException, InvalidValue, AlreadyExists,
+            NotFound, IoError,
+            RemoteException, ServerException {
+        SloanCMOUtils util = new SloanCMOUtils(managerContext);
+        Map<String, Object> bankedFields = bankedSampleRecord.getFields(user);
+        BankedSample bankedSample = new BankedSample((String) bankedFields.get(BankedSample.USER_SAMPLE_ID),
+                bankedFields);
+
+        if (bankedSample.getPromoted()) {
+            throw new LimsException(String.format("Trying to promote a banked sample: %s that has already been " +
+                    "promoted to sample", bankedSample.getUserSampleID()));
+        }
+
+        String correctedCmoSampleId = getCorrectedCmoSampleId(bankedSample, requestId);
+        String otherSampleId = bankedSample.getOtherSampleId();
+
+        log.debug(String.format("Generated corrected cmo id: %s", correctedCmoSampleId));
 
         if (existentIds.contains(otherSampleId)) {
-            throw new LimsException("There already is a sample in the project with the name " + otherSampleId);
+            throw new LimsException("There already is a sample in the project with the name: " + otherSampleId);
         }
         log.info("uuiding");
         UuidGenerator uuidGen = new UuidGenerator();
-        String uuid = "UUID_ERROR";
+        String uuid;
         try {
             uuid = uuidGen.integerToUUID(Integer.parseInt(util.getNextBankedId()), 32);
         } catch (IOException e) {
             throw new LimsException("UUID generation failed for sample due to IOException " + e.getMessage());
         } catch (ClassNotFoundException e) {
-            throw new LimsException("UUID generation failed for sample due to ClassNotFoundException " + e.getMessage());
+            throw new LimsException("UUID generation failed for sample due to ClassNotFoundException " + e.getMessage
+                    ());
         } catch (Exception e) {
             throw new LimsException("UUID generation failed for sample due to " + e.getMessage());
         }
@@ -293,7 +346,8 @@ public class PromoteBanked extends LimsTask {
                 if (plateId2Plate.containsKey(plateId)) {
                     plate = plateId2Plate.get(plateId);
                 } else {
-                    List<DataRecord> plateList = dataRecordManager.queryDataRecords("Plate", "PlateId = '" + plateId + "'", user);
+                    List<DataRecord> plateList = dataRecordManager.queryDataRecords("Plate", "PlateId = '" + plateId
+                            + "'", user);
                     if (plateList.size() == 0) {
                         plate = dataRecordManager.addDataRecord("Plate", user);
                         plate.setDataField("PlateId", plateId, user);
@@ -306,7 +360,8 @@ public class PromoteBanked extends LimsTask {
                 plate.addChild(promotedSample, user);
             }
             if (barcodeId != null && !barcodeId.equals("") && !barcodeId2Sequence.containsKey(barcodeId)) {
-                throw new LimsException("The LIMS does not know about the barcode " + barcodeId + ". Please make sure to the list of barcodes is up-to-date");
+                throw new LimsException("The LIMS does not know about the barcode " + barcodeId + ". Please make sure" +
+                        " to the list of barcodes is up-to-date");
             }
             bankedFields.put("SampleId", newIgoId);
             bankedFields.put("ExemplarSampleStatus", "Received");
@@ -330,24 +385,7 @@ public class PromoteBanked extends LimsTask {
                 req.addChild("PairingInfo", pairingMap, user);
             }
 
-            Map<String, Object> cmoFields = new HashMap<>();
-            cmoFields.put("UserSampleID", otherSampleId);
-            cmoFields.put("CorrectedCMOID", otherSampleId);
-            cmoFields.put(VeloxConstants.OTHER_SAMPLE_ID, bankedFields.get(VeloxConstants.OTHER_SAMPLE_ID));
-            cmoFields.put("AltId", bankedFields.get("AltId"));
-            cmoFields.put("CmoPatientId", bankedFields.get("PatientId"));
-            cmoFields.put("CollectionYear", bankedFields.get("CollectionYear"));
-            cmoFields.put("ClinicalInfo", bankedFields.get("ClinicalInfo"));
-            cmoFields.put("EstimatedPurity", bankedFields.get("EstimatedPurity"));
-            cmoFields.put("Gender", bankedFields.get("Gender"));
-            cmoFields.put("GeneticAlterations", bankedFields.get("GeneticAlterations"));
-            cmoFields.put("PatientId", bankedFields.get("PatientId"));
-            cmoFields.put("Preservation", bankedFields.get("Preservation"));
-            cmoFields.put("Species", bankedFields.get("Species"));
-            cmoFields.put("TumorType", bankedFields.get("TumorType"));
-            cmoFields.put("RequestId", requestId);
-            cmoFields.put("SampleId", newIgoId);
-
+            Map<String, Object> cmoFields = getCmoFields(bankedFields, correctedCmoSampleId, requestId, newIgoId);
             promotedSample.addChild("SampleCMOInfoRecords", cmoFields, user);
 
             Map<String, Object> srFields = new HashMap<>();
@@ -355,7 +393,8 @@ public class PromoteBanked extends LimsTask {
             srFields.put("SampleId", newIgoId);
             srFields.put("SequencingRunType", runType);
             if (requestedReads != null && !requestedReads.equals("") &&
-                    !requestedReads.equals("<10 million") && !requestedReads.equals(">100 million") && !requestedReads.equals("Does Not Apply")) {
+                    !requestedReads.equals("<10 million") && !requestedReads.equals(">100 million") &&
+                    !requestedReads.equals("Does Not Apply")) {
 
                 Double rrMapped;
 
@@ -376,28 +415,76 @@ public class PromoteBanked extends LimsTask {
         } catch (NullPointerException npe) {}
     }
 
-    private String getCmoSampleId(DataRecord bankedSample, Map<String, Object> bankedFields) throws NotFound, RemoteException, IoError {
-        List<String> patientCmoSampleIds = getPatientCmoSampleIds(bankedSample);
+    private Map<String, Object> getCmoFields(Map<String, Object> bankedFields, String correctedCmoSampleId, String
+            assignedRequestId, String igoId) {
+        Map<String, Object> cmoFields = new HashMap<>();
+        cmoFields.put(CmoSampleInfo.ALT_ID, bankedFields.get("AltId"));
+        cmoFields.put(CmoSampleInfo.CLINICAL_INFO, bankedFields.get("ClinicalInfo"));
+        cmoFields.put(CmoSampleInfo.CMO_PATIENT_ID, bankedFields.get("PatientId"));
+        cmoFields.put(CmoSampleInfo.CMOSAMPLE_CLASS, bankedFields.get(BankedSample.SAMPLE_CLASS));
+        cmoFields.put(CmoSampleInfo.COLLECTION_YEAR, bankedFields.get("CollectionYear"));
+        cmoFields.put(CmoSampleInfo.CORRECTED_CMOID, correctedCmoSampleId);
 
-        if (isCellLine(bankedFields))
-            return cellLineCmoSampleIdRetriever.retrieve(bankedFields, patientCmoSampleIds);
-        return patientCmoSampleIdRetriever.retrieve(bankedFields, patientCmoSampleIds);
+        cmoFields.put(CmoSampleInfo.CORRECTED_INVEST_PATIENT_ID, bankedFields.get("PatientId"));
+
+        cmoFields.put(CmoSampleInfo.ESTIMATED_PURITY, bankedFields.get("EstimatedPurity"));
+        cmoFields.put(CmoSampleInfo.GENDER, bankedFields.get("Gender"));
+        cmoFields.put(CmoSampleInfo.GENETIC_ALTERATIONS, bankedFields.get("GeneticAlterations"));
+        cmoFields.put(CmoSampleInfo.OTHER_SAMPLE_ID, bankedFields.get(BankedSample.OTHER_SAMPLE_ID));
+        cmoFields.put(CmoSampleInfo.PATIENT_ID, bankedFields.get("PatientId"));
+        cmoFields.put(CmoSampleInfo.PRESERVATION, bankedFields.get("Preservation"));
+
+        cmoFields.put(CmoSampleInfo.REQUEST_ID, assignedRequestId);
+        cmoFields.put(CmoSampleInfo.SAMPLE_ID, igoId);
+
+        cmoFields.put(CmoSampleInfo.SAMPLE_ORIGIN, bankedFields.get(BankedSample.SAMPLE_ORIGIN));
+        cmoFields.put(CmoSampleInfo.SPECIES, bankedFields.get("Species"));
+        cmoFields.put(CmoSampleInfo.SPECIMEN_TYPE, bankedFields.get(BankedSample.SPECIMEN_TYPE));
+
+        cmoFields.put(CmoSampleInfo.TISSUE_LOCATION, BankedSample.TISSUE_SITE);
+
+        cmoFields.put(CmoSampleInfo.TUMOR_OR_NORMAL, bankedFields.get(BankedSample.TUMOR_OR_NORMAL));
+
+        cmoFields.put(CmoSampleInfo.TUMOR_TYPE, bankedFields.get(BankedSample.TUMOR_TYPE));
+        cmoFields.put(CmoSampleInfo.USER_SAMPLE_ID, bankedFields.get(BankedSample.USER_SAMPLE_ID));
+
+        return cmoFields;
     }
 
-    private boolean isCellLine(Map<String, Object> bankedFields) {
-        return SpecimenType.fromValue(String.valueOf(bankedFields.get(BankedSample.SPECIMEN_TYPE))) == SpecimenType.CELLLINE;
-    }
+    private String getCorrectedCmoSampleId(BankedSample bankedSample, String requestId) {
+        try {
+            if (!isHumanSample(bankedSample)) {
+                log.info(String.format("Non-Human sample: %s with species: %s won't have cmo sample id generated.",
+                        bankedSample.getUserSampleID(), bankedSample.getSpecies()));
 
-    private List<String> getPatientCmoSampleIds(DataRecord bankedSample) throws NotFound, RemoteException, IoError {
-        String patientId = bankedSample.getStringVal("PatientId", user);
-        List<DataRecord> sampleCmoInfoRecords = dataRecordManager.queryDataRecords(VeloxConstants.SAMPLE_CMO_INFO_RECORDS, "PatientId = '" + patientId + "'", user);
-        List<String> patientCmoSampleIds = new ArrayList<>();
+                return "";
+            }
 
-        for (DataRecord record : sampleCmoInfoRecords) {
-            String cmoSampleId = record.getStringVal("CorrectedCMOID", user);
-            patientCmoSampleIds.add(cmoSampleId);
+            CorrectedCmoSampleView correctedCmoSampleView = convertBankedSampleToCorrectedCmoSampleId(bankedSample);
+
+            String cmoSampleId = correctedCmoSampleIdGenerator.generate(correctedCmoSampleView, requestId,
+                    dataRecordManager, user);
+
+            log.info(String.format("Generated CMO Sample id for banked sample with is: %s (%s) is: %s", bankedSample
+                    .getUserSampleID(), bankedSample.getOtherSampleId(), cmoSampleId));
+            return cmoSampleId;
+        } catch (Exception e) {
+            String message = String.format("Corrected cmo id autogeneration failed for banked sample: %s",
+                    bankedSample.getUserSampleID());
+            log.warn(message, e);
+            errors.put(bankedSample.getUserSampleID(), String.format("%s. Cause: %s", message, e.getMessage()));
+
+            return "";
         }
-        return patientCmoSampleIds;
+    }
+
+    private boolean isHumanSample(BankedSample bankedSample) {
+        return humanSamplePredicate.test(bankedSample);
+    }
+
+    private CorrectedCmoSampleView convertBankedSampleToCorrectedCmoSampleId(BankedSample bankedSample) throws
+            LimsException {
+        return bankedSampleToCorrectedCmoSampleIdConverter.convert(bankedSample);
     }
 
     /**

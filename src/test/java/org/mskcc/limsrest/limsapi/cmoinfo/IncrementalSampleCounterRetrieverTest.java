@@ -1,0 +1,135 @@
+package org.mskcc.limsrest.limsapi.cmoinfo;
+
+import org.junit.Test;
+import org.mskcc.domain.CorrectedCmoSampleView;
+import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverterFactory;
+import org.mskcc.limsrest.limsapi.cmoinfo.converter.StringToSampleCmoIdConverter;
+import org.mskcc.limsrest.limsapi.cmoinfo.cspace.PatientAwareCorrectedCmoIdConverter;
+import org.mskcc.limsrest.limsapi.cmoinfo.retriever.IncrementalSampleCounterRetriever;
+import org.mskcc.util.TestUtils;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.typeCompatibleWith;
+
+public class IncrementalSampleCounterRetrieverTest {
+    private CorrectedCmoIdConverterFactory converterFactory = new ConverterFactoryMock();
+    private IncrementalSampleCounterRetriever incrementalSampleCounterRetriever = new
+            IncrementalSampleCounterRetriever(converterFactory);
+
+    @Test
+    public void whenSampleCmoIdListIsEmpty_shouldReturnOne() throws Exception {
+        List<CorrectedCmoSampleView> sampleCmoIds = Collections.emptyList();
+
+        int sampleCount = incrementalSampleCounterRetriever.retrieve(sampleCmoIds, "X");
+
+        assertThat(sampleCount, is(1));
+    }
+
+    @Test
+    public void whenSampleCmoIdListContainsOneElementWithOtherClass_shouldReturnOne() throws Exception {
+        List<CorrectedCmoSampleView> sampleCmoIds = Arrays.asList(getSample("C-123456-L001-d"));
+        String sampleClassAbbr = "X";
+
+        int sampleCount = incrementalSampleCounterRetriever.retrieve(sampleCmoIds, sampleClassAbbr);
+
+        assertThat(sampleCount, is(1));
+    }
+
+    private CorrectedCmoSampleView getSample(String correctedCmoId) {
+        CorrectedCmoSampleView sample = new CorrectedCmoSampleView("sampleId");
+        sample.setCorrectedCmoId(correctedCmoId);
+        return sample;
+    }
+
+    @Test
+    public void whenSampleCmoIdListContainsMultipleElementsWithOtherClasses_shouldReturnOne() throws Exception {
+        List<CorrectedCmoSampleView> sampleCmoIds = Arrays.asList(getSample("C-123456-L001-d"), getSample
+                ("C-123456-L002-d"), getSample("C-123456-T001-d"), getSample("C-123456-N001-d"));
+        String sampleClassAbbr = "X";
+
+        int sampleCount = incrementalSampleCounterRetriever.retrieve(sampleCmoIds, sampleClassAbbr);
+
+        assertThat(sampleCount, is(1));
+    }
+
+    @Test
+    public void whenSampleCmoIdListContainsSampleWithSameClassAndOthers_shouldReturnIncrementedSameClassCounter()
+            throws Exception {
+        List<CorrectedCmoSampleView> sampleCmoIds = Arrays.asList(getSample("C-123456-X003-d"), getSample
+                ("C-123456-L001-d"), getSample("C-123456-L002-d"), getSample("C-123456-T001-d"), getSample
+                ("C-123456-N001-d"));
+        String sampleClassAbbr = "X";
+
+        int sampleCount = incrementalSampleCounterRetriever.retrieve(sampleCmoIds, sampleClassAbbr);
+
+        assertThat(sampleCount, is(4));
+    }
+
+    @Test
+    public void whenSampleCmoIdListContainsOneElementWithGivenClass_shouldReturnTwo() throws Exception {
+        List<CorrectedCmoSampleView> sampleCmoIds = Arrays.asList(getSample("C-123456-N001-d"));
+        String sampleClassAbbr = "N";
+
+        int sampleCount = incrementalSampleCounterRetriever.retrieve(sampleCmoIds, sampleClassAbbr);
+
+        assertThat(sampleCount, is(2));
+    }
+
+    @Test
+    public void whenSampleCmoIdListContainsElementWithSampleCountSix_shouldReturnSeven() throws Exception {
+        List<CorrectedCmoSampleView> sampleCmoIds = Arrays.asList(getSample("C-123456-N006-d"));
+        String sampleClassAbbr = "N";
+
+        int sampleCount = incrementalSampleCounterRetriever.retrieve(sampleCmoIds, sampleClassAbbr);
+
+        assertThat(sampleCount, is(7));
+    }
+
+    @Test
+    public void whenSampleCmoIdListContainsElementWithTwoDigitSampleCount_shouldReturnThisCountPlusOne() throws
+            Exception {
+        List<CorrectedCmoSampleView> sampleCmoIds = Arrays.asList(getSample("C-123456-N010-d"));
+        String sampleClassAbbr = "N";
+
+        int sampleCount = incrementalSampleCounterRetriever.retrieve(sampleCmoIds, sampleClassAbbr);
+
+        assertThat(sampleCount, is(11));
+    }
+
+    @Test
+    public void whenSampleCmoIdListContainsElementWithThreeDigitSampleCount_shouldReturnThisCountPlusOne() throws
+            Exception {
+        List<CorrectedCmoSampleView> sampleCmoIds = Arrays.asList(getSample("C-123456-N654-d"));
+        String sampleClassAbbr = "N";
+
+        int sampleCount = incrementalSampleCounterRetriever.retrieve(sampleCmoIds, sampleClassAbbr);
+
+        assertThat(sampleCount, is(655));
+    }
+
+    @Test
+    public void whenSampleCmoIdListContainsElementWithMaxCountValue_shouldThrowException() throws Exception {
+        List<CorrectedCmoSampleView> sampleCmoIds = Arrays.asList(getSample("C-123456-N999-d"));
+        String sampleClassAbbr = "N";
+
+        Optional<Exception> exception = TestUtils.assertThrown(() -> incrementalSampleCounterRetriever.retrieve
+                (sampleCmoIds, sampleClassAbbr));
+
+        assertThat(exception.isPresent(), is(true));
+        assertThat(exception.get().getClass(), typeCompatibleWith(IncrementalSampleCounterRetriever
+                .SampleCounterOverflowException.class));
+    }
+
+    private class ConverterFactoryMock implements CorrectedCmoIdConverterFactory {
+        @Override
+        public StringToSampleCmoIdConverter getConverter(String correctedCmoSampleId) {
+            return new PatientAwareCorrectedCmoIdConverter();
+        }
+    }
+}

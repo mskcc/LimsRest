@@ -20,6 +20,8 @@ import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import static org.mskcc.util.CommonUtils.runAndCatchNpe;
+
 /**
  * This is the base class for tasks that run through the connection queue.
  * Preferred way to interact with the lims to avoid collisions on the bicapi user
@@ -74,85 +76,32 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
     public void annotateQcSummary(SampleQcSummary qcSummary, DataRecord qc) {
         try {
             Map<String, Object> qcFields = qc.getFields(user);
-            try {
-                qcSummary.setRecordId((Long) qcFields.get("RecordId"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setSampleName((String) qcFields.get("OtherSampleId"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setBaitSet((String) qcFields.get("BaitSet"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setMskq((Double) qcFields.get("Mskq"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setMeanTargetCoverage((Double) qcFields.get("MeanCoverage"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setPercentAdapters((Double) qcFields.get("PercentAdapters"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setPercentDuplication((Double) qcFields.get("PercentDuplication"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setPercentOffBait((Double) qcFields.get("PercentOffBait"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setPercentTarget10x((Double) qcFields.get("PercentTarget10X"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setPercentTarget30x((Double) qcFields.get("PercentTarget30X"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setPercentTarget100x((Double) qcFields.get("PercentTarget100X"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setReadsDuped((Long) qcFields.get("ReadPairDupes"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setReadsExamined((Long) qcFields.get("ReadsExamined"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setTotalReads((Long) qcFields.get("TotalReads"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setUnmapped((Long) qcFields.get("UnmappedDupes"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setUnpairedReadsExamined((Long) qcFields.get("UnpairedReads"));
-            } catch (NullPointerException npe) {}
-
-            try {
-                qcSummary.setZeroCoveragePercent((Double) qcFields.get("ZeroCoveragePercent"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setRun((String) qcFields.get("SequencerRunFolder"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setReviewed((Boolean) qcFields.get("Reviewed"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setQcStatus((String) qcFields.get("SeqQCStatus"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setPercentRibosomalBases((Double) qcFields.get("PercentRibosomalBases"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setPercentCodingBases((Double) qcFields.get("PercentCodingBases"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setPercentUtrBases((Double) qcFields.get("PercentUtrBases"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setPercentIntronicBases((Double) qcFields.get("PercentIntronicBases"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setPercentIntergenicBases((Double) qcFields.get("PercentIntergenicBases"));
-            } catch (NullPointerException npe) {}
-            try {
-                qcSummary.setPercentMrnaBases((Double) qcFields.get("PercentMrnaBases"));
-            } catch (NullPointerException npe) {}
+            runAndCatchNpe(() -> qcSummary.setRecordId((Long) qcFields.get("RecordId")));
+            runAndCatchNpe(() -> qcSummary.setSampleName((String) qcFields.get("OtherSampleId")));
+            runAndCatchNpe(() -> qcSummary.setBaitSet((String) qcFields.get("BaitSet")));
+            runAndCatchNpe(() -> qcSummary.setMskq((Double) qcFields.get("Mskq")));
+            runAndCatchNpe(() -> qcSummary.setMeanTargetCoverage((Double) qcFields.get("MeanCoverage")));
+            runAndCatchNpe(() -> qcSummary.setPercentAdapters((Double) qcFields.get("PercentAdapters")));
+            runAndCatchNpe(() -> qcSummary.setPercentDuplication((Double) qcFields.get("PercentDuplication")));
+            runAndCatchNpe(() -> qcSummary.setPercentOffBait((Double) qcFields.get("PercentOffBait")));
+            runAndCatchNpe(() -> qcSummary.setPercentTarget10x((Double) qcFields.get("PercentTarget10X")));
+            runAndCatchNpe(() -> qcSummary.setPercentTarget30x((Double) qcFields.get("PercentTarget30X")));
+            runAndCatchNpe(() -> qcSummary.setPercentTarget100x((Double) qcFields.get("PercentTarget100X")));
+            runAndCatchNpe(() -> qcSummary.setReadsDuped((Long) qcFields.get("ReadPairDupes")));
+            runAndCatchNpe(() -> qcSummary.setReadsExamined((Long) qcFields.get("ReadsExamined")));
+            runAndCatchNpe(() -> qcSummary.setTotalReads((Long) qcFields.get("TotalReads")));
+            runAndCatchNpe(() -> qcSummary.setUnmapped((Long) qcFields.get("UnmappedDupes")));
+            runAndCatchNpe(() -> qcSummary.setUnpairedReadsExamined((Long) qcFields.get("UnpairedReads")));
+            runAndCatchNpe(() -> qcSummary.setZeroCoveragePercent((Double) qcFields.get("ZeroCoveragePercent")));
+            runAndCatchNpe(() -> qcSummary.setRun((String) qcFields.get("SequencerRunFolder")));
+            runAndCatchNpe(() -> qcSummary.setReviewed((Boolean) qcFields.get("Reviewed")));
+            runAndCatchNpe(() -> qcSummary.setQcStatus((String) qcFields.get("SeqQCStatus")));
+            runAndCatchNpe(() -> qcSummary.setPercentRibosomalBases((Double) qcFields.get("PercentRibosomalBases")));
+            runAndCatchNpe(() -> qcSummary.setPercentCodingBases((Double) qcFields.get("PercentCodingBases")));
+            runAndCatchNpe(() -> qcSummary.setPercentUtrBases((Double) qcFields.get("PercentUtrBases")));
+            runAndCatchNpe(() -> qcSummary.setPercentIntronicBases((Double) qcFields.get("PercentIntronicBases")));
+            runAndCatchNpe(() -> qcSummary.setPercentIntergenicBases((Double) qcFields.get("PercentIntergenicBases")));
+            runAndCatchNpe(() -> qcSummary.setPercentMrnaBases((Double) qcFields.get("PercentMrnaBases")));
         } catch (Throwable e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
@@ -179,38 +128,14 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
 
     public void annotateRequestSummary(RequestSummary rs, Map<String, Object> requestFields) {
         try {
-            try {
-                rs.setPi((String) requestFields.get("LaboratoryHead"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                rs.setInvestigator((String) requestFields.get("Investigator"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                rs.setPiEmail((String) requestFields.get("LabHeadEmail"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                rs.setInvestigatorEmail((String) requestFields.get("Investigatoremail"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                rs.setAutorunnable((Boolean) requestFields.get("BicAutorunnable"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                rs.setAnalysisRequested((Boolean) requestFields.get("BICAnalysis"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                rs.setCmoProject((String) requestFields.get("CMOProjectID"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                rs.setProjectManager((String) requestFields.get("ProjectManager"));
-            } catch (NullPointerException npe) {
-            }
+            runAndCatchNpe(() -> rs.setPi((String) requestFields.get("LaboratoryHead")));
+            runAndCatchNpe(() -> rs.setInvestigator((String) requestFields.get("Investigator")));
+            runAndCatchNpe(() -> rs.setPiEmail((String) requestFields.get("LabHeadEmail")));
+            runAndCatchNpe(() -> rs.setInvestigatorEmail((String) requestFields.get("Investigatoremail")));
+            runAndCatchNpe(() -> rs.setAutorunnable((Boolean) requestFields.get("BicAutorunnable")));
+            runAndCatchNpe(() -> rs.setAnalysisRequested((Boolean) requestFields.get("BICAnalysis")));
+            runAndCatchNpe(() -> rs.setCmoProject((String) requestFields.get("CMOProjectID")));
+            runAndCatchNpe(() -> rs.setProjectManager((String) requestFields.get("ProjectManager")));
         } catch (Throwable e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
@@ -219,233 +144,82 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
             log.info(sw.toString());
             rs.setInvestigator("Annotation failed:" + e.getMessage());
         }
-
     }
 
     public void annotateRequestDetailed(RequestDetailed requestDetailed, DataRecord request) {
         try {
             Map<String, Object> requestFields = request.getFields(user);
-            try {
-                requestDetailed.setApplications((String) requestFields.get("PlatformApplication"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setBicReadme((String) requestFields.get("ReadMe"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setClinicalCorrelative((String) requestFields.get("ClinicalCorrelativeType"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setCostCenter((String) requestFields.get("CostCenter"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setFundNumber((String) requestFields.get("FundNum"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setContactName((String) requestFields.get("ContactName"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setDataAnalyst((String) requestFields.get("DataAnalyst"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setDataAnalystEmail((String) requestFields.get("DataAnalystEmail"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setDataDeliveryType((String) requestFields.get("DataDeliveryType"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setCmoContactName((String) requestFields.get("ContactName"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setCmoPiName((String) requestFields.get("PIFirstName") + " " + (String) requestFields.get("PILastName"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setCmoPiEmail((String) requestFields.get("PIemail"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setCmoProjectId((String) requestFields.get("CMOProjectID"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setRequestId((String) requestFields.get("RequestId"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setFaxNumber((String) requestFields.get("FaxNum"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setMailTo((String) requestFields.get("MailTo"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setInvestigator((String) requestFields.get("Investigator"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setIrbWaiverComments((String) requestFields.get("IRBandWaiverComments"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setPi((String) requestFields.get("LaboratoryHead"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setProjectNotes((String) requestFields.get("ProjectNotes"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setGroup((String) requestFields.get("ProcessingType"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setGroupLeader((String) requestFields.get("GroupLeader"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setInvestigatorEmail((String) requestFields.get("Investigatoremail"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setIrbId((String) requestFields.get("IRBandWaiverNumber"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setIrbVerifier((String) requestFields.get("IRBVerifier"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setPiEmail((String) requestFields.get("LabHeadEmail"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setProjectManager((String) requestFields.get("ProjectManager"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setRequestDescription((String) requestFields.get("RequestDescription"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setRequestDetails((String) requestFields.get("RequestDetail"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setRoom((String) requestFields.get("RoomNum"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setRequestType((String) requestFields.get("RequestType"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setSampleType((String) requestFields.get("SampleType"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setStatus((String) requestFields.get("Status"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setFurthestSample((String) requestFields.get("FurthestSample"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setTelephoneNum((String) requestFields.get("TelephoneNum"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setTatFromProcessing((String) requestFields.get("TATFromInProcessing"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setTatFromReceiving((String) requestFields.get("TATFromReceiving"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setServicesRequested((String) requestFields.get("ServicesRequested"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setStudyId((String) requestFields.get("ProjectId"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setCommunicationNotes((String) requestFields.get("PICommunication"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setCompletedDate((long) requestFields.get("CompletedDate"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setDeliveryDate((long) requestFields.get("SampleDeliveryDate"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setPartialReceivedDate((long) requestFields.get("PartiallyReceivedDate"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setReceivedDate((long) requestFields.get("ReceivedDate"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setPortalDate((long) requestFields.get("InformaticsReceipt"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setPortalUploadDate((long) requestFields.get("PortalDate"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setInvestigatorDate((long) requestFields.get("DateSentInvestigator"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setInprocessDate((long) requestFields.get("InProcessDate"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setIlabsRequestDate((long) requestFields.get("RequestStartDate"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setIrbDate((long) requestFields.get("DateIRBandWaiverCheckout"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setSamplesReceivedDate((long) requestFields.get("RequestDate"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setAutorunnable((Boolean) requestFields.get("BicAutorunnable"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setFastqRequested((Boolean) requestFields.get("FASTQ"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setAnalysisRequested((Boolean) requestFields.get("BICAnalysis"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                requestDetailed.setHighPriority((Boolean) requestFields.get("HighPriority"));
-            } catch (NullPointerException npe) {
-            }
 
+            runAndCatchNpe(() -> requestDetailed.setApplications((String) requestFields.get
+                    ("PlatformApplication")));
+
+            runAndCatchNpe(() -> requestDetailed.setBicReadme((String) requestFields.get("ReadMe")));
+
+            runAndCatchNpe(() -> requestDetailed.setClinicalCorrelative((String) requestFields.get
+                    ("ClinicalCorrelativeType")));
+
+            runAndCatchNpe(() -> requestDetailed.setCostCenter((String) requestFields.get("CostCenter")));
+
+            runAndCatchNpe(() -> requestDetailed.setFundNumber((String) requestFields.get("FundNum")));
+
+            runAndCatchNpe(() -> requestDetailed.setContactName((String) requestFields.get("ContactName")));
+
+            runAndCatchNpe(() -> requestDetailed.setDataAnalyst((String) requestFields.get("DataAnalyst")));
+
+            runAndCatchNpe(() -> requestDetailed.setDataAnalystEmail((String) requestFields.get("DataAnalystEmail")));
+
+            runAndCatchNpe(() -> requestDetailed.setDataDeliveryType((String) requestFields.get("DataDeliveryType")));
+            runAndCatchNpe(() -> requestDetailed.setCmoContactName((String) requestFields.get("ContactName")));
+            runAndCatchNpe(() -> requestDetailed.setCmoPiName((String) requestFields.get("PIFirstName") + " " +
+                    (String) requestFields.get("PILastName")));
+            runAndCatchNpe(() -> requestDetailed.setCmoPiEmail((String) requestFields.get("PIemail")));
+            runAndCatchNpe(() -> requestDetailed.setCmoProjectId((String) requestFields.get("CMOProjectID")));
+            runAndCatchNpe(() -> requestDetailed.setRequestId((String) requestFields.get("RequestId")));
+            runAndCatchNpe(() -> requestDetailed.setFaxNumber((String) requestFields.get("FaxNum")));
+            runAndCatchNpe(() -> requestDetailed.setMailTo((String) requestFields.get("MailTo")));
+            runAndCatchNpe(() -> requestDetailed.setInvestigator((String) requestFields.get("Investigator")));
+            runAndCatchNpe(() -> requestDetailed.setIrbWaiverComments((String) requestFields.get
+                    ("IRBandWaiverComments")));
+            runAndCatchNpe(() -> requestDetailed.setPi((String) requestFields.get("LaboratoryHead")));
+            runAndCatchNpe(() -> requestDetailed.setProjectNotes((String) requestFields.get("ProjectNotes")));
+            runAndCatchNpe(() -> requestDetailed.setGroup((String) requestFields.get("ProcessingType")));
+            runAndCatchNpe(() -> requestDetailed.setGroupLeader((String) requestFields.get("GroupLeader")));
+            runAndCatchNpe(() -> requestDetailed.setInvestigatorEmail((String) requestFields.get("Investigatoremail")));
+            runAndCatchNpe(() -> requestDetailed.setIrbId((String) requestFields.get("IRBandWaiverNumber")));
+            runAndCatchNpe(() -> requestDetailed.setIrbVerifier((String) requestFields.get("IRBVerifier")));
+            runAndCatchNpe(() -> requestDetailed.setPiEmail((String) requestFields.get("LabHeadEmail")));
+            runAndCatchNpe(() -> requestDetailed.setProjectManager((String) requestFields.get("ProjectManager")));
+            runAndCatchNpe(() -> requestDetailed.setRequestDescription((String) requestFields.get
+                    ("RequestDescription")));
+            runAndCatchNpe(() -> requestDetailed.setRequestDetails((String) requestFields.get("RequestDetail")));
+            runAndCatchNpe(() -> requestDetailed.setRoom((String) requestFields.get("RoomNum")));
+            runAndCatchNpe(() -> requestDetailed.setRequestType((String) requestFields.get("RequestType")));
+            runAndCatchNpe(() -> requestDetailed.setSampleType((String) requestFields.get("SampleType")));
+            runAndCatchNpe(() -> requestDetailed.setStatus((String) requestFields.get("Status")));
+            runAndCatchNpe(() -> requestDetailed.setFurthestSample((String) requestFields.get("FurthestSample")));
+            runAndCatchNpe(() -> requestDetailed.setTelephoneNum((String) requestFields.get("TelephoneNum")));
+            runAndCatchNpe(() -> requestDetailed.setTatFromProcessing((String) requestFields.get
+                    ("TATFromInProcessing")));
+            runAndCatchNpe(() -> requestDetailed.setTatFromReceiving((String) requestFields.get("TATFromReceiving")));
+            runAndCatchNpe(() -> requestDetailed.setServicesRequested((String) requestFields.get("ServicesRequested")));
+            runAndCatchNpe(() -> requestDetailed.setStudyId((String) requestFields.get("ProjectId")));
+            runAndCatchNpe(() -> requestDetailed.setCommunicationNotes((String) requestFields.get("PICommunication")));
+            runAndCatchNpe(() -> requestDetailed.setCompletedDate((long) requestFields.get("CompletedDate")));
+            runAndCatchNpe(() -> requestDetailed.setDeliveryDate((long) requestFields.get("SampleDeliveryDate")));
+            runAndCatchNpe(() -> requestDetailed.setPartialReceivedDate((long) requestFields.get
+                    ("PartiallyReceivedDate")));
+            runAndCatchNpe(() -> requestDetailed.setReceivedDate((long) requestFields.get("ReceivedDate")));
+            runAndCatchNpe(() -> requestDetailed.setPortalDate((long) requestFields.get("InformaticsReceipt")));
+            runAndCatchNpe(() -> requestDetailed.setPortalUploadDate((long) requestFields.get("PortalDate")));
+            runAndCatchNpe(() -> requestDetailed.setInvestigatorDate((long) requestFields.get("DateSentInvestigator")));
+            runAndCatchNpe(() -> requestDetailed.setInprocessDate((long) requestFields.get("InProcessDate")));
+            runAndCatchNpe(() -> requestDetailed.setIlabsRequestDate((long) requestFields.get("RequestStartDate")));
+            runAndCatchNpe(() -> requestDetailed.setIrbDate((long) requestFields.get("DateIRBandWaiverCheckout")));
+            runAndCatchNpe(() -> requestDetailed.setSamplesReceivedDate((long) requestFields.get("RequestDate")));
+            runAndCatchNpe(() -> requestDetailed.setAutorunnable((Boolean) requestFields.get("BicAutorunnable")));
+            runAndCatchNpe(() -> requestDetailed.setFastqRequested((Boolean) requestFields.get("FASTQ")));
+            runAndCatchNpe(() -> requestDetailed.setAnalysisRequested((Boolean) requestFields.get("BICAnalysis")));
+            runAndCatchNpe(() -> requestDetailed.setHighPriority((Boolean) requestFields.get("HighPriority")));
         } catch (Throwable e) {
             requestDetailed.setInvestigator("Annotation failed: " + e.getMessage());
         }
@@ -456,66 +230,20 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
         try {
             Map<String, Object> projectFields = project.getFields(user);
 
-            try {
-                projectSummary.setCmoProjectId((String) projectFields.get("CMOProjectID"));
-            } catch (NullPointerException npe) {
-            }
-
-            try {
-                projectSummary.setCmoProposalTitle((String) projectFields.get("CMOProposalTitle"));
-            } catch (NullPointerException npe) {
-            }
-
-            try {
-                projectSummary.setCmoStudyType((String) projectFields.get("CMOStudyType"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                projectSummary.setStudyName((String) projectFields.get("CMOStudyName"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                projectSummary.setCmoFinalProjectTitle((String) projectFields.get("CMOFinalProjectTitle"));
-            } catch (NullPointerException npe) {
-            }
-
-            try {
-                projectSummary.setCmoProjectBrief((String) projectFields.get("CMOProjectBrief"));
-            } catch (NullPointerException npe) {
-            }
-
-            try {
-                projectSummary.setProjectDesc((String) projectFields.get("ProjectDesc"));
-            } catch (NullPointerException npe) {
-            }
-
-            try {
-                projectSummary.setProjectName((String) projectFields.get("ProjectName"));
-            } catch (NullPointerException npe) {
-            }
-
-            try {
-                projectSummary.setProjectNotes((String) projectFields.get("ProjectNotes"));
-            } catch (NullPointerException npe) {
-            }
-
-            try {
-                projectSummary.setGroupLeader((String) projectFields.get("Leader"));
-            } catch (NullPointerException npe) {
-            }
-
-            try {
-                projectSummary.setProjectId((String) projectFields.get("ProjectId"));
-            } catch (NullPointerException npe) {
-            }
-
-
-            try {
-                projectSummary.setCmoMeetingDiscussionDate((Long) projectFields.get("CMOMeetingDiscussion"));
-            } catch (NullPointerException npe) {
-            }
-
-
+            runAndCatchNpe(() -> projectSummary.setCmoProjectId((String) projectFields.get("CMOProjectID")));
+            runAndCatchNpe(() -> projectSummary.setCmoProposalTitle((String) projectFields.get("CMOProposalTitle")));
+            runAndCatchNpe(() -> projectSummary.setCmoStudyType((String) projectFields.get("CMOStudyType")));
+            runAndCatchNpe(() -> projectSummary.setStudyName((String) projectFields.get("CMOStudyName")));
+            runAndCatchNpe(() -> projectSummary.setCmoFinalProjectTitle((String) projectFields.get
+                    ("CMOFinalProjectTitle")));
+            runAndCatchNpe(() -> projectSummary.setCmoProjectBrief((String) projectFields.get("CMOProjectBrief")));
+            runAndCatchNpe(() -> projectSummary.setProjectDesc((String) projectFields.get("ProjectDesc")));
+            runAndCatchNpe(() -> projectSummary.setProjectName((String) projectFields.get("ProjectName")));
+            runAndCatchNpe(() -> projectSummary.setProjectNotes((String) projectFields.get("ProjectNotes")));
+            runAndCatchNpe(() -> projectSummary.setGroupLeader((String) projectFields.get("Leader")));
+            runAndCatchNpe(() -> projectSummary.setProjectId((String) projectFields.get("ProjectId")));
+            runAndCatchNpe(() -> projectSummary.setCmoMeetingDiscussionDate((Long) projectFields.get
+                    ("CMOMeetingDiscussion")));
         } catch (Throwable e) {
             projectSummary.setCmoProjectId("Annotation failed: " + e.getMessage());
         }
@@ -534,50 +262,19 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
         try {
             ss.setRecordId((Long) sampleFields.get("RecordId"));
             ss.setSpecies((String) sampleFields.get("Species"));
-            try {
-                ss.setRecipe((String) sampleFields.get("Recipe"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                ss.setTumorOrNormal((String) sampleFields.get("TumorOrNormal"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                ss.setTumorType((String) sampleFields.get("TumorType"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                ss.setGender((String) sampleFields.get("Gender"));
-            } catch (NullPointerException npe) {
-            }
-
+            runAndCatchNpe(() -> ss.setRecipe((String) sampleFields.get("Recipe")));
+            runAndCatchNpe(() -> ss.setTumorOrNormal((String) sampleFields.get("TumorOrNormal")));
+            runAndCatchNpe(() -> ss.setTumorType((String) sampleFields.get("TumorType")));
+            runAndCatchNpe(() -> ss.setGender((String) sampleFields.get("Gender")));
             ss.addRequest((String) sampleFields.get("RequestId"));
             ss.addBaseId((String) sampleFields.get("SampleId"));
             ss.addCmoId((String) sampleFields.get("OtherSampleId"));
-            try {
-                ss.addExpName((String) sampleFields.get("UserSampleID"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                ss.setSpecimenType((String) sampleFields.get("SpecimenType"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                ss.addConcentration((Double) sampleFields.get("Concentration"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                ss.addConcentrationUnits((String) sampleFields.get("ConcentrationUnits"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                ss.addVolume((Double) sampleFields.get("Volume"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                ss.setPlatform((String) sampleFields.get("Platform"));
-            } catch (NullPointerException npe) {
-            }
+            runAndCatchNpe(() -> ss.addExpName((String) sampleFields.get("UserSampleID")));
+            runAndCatchNpe(() -> ss.setSpecimenType((String) sampleFields.get("SpecimenType")));
+            runAndCatchNpe(() -> ss.addConcentration((Double) sampleFields.get("Concentration")));
+            runAndCatchNpe(() -> ss.addConcentrationUnits((String) sampleFields.get("ConcentrationUnits")));
+            runAndCatchNpe(() -> ss.addVolume((Double) sampleFields.get("Volume")));
+            runAndCatchNpe(() -> ss.setPlatform((String) sampleFields.get("Platform")));
             ss.setDropOffDate((Long) sampleFields.get("DateCreated"));
         } catch (Throwable e) {
             ss.addCmoId("Annotation failed:" + e.getMessage());
@@ -588,7 +285,8 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
         try {
             Map sampleFields = sample.getFields(user);
             ss.setRecordId((Long) sampleFields.get("RecordId"));
-            if (sampleFields.containsKey("Organism") && sampleFields.get("Organism") != null && !sampleFields.get("Organism").equals("")) {
+            if (sampleFields.containsKey("Organism") && sampleFields.get("Organism") != null && !sampleFields.get
+                    ("Organism").equals("")) {
                 ss.setSpecies((String) sampleFields.get("Organism"));
             } else if (sampleFields.containsKey("Species")) {
                 ss.setSpecies((String) sampleFields.get("Species"));
@@ -596,7 +294,8 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
             ss.setAssay((String) sampleFields.get("Assay"));
             ss.setClinicalInfo((String) sampleFields.get("ClinicalInfo"));
             ss.setCollectionYear((String) sampleFields.get("CollectionYear"));
-            if (sampleFields.containsKey("TumorType")) { //not relying ob catching the error since underlying map could switch in future releases
+            if (sampleFields.containsKey("TumorType")) { //not relying ob catching the error since underlying map
+                // could switch in future releases
                 ss.setTumorType((String) sampleFields.get("TumorType"));
                 ss.setTumorOrNormal("Tumor");
             } else {
@@ -613,28 +312,13 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
             ss.setTissueSite((String) sampleFields.get("TissueSite"));
             ss.addRequest((String) sampleFields.get("RequestId"));
             ss.addCmoId((String) sampleFields.get("OtherSampleId"));
-            try {
-                ss.addConcentration((Double) sampleFields.get("Concentration"));
-            } catch (NullPointerException npe) {
-            }
+            runAndCatchNpe(() -> ss.addConcentration((Double) sampleFields.get("Concentration")));
             ss.addConcentrationUnits((String) sampleFields.get("ConcentrationUnits"));
-            try {
-                ss.addVolume((Double) sampleFields.get("Volume"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                ss.setEstimatedPurity((Double) sampleFields.get("EstimatedPurity"));
-            } catch (NullPointerException npe) {
-            }
+            runAndCatchNpe(() -> ss.addVolume((Double) sampleFields.get("Volume")));
+            runAndCatchNpe(() -> ss.setEstimatedPurity((Double) sampleFields.get("EstimatedPurity")));
             ss.setPlatform((String) sampleFields.get("Platform"));
-            try {
-                ss.setDropOffDate((Long) sampleFields.get("DateCreated"));
-            } catch (NullPointerException npe) {
-            }
-            try {
-                ss.setServiceId((String) sampleFields.get("ServiceId"));
-            } catch (NullPointerException npe) {
-            }
+            runAndCatchNpe(() -> ss.setDropOffDate((Long) sampleFields.get("DateCreated")));
+            runAndCatchNpe(() -> ss.setServiceId((String) sampleFields.get("ServiceId")));
         } catch (Throwable e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
@@ -645,11 +329,13 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
     }
 
     /**
-     * put as a method in LimsTask because it reoccurs in sevaral tasks and how this record is being used keeps shifting. Maybe once it stabilizes we can put this elsewhere.
+     * put as a method in LimsTask because it reoccurs in sevaral tasks and how this record is being used keeps
+     * shifting. Maybe once it stabilizes we can put this elsewhere.
      */
     public boolean cmoInfoCheck(String correctedId, DataRecord cmoInfo) {
         try {
-            if (correctedId.equals(cmoInfo.getStringVal("CorrectedCMOID", user)) && !cmoInfo.getStringVal("CorrectedCMOID", user).equals("")) {
+            if (correctedId.equals(cmoInfo.getStringVal("CorrectedCMOID", user)) && !cmoInfo.getStringVal
+                    ("CorrectedCMOID", user).equals("")) {
                 return true;
             } else if (correctedId.equals(cmoInfo.getStringVal("OtherSampleId", user))) {
                 return true;
