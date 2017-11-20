@@ -6,12 +6,12 @@ import org.mskcc.limsrest.limsapi.cmoinfo.formatter.CmoSampleIdFormatter;
 import java.util.LinkedList;
 import java.util.List;
 
-public class PatientCmoSampleIdFormatter implements CmoSampleIdFormatter<PatientCmoSampleId> {
+public class PatientCmoSampleIdFormatter implements CmoSampleIdFormatter<PatientAwareCmoSampleId> {
     private static final String CMO_SAMPLE_ID_PREFIX = "C";
     private static final String CMO_SAMPLE_ID_DELIMITER = "-";
 
     @Override
-    public String format(PatientCmoSampleId patientCmoSampleId) {
+    public String format(PatientAwareCmoSampleId patientCmoSampleId) {
         List<String> cmoSampleIdProps = new LinkedList<>();
 
         cmoSampleIdProps.add(CMO_SAMPLE_ID_PREFIX);
