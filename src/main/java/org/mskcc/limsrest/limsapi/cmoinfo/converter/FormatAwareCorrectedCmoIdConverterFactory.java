@@ -1,6 +1,6 @@
 package org.mskcc.limsrest.limsapi.cmoinfo.converter;
 
-import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceCorrectedCmoIdConverter;
+import org.mskcc.limsrest.limsapi.cmoinfo.cspace.PatientAwareCorrectedCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.noformat.NoFormatCorrectedCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.oldformat.OldCorrectedCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleAbbreviationRetriever;
@@ -15,7 +15,7 @@ public class FormatAwareCorrectedCmoIdConverterFactory implements CorrectedCmoId
     @Override
     public StringToSampleCmoIdConverter getConverter(String correctedCmoSampleId) {
         if (isInCspaceFormat(correctedCmoSampleId))
-            return new CspaceCorrectedCmoIdConverter();
+            return new PatientAwareCorrectedCmoIdConverter();
 
         if (isInOldFormat(correctedCmoSampleId))
             return new OldCorrectedCmoIdConverter(sampleAbbreviationRetriever);
@@ -24,7 +24,7 @@ public class FormatAwareCorrectedCmoIdConverterFactory implements CorrectedCmoId
     }
 
     private boolean isInCspaceFormat(String correctedCmoSampleId) {
-        return correctedCmoSampleId.matches(CspaceCorrectedCmoIdConverter.PATTERN);
+        return correctedCmoSampleId.matches(PatientAwareCorrectedCmoIdConverter.PATTERN);
     }
 
     private boolean isInOldFormat(String correctedCmoSampleId) {

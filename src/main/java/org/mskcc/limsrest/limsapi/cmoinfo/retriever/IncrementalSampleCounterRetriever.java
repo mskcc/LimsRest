@@ -3,7 +3,7 @@ package org.mskcc.limsrest.limsapi.cmoinfo.retriever;
 import org.mskcc.domain.CorrectedCmoSampleView;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverterFactory;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.StringToSampleCmoIdConverter;
-import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleId;
+import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientAwareCmoSampleId;
 import org.mskcc.limsrest.staticstrings.Constants;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class IncrementalSampleCounterRetriever implements SampleCounterRetriever
 
     @Override
     public int retrieve(List<CorrectedCmoSampleView> patientCorrectedViews, String sampleClassAbbr) {
-        List<PatientCmoSampleId> cmoSampleIds = patientCorrectedViews.stream()
+        List<PatientAwareCmoSampleId> cmoSampleIds = patientCorrectedViews.stream()
                 .map(sampleCmoView -> {
                     StringToSampleCmoIdConverter converter = correctedCmoIdConverterFactory.getConverter
                             (sampleCmoView.getCorrectedCmoId());
@@ -30,7 +30,7 @@ public class IncrementalSampleCounterRetriever implements SampleCounterRetriever
 
         OptionalLong maxSampleCount = cmoSampleIds.stream()
                 .filter(s -> Objects.equals(s.getSampleTypeAbbr(), sampleClassAbbr))
-                .mapToLong(PatientCmoSampleId::getSampleCount)
+                .mapToLong(PatientAwareCmoSampleId::getSampleCount)
                 .max();
 
         if (maxSampleCount.isPresent()) {

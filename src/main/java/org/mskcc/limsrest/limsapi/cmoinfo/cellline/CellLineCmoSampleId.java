@@ -3,6 +3,10 @@ package org.mskcc.limsrest.limsapi.cmoinfo.cellline;
 import org.mskcc.limsrest.limsapi.cmoinfo.CmoSampleId;
 import org.mskcc.util.CommonUtils;
 
+/**
+ * CellLineCmoSampleId stores data needed to create CMO Sample ID for Cell line samples used subsequently by Project
+ * Managers.
+ */
 public class CellLineCmoSampleId implements CmoSampleId {
     private final String sampleId;
     private final String requestId;

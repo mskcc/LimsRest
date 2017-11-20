@@ -8,7 +8,7 @@ import org.mskcc.domain.sample.SampleClass;
 import org.mskcc.domain.sample.SampleOrigin;
 import org.mskcc.domain.sample.SpecimenType;
 import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceSampleAbbreviationRetriever;
-import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleId;
+import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientAwareCmoSampleId;
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdResolver;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.IncrementalSampleCounterRetriever;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleAbbreviationRetriever;
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mskcc.util.TestUtils.assertThrown;
 
-public class PatientCmoSampleIdResolverTest {
+public class PatientAwareCmoSampleIdResolverTest {
     private PatientCmoSampleIdResolver patientCmoSampleIdResolver;
     private CorrectedCmoSampleView sample;
     private IncrementalSampleCounterRetriever countRetriever = mock(IncrementalSampleCounterRetriever.class);
@@ -155,7 +155,8 @@ public class PatientCmoSampleIdResolverTest {
         sample.setSampleOrigin(sampleOrigin);
 
         //when
-        PatientCmoSampleId cmoSampleId = patientCmoSampleIdResolver.resolve(sample, Collections.emptyList(), requestId);
+        PatientAwareCmoSampleId cmoSampleId = patientCmoSampleIdResolver.resolve(sample, Collections.emptyList(),
+                requestId);
 
         //then
         assertThat(cmoSampleId.getPatientId(), is(patientId));
@@ -186,7 +187,8 @@ public class PatientCmoSampleIdResolverTest {
         sample.setSampleClass(sampleClass);
 
         //when
-        PatientCmoSampleId cmoSampleId = patientCmoSampleIdResolver.resolve(sample, Collections.emptyList(), requestId);
+        PatientAwareCmoSampleId cmoSampleId = patientCmoSampleIdResolver.resolve(sample, Collections.emptyList(),
+                requestId);
 
         //then
         assertThat(cmoSampleId.getPatientId(), is(patientId));
@@ -204,7 +206,7 @@ public class PatientCmoSampleIdResolverTest {
         sample.setNucleidAcid(nucleicAcid);
 
         //when
-        PatientCmoSampleId cmoSampleId = patientCmoSampleIdResolver.resolve(sample, Collections.emptyList(), requestId);
+        PatientAwareCmoSampleId cmoSampleId = patientCmoSampleIdResolver.resolve(sample, Collections.emptyList(), requestId);
 
         //then
         assertThat(cmoSampleId.getPatientId(), is(patientId));
@@ -266,7 +268,7 @@ public class PatientCmoSampleIdResolverTest {
         sample.setSpecimenType(SpecimenType.BIOPSY);
 
         //when
-        PatientCmoSampleId cmoSampleId = patientCmoSampleIdResolver.resolve(sample, Collections.emptyList(), requestId);
+        PatientAwareCmoSampleId cmoSampleId = patientCmoSampleIdResolver.resolve(sample, Collections.emptyList(), requestId);
 
         //then
         String sampleClassByOrigin = CspaceSampleAbbreviationRetriever.getSampleOriginToAbbreviation().get(sampleOrigin);

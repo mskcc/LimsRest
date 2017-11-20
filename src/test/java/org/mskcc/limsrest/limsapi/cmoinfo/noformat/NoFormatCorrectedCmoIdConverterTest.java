@@ -6,7 +6,7 @@ import org.mskcc.domain.sample.NucleicAcid;
 import org.mskcc.domain.sample.SampleClass;
 import org.mskcc.domain.sample.SpecimenType;
 import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceSampleAbbreviationRetriever;
-import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleId;
+import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientAwareCmoSampleId;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleAbbreviationRetriever;
 
 import static org.hamcrest.core.Is.is;
@@ -32,7 +32,7 @@ public class NoFormatCorrectedCmoIdConverterTest {
         sample.setNucleidAcid(nAtoExtract);
         sample.setSpecimenType(SpecimenType.XENOGRAFT);
 
-        PatientCmoSampleId cmoSampleId = noFormatCorrectedCmoIdConverter.convert(sample);
+        PatientAwareCmoSampleId cmoSampleId = noFormatCorrectedCmoIdConverter.convert(sample);
 
         assertThat(cmoSampleId.getPatientId(), is(patientId));
         assertThat(cmoSampleId.getNucleicAcid(), is(CspaceSampleAbbreviationRetriever.getNucleicAcidAbbr(sample)));

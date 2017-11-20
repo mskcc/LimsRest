@@ -2,7 +2,7 @@ package org.mskcc.limsrest.limsapi.cmoinfo;
 
 import org.hamcrest.object.IsCompatibleType;
 import org.junit.Test;
-import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleId;
+import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientAwareCmoSampleId;
 import org.mskcc.util.TestUtils;
 
 import java.util.Optional;
@@ -21,13 +21,15 @@ public class CmoSampleIdTest {
     }
 
     private void assertExceptionNotThrownOnCountRangeExceeded(int sampleCount) {
-        Optional<Exception> exception = TestUtils.assertThrown(() -> new PatientCmoSampleId("P1", "L", sampleCount, "r"));
+        Optional<Exception> exception = TestUtils.assertThrown(() -> new PatientAwareCmoSampleId("P1", "L",
+                sampleCount, "r"));
 
         assertThat(exception.isPresent(), is(false));
     }
 
     private void assertExceptionThrownOnCountRangeExceeded(int sampleCount) {
-        Optional<Exception> exception = TestUtils.assertThrown(() -> new PatientCmoSampleId("P1", "L", sampleCount, "r"));
+        Optional<Exception> exception = TestUtils.assertThrown(() -> new PatientAwareCmoSampleId("P1", "L",
+                sampleCount, "r"));
 
         assertThat(exception.isPresent(), is(true));
         assertThat(exception.get().getClass(), IsCompatibleType.typeCompatibleWith(IllegalArgumentException.class));

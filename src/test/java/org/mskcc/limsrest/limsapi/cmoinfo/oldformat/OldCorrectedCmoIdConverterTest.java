@@ -5,7 +5,7 @@ import org.mskcc.domain.CorrectedCmoSampleView;
 import org.mskcc.domain.sample.NucleicAcid;
 import org.mskcc.domain.sample.SpecimenType;
 import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceSampleAbbreviationRetriever;
-import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleId;
+import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientAwareCmoSampleId;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleAbbreviationRetriever;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -49,14 +49,14 @@ public class OldCorrectedCmoIdConverterTest {
         sample.setCorrectedCmoId(correctedCmoId);
 
         //when
-        PatientCmoSampleId patientCmoSampleId = oldCorrectedCmoIdConverter.convert(sample);
+        PatientAwareCmoSampleId patientAwareCmoSampleId = oldCorrectedCmoIdConverter.convert(sample);
 
         //then
-        assertThat(patientCmoSampleId.getNucleicAcid(), is(CspaceSampleAbbreviationRetriever.getNucleicAcidAbbr
+        assertThat(patientAwareCmoSampleId.getNucleicAcid(), is(CspaceSampleAbbreviationRetriever.getNucleicAcidAbbr
                 (sample)));
-        assertThat(patientCmoSampleId.getPatientId(), is(sample.getPatientId()));
-        assertThat(patientCmoSampleId.getSampleCount(), is(count));
-        assertThat(patientCmoSampleId.getSampleTypeAbbr(), is(CspaceSampleAbbreviationRetriever
+        assertThat(patientAwareCmoSampleId.getPatientId(), is(sample.getPatientId()));
+        assertThat(patientAwareCmoSampleId.getSampleCount(), is(count));
+        assertThat(patientAwareCmoSampleId.getSampleTypeAbbr(), is(CspaceSampleAbbreviationRetriever
                 .getSpecimenTypeToAbbreviation().get(specimenType)));
     }
 

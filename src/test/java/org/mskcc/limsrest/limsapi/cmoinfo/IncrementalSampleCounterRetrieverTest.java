@@ -4,7 +4,7 @@ import org.junit.Test;
 import org.mskcc.domain.CorrectedCmoSampleView;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverterFactory;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.StringToSampleCmoIdConverter;
-import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceCorrectedCmoIdConverter;
+import org.mskcc.limsrest.limsapi.cmoinfo.cspace.PatientAwareCorrectedCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.IncrementalSampleCounterRetriever;
 import org.mskcc.util.TestUtils;
 
@@ -129,7 +129,7 @@ public class IncrementalSampleCounterRetrieverTest {
     private class ConverterFactoryMock implements CorrectedCmoIdConverterFactory {
         @Override
         public StringToSampleCmoIdConverter getConverter(String correctedCmoSampleId) {
-            return new CspaceCorrectedCmoIdConverter();
+            return new PatientAwareCorrectedCmoIdConverter();
         }
     }
 }

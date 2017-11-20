@@ -6,6 +6,10 @@ import org.mskcc.domain.sample.SampleOrigin;
 import org.mskcc.domain.sample.SpecimenType;
 import org.mskcc.util.CommonUtils;
 
+/**
+ * CorrectedCmoSampleView stores data needed to create all types of CMO Sample Id. Different Type of samples (eg.
+ * Sample and Banked Sample) are converted to CorrectedCmoSampleView to have CMO Sample Id generated.
+ */
 public class CorrectedCmoSampleView {
     private final String id;
     private String sampleId;

@@ -16,6 +16,9 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * PatientSamplesWithCmoInfoRetriever retrieves all samples for given patient from LIMS
+ */
 public class PatientSamplesWithCmoInfoRetriever implements PatientSamplesRetriever {
     private final CorrectedCmoIdConverter<Sample> sampleToCorrectedCmoIdConverter;
     private final SampleRecordToSampleConverter sampleRecordToSampleConverter;

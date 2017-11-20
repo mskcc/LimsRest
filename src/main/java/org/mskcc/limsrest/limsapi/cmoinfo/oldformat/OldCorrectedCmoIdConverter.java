@@ -3,7 +3,7 @@ package org.mskcc.limsrest.limsapi.cmoinfo.oldformat;
 import org.mskcc.domain.CorrectedCmoSampleView;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.StringToSampleCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceSampleAbbreviationRetriever;
-import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleId;
+import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientAwareCmoSampleId;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleAbbreviationRetriever;
 
 import java.util.regex.Matcher;
@@ -19,7 +19,7 @@ public class OldCorrectedCmoIdConverter implements StringToSampleCmoIdConverter 
     }
 
     @Override
-    public PatientCmoSampleId convert(CorrectedCmoSampleView correctedCmoSampleView) {
+    public PatientAwareCmoSampleId convert(CorrectedCmoSampleView correctedCmoSampleView) {
         Pattern oldCorrectedCmoPattern = Pattern.compile(PATTERN);
         Matcher oldCorrectedCmoMatcher = oldCorrectedCmoPattern.matcher(correctedCmoSampleView.getCorrectedCmoId());
 
@@ -33,8 +33,9 @@ public class OldCorrectedCmoIdConverter implements StringToSampleCmoIdConverter 
         String sampleClass = sampleTypeAbbreviationRetriever.retrieve(correctedCmoSampleView);
         String nucleicAcid = CspaceSampleAbbreviationRetriever.getNucleicAcidAbbr(correctedCmoSampleView);
 
-        PatientCmoSampleId patientCmoSampleId = new PatientCmoSampleId(patientId, sampleClass, sampleCount,
+        PatientAwareCmoSampleId patientAwareCmoSampleId = new PatientAwareCmoSampleId(patientId, sampleClass,
+                sampleCount,
                 nucleicAcid);
-        return patientCmoSampleId;
+        return patientAwareCmoSampleId;
     }
 }

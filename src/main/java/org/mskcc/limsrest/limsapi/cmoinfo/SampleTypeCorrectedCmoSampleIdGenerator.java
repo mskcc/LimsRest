@@ -20,6 +20,10 @@ import java.util.stream.Collectors;
 
 import static org.mskcc.domain.sample.SpecimenType.CELLLINE;
 
+/**
+ * SampleTypeCorrectedCmoSampleGenerator generates CMO Sample ID for both Cell line and non-Cell line samples.
+ * In case of Cmo Sample Id generation error notification will be sent.
+ */
 public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSampleIdGenerator {
     private static final Logger LOGGER = Logger.getLogger(SampleTypeCorrectedCmoSampleIdGenerator.class);
 

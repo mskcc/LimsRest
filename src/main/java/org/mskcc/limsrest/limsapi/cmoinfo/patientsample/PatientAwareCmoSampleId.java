@@ -6,13 +6,26 @@ import org.mskcc.util.CommonUtils;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-public class PatientCmoSampleId implements CmoSampleId {
+/***
+ * PatientAwareCmoSampleId is a class which stores data needed to create CMO Sample Id for non-Cell line samples used
+ * subsequently by Project
+ * Managers.
+ */
+public class PatientAwareCmoSampleId implements CmoSampleId {
     private final String patientId;
     private final String sampleTypeAbbr;
     private final int sampleCount;
     private final String nucleicAcid;
 
-    public PatientCmoSampleId(String patientId, String sampleTypeAbbr, int sampleCount, String nucleicAcid) {
+    /**
+     * @param patientId      Anonymized patient id
+     * @param sampleTypeAbbr Sample Type Abbreviation. String indicating sample Type (Specimen Type, Sample Origin,
+     *                       Sample Class)
+     * @param sampleCount    Sample Counter incremented for each sample for particular patient and @sampleTypeAbbr
+     *                       across add the requests
+     * @param nucleicAcid    Nucleid Acid Abrreviation. String indicating nucleid acid type.
+     */
+    public PatientAwareCmoSampleId(String patientId, String sampleTypeAbbr, int sampleCount, String nucleicAcid) {
         checkArgument(sampleCount >= Constants.SAMPLE_COUNT_MIN_VALUE && sampleCount <= Constants
                 .SAMPLE_COUNT_MAX_VALUE, "Sample count value: %s is not in correct range <1-999>", sampleCount);
         CommonUtils.requireNonNullNorEmpty(patientId, String.format("Patient id cannot be null nor empty"));
@@ -46,7 +59,7 @@ public class PatientCmoSampleId implements CmoSampleId {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        PatientCmoSampleId that = (PatientCmoSampleId) o;
+        PatientAwareCmoSampleId that = (PatientAwareCmoSampleId) o;
 
         if (sampleCount != that.sampleCount) return false;
         if (patientId != null ? !patientId.equals(that.patientId) : that.patientId != null) return false;

@@ -45,8 +45,9 @@ public class GenerateSampleCmoIdTask extends LimsTask {
     @Override
     public ResponseEntity<String> execute(VeloxConnection conn) {
         try {
-            CorrectedCmoSampleView correctedCmoId = getCorrectedCmoId();
-            return ResponseEntity.ok(correctedCmoSampleIdGenerator.generate(correctedCmoId, correctedCmoId
+            CorrectedCmoSampleView correctedCmoSampleView = getCorrectedCmoSampleView();
+            return ResponseEntity.ok(correctedCmoSampleIdGenerator.generate(correctedCmoSampleView,
+                    correctedCmoSampleView
                     .getRequestId(), dataRecordManager, user));
         } catch (Exception e) {
             String message = String.format("Unable to generate corrected cmo sample id for sample: %s",
@@ -57,7 +58,7 @@ public class GenerateSampleCmoIdTask extends LimsTask {
         }
     }
 
-    private CorrectedCmoSampleView getCorrectedCmoId() throws LimsException {
+    private CorrectedCmoSampleView getCorrectedCmoSampleView() throws LimsException {
         try {
             List<DataRecord> sampleRecords = dataRecordManager.queryDataRecords(VeloxConstants.SAMPLE, "SampleId = '"
                     + sampleIgoId + "'", user);

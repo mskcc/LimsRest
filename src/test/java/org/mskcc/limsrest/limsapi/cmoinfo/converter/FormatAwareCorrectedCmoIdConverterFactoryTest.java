@@ -2,7 +2,7 @@ package org.mskcc.limsrest.limsapi.cmoinfo.converter;
 
 import org.hamcrest.object.IsCompatibleType;
 import org.junit.Test;
-import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceCorrectedCmoIdConverter;
+import org.mskcc.limsrest.limsapi.cmoinfo.cspace.PatientAwareCorrectedCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.noformat.NoFormatCorrectedCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.oldformat.OldCorrectedCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleAbbreviationRetriever;
@@ -17,10 +17,10 @@ public class FormatAwareCorrectedCmoIdConverterFactoryTest {
 
     @Test
     public void whenCorrectedCmoIdIsInCspace_shouldReturnCspaceConverter() throws Exception {
-        assertConverterType("C-AS456H-G001-d", CspaceCorrectedCmoIdConverter.class);
-        assertConverterType("C-12345-X341-d", CspaceCorrectedCmoIdConverter.class);
-        assertConverterType("C-fjnFNJDSN-N045-r", CspaceCorrectedCmoIdConverter.class);
-        assertConverterType("C-fds324-R666-d", CspaceCorrectedCmoIdConverter.class);
+        assertConverterType("C-AS456H-G001-d", PatientAwareCorrectedCmoIdConverter.class);
+        assertConverterType("C-12345-X341-d", PatientAwareCorrectedCmoIdConverter.class);
+        assertConverterType("C-fjnFNJDSN-N045-r", PatientAwareCorrectedCmoIdConverter.class);
+        assertConverterType("C-fds324-R666-d", PatientAwareCorrectedCmoIdConverter.class);
     }
 
     @Test

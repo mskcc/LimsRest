@@ -3,7 +3,7 @@ package org.mskcc.limsrest.limsapi.cmoinfo.noformat;
 import org.mskcc.domain.CorrectedCmoSampleView;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.StringToSampleCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceSampleAbbreviationRetriever;
-import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleId;
+import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientAwareCmoSampleId;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleAbbreviationRetriever;
 
 public class NoFormatCorrectedCmoIdConverter implements StringToSampleCmoIdConverter {
@@ -14,14 +14,15 @@ public class NoFormatCorrectedCmoIdConverter implements StringToSampleCmoIdConve
     }
 
     @Override
-    public PatientCmoSampleId convert(CorrectedCmoSampleView correctedCmoSampleView) {
+    public PatientAwareCmoSampleId convert(CorrectedCmoSampleView correctedCmoSampleView) {
         String patientId = correctedCmoSampleView.getPatientId();
         String sampleClass = sampleTypeAbbreviationRetriever.retrieve(correctedCmoSampleView);
         int sampleCount = 0;
         String nucleicAcid = CspaceSampleAbbreviationRetriever.getNucleicAcidAbbr(correctedCmoSampleView);
 
-        PatientCmoSampleId patientCmoSampleId = new PatientCmoSampleId(patientId, sampleClass, sampleCount,
+        PatientAwareCmoSampleId patientAwareCmoSampleId = new PatientAwareCmoSampleId(patientId, sampleClass,
+                sampleCount,
                 nucleicAcid);
-        return patientCmoSampleId;
+        return patientAwareCmoSampleId;
     }
 }

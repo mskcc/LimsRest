@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
-public class PatientCmoSampleIdResolver implements CmoSampleIdResolver<PatientCmoSampleId> {
+public class PatientCmoSampleIdResolver implements CmoSampleIdResolver<PatientAwareCmoSampleId> {
     private static final Log LOG = LogFactory.getLog(PatientCmoSampleIdResolver.class);
 
     private final SampleCounterRetriever sampleCounterRetriever;
@@ -27,7 +27,7 @@ public class PatientCmoSampleIdResolver implements CmoSampleIdResolver<PatientCm
     }
 
     @Override
-    public PatientCmoSampleId resolve(CorrectedCmoSampleView correctedCmoSampleView, List<CorrectedCmoSampleView>
+    public PatientAwareCmoSampleId resolve(CorrectedCmoSampleView correctedCmoSampleView, List<CorrectedCmoSampleView>
             cmoSampleViews, String requestId) {
         validateRequiredFields(correctedCmoSampleView);
 
@@ -37,7 +37,7 @@ public class PatientCmoSampleIdResolver implements CmoSampleIdResolver<PatientCm
         String sampleClassAbbr = sampleTypeAbbreviationRetriever.retrieve(correctedCmoSampleView);
         int sampleCount = sampleCounterRetriever.retrieve(cmoSampleViews, sampleClassAbbr);
 
-        return new PatientCmoSampleId(
+        return new PatientAwareCmoSampleId(
                 correctedCmoSampleView.getPatientId(),
                 sampleClassAbbr,
                 sampleCount,

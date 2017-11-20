@@ -2,16 +2,16 @@ package org.mskcc.limsrest.limsapi.cmoinfo.cspace;
 
 import org.mskcc.domain.CorrectedCmoSampleView;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.StringToSampleCmoIdConverter;
-import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleId;
+import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientAwareCmoSampleId;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class CspaceCorrectedCmoIdConverter implements StringToSampleCmoIdConverter {
+public class PatientAwareCorrectedCmoIdConverter implements StringToSampleCmoIdConverter {
     public static final String PATTERN = "^C-([a-zA-Z0-9]+)-([NTRMLUPSGX])([0-9]{3})-([dr])$";
 
     @Override
-    public PatientCmoSampleId convert(CorrectedCmoSampleView correctedCmoSampleView) {
+    public PatientAwareCmoSampleId convert(CorrectedCmoSampleView correctedCmoSampleView) {
         Pattern cSpaceCorrectedCmoPattern = Pattern.compile(PATTERN);
         Matcher cSpaceMatcher = cSpaceCorrectedCmoPattern.matcher(correctedCmoSampleView.getCorrectedCmoId());
 
@@ -25,8 +25,9 @@ public class CspaceCorrectedCmoIdConverter implements StringToSampleCmoIdConvert
         int sampleCount = Integer.parseInt(cSpaceMatcher.group(3));
         String nucleicAcid = cSpaceMatcher.group(4);
 
-        PatientCmoSampleId patientCmoSampleId = new PatientCmoSampleId(patientId, sampleTypeAbbr, sampleCount,
+        PatientAwareCmoSampleId patientAwareCmoSampleId = new PatientAwareCmoSampleId(patientId, sampleTypeAbbr,
+                sampleCount,
                 nucleicAcid);
-        return patientCmoSampleId;
+        return patientAwareCmoSampleId;
     }
 }

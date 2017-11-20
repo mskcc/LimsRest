@@ -1,13 +1,13 @@
 package org.mskcc.limsrest.limsapi.cmoinfo;
 
 import org.junit.Test;
-import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleId;
+import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientAwareCmoSampleId;
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdFormatter;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class PatientCmoSampleIdFormatterTest {
+public class PatientAwareCmoSampleIdFormatterTest {
     private PatientCmoSampleIdFormatter patientCmoSampleIdFormatter = new PatientCmoSampleIdFormatter();
 
     @Test
@@ -28,10 +28,11 @@ public class PatientCmoSampleIdFormatterTest {
 
     private void assertFormatterCmoSampleId(String patientId, String sampleClass, int sampleCount, String nucleicAcid, String expected) {
         //given
-        PatientCmoSampleId patientCmoSampleId = new PatientCmoSampleId(patientId, sampleClass, sampleCount, nucleicAcid);
+        PatientAwareCmoSampleId patientAwareCmoSampleId = new PatientAwareCmoSampleId(patientId, sampleClass,
+                sampleCount, nucleicAcid);
 
         //when
-        String formattedCmoSampleId = patientCmoSampleIdFormatter.format(patientCmoSampleId);
+        String formattedCmoSampleId = patientCmoSampleIdFormatter.format(patientAwareCmoSampleId);
 
         //then
         assertThat(formattedCmoSampleId, is(expected));

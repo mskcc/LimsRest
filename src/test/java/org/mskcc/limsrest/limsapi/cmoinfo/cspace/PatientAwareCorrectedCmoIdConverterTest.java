@@ -10,14 +10,15 @@ import java.util.Optional;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class CspaceCorrectedCmoIdConverterTest {
-    private CspaceCorrectedCmoIdConverter cspaceCorrectedCmoIdConverter = new CspaceCorrectedCmoIdConverter();
+public class PatientAwareCorrectedCmoIdConverterTest {
+    private PatientAwareCorrectedCmoIdConverter patientAwareCorrectedCmoIdConverter = new
+            PatientAwareCorrectedCmoIdConverter();
 
     @Test
     public void whenCmoIdStringIsEmpty_shouldThrowAnException() throws Exception {
         CorrectedCmoSampleView sample = getSample("sampleId");
         Optional<Exception> exception = TestUtils.assertThrown(() -> {
-            cspaceCorrectedCmoIdConverter.convert(sample);
+            patientAwareCorrectedCmoIdConverter.convert(sample);
         });
 
         assertThat(exception.isPresent(), is(true));
@@ -57,7 +58,7 @@ public class CspaceCorrectedCmoIdConverterTest {
     private void assertExceptionThrown(String incorrectCmoId) {
         Optional<Exception> exception = TestUtils.assertThrown(() -> {
             CorrectedCmoSampleView sample = getSample(incorrectCmoId);
-            cspaceCorrectedCmoIdConverter.convert(sample);
+            patientAwareCorrectedCmoIdConverter.convert(sample);
         });
 
         assertThat(exception.isPresent(), is(true));
@@ -72,7 +73,8 @@ public class CspaceCorrectedCmoIdConverterTest {
 
     @Test
     public void whenCmoIdStringDoesntStartWithPrefix_shouldThrowAnException() throws Exception {
-        Optional<Exception> exception = TestUtils.assertThrown(() -> cspaceCorrectedCmoIdConverter.convert(getSample
+        Optional<Exception> exception = TestUtils.assertThrown(() -> patientAwareCorrectedCmoIdConverter.convert
+                (getSample
                 ("D-12345-X001-d1")));
 
         assertThat(exception.isPresent(), is(true));
