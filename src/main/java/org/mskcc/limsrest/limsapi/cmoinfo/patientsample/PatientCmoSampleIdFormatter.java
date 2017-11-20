@@ -6,19 +6,19 @@ import org.mskcc.limsrest.limsapi.cmoinfo.formatter.CmoSampleIdFormatter;
 import java.util.LinkedList;
 import java.util.List;
 
-public class PatientCmoSampleIdFormatter implements CmoSampleIdFormatter<PatientAwareCmoSampleId> {
+public class PatientCmoSampleIdFormatter implements CmoSampleIdFormatter<PatientCmoSampleId> {
     private static final String CMO_SAMPLE_ID_PREFIX = "C";
     private static final String CMO_SAMPLE_ID_DELIMITER = "-";
 
     @Override
-    public String format(PatientAwareCmoSampleId patientAwareCmoSampleId) {
+    public String format(PatientCmoSampleId patientCmoSampleId) {
         List<String> cmoSampleIdProps = new LinkedList<>();
 
         cmoSampleIdProps.add(CMO_SAMPLE_ID_PREFIX);
-        cmoSampleIdProps.add(patientAwareCmoSampleId.getPatientId());
-        cmoSampleIdProps.add(patientAwareCmoSampleId.getSampleTypeAbbr() + String.format("%03d", patientAwareCmoSampleId
+        cmoSampleIdProps.add(patientCmoSampleId.getPatientId());
+        cmoSampleIdProps.add(patientCmoSampleId.getSampleTypeAbbr() + String.format("%03d", patientCmoSampleId
                 .getSampleCount()));
-        cmoSampleIdProps.add(patientAwareCmoSampleId.getNucleicAcid());
+        cmoSampleIdProps.add(patientCmoSampleId.getNucleicAcid());
 
         return StringUtils.join(cmoSampleIdProps, CMO_SAMPLE_ID_DELIMITER);
     }
