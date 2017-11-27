@@ -21,6 +21,11 @@ import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdFormat
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdResolver;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.*;
 import org.mskcc.limsrest.limsapi.converter.SampleRecordToSampleConverter;
+import org.mskcc.limsrest.limsapi.dmp.*;
+import org.mskcc.limsrest.limsapi.dmp.converter.DMPToBankedSampleConverter;
+import org.mskcc.limsrest.limsapi.dmp.converter.StudyToCMOBankedSampleConverter;
+import org.mskcc.limsrest.limsapi.store.RecordSaver;
+import org.mskcc.limsrest.limsapi.store.VeloxRecordSaver;
 import org.mskcc.limsrest.web.*;
 import org.mskcc.util.notificator.Notificator;
 import org.mskcc.util.notificator.SlackNotificator;
@@ -43,7 +48,7 @@ import org.springframework.boot.context.web.SpringBootServletInitializer;
 
 @Configuration
 @EnableAutoConfiguration
-@PropertySource({"classpath:/connect.txt", "classpath:/slack.properties"})
+@PropertySource({"classpath:/connect.txt", "classpath:/slack.properties", "classpath:/app.properties"})
 public class App extends SpringBootServletInitializer {
     @Autowired
     private Environment env;
@@ -59,6 +64,9 @@ public class App extends SpringBootServletInitializer {
 
     @Value("${icon}")
     private String icon;
+
+    @Value("${dmpRestUrl}")
+    private String dmpRestUrl;
 
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
@@ -449,9 +457,45 @@ public class App extends SpringBootServletInitializer {
 
     @Bean
     @Scope("request")
+    public CreateBankedSamplesFromDMP createBankedSamplesFromDMP() {
+        return new CreateBankedSamplesFromDMP(connectionQueue(), generateBankedSamplesFromDMP(), dateRetriever());
+    }
+
+    @Bean
+    @Scope("request")
+    public DateRetriever dateRetriever() {
+        return new DefaultTodayDateRetriever();
+    }
+
+    @Bean
+    @Scope("request")
     public GenerateSampleCmoIdTask generateSampleCmoIdTask() {
         return new GenerateSampleCmoIdTask(sampleTypeCorrectedCmoSampleIdGenerator(), sampleToCorrectedCmoIdConverter
                 (), sampleRecordToSampleConverter());
+    }
+
+    @Bean
+    @Scope("request")
+    public GenerateBankedSamplesFromDMP generateBankedSamplesFromDMP() {
+        return new GenerateBankedSamplesFromDMP(dmpToBankedSampleConverter(), dmpSamplesRetriever(), recordSaver());
+    }
+
+    @Bean
+    @Scope("request")
+    public RecordSaver recordSaver() {
+        return new VeloxRecordSaver();
+    }
+
+    @Bean
+    @Scope("request")
+    public DMPSamplesRetriever dmpSamplesRetriever() {
+        return new WebServiceDMPSamplesRetriever(dmpRestUrl);
+    }
+
+    @Bean
+    @Scope("request")
+    public DMPToBankedSampleConverter dmpToBankedSampleConverter() {
+        return new StudyToCMOBankedSampleConverter();
     }
 
     @Bean
