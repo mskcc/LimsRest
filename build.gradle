@@ -14,14 +14,11 @@ apply plugin: 'java'
 apply plugin: 'spring-boot'
 apply plugin: 'war'
 
+
 if(target== 'dev'){
     copy {
-        from "src/dev/resources/connect.txt"
-        into "src/main/resources/"
-    }
-    copy {
-        from "src/dev/resources/slack.properties"
-        into "src/main/resources/"
+        from "src/dev/resources"
+        into "src/main/resources"
     }
     copy {
         from "src/dev/RelatedRecords.java"
@@ -31,12 +28,8 @@ if(target== 'dev'){
 }
 else {
     copy {
-        from "src/production/resources/connect.txt"
-        into "src/main/resources/"
-    }
-    copy {
-        from "src/production/resources/slack.properties"
-        into "src/main/resources/"
+        from "src/production/resources"
+        into "src/main/resources"
     }
     copy {
         from "src/production/RelatedRecords.java"
@@ -73,6 +66,7 @@ dependencies {
     compile ("org.springframework.boot:spring-boot-starter-web")
     compile ("org.springframework.boot:spring-boot-starter-security")
     compile ('javax.servlet:jstl:1.2')
+    compile("com.fasterxml.jackson.core:jackson-databind")
     compile (group: 'com.google.guava', name: 'guava', version: '18.+')
     compile (group: 'org.mskcc.common', name:'common-domain', version: '2.0.0-SNAPSHOT')
     compile fileTree (dir: 'libs', include: '*.jar')

@@ -1,5 +1,7 @@
 package org.mskcc.limsrest.staticstrings;
 
+import java.time.format.DateTimeFormatter;
+
 public class Constants {
     public static final String POOLING_OF_SAMPLE_LIBRARIES_FOR_SEQUENCING = "Pooling of Sample Libraries for Sequencing";
     public static final String CAPTURE_FROM_KAPA_LIBRARY1 = "Capture from KAPA Library";
@@ -12,4 +14,6 @@ public class Constants {
     public static final String ERRORS = "Errors";
     public static final String WARNINGS = "Warnings";
     public static final String STATUS = "Status";
+    public static final String US_DATE_FORMAT = "MM-dd-yyyy";
+    public static final DateTimeFormatter US_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(US_DATE_FORMAT);
 }
