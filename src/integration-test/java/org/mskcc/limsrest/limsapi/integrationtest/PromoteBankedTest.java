@@ -43,6 +43,7 @@ import static org.mskcc.domain.sample.NucleicAcid.RNA;
 import static org.mskcc.domain.sample.SampleClass.*;
 import static org.mskcc.domain.sample.SampleOrigin.*;
 import static org.mskcc.domain.sample.SpecimenType.*;
+import static org.mskcc.domain.sample.SpecimenType.SALIVA;
 
 public class PromoteBankedTest {
     private static final Log LOG = LogFactory.getLog(PromoteBankedTest.class);
@@ -71,7 +72,6 @@ public class PromoteBankedTest {
     private static final String requestId1 = "PromoteBankedTest_A";
     private static final String normalizedRequestId1 = "PromoteBankedTestA";
     private static final String requestId2 = "PromoteBankedTest_B";
-    private static final String normalizedRequestId2 = "PromoteBankedTestB";
     private static PromoteBanked promoteBanked;
     private final String patientId1 = "C-promoteBankedTestPatient1";
     private final String patientId2 = "C-promoteBankedTestPatient2";
