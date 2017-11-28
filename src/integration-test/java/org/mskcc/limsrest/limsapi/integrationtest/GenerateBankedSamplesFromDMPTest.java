@@ -42,12 +42,13 @@ public class GenerateBankedSamplesFromDMPTest {
     private DataRecordManager dataRecordManager;
     private User user;
     private int counter = 0;
-    private RecordSaverSpy recordSaverSpy = new RecordSaverSpy();
+    private RecordSaverSpy recordSaverSpy;
     private String patientId = "P-5683956";
 
     @Before
     public void setUp() throws Exception {
         try {
+            recordSaverSpy = new RecordSaverSpy();
             addShutdownHook();
             generateBankedSamplesFromDMP = new GenerateBankedSamplesFromDMP(dmpToBankedSampleConverter,
                     dmpSamplesRetriever, recordSaverSpy);
@@ -92,10 +93,11 @@ public class GenerateBankedSamplesFromDMPTest {
     }
 
     private void openConnection() throws VeloxConnectionException {
-        if (!connection.isConnected())
+        if (!connection.isConnected()) {
             connection.open();
-        dataRecordManager = connection.getDataRecordManager();
-        user = connection.getUser();
+            dataRecordManager = connection.getDataRecordManager();
+            user = connection.getUser();
+        }
     }
 
     @After
@@ -115,6 +117,8 @@ public class GenerateBankedSamplesFromDMPTest {
         dataRecordManager.deleteDataRecords(recordSaverSpy.getCreatedBankedSampleRecords(), null,
                 false, user);
         dataRecordManager.storeAndCommit("Deleting banked sample records created for test", null, user);
+
+        recordSaverSpy.getCreatedBankedSampleRecords().clear();
     }
 
     private List<Long> getRecordIds() {
@@ -254,7 +258,7 @@ public class GenerateBankedSamplesFromDMPTest {
         study.setBarcodePlateId("barcode" + counter);
         study.setCollectionYear(String.valueOf(1 + counter));
         study.setConcentration(1.0 + counter);
-        study.setDmpId(patientId + counter);
+        study.setDmpId(patientId + "-" + counter);
         study.setDnaInputIntoLibrary(1.0 + counter);
         study.setIndex("index" + counter);
         study.setIndexSequence("indexSeq" + counter);
