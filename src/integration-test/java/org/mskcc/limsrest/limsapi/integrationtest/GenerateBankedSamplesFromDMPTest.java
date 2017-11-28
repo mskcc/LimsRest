@@ -39,6 +39,7 @@ public class GenerateBankedSamplesFromDMPTest {
         recordSaverSpy = new RecordSaverSpy();
         generateBankedSamplesFromDMP = new GenerateBankedSamplesFromDMP(externalToBankedSampleConverter,
                 dmpSamplesRetriever, recordSaverSpy, limsDataRetriever);
+
     }
 
     @Test
