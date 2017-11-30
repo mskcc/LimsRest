@@ -50,7 +50,7 @@ public class SetBankedSample {
                            @RequestParam(value="transactionId") String transactionId, @RequestParam(value="organism", defaultValue="NULL") String organism,
                            @RequestParam(value="platform", defaultValue="NULL") String platform,  @RequestParam(value="preservation", defaultValue="NULL") String preservation,
                            @RequestParam(value="specimenType", defaultValue="NULL") String specimenType,  @RequestParam(value="sampleType", defaultValue="NULL") String sampleType,
-                           @RequestParam(value="sampleOrigin", defaultValue="NULL") String sampleOrigin,
+                           @RequestParam(value="sampleOrigin", defaultValue="NULL") String sampleOrigin, @RequestParam(value="micronicTubeBarcode", defaultValue="NULL") String micronicTubeBarcode,
                            @RequestParam(value="sampleClass", defaultValue="NULL") String sampleClass, @RequestParam(value="requestedReads", required=false) String requestedReads,
                            @RequestParam(value="spikeInGenes", defaultValue="NULL") String spikeInGenes,  @RequestParam(value="tissueType", defaultValue="NULL") String tissueType,
                            @RequestParam(value="cancerType", defaultValue="Normal") String cancerType, @RequestParam(value="recipe", defaultValue="NULL") String recipe,
@@ -88,7 +88,7 @@ public class SetBankedSample {
 
       // if(requestedReads != null){ rr = new Double(requestedReads);}
        task.init(igoUser, investigator, userId, assay, clinicalInfo, collectionYear, concentrationUnits, gender, geneticAlterations, organism, platform, preservation, 
-                        specimenType, sampleType, sampleOrigin, sampleClass, spikeInGenes, tissueType, cancerType, barcodeId, barcodePosition, recipe, runType, serviceId, tubeId, patientId,rowPos, colPos, plateId, requestedReads,
+                        specimenType, sampleType, sampleOrigin, sampleClass, spikeInGenes, tissueType, cancerType, micronicTubeBarcode, barcodeId, barcodePosition, recipe, runType, serviceId, tubeId, patientId,rowPos, colPos, plateId, requestedReads,
                         cellCount, sequencingReadLength, numTubes, naToExtract, ep, Float.parseFloat(vol), Double.parseDouble(concentration), Integer.parseInt(rowIndex), Long.parseLong(transactionId) );
        Future<Object> result = connQueue.submitTask(task);
        String returnCode = "";
