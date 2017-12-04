@@ -71,6 +71,7 @@ public class SetOrCreateBanked  extends LimsTask
   String spikeInGenes;
   String tissueType;
   String cancerType;
+  String micronicTubeBarcode;
   String barcodeId;
   String recipe;
   String runType;
@@ -94,8 +95,8 @@ public class SetOrCreateBanked  extends LimsTask
 
   public void init(String igoUser, String investigator, String sampleId,  String[] assay, String clinicalInfo, String collectionYear, String concentrationUnits, String gender, 
                      String geneticAlterations, String organism, String platform, String preservation, String specimenType, String sampleType, String sampleOrigin,
-                     String sampleClass, String spikeInGenes, String tissueType, String cancerType, String barcodeId, String barcodePosition, String recipe, String runType, String serviceId, 
-                     String tubeId, String patientId, String rowPos, 
+                     String sampleClass, String spikeInGenes, String tissueType, String cancerType, String micronicTubeBarcode,
+                     String barcodeId, String barcodePosition, String recipe, String runType, String serviceId, String tubeId, String patientId, String rowPos, 
                      String colPos, String plateId,  String requestedReads, String cellCount, String sequencingReadLength, String numTubes, String naToExtract, Double estimatedPurity, 
                      float vol, double concentration, int rowIndex, long transactionId){
     this.igoUser = igoUser;
@@ -122,6 +123,7 @@ public class SetOrCreateBanked  extends LimsTask
     this.tubeId = tubeId;
     this.tissueType = tissueType;
     this.cancerType = cancerType;
+    this.micronicTubeBarcode = micronicTubeBarcode;
     this.barcodeId = barcodeId;
     this.recipe = recipe;
     this.runType = runType;
@@ -199,6 +201,7 @@ public class SetOrCreateBanked  extends LimsTask
     if(!"NULL".equals(organism)){ bankedFields.put("Species", organism); }
     if(!"NULL".equals(spikeInGenes)){ bankedFields.put("SpikeInGenes", spikeInGenes); }
     if(!"NULL".equals(tissueType)){ bankedFields.put("TissueSite", tissueType); }
+    if(!"NULL".equals(micronicTubeBarcode)){ bankedFields.put("MicronicTubeBarcode", micronicTubeBarcode); }
     if(!"NULL".equals(barcodeId)){ bankedFields.put("BarcodeId", barcodeId); }
     if(!"NULL".equals(recipe)){ bankedFields.put("Recipe", recipe); }
     if(!"NULL".equals(runType)){ bankedFields.put("RunType", runType); }
