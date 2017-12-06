@@ -35,7 +35,7 @@ public class WebServiceDMPSamplesRetriever implements DMPSamplesRetriever {
     }
 
     @Override
-    public List<Study> getStudies(String trackingId) {
+    public List<DMPSample> getDMPSamples(String trackingId) {
         LOGGER.info(String.format("Retrieving CMO Sample Request Details for tracking id: %s", trackingId));
         RestTemplate restTemplate = new RestTemplate();
 
@@ -43,7 +43,7 @@ public class WebServiceDMPSamplesRetriever implements DMPSamplesRetriever {
                 (getCMOSampleRequestDetailsQuery(trackingId),
                         CMOSampleRequestDetailsResponse.class);
 
-        List<Study> studies = cmoSampleRequestDetailsResponse.getStudies();
+        List<DMPSample> studies = cmoSampleRequestDetailsResponse.getStudies();
 
         LOGGER.info(String.format("Retrieved Sample Details for %d studies: %s", studies.size(),
                 getStudiesIds(studies)));
@@ -54,9 +54,9 @@ public class WebServiceDMPSamplesRetriever implements DMPSamplesRetriever {
         return String.format("%s/getCMOSampleRequestDetails?trackingId=%s", restServiceUrl, trackingId);
     }
 
-    private List<String> getStudiesIds(List<Study> studies) {
+    private List<String> getStudiesIds(List<DMPSample> studies) {
         return studies.stream()
-                .map(s -> s.getStudyId())
+                .map(s -> s.getStudySampleId())
                 .collect(Collectors.toList());
     }
 }

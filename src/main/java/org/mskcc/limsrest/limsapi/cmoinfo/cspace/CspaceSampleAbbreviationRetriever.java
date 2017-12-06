@@ -114,10 +114,6 @@ public class CspaceSampleAbbreviationRetriever implements SampleAbbreviationRetr
         return sampleTypeAbbrev;
     }
 
-    private boolean isCellFree(CorrectedCmoSampleView correctedCmoSampleView) {
-        return correctedCmoSampleView.getSampleClass() == SampleClass.CELL_FREE;
-    }
-
     private String resolveBySampleOrigin(CorrectedCmoSampleView correctedCmoSampleView) {
         Preconditions.checkNotNull(correctedCmoSampleView.getSampleOrigin(), String.format("Sample origin is not set " +
                 "for Cell free sample: %s", correctedCmoSampleView.getId()));
@@ -145,14 +141,14 @@ public class CspaceSampleAbbreviationRetriever implements SampleAbbreviationRetr
         return shouldResolveBySpecimenType;
     }
 
-    private boolean isOgranoid(CorrectedCmoSampleView correctedCmoSampleView) {
-        return correctedCmoSampleView.getSpecimenType() == SpecimenType.ORGANOID;
-    }
-
     private boolean isXenograft(CorrectedCmoSampleView correctedCmoSampleView) {
         return correctedCmoSampleView.getSpecimenType() == SpecimenType.PDX || correctedCmoSampleView.getSpecimenType
                 () == SpecimenType.XENOGRAFTDERIVEDCELLLINE || correctedCmoSampleView.getSpecimenType() ==
                 SpecimenType.XENOGRAFT;
+    }
+
+    private boolean isOgranoid(CorrectedCmoSampleView correctedCmoSampleView) {
+        return correctedCmoSampleView.getSpecimenType() == SpecimenType.ORGANOID;
     }
 
     private boolean shouldResolveBySampleOrigin(CorrectedCmoSampleView correctedCmoSampleView) {
@@ -167,5 +163,9 @@ public class CspaceSampleAbbreviationRetriever implements SampleAbbreviationRetr
 
     private boolean isCfDNA(CorrectedCmoSampleView correctedCmoSampleView) {
         return correctedCmoSampleView.getSpecimenType() == SpecimenType.CFDNA;
+    }
+
+    private boolean isCellFree(CorrectedCmoSampleView correctedCmoSampleView) {
+        return correctedCmoSampleView.getSampleClass() == SampleClass.CELL_FREE;
     }
 }

@@ -30,6 +30,8 @@ import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdFormat
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdResolver;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.*;
 import org.mskcc.limsrest.limsapi.converter.SampleRecordToSampleConverter;
+import org.mskcc.limsrest.limsapi.promote.BankedSampleToSampleConverter;
+import org.mskcc.util.Constants;
 import org.mskcc.util.VeloxConstants;
 import org.mskcc.util.notificator.Notificator;
 import org.mskcc.util.notificator.SlackNotificator;
@@ -86,6 +88,7 @@ public class PromoteBankedTest {
     private DataRecordUtilManager drum;
     private VeloxStandaloneManagerContext managerContext;
     private DataRecord projectRecord;
+    private BankedSampleToSampleConverter bankedSampleToSampleConverter = new BankedSampleToSampleConverter();
 
     @Before
     public void setUp() throws Exception {
@@ -124,13 +127,15 @@ public class PromoteBankedTest {
     public void whenCellLineSampleIsPromoted_shouldAssignCorrectedCmoId() throws
             Exception {
         //given
-        promoteSample(patientId1, CELLLINE, requestId1, userSampleId, "otherId_1", requestId1, serviceId, projectId);
+        DataRecord dataRecord = promoteSample(patientId1, CELLLINE, requestId1, userSampleId, "otherId_1",
+                requestId1, serviceId, projectId);
 
         //then
-        assertPromoteSample(ImmutableMap.<String, List<String>>builder()
+        assertPromoteSample(ImmutableMap.<String, List<BankedWithCorrectedCmoId>>builder()
                 .put(
                         requestId1,
-                        Collections.singletonList(String.format("%s-%s", userSampleId, normalizedRequestId1)))
+                        Collections.singletonList(new BankedWithCorrectedCmoId(dataRecord, String.format("%s-%s",
+                                userSampleId, normalizedRequestId1))))
                 .build());
     }
 
@@ -147,12 +152,12 @@ public class PromoteBankedTest {
         promoteBanked.call();
 
         //then
-        Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
-        List<String> correctedCmoIds = Arrays.asList(
-                String.format("%s-%s", USER_SAMP_ID1, normalizedRequestId1),
-                String.format("%s-%s", USER_SAMP_ID2, normalizedRequestId1),
-                String.format("%s-%s", USER_SAMP_ID3, normalizedRequestId1),
-                String.format("%s-%s", USER_SAMP_ID4, normalizedRequestId1)
+        Map<String, List<BankedWithCorrectedCmoId>> requestToCorrectedCmoIds = new HashMap<>();
+        List<BankedWithCorrectedCmoId> correctedCmoIds = Arrays.asList(
+                new BankedWithCorrectedCmoId(banked1, String.format("%s-%s", USER_SAMP_ID1, normalizedRequestId1)),
+                new BankedWithCorrectedCmoId(banked2, String.format("%s-%s", USER_SAMP_ID2, normalizedRequestId1)),
+                new BankedWithCorrectedCmoId(banked3, String.format("%s-%s", USER_SAMP_ID3, normalizedRequestId1)),
+                new BankedWithCorrectedCmoId(banked4, String.format("%s-%s", USER_SAMP_ID4, normalizedRequestId1))
         );
 
         requestToCorrectedCmoIds.put(requestId1, correctedCmoIds);
@@ -163,12 +168,15 @@ public class PromoteBankedTest {
     @Test
     public void whenSampleIsFirstPatientSampleOfThatType_shouldSetCorrectedCmoIdWithCount1() throws Exception {
         //given
-        promoteSample(patientId1, ORGANOID, requestId1, SAMPLE_ID1, OTHER_SAMPLE_ID1, requestId1, serviceId, projectId);
+        DataRecord dataRecord = promoteSample(patientId1, ORGANOID, requestId1, SAMPLE_ID1, OTHER_SAMPLE_ID1,
+                requestId1, serviceId, projectId);
 
         //then
-        List<String> correctedCmoIds = Arrays.asList(String.format("C-%s-%s%s-%s", patientId1, "G", "001", "d"));
+        List<BankedWithCorrectedCmoId> correctedCmoIds = Arrays.asList(
+                new BankedWithCorrectedCmoId(dataRecord, String.format("C-%s-%s%s-%s", patientId1, "G", "001", "d"))
+        );
 
-        Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
+        Map<String, List<BankedWithCorrectedCmoId>> requestToCorrectedCmoIds = new HashMap<>();
         requestToCorrectedCmoIds.put(requestId1, correctedCmoIds);
 
         assertPromoteSample(requestToCorrectedCmoIds);
@@ -177,13 +185,16 @@ public class PromoteBankedTest {
     @Test
     public void whenSampleIsCfdna_shouldSetIdBasedOnSampleOrigin() throws Exception {
         //given
-        promoteSample(patientId1, CFDNA, Optional.of(URINE), Optional.empty(), requestId1, SAMPLE_ID1, OTHER_SAMPLE_ID1,
+        DataRecord dataRecord = promoteSample(patientId1, CFDNA, Optional.of(URINE), Optional.empty(), requestId1,
+                SAMPLE_ID1, OTHER_SAMPLE_ID1,
                 requestId1, serviceId, projectId);
 
         //then
-        List<String> correctedCmoIds = Arrays.asList(String.format("C-%s-%s%s-%s", patientId1, "U", "001", "d"));
+        List<BankedWithCorrectedCmoId> correctedCmoIds = Arrays.asList(
+                new BankedWithCorrectedCmoId(dataRecord, String.format("C-%s-%s%s-%s", patientId1, "U", "001", "d"))
+        );
 
-        Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
+        Map<String, List<BankedWithCorrectedCmoId>> requestToCorrectedCmoIds = new HashMap<>();
         requestToCorrectedCmoIds.put(requestId1, correctedCmoIds);
 
         assertPromoteSample(requestToCorrectedCmoIds);
@@ -192,13 +203,15 @@ public class PromoteBankedTest {
     @Test
     public void whenBankedSampleHasRequestIdSet_shouldAsignToRequestProvidedToPromoteBanked() throws Exception {
         //given
-        promoteSample(patientId1, ORGANOID, "someOtherRequest", SAMPLE_ID1, OTHER_SAMPLE_ID1, requestId1, serviceId,
+        DataRecord dataRecord = promoteSample(patientId1, ORGANOID, "someOtherRequest", SAMPLE_ID1, OTHER_SAMPLE_ID1,
+                requestId1, serviceId,
                 projectId);
 
         //then
-        List<String> correctedCmoIds = Arrays.asList(String.format("C-%s-%s%s-%s", patientId1, "G", "001", "d"));
+        List<BankedWithCorrectedCmoId> correctedCmoIds = Arrays.asList(
+                new BankedWithCorrectedCmoId(dataRecord, String.format("C-%s-%s%s-%s", patientId1, "G", "001", "d")));
 
-        Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
+        Map<String, List<BankedWithCorrectedCmoId>> requestToCorrectedCmoIds = new HashMap<>();
         requestToCorrectedCmoIds.put(requestId1, correctedCmoIds);
 
         assertPromoteSample(requestToCorrectedCmoIds);
@@ -210,15 +223,19 @@ public class PromoteBankedTest {
             Exception {
         //given
         String patientId = patientId1;
-        promoteSample(patientId, ORGANOID, requestId1, "sample_1", "otherId_1", requestId1, serviceId, projectId);
+        DataRecord banked1 = promoteSample(patientId, ORGANOID, requestId1, "sample_1", "otherId_1", requestId1,
+                serviceId, projectId);
 
-        promoteSample(patientId, ORGANOID, requestId1, "sample_2", "otherId_2", requestId1, serviceId, projectId);
+        DataRecord banked2 = promoteSample(patientId, ORGANOID, requestId1, "sample_2", "otherId_2", requestId1,
+                serviceId, projectId);
 
         //then
-        List<String> correctedCmoIds = Arrays.asList(String.format("C-%s-%s%s-%s", patientId, "G", "001",
-                "d"), String.format("C-%s-%s%s-%s", patientId, "G", "002", "d"));
+        List<BankedWithCorrectedCmoId> correctedCmoIds = Arrays.asList(
+                new BankedWithCorrectedCmoId(banked1, String.format("C-%s-%s%s-%s", patientId, "G", "001", "d")),
+                new BankedWithCorrectedCmoId(banked2, String.format("C-%s-%s%s-%s", patientId, "G", "002", "d"))
+        );
 
-        Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
+        Map<String, List<BankedWithCorrectedCmoId>> requestToCorrectedCmoIds = new HashMap<>();
         requestToCorrectedCmoIds.put(requestId1, correctedCmoIds);
 
         assertPromoteSample(requestToCorrectedCmoIds);
@@ -232,19 +249,21 @@ public class PromoteBankedTest {
         //given
         String patientId = patientId1;
         String cellLineSampleId = SAMPLE_ID1;
-        promoteSample(patientId, CELLLINE, Optional.of(CEREBROSPINAL_FLUID), Optional.of(ADJACENT_NORMAL),
+        DataRecord banked1 = promoteSample(patientId, CELLLINE, Optional.of(CEREBROSPINAL_FLUID), Optional.of
+                        (ADJACENT_NORMAL),
                 requestId1, cellLineSampleId, OTHER_SAMPLE_ID1, requestId1, serviceId, projectId);
 
         //when
-        promoteSample(patientId, PDX, requestId1, SAMPLE_ID2, OTHER_SAMPLE_ID2, requestId1, serviceId, projectId);
+        DataRecord banked2 = promoteSample(patientId, PDX, requestId1, SAMPLE_ID2, OTHER_SAMPLE_ID2, requestId1,
+                serviceId, projectId);
 
         //then
-        List<String> correctedCmoIds = Arrays.asList(
-                String.format("%s-%s", cellLineSampleId, normalizedRequestId1),
-                String.format("C-%s-%s%s-%s", patientId, "X", "001", "d")
+        List<BankedWithCorrectedCmoId> correctedCmoIds = Arrays.asList(
+                new BankedWithCorrectedCmoId(banked1, String.format("%s-%s", cellLineSampleId, normalizedRequestId1)),
+                new BankedWithCorrectedCmoId(banked2, String.format("C-%s-%s%s-%s", patientId, "X", "001", "d"))
         );
 
-        Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
+        Map<String, List<BankedWithCorrectedCmoId>> requestToCorrectedCmoIds = new HashMap<>();
         requestToCorrectedCmoIds.put(requestId1, correctedCmoIds);
 
         assertPromoteSample(requestToCorrectedCmoIds);
@@ -257,18 +276,20 @@ public class PromoteBankedTest {
         //given
         String patientId1 = "patient1";
         String patientId2 = "patient2";
-        promoteSample(patientId1, ORGANOID, requestId1, SAMPLE_ID1, OTHER_SAMPLE_ID1, requestId1, serviceId, projectId);
+        DataRecord banked1 = promoteSample(patientId1, ORGANOID, requestId1, SAMPLE_ID1, OTHER_SAMPLE_ID1,
+                requestId1, serviceId, projectId);
 
         //when
-        promoteSample(patientId2, ORGANOID, requestId1, SAMPLE_ID2, OTHER_SAMPLE_ID2, requestId1, serviceId, projectId);
+        DataRecord banked2 = promoteSample(patientId2, ORGANOID, requestId1, SAMPLE_ID2, OTHER_SAMPLE_ID2,
+                requestId1, serviceId, projectId);
 
         //then
-        List<String> correctedCmoIds = Arrays.asList(
-                String.format("C-%s-%s%s-%s", patientId1, "G", "001", "d"),
-                String.format("C-%s-%s%s-%s", patientId2, "G", "001", "d")
+        List<BankedWithCorrectedCmoId> correctedCmoIds = Arrays.asList(
+                new BankedWithCorrectedCmoId(banked1, String.format("C-%s-%s%s-%s", patientId1, "G", "001", "d")),
+                new BankedWithCorrectedCmoId(banked2, String.format("C-%s-%s%s-%s", patientId2, "G", "001", "d"))
         );
 
-        Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
+        Map<String, List<BankedWithCorrectedCmoId>> requestToCorrectedCmoIds = new HashMap<>();
         requestToCorrectedCmoIds.put(requestId1, correctedCmoIds);
 
         assertPromoteSample(requestToCorrectedCmoIds);
@@ -280,16 +301,21 @@ public class PromoteBankedTest {
             Exception {
         //given
         String patientId = patientId1;
-        promoteSample(patientId, ORGANOID, "someReqId", "sample_1", "otherId_1", requestId1, serviceId, projectId);
+        DataRecord banked1 = promoteSample(patientId, ORGANOID, "someReqId", "sample_1", "otherId_1", requestId1,
+                serviceId, projectId);
 
-        promoteSample(patientId, ORGANOID, "someReqId", "sample_2", "otherId_2", requestId2, serviceId, projectId);
+        DataRecord banked2 = promoteSample(patientId, ORGANOID, "someReqId", "sample_2", "otherId_2", requestId2,
+                serviceId, projectId);
 
         //then
-        Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
-        requestToCorrectedCmoIds.put(requestId1, Arrays.asList(String.format("C-%s-%s%s-%s", patientId, "G", "001",
-                "d")));
-        requestToCorrectedCmoIds.put(requestId2, Arrays.asList(String.format("C-%s-%s%s-%s", patientId, "G", "002",
-                "d")));
+        Map<String, List<BankedWithCorrectedCmoId>> requestToCorrectedCmoIds = new HashMap<>();
+        requestToCorrectedCmoIds.put(requestId1, Arrays.asList(
+                new BankedWithCorrectedCmoId(banked1, String.format("C-%s-%s%s-%s", patientId, "G", "001", "d")))
+        );
+
+        requestToCorrectedCmoIds.put(requestId2, Arrays.asList(
+                new BankedWithCorrectedCmoId(banked2, String.format("C-%s-%s%s-%s", patientId, "G", "002", "d")))
+        );
 
         assertPromoteSample(requestToCorrectedCmoIds);
     }
@@ -301,28 +327,36 @@ public class PromoteBankedTest {
             Exception {
         //given
         String patientId = patientId1;
-        promoteSample(patientId, ORGANOID, "someReqId", SAMPLE_ID1, OTHER_SAMPLE_ID1, PromoteBankedTest.requestId1,
+        DataRecord banked1 = promoteSample(patientId, ORGANOID, "someReqId", SAMPLE_ID1, OTHER_SAMPLE_ID1,
+                PromoteBankedTest.requestId1,
                 PromoteBankedTest.serviceId, PromoteBankedTest.projectId);
-        promoteSample(patientId, ORGANOID, "someReqId", SAMPLE_ID2, OTHER_SAMPLE_ID2, PromoteBankedTest.requestId1,
+        DataRecord banked2 = promoteSample(patientId, ORGANOID, "someReqId", SAMPLE_ID2, OTHER_SAMPLE_ID2,
+                PromoteBankedTest.requestId1,
                 PromoteBankedTest.serviceId, PromoteBankedTest.projectId);
-        promoteSample(patientId, ORGANOID, "someReqId", SAMPLE_ID3, OTHER_SAMPLE_ID3, PromoteBankedTest.requestId1,
+        DataRecord banked3 = promoteSample(patientId, ORGANOID, "someReqId", SAMPLE_ID3, OTHER_SAMPLE_ID3,
+                PromoteBankedTest.requestId1,
                 PromoteBankedTest.serviceId, PromoteBankedTest.projectId);
 
         //when
-        promoteSample(patientId, ORGANOID, "someReqId", "sample_2", "otherId_2", requestId2, PromoteBankedTest
-                .serviceId, PromoteBankedTest.projectId);
+        DataRecord banked4 = promoteSample(patientId, ORGANOID, "someReqId", "sample_2", "otherId_2", requestId2,
+                PromoteBankedTest
+                        .serviceId, PromoteBankedTest.projectId);
 
         //then
-        Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
+        Map<String, List<BankedWithCorrectedCmoId>> requestToCorrectedCmoIds = new HashMap<>();
         requestToCorrectedCmoIds.put(PromoteBankedTest.requestId1,
                 Arrays.asList(
-                        String.format("C-%s-%s%s-%s", patientId, "G", "001", "d"),
-                        String.format("C-%s-%s%s-%s", patientId, "G", "002", "d"),
-                        String.format("C-%s-%s%s-%s", patientId, "G", "003", "d")
-                ));
+                        new BankedWithCorrectedCmoId(banked1, String.format("C-%s-%s%s-%s", patientId, "G", "001",
+                                "d")),
+                        new BankedWithCorrectedCmoId(banked2, String.format("C-%s-%s%s-%s", patientId, "G", "002",
+                                "d")),
+                        new BankedWithCorrectedCmoId(banked3, String.format("C-%s-%s%s-%s", patientId, "G", "003",
+                                "d")))
+        );
 
-        requestToCorrectedCmoIds.put(requestId2, Arrays.asList(String.format("C-%s-%s%s-%s", patientId, "G", "004",
-                "d")));
+        requestToCorrectedCmoIds.put(requestId2, Arrays.asList(
+                new BankedWithCorrectedCmoId(banked4, String.format("C-%s-%s%s-%s", patientId, "G", "004", "d")))
+        );
 
         assertPromoteSample(requestToCorrectedCmoIds);
     }
@@ -333,15 +367,18 @@ public class PromoteBankedTest {
             Exception {
         //given
         String patientId = patientId1;
-        promoteSample(patientId, XENOGRAFT, requestId1, "sample_1", "otherId_1", requestId1, serviceId, projectId);
+        DataRecord banked1 = promoteSample(patientId, XENOGRAFT, requestId1, "sample_1", "otherId_1", requestId1,
+                serviceId, projectId);
 
-        promoteSample(patientId, PDX, requestId1, "sample_2", "otherId_2", requestId1, serviceId, projectId);
+        DataRecord banked2 = promoteSample(patientId, PDX, requestId1, "sample_2", "otherId_2", requestId1,
+                serviceId, projectId);
 
         //then
-        List<String> correctedCmoIds = Arrays.asList(String.format("C-%s-%s%s-%s", patientId, "X", "001",
-                "d"), String.format("C-%s-%s%s-%s", patientId, "X", "002", "d"));
+        List<BankedWithCorrectedCmoId> correctedCmoIds = Arrays.asList(
+                new BankedWithCorrectedCmoId(banked1, String.format("C-%s-%s%s-%s", patientId, "X", "001", "d")),
+                new BankedWithCorrectedCmoId(banked2, String.format("C-%s-%s%s-%s", patientId, "X", "002", "d")));
 
-        Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
+        Map<String, List<BankedWithCorrectedCmoId>> requestToCorrectedCmoIds = new HashMap<>();
         requestToCorrectedCmoIds.put(requestId1, correctedCmoIds);
 
         assertPromoteSample(requestToCorrectedCmoIds);
@@ -353,7 +390,8 @@ public class PromoteBankedTest {
             Exception {
         //given
         String patientId = patientId1;
-        promoteSample(patientId, XENOGRAFT, requestId1, "sample_1", "otherId_1", requestId1, serviceId, projectId);
+        DataRecord banked1 = promoteSample(patientId, XENOGRAFT, requestId1, "sample_1", "otherId_1", requestId1,
+                serviceId, projectId);
 
         DataRecord banked2 = addPromoteBanked(patientId, PDX, RNA, requestId1, "sample_2", "otherId_2");
         initPromoteBanked(Arrays.asList(banked2), requestId1, serviceId, projectId);
@@ -362,10 +400,11 @@ public class PromoteBankedTest {
         promoteBanked.call();
 
         //then
-        List<String> correctedCmoIds = Arrays.asList(String.format("C-%s-%s%s-%s", patientId, "X", "001",
-                "d"), String.format("C-%s-%s%s-%s", patientId, "X", "002", "r"));
+        List<BankedWithCorrectedCmoId> correctedCmoIds = Arrays.asList(
+                new BankedWithCorrectedCmoId(banked1, String.format("C-%s-%s%s-%s", patientId, "X", "001", "d")),
+                new BankedWithCorrectedCmoId(banked2, String.format("C-%s-%s%s-%s", patientId, "X", "002", "r")));
 
-        Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
+        Map<String, List<BankedWithCorrectedCmoId>> requestToCorrectedCmoIds = new HashMap<>();
         requestToCorrectedCmoIds.put(requestId1, correctedCmoIds);
 
         assertPromoteSample(requestToCorrectedCmoIds);
@@ -383,10 +422,11 @@ public class PromoteBankedTest {
         promoteBanked.call();
 
         //then
-        List<String> correctedCmoIds = Arrays.asList(String.format("C-%s-%s%s-%s", patientId1, "G", "001",
-                "d"), String.format("C-%s-%s%s-%s", patientId1, "G", "002", "d"));
+        List<BankedWithCorrectedCmoId> correctedCmoIds = Arrays.asList(
+                new BankedWithCorrectedCmoId(banked1, String.format("C-%s-%s%s-%s", patientId1, "G", "001", "d")),
+                new BankedWithCorrectedCmoId(banked2, String.format("C-%s-%s%s-%s", patientId1, "G", "002", "d")));
 
-        Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
+        Map<String, List<BankedWithCorrectedCmoId>> requestToCorrectedCmoIds = new HashMap<>();
         requestToCorrectedCmoIds.put(requestId1, correctedCmoIds);
 
         assertPromoteSample(requestToCorrectedCmoIds);
@@ -409,14 +449,14 @@ public class PromoteBankedTest {
         promoteBanked.call();
 
         //then
-        List<String> correctedCmoIds = Arrays.asList(
-                String.format("%s-%s", SAMPLE_ID1, normalizedRequestId1),
-                String.format("C-%s-%s%s-%s", patientId, "X", "001", "d"),
-                String.format("C-%s-%s%s-%s", patientId, "X", "002", "d"),
-                String.format("C-%s-%s%s-%s", patientId, "G", "001", "r")
+        List<BankedWithCorrectedCmoId> correctedCmoIds = Arrays.asList(
+                new BankedWithCorrectedCmoId(cellLine, String.format("%s-%s", SAMPLE_ID1, normalizedRequestId1)),
+                new BankedWithCorrectedCmoId(banked1, String.format("C-%s-%s%s-%s", patientId, "X", "001", "d")),
+                new BankedWithCorrectedCmoId(banked2, String.format("C-%s-%s%s-%s", patientId, "X", "002", "d")),
+                new BankedWithCorrectedCmoId(banked3, String.format("C-%s-%s%s-%s", patientId, "G", "001", "r"))
         );
 
-        Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
+        Map<String, List<BankedWithCorrectedCmoId>> requestToCorrectedCmoIds = new HashMap<>();
         requestToCorrectedCmoIds.put(requestId1, correctedCmoIds);
 
         assertPromoteSample(requestToCorrectedCmoIds);
@@ -458,46 +498,59 @@ public class PromoteBankedTest {
         promoteBanked.call();
 
         //then
-        List<String> req1CorrectedCmoIds = Arrays.asList(
-                String.format("%s-%s", SAMPLE_ID1, normalizedRequestId1),
-                String.format("C-%s-%s%s-%s", patientId1, "G", "001", "d"),
-                String.format("C-%s-%s%s-%s", patientId3, "L", "001", "d"),
-                String.format("C-%s-%s%s-%s", patientId3, "L", "002", "d"),
-                String.format("C-%s-%s%s-%s", patientId3, "N", "001", "d"),
-                String.format("C-%s-%s%s-%s", patientId3, "N", "002", "d"),
-                String.format("C-%s-%s%s-%s", patientId3, "S", "001", "r"),
-                String.format("%s-%s", SAMPLE_ID2, normalizedRequestId1)
+        List<BankedWithCorrectedCmoId> req1CorrectedCmoIds = Arrays.asList(
+                new BankedWithCorrectedCmoId(bankedToPromote1.get(0), String.format("%s-%s", SAMPLE_ID1,
+                        normalizedRequestId1)),
+                new BankedWithCorrectedCmoId(bankedToPromote1.get(1), String.format("C-%s-%s%s-%s", patientId1, "G",
+                        "001", "d")),
+                new BankedWithCorrectedCmoId(bankedToPromote1.get(2), String.format("C-%s-%s%s-%s", patientId3, "L",
+                        "001", "d")),
+                new BankedWithCorrectedCmoId(bankedToPromote1.get(3), String.format("C-%s-%s%s-%s", patientId3, "L",
+                        "002", "d")),
+                new BankedWithCorrectedCmoId(bankedToPromote1.get(4), String.format("C-%s-%s%s-%s", patientId3, "N",
+                        "001", "d")),
+                new BankedWithCorrectedCmoId(bankedToPromote1.get(5), String.format("C-%s-%s%s-%s", patientId3, "N",
+                        "002", "d")),
+                new BankedWithCorrectedCmoId(bankedToPromote1.get(6), String.format("C-%s-%s%s-%s", patientId3, "S",
+                        "001", "r")),
+                new BankedWithCorrectedCmoId(bankedToPromote1.get(7), String.format("%s-%s", SAMPLE_ID2,
+                        normalizedRequestId1))
         );
 
-        List<String> req2CorrectedCmoIds = Arrays.asList(
-                String.format("C-%s-%s%s-%s", patientId2, "U", "001", "d"),
-                String.format("C-%s-%s%s-%s", patientId3, "T", "001", "d")
+        List<BankedWithCorrectedCmoId> req2CorrectedCmoIds = Arrays.asList(
+                new BankedWithCorrectedCmoId(bankedToPromote2.get(0), String.format("C-%s-%s%s-%s", patientId2, "U",
+                        "001", "d")),
+                new BankedWithCorrectedCmoId(bankedToPromote2.get(1), String.format("C-%s-%s%s-%s", patientId3, "T",
+                        "001", "d"))
         );
 
-        Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
+        Map<String, List<BankedWithCorrectedCmoId>> requestToCorrectedCmoIds = new HashMap<>();
         requestToCorrectedCmoIds.put(requestId1, req1CorrectedCmoIds);
         requestToCorrectedCmoIds.put(requestId2, req2CorrectedCmoIds);
 
         assertPromoteSample(requestToCorrectedCmoIds);
     }
 
-    private void promoteSample(String patientId, SpecimenType specimenType, Optional<SampleOrigin> sampleOrigin,
-                               Optional<SampleClass>
-                                       sampleClass, String bankedReqId, String sampleId, String otherSampleId, String
-                                       promoteRequest, String
-                                       serviceId, String projectId) throws Exception {
+    private DataRecord promoteSample(String patientId, SpecimenType specimenType, Optional<SampleOrigin> sampleOrigin,
+                                     Optional<SampleClass>
+                                             sampleClass, String bankedReqId, String sampleId, String otherSampleId,
+                                     String
+                                             promoteRequest, String
+                                             serviceId, String projectId) throws Exception {
 
-        DataRecord banked1 = addPromoteBanked(patientId, specimenType, sampleOrigin, sampleClass, DNA, bankedReqId,
+        DataRecord banked = addPromoteBanked(patientId, specimenType, sampleOrigin, sampleClass, DNA, bankedReqId,
                 sampleId, otherSampleId);
-        initPromoteBanked(Arrays.asList(banked1), promoteRequest, serviceId, projectId);
+        initPromoteBanked(Arrays.asList(banked), promoteRequest, serviceId, projectId);
 
         promoteBanked.call();
+
+        return banked;
     }
 
-    private void promoteSample(String patientId, SpecimenType specimenType, String bankedReqId, String sampleId,
-                               String otherSampleId, String promoteRequest, String serviceId, String projectId)
+    private DataRecord promoteSample(String patientId, SpecimenType specimenType, String bankedReqId, String sampleId,
+                                     String otherSampleId, String promoteRequest, String serviceId, String projectId)
             throws Exception {
-        promoteSample(patientId, specimenType, Optional.empty(), Optional.empty(), bankedReqId, sampleId,
+        return promoteSample(patientId, specimenType, Optional.empty(), Optional.empty(), bankedReqId, sampleId,
                 otherSampleId, promoteRequest, serviceId, projectId);
     }
 
@@ -519,14 +572,44 @@ public class PromoteBankedTest {
         DataRecord bankedSampleRecord = dataRecordManager.addDataRecord(BankedSample.DATA_TYPE_NAME, user);
         Map<String, Object> fields = new HashMap<>();
 
-        fields.put(BankedSample.SERVICE_ID, serviceId);
-        fields.put(BankedSample.SPECIMEN_TYPE, specimenType.getValue());
-        fields.put(BankedSample.REQUEST_ID, requestId);
-        fields.put(BankedSample.PATIENT_ID, patientId);
+        fields.put(BankedSample.ASSAY, "assay");
+        fields.put(BankedSample.CELL_COUNT, 2);
+        fields.put(BankedSample.CLINICAL_INFO, "clinicalInfo");
+        fields.put(BankedSample.COL_POSITION, "C");
+        fields.put(BankedSample.COLLECTION_YEAR, "1998");
+        fields.put(BankedSample.CONCENTRATION, 23.5);
+        fields.put(BankedSample.CONCENTRATION_UNITS, "ng/l");
+        fields.put(BankedSample.ESTIMATED_PURITY, 34.70);
+        fields.put(BankedSample.GENDER, "M");
+        fields.put(BankedSample.GENETIC_ALTERATIONS, "alterations");
+        fields.put(BankedSample.INVESTIGATOR, "investigator");
         fields.put(BankedSample.NATO_EXTRACT, nucleicAcid.getValue());
-        fields.put(BankedSample.USER_SAMPLE_ID, sampleId);
+        fields.put(BankedSample.NON_LIMS_LIBRARY_INPUT, 230);
+        fields.put(BankedSample.NON_LIMS_LIBRARY_OUTPUT, 56.07);
+        fields.put(BankedSample.ORGANISM, "Human");
         fields.put(BankedSample.OTHER_SAMPLE_ID, otherSampleId);
+        fields.put(BankedSample.PATIENT_ID, patientId);
+        fields.put(BankedSample.PLATE_ID, "plateId");
+        fields.put(BankedSample.PLATFORM, "platform");
+        fields.put(BankedSample.PRESERVATION, "preservation");
+        fields.put(BankedSample.PROMOTED, "false");
+        fields.put(BankedSample.RECIPE, "recipe");
+        fields.put(BankedSample.REQUEST_ID, requestId);
+        fields.put(BankedSample.REQUESTED_READS, "12345");
+        fields.put(BankedSample.ROW_INDEX, 2);
+        fields.put(BankedSample.RUN_TYPE, "runTYpe");
+        fields.put(BankedSample.SAMPLE_TYPE, "sampleType");
+        fields.put(BankedSample.SERVICE_ID, serviceId);
         fields.put(BankedSample.SPECIES, "Human");
+        fields.put(BankedSample.SPECIMEN_TYPE, specimenType.getValue());
+        fields.put(BankedSample.SPIKE_IN_GENES, "spikeInGenes");
+        fields.put(BankedSample.TISSUE_SITE, "tissueSite");
+        fields.put(BankedSample.TRANSACTION_ID, 12376534);
+        fields.put(BankedSample.TUBE_BARCODE, "tybeBarcode");
+        fields.put(BankedSample.TUMOR_OR_NORMAL, "Normals");
+        fields.put(BankedSample.TUMOR_TYPE, "tumorType");
+        fields.put(BankedSample.USER_SAMPLE_ID, sampleId);
+        fields.put(BankedSample.VOLUME, 456.76);
 
         sampleOrigin.ifPresent(sampleOrigin1 -> fields.put(BankedSample.SAMPLE_ORIGIN, sampleOrigin1.getValue()));
         sampleClass.ifPresent(sampleClass1 -> fields.put(BankedSample.SAMPLE_CLASS, sampleClass1.getValue()));
@@ -555,10 +638,11 @@ public class PromoteBankedTest {
 
     }
 
-    private void assertPromoteSample(Map<String, List<String>> requestToCorrectedCmoIds) throws
+    private void assertPromoteSample(Map<String, List<BankedWithCorrectedCmoId>> requestToCorrectedCmoIds) throws
             Exception {
 
-        for (Map.Entry<String, List<String>> requestToCorrectedCmoId : requestToCorrectedCmoIds.entrySet()) {
+        for (Map.Entry<String, List<BankedWithCorrectedCmoId>> requestToCorrectedCmoId : requestToCorrectedCmoIds
+                .entrySet()) {
             String assignedRequestId = requestToCorrectedCmoId.getKey();
 
             List<DataRecord> requestRecords = dataRecordManager.queryDataRecords(VeloxConstants.REQUEST, VeloxConstants
@@ -568,28 +652,104 @@ public class PromoteBankedTest {
             DataRecord[] samples = requestRecords.get(0).getChildrenOfType(VeloxConstants.SAMPLE, user);
 
             List<DataRecord> sampleList = Arrays.asList(samples);
-            List<String> samplesToCorrectedIds = requestToCorrectedCmoId.getValue();
-            assertThat(sampleList.size(), is(samplesToCorrectedIds.size()));
+            List<BankedWithCorrectedCmoId> bankedWithCorrectedCmoIds = requestToCorrectedCmoId.getValue();
+            assertThat(sampleList.size(), is(bankedWithCorrectedCmoIds.size()));
 
             int i = 0;
             for (DataRecord promotedSample : sampleList) {
                 assertThat(promotedSample.getStringVal(VeloxConstants.SAMPLE_ID, user), is(assignedRequestId + "_" +
                         (i + 1)));
 
-                assertCmoInfoRecordExists(promotedSample, samplesToCorrectedIds.get(i), promotedSample);
+                assertThat(promotedSample.getDataTypeName(), is(Sample.DATA_TYPE_NAME));
+                DataRecord bankedSample = bankedWithCorrectedCmoIds.get(i).bankedDataRecord;
+
+                assertThat(promotedSample.getStringVal(Sample.ASSAY, user), is(bankedSample.getStringVal(BankedSample
+                        .ASSAY, user)));
+
+                assertThat(promotedSample.getStringVal(Sample.CELL_COUNT, user), is(bankedSample.getStringVal
+                        (BankedSample.CELL_COUNT, user)));
+                assertThat(promotedSample.getStringVal(Sample.CLINICAL_INFO, user), is(bankedSample.getStringVal
+                        (BankedSample.CLINICAL_INFO, user)));
+                assertThat(promotedSample.getStringVal(Sample.CMOSAMPLE_CLASS, user), is(bankedSample.getStringVal
+                        (BankedSample.SAMPLE_CLASS, user)));
+                assertThat(promotedSample.getStringVal(Sample.COL_POSITION, user), is(bankedSample.getStringVal
+                        (BankedSample.COL_POSITION, user)));
+                assertThat(promotedSample.getStringVal(Sample.COLLECTION_YEAR, user), is(bankedSample.getStringVal
+                        (BankedSample.COLLECTION_YEAR, user)));
+                assertThat(promotedSample.getDoubleVal(Sample.CONCENTRATION, user), is(bankedSample.getDoubleVal
+                        (BankedSample.CONCENTRATION, user)));
+                assertThat(promotedSample.getStringVal(Sample.CONCENTRATION_UNITS, user), is(bankedSample
+                        .getStringVal(BankedSample.CONCENTRATION_UNITS, user)));
+
+                assertThat(promotedSample.getStringVal(Sample.ESTIMATED_PURITY, user), is(bankedSample
+                        .getStringVal(BankedSample.ESTIMATED_PURITY, user)));
+                assertThat(promotedSample.getStringVal(Sample.EXEMPLAR_SAMPLE_TYPE, user), is(bankedSample
+                        .getStringVal(BankedSample.SAMPLE_TYPE, user)));
+                assertThat(promotedSample.getStringVal(Sample.EXEMPLAR_SAMPLE_STATUS, user), is(Constants.RECEIVED));
+
+                assertThat(promotedSample.getStringVal(Sample.GENDER, user), is(bankedSample.getStringVal
+                        (BankedSample.GENDER, user)));
+                assertThat(promotedSample.getStringVal(Sample.GENETIC_ALTERATIONS, user), is(bankedSample
+                        .getStringVal(BankedSample.GENETIC_ALTERATIONS, user)));
+
+                assertThat(promotedSample.getStringVal(Sample.NATO_EXTRACT, user), is(bankedSample
+                        .getStringVal(BankedSample.NATO_EXTRACT, user)));
+
+                assertThat(promotedSample.getStringVal(Sample.ORGANISM, user), is(bankedSample
+                        .getStringVal(BankedSample.ORGANISM, user)));
+                assertThat(promotedSample.getStringVal(Sample.OTHER_SAMPLE_ID, user), is(bankedSample
+                        .getStringVal(BankedSample.OTHER_SAMPLE_ID, user)));
+
+                assertThat(promotedSample.getStringVal(Sample.PATIENT_ID, user), is(bankedSample.getStringVal
+                        (BankedSample.PATIENT_ID, user)));
+                assertThat(promotedSample.getStringVal(Sample.PLATFORM, user), is(bankedSample.getStringVal
+                        (BankedSample.PLATFORM, user)));
+                assertThat(promotedSample.getStringVal(Sample.PRESERVATION, user), is(bankedSample.getStringVal
+                        (BankedSample.PRESERVATION, user)));
+
+                assertThat(promotedSample.getDoubleVal(Sample.RECEIVED_QUANTITY, user), is(bankedSample.getDoubleVal
+                        (BankedSample.VOLUME, user)));
+                assertThat(promotedSample.getStringVal(Sample.RECIPE, user), is(bankedSample.getStringVal
+                        (BankedSample.RECIPE, user)));
+                assertThat(promotedSample.getStringVal(Sample.REQUEST_ID, user), is(assignedRequestId));
+                assertThat(promotedSample.getStringVal(Sample.ROW_POSITION, user), is(bankedSample.getStringVal
+                        (BankedSample.ROW_POSITION, user)));
+
+                assertThat(promotedSample.getStringVal(Sample.SAMPLE_ORIGIN, user), is(bankedSample.getStringVal
+                        (BankedSample.SAMPLE_ORIGIN, user)));
+                assertThat(promotedSample.getStringVal(Sample.SPECIES, user), is(bankedSample.getStringVal
+                        (BankedSample.SPECIES, user)));
+                assertThat(promotedSample.getStringVal(Sample.SPECIMEN_TYPE, user), is(bankedSample.getStringVal
+                        (BankedSample.SPECIMEN_TYPE, user)));
+                assertThat(promotedSample.getStringVal(Sample.SPIKE_IN_GENES, user), is(bankedSample.getStringVal
+                        (BankedSample.SPIKE_IN_GENES, user)));
+                assertThat(promotedSample.getStringVal(Sample.SPECIMEN_TYPE, user), is(bankedSample.getStringVal
+                        (BankedSample.SPECIMEN_TYPE, user)));
+
+                assertThat(promotedSample.getStringVal(Sample.TISSUE_LOCATION, user), is(bankedSample.getStringVal
+                        (BankedSample.TISSUE_SITE, user)));
+                assertThat(promotedSample.getStringVal(Sample.TUBE_BARCODE, user), is(bankedSample.getStringVal
+                        (BankedSample.TUBE_BARCODE, user)));
+                assertThat(promotedSample.getStringVal(Sample.TUMOR_OR_NORMAL, user), is(bankedSample
+                        .getStringVal(BankedSample.TUMOR_OR_NORMAL, user)));
+                assertThat(promotedSample.getStringVal(Sample.TUMOR_TYPE, user), is(bankedSample.getStringVal
+                        (BankedSample.TUMOR_TYPE, user)));
+
+                assertCmoInfoRecordExists(promotedSample, bankedWithCorrectedCmoIds.get(i), promotedSample);
                 i++;
             }
         }
     }
 
-    private void assertCmoInfoRecordExists(DataRecord promotedSample, String expectedCorrectedId, DataRecord
-            bankedRecord) throws NotFound, IoError, RemoteException {
+    private void assertCmoInfoRecordExists(DataRecord promotedSample, BankedWithCorrectedCmoId
+            bankedWithCorrectedCmoId, DataRecord
+                                                   bankedRecord) throws NotFound, IoError, RemoteException {
         DataRecord[] sampleCMOInfoRecords = promotedSample.getChildrenOfType(VeloxConstants.SAMPLE_CMO_INFO_RECORDS,
                 user);
         assertThat(sampleCMOInfoRecords.length, is(1));
         assertThat(sampleCMOInfoRecords[0].getStringVal("UserSampleID", user), is(bankedRecord.getStringVal
                 ("UserSampleID", user)));
-        assertThat(sampleCMOInfoRecords[0].getStringVal("CorrectedCMOID", user), is(expectedCorrectedId));
+        assertThat(sampleCMOInfoRecords[0].getStringVal("CorrectedCMOID", user), is(bankedWithCorrectedCmoId.cmoId));
     }
 
     private void reopenConnection() throws Exception {
@@ -651,7 +811,7 @@ public class PromoteBankedTest {
         BankedSampleToCorrectedCmoSampleIdConverter bankedSampleToCorrectedCmoSampleIdConverter = new
                 BankedSampleToCorrectedCmoSampleIdConverter();
         return new PromoteBanked(bankedSampleToCorrectedCmoSampleIdConverter,
-                getCorrectedCmoSampleIdGenerator());
+                getCorrectedCmoSampleIdGenerator(), bankedSampleToSampleConverter);
     }
 
     private String getResourceFile(String connectionFile) throws Exception {
@@ -676,6 +836,15 @@ public class PromoteBankedTest {
     }
 
     private void deleteRecord(DataRecord record) throws IoError, RemoteException, NotFound {
+        DataRecord[] requests = record.getChildrenOfType(VeloxConstants.REQUEST, user);
+
+        for (DataRecord request : requests) {
+            DataRecord[] samples = request.getChildrenOfType(Sample.DATA_TYPE_NAME, user);
+            drum.deleteRecords(Arrays.asList(samples), true);
+        }
+
+        drum.deleteRecords(Arrays.asList(requests), true);
+
         drum.deleteRecords(Arrays.asList(record), true);
         LOG.info(String.format("Deleted record of type: %s, with record id: %s", record.getDataTypeName(), record
                 .getRecordId()));
@@ -685,6 +854,16 @@ public class PromoteBankedTest {
         for (DataRecord createdBankedRecord : createdBankedRecords) {
             dataRecordManager.deleteDataRecords(Arrays.asList(createdBankedRecord), null, true, user);
             LOG.info(String.format("Deleted banked sample record: %s", createdBankedRecord.getRecordId()));
+        }
+    }
+
+    class BankedWithCorrectedCmoId {
+        private final DataRecord bankedDataRecord;
+        private final String cmoId;
+
+        BankedWithCorrectedCmoId(DataRecord bankedDataRecord, String cmoId) {
+            this.bankedDataRecord = bankedDataRecord;
+            this.cmoId = cmoId;
         }
     }
 }

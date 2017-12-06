@@ -1,6 +1,7 @@
 package org.mskcc.limsrest;
 
 import com.fasterxml.jackson.databind.SerializationFeature;
+import org.apache.log4j.Logger;
 import org.mskcc.domain.sample.BankedSample;
 import org.mskcc.domain.sample.Sample;
 import org.mskcc.limsrest.connection.ConnectionQueue;
@@ -20,15 +21,20 @@ import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceSampleAbbreviationRetriev
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdFormatter;
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdResolver;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.*;
+import org.mskcc.limsrest.limsapi.converter.ExternalToBankedSampleConverter;
 import org.mskcc.limsrest.limsapi.converter.SampleRecordToSampleConverter;
 import org.mskcc.limsrest.limsapi.dmp.*;
-import org.mskcc.limsrest.limsapi.dmp.converter.DMPToBankedSampleConverter;
-import org.mskcc.limsrest.limsapi.dmp.converter.StudyToCMOBankedSampleConverter;
+import org.mskcc.limsrest.limsapi.dmp.converter.DMPSampleToCMOBankedSampleConverter;
+import org.mskcc.limsrest.limsapi.promote.BankedSampleToSampleConverter;
+import org.mskcc.limsrest.limsapi.retriever.LimsDataRetriever;
+import org.mskcc.limsrest.limsapi.retriever.VeloxLimsDataRetriever;
 import org.mskcc.limsrest.limsapi.store.RecordSaver;
 import org.mskcc.limsrest.limsapi.store.VeloxRecordSaver;
 import org.mskcc.limsrest.web.*;
 import org.mskcc.util.notificator.Notificator;
 import org.mskcc.util.notificator.SlackNotificator;
+import org.mskcc.util.tumortype.OncotreeTumorTypeRetriever;
+import org.mskcc.util.tumortype.TumorTypeRetriever;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,6 +54,8 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 @EnableAutoConfiguration
 @PropertySource({"classpath:/connect.txt", "classpath:/slack.properties", "classpath:/app.properties"})
 public class App extends SpringBootServletInitializer {
+    private static final Logger LOGGER = Logger.getLogger(App.class);
+
     @Autowired
     private Environment env;
 
@@ -65,6 +73,9 @@ public class App extends SpringBootServletInitializer {
 
     @Value("${dmpRestUrl}")
     private String dmpRestUrl;
+
+    @Value("${oncotreeRestUrl}")
+    private String oncotreeRestUrl;
 
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
@@ -253,8 +264,17 @@ public class App extends SpringBootServletInitializer {
     @Bean
     @Scope("request")
     public PromoteBanked promoteBanked() {
-        return new PromoteBanked(bankedSampleToCorrectedCmoSampleIdConverter(),
-                sampleTypeCorrectedCmoSampleIdGenerator());
+        return new PromoteBanked(
+                bankedSampleToCorrectedCmoSampleIdConverter(),
+                sampleTypeCorrectedCmoSampleIdGenerator(),
+                bankedSampleToSampleConverter()
+        );
+    }
+
+    @Bean
+    @Scope("request")
+    public BankedSampleToSampleConverter bankedSampleToSampleConverter() {
+        return new BankedSampleToSampleConverter();
     }
 
     @Bean
@@ -475,7 +495,20 @@ public class App extends SpringBootServletInitializer {
     @Bean
     @Scope("request")
     public GenerateBankedSamplesFromDMP generateBankedSamplesFromDMP() {
-        return new GenerateBankedSamplesFromDMP(dmpToBankedSampleConverter(), dmpSamplesRetriever(), recordSaver());
+        return new GenerateBankedSamplesFromDMP(dmpToBankedSampleConverter(), dmpSamplesRetriever(), recordSaver(),
+                limsDataRetriever());
+    }
+
+    @Bean
+    @Scope("request")
+    public LimsDataRetriever limsDataRetriever() {
+        return new VeloxLimsDataRetriever();
+    }
+
+    @Bean
+    @Scope("request")
+    public TumorTypeRetriever tumorTypeRetriever() {
+        return new OncotreeTumorTypeRetriever(oncotreeRestUrl);
     }
 
     @Bean
@@ -492,8 +525,8 @@ public class App extends SpringBootServletInitializer {
 
     @Bean
     @Scope("request")
-    public DMPToBankedSampleConverter dmpToBankedSampleConverter() {
-        return new StudyToCMOBankedSampleConverter();
+    public ExternalToBankedSampleConverter dmpToBankedSampleConverter() {
+        return new DMPSampleToCMOBankedSampleConverter(tumorTypeRetriever());
     }
 
     @Bean
