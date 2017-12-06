@@ -15,11 +15,12 @@ import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.domain.sample.BankedSample;
 import org.mskcc.domain.sample.CmoSampleInfo;
 import org.mskcc.domain.sample.HumanSamplePredicate;
+import org.mskcc.domain.sample.Sample;
 import org.mskcc.limsrest.limsapi.cmoinfo.CorrectedCmoSampleIdGenerator;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverter;
+import org.mskcc.limsrest.limsapi.promote.BankedSampleToSampleConverter;
 import org.mskcc.limsrest.staticstrings.Constants;
 import org.mskcc.limsrest.staticstrings.Messages;
-import org.mskcc.limsrest.staticstrings.RelatedRecords;
 import org.mskcc.util.CommonUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -49,6 +50,7 @@ public class PromoteBanked extends LimsTask {
     private final CorrectedCmoIdConverter<BankedSample> bankedSampleToCorrectedCmoSampleIdConverter;
     private final CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator;
     private final HumanSamplePredicate humanSamplePredicate = new HumanSamplePredicate();
+    private final BankedSampleToSampleConverter bankedSampleToSampleConverter;
     String[] bankedIds;
     String requestId;
     String serviceId;
@@ -58,9 +60,11 @@ public class PromoteBanked extends LimsTask {
     private Multimap<String, String> errors = HashMultimap.create();
 
     public PromoteBanked(CorrectedCmoIdConverter<BankedSample> bankedSampleToCorrectedCmoSampleIdConverter,
-                         CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator) {
+                         CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator,
+                         BankedSampleToSampleConverter bankedSampleToSampleConverter) {
         this.bankedSampleToCorrectedCmoSampleIdConverter = bankedSampleToCorrectedCmoSampleIdConverter;
         this.correctedCmoSampleIdGenerator = correctedCmoSampleIdGenerator;
+        this.bankedSampleToSampleConverter = bankedSampleToSampleConverter;
     }
 
     public void init(String[] bankedIds, String projectId, String requestId, String serviceId, String igoUser, String
@@ -323,47 +327,18 @@ public class PromoteBanked extends LimsTask {
         //copy fields
         String newIgoId = requestId + "_" + Integer.toString(maxExistentId + offset);
         try {
-            DataRecord promotedSample = req.addChild("Sample", user);
-            String barcodeId = (String) bankedFields.get("BarcodeId");
-            String runType = (String) bankedFields.get("RunType");
-            String plateId = (String) bankedFields.get("PlateId");
+            DataRecord promotedSampleRecord = req.addChild("Sample", user);
+            String barcodeId = bankedSample.getBarcodeId();
+            String runType = bankedSample.getRunType();
+            String plateId = bankedSample.getPlateId();
             if (runType == null) {
                 runType = "";
             }
-            if (bankedFields.containsKey("SampleClass")) {
-                bankedFields.put("CMOSampleClass", bankedFields.get("SampleClass"));
-                bankedFields.remove("SampleClass");
-            }
-            String requestedReads = (String) bankedFields.get("RequestedReads");
-            bankedFields.remove("Promoted");
-            bankedFields.remove("PlateId");
-            bankedFields.remove("Investigator");
-            bankedFields.remove("BarcodeId");
-            bankedFields.remove("ServiceId");
-            bankedFields.remove("RunType");
-            bankedFields.remove("RowIndex");
-            bankedFields.remove("TransactionId");
-            bankedFields.remove("RequestedReads");
-            bankedFields.remove("DMPTrackingId");
-            bankedFields.remove("NonLimsLibraryOutput");
-            bankedFields.remove("NonLimsLibraryInput");
-            bankedFields.remove("NormalizedPatientId");
-            bankedFields.remove("CMOPatientId");
-            //remove micronic tube
-            bankedFields.remove(RelatedRecords.MICRONIC_TUBE_REF);
-            bankedFields.remove("NumTubes");
-            bankedFields.remove("BarcodePosition");
-            bankedFields.remove("SequencingReadLength");
-            bankedFields.put("ReceivedQuantity", bankedFields.get("Volume"));
-            bankedFields.remove("Volume");
-            bankedFields.put("ExemplarSampleType", bankedFields.get("SampleType"));
-            bankedFields.remove("SampleType");
+            Sample promotedSample = getPromotedSample(bankedSample, uuid, newIgoId, requestId);
+            String requestedReads = bankedSample.getRequestedReads();
 
-            String tissueSite = (String) bankedFields.get("TissueSite");
-            bankedFields.put("TissueLocation", tissueSite);
-            bankedFields.remove("TissueSite");
-            log.info("using uuid:" + uuid);
-            bankedFields.put("AltId", uuid);
+            promotedSampleRecord.setFields(promotedSample.getFields(), user);
+
             if (plateId != null && !plateId.equals("")) {
                 DataRecord plate;
                 if (plateId2Plate.containsKey(plateId)) {
@@ -380,15 +355,12 @@ public class PromoteBanked extends LimsTask {
                         plateId2Plate.put(plateId, plate);
                     }
                 }
-                plate.addChild(promotedSample, user);
+                plate.addChild(promotedSampleRecord, user);
             }
             if (barcodeId != null && !barcodeId.equals("") && !barcodeId2Sequence.containsKey(barcodeId)) {
                 throw new LimsException("The LIMS does not know about the barcode " + barcodeId + ". Please make sure" +
                         " to the list of barcodes is up-to-date");
             }
-            bankedFields.put("SampleId", newIgoId);
-            bankedFields.put("ExemplarSampleStatus", "Received");
-            promotedSample.setFields(bankedFields, user);
 
             if (barcodeId != null && !barcodeId.equals("")) {
                 Map<String, Object> bcFields = new HashMap<>();
@@ -399,7 +371,7 @@ public class PromoteBanked extends LimsTask {
                 bcFields.put("IndexTag", barcodeId2Sequence.get(barcodeId));
                 bcFields.put("IndexPrimerVolume", 10.0);
                 bcFields.put("ResuspensionBufferVolume", 10.0);
-                promotedSample.addChild("IndexBarcode", bcFields, user);
+                promotedSampleRecord.addChild("IndexBarcode", bcFields, user);
             }
 
             if (bankedFields.containsKey("TumorOrNormal") && "Tumor".equals(bankedFields.get("TumorOrNormal"))) {
@@ -409,7 +381,7 @@ public class PromoteBanked extends LimsTask {
             }
 
             Map<String, Object> cmoFields = getCmoFields(bankedFields, correctedCmoSampleId, requestId, newIgoId, uuid);
-            promotedSample.addChild("SampleCMOInfoRecords", cmoFields, user);
+            promotedSampleRecord.addChild("SampleCMOInfoRecords", cmoFields, user);
 
             Map<String, Object> srFields = new HashMap<>();
             srFields.put("OtherSampleId", otherSampleId);
@@ -433,9 +405,14 @@ public class PromoteBanked extends LimsTask {
                 }
                 srFields.put("RequestedReads", rrMapped);
             }
-            promotedSample.addChild("SeqRequirement", srFields, user);
+            promotedSampleRecord.addChild("SeqRequirement", srFields, user);
 
         } catch (NullPointerException npe) {}
+    }
+
+    private Sample getPromotedSample(BankedSample bankedSample, String uuid, String newIgoId, String
+            assignedRequestId) {
+        return bankedSampleToSampleConverter.convert(bankedSample, uuid, newIgoId, assignedRequestId);
     }
 
     private Map<String, Object> getCmoFields(Map<String, Object> bankedFields, String correctedCmoSampleId, String
@@ -449,6 +426,10 @@ public class PromoteBanked extends LimsTask {
         cmoFields.put(CmoSampleInfo.CORRECTED_CMOID, correctedCmoSampleId);
 
         cmoFields.put(CmoSampleInfo.CORRECTED_INVEST_PATIENT_ID, bankedFields.get(BankedSample.PATIENT_ID));
+
+        cmoFields.put(CmoSampleInfo.DMPLIBRARY_INPUT, bankedFields.getOrDefault(BankedSample.NON_LIMS_LIBRARY_INPUT,
+                ""));
+        cmoFields.put(CmoSampleInfo.DMPLIBRARY_OUTPUT, bankedFields.getOrDefault(BankedSample.NON_LIMS_LIBRARY_OUTPUT, ""));
 
         cmoFields.put(CmoSampleInfo.ESTIMATED_PURITY, bankedFields.get(BankedSample.ESTIMATED_PURITY));
         cmoFields.put(CmoSampleInfo.GENDER, bankedFields.get(BankedSample.GENDER));
