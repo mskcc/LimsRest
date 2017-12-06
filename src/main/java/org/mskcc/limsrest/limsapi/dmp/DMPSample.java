@@ -1,7 +1,7 @@
 package org.mskcc.limsrest.limsapi.dmp;
 
-public class Study {
-    private final String studyId;
+public class DMPSample {
+    private final String studySampleId;
 
     private Double concentration;
     private Double dnaInputIntoLibrary;
@@ -25,12 +25,12 @@ public class Study {
     private String tumorType;
     private String wellPosition;
 
-    public Study(String studyId) {
-        this.studyId = studyId;
+    public DMPSample(String studySampleId) {
+        this.studySampleId = studySampleId;
     }
 
-    public String getStudyId() {
-        return studyId;
+    public String getStudySampleId() {
+        return studySampleId;
     }
 
     public String getTumorType() {
