@@ -681,8 +681,8 @@ public class PromoteBankedTest {
                 assertThat(promotedSample.getStringVal(Sample.CONCENTRATION_UNITS, user), is(bankedSample
                         .getStringVal(BankedSample.CONCENTRATION_UNITS, user)));
 
-                assertThat(promotedSample.getStringVal(Sample.ESTIMATED_PURITY, user), is(bankedSample
-                        .getStringVal(BankedSample.ESTIMATED_PURITY, user)));
+                assertThat(promotedSample.getDoubleVal(Sample.ESTIMATED_PURITY, user), is(bankedSample
+                        .getDoubleVal(BankedSample.ESTIMATED_PURITY, user)));
                 assertThat(promotedSample.getStringVal(Sample.EXEMPLAR_SAMPLE_TYPE, user), is(bankedSample
                         .getStringVal(BankedSample.SAMPLE_TYPE, user)));
                 assertThat(promotedSample.getStringVal(Sample.EXEMPLAR_SAMPLE_STATUS, user), is(Constants.RECEIVED));

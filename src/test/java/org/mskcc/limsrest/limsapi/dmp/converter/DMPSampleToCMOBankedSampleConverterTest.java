@@ -22,7 +22,7 @@ public class DMPSampleToCMOBankedSampleConverterTest {
     private static final String TUMOR_TYPE = "Some tumor type";
     private static final String TUMOR_CODE = "CODE";
     private static final String TISSUE_TYPE = "Tissue";
-    private final DMPSample DMPSample = new DMPSample("43543_FD");
+    private final DMPSample dmpSample = new DMPSample("43543_FD");
     private TumorTypeRetriever tumorTypeRetriever = mock(TumorTypeRetriever.class);
     private ExternalToBankedSampleConverter externalToBankedSampleConverter;
     private long transactionId = 1234565436;
@@ -36,22 +36,22 @@ public class DMPSampleToCMOBankedSampleConverterTest {
     @Test
     public void whenStringFieldsAreNotAvailable_shouldBeLeftBlank() throws Exception {
         //given
-        DMPSample.setBarcodePlateId(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
-        DMPSample.setCollectionYear(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
-        DMPSample.setIndex(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
-        DMPSample.setInvestigatorSampleId(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
-        DMPSample.setNucleidAcidType(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
-        DMPSample.setDmpId(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
-        DMPSample.setPiName(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
-        DMPSample.setPreservation(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
-        DMPSample.setSampleClass(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
-        DMPSample.setSex(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
-        DMPSample.setSpecimenType(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
-        DMPSample.setTumorType(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
-        DMPSample.setWellPosition(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
+        dmpSample.setBarcodePlateId(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
+        dmpSample.setCollectionYear(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
+        dmpSample.setIndex(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
+        dmpSample.setInvestigatorSampleId(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
+        dmpSample.setNucleidAcidType(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
+        dmpSample.setDmpId(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
+        dmpSample.setPiName(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
+        dmpSample.setPreservation(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
+        dmpSample.setSampleClass(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
+        dmpSample.setSex(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
+        dmpSample.setSpecimenType(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
+        dmpSample.setTumorType(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
+        dmpSample.setWellPosition(CMOSampleRequestDetailsResponse.Content.NOT_AVAILABLE);
 
         //when
-        BankedSample bankedSample = externalToBankedSampleConverter.convert(DMPSample, transactionId);
+        BankedSample bankedSample = externalToBankedSampleConverter.convert(dmpSample, transactionId);
 
         //then
         assertThat(bankedSample.getBarcodeId(), is(""));
@@ -76,7 +76,7 @@ public class DMPSampleToCMOBankedSampleConverterTest {
         //given
 
         //when
-        BankedSample bankedSample = externalToBankedSampleConverter.convert(DMPSample, transactionId);
+        BankedSample bankedSample = externalToBankedSampleConverter.convert(dmpSample, transactionId);
 
         //then
         assertNull(bankedSample.getVolume());
@@ -90,6 +90,8 @@ public class DMPSampleToCMOBankedSampleConverterTest {
         assertWellPosition("D14", "D", "14", 100 * 14 + 3);
         assertWellPosition("H45", "H", "45", 100 * 45 + 7);
         assertWellPosition("Z145", "Z", "145", 100 * 145 + 25);
+        assertWellPosition("a1", "a", "1", 100 * 1 + 0);
+        assertWellPosition("g56", "g", "56", 100 * 56 + 6);
     }
 
     @Test
@@ -167,28 +169,30 @@ public class DMPSampleToCMOBankedSampleConverterTest {
         String sampleClass = "Primary";
         String sex = "M";
         String specimenType = "Blood";
+        String trackingId = "6435gfdgd";
         String wellPosition = "A12";
 
-        DMPSample.setBarcodePlateId(barcodeOrPlateId);
-        DMPSample.setCollectionYear(collectionYear);
-        DMPSample.setConcentration(concentration);
-        DMPSample.setDmpId(patientId + "-something-whatever");
-        DMPSample.setDnaInputIntoLibrary(dnaInputIntoLib);
-        DMPSample.setIndex(index);
-        DMPSample.setInvestigatorSampleId(investigatorSampleId);
-        DMPSample.setNucleidAcidType(nucleidAcid);
-        DMPSample.setPiName(piName);
-        DMPSample.setPreservation(preservation);
-        DMPSample.setReceivedDnaMass(receivedDnaMass);
-        DMPSample.setSampleClass(sampleClass);
-        DMPSample.setSex(sex);
-        DMPSample.setSpecimenType(specimenType);
-        DMPSample.setTumorType(String.format("%s:%s", TISSUE_TYPE, TUMOR_TYPE));
-        DMPSample.setVolume(volume);
-        DMPSample.setWellPosition(wellPosition);
+        dmpSample.setBarcodePlateId(barcodeOrPlateId);
+        dmpSample.setCollectionYear(collectionYear);
+        dmpSample.setConcentration(concentration);
+        dmpSample.setDmpId(patientId + "-something-whatever");
+        dmpSample.setDnaInputIntoLibrary(dnaInputIntoLib);
+        dmpSample.setIndex(index);
+        dmpSample.setInvestigatorSampleId(investigatorSampleId);
+        dmpSample.setNucleidAcidType(nucleidAcid);
+        dmpSample.setPiName(piName);
+        dmpSample.setPreservation(preservation);
+        dmpSample.setReceivedDnaMass(receivedDnaMass);
+        dmpSample.setSampleClass(sampleClass);
+        dmpSample.setSex(sex);
+        dmpSample.setSpecimenType(specimenType);
+        dmpSample.setTumorType(String.format("%s:%s", TISSUE_TYPE, TUMOR_TYPE));
+        dmpSample.setTrackingId(trackingId);
+        dmpSample.setVolume(volume);
+        dmpSample.setWellPosition(wellPosition);
 
         //when
-        BankedSample bankedSample = externalToBankedSampleConverter.convert(DMPSample, transactionId);
+        BankedSample bankedSample = externalToBankedSampleConverter.convert(dmpSample, transactionId);
 
         //then
         assertThat(bankedSample.getBarcodeId(), is("IDT5"));
@@ -197,6 +201,7 @@ public class DMPSampleToCMOBankedSampleConverterTest {
         assertThat(bankedSample.getConcentration(), is(concentration));
         assertThat(bankedSample.getConcentrationUnits(), is(CMOSampleRequestDetailsResponse.Content
                 .CONCENTRATION_UNITS));
+        assertThat(bankedSample.getDMPTrackingId(), is(trackingId));
         assertThat(bankedSample.getGender(), is(sex));
         assertThat(bankedSample.getInvestigator(), is(piName));
         assertThat(bankedSample.getNAtoExtract(), is(nucleidAcid));
@@ -209,6 +214,7 @@ public class DMPSampleToCMOBankedSampleConverterTest {
         assertThat(bankedSample.getRowIndex(), is(1200));
         assertThat(bankedSample.getRowPosition(), is("A"));
         assertThat(bankedSample.getSampleClass(), is(sampleClass));
+        assertThat(bankedSample.getServiceId(), is(trackingId));
         assertThat(bankedSample.getSpecimenType(), is(specimenType));
         assertThat(bankedSample.getTumorOrNormal(), is(Constants.TUMOR));
         assertThat(bankedSample.getTumorType(), is(TUMOR_CODE));
@@ -219,10 +225,10 @@ public class DMPSampleToCMOBankedSampleConverterTest {
     @Test
     public void whenSpecimenTypeIsBiopsy_shouldCapitalizeThisValue() throws Exception {
         //given
-        DMPSample.setSpecimenType("biopsy");
+        dmpSample.setSpecimenType("biopsy");
 
         //when
-        BankedSample bankedSample = externalToBankedSampleConverter.convert(DMPSample, transactionId);
+        BankedSample bankedSample = externalToBankedSampleConverter.convert(dmpSample, transactionId);
 
         //then
         assertThat(bankedSample.getSpecimenType(), is(SpecimenType.BIOPSY.getValue()));
@@ -231,10 +237,10 @@ public class DMPSampleToCMOBankedSampleConverterTest {
     @Test
     public void whenSpecimenTypeIsResection_shouldCapitalizeThisValue() throws Exception {
         //given
-        DMPSample.setSpecimenType("resection");
+        dmpSample.setSpecimenType("resection");
 
         //when
-        BankedSample bankedSample = externalToBankedSampleConverter.convert(DMPSample, transactionId);
+        BankedSample bankedSample = externalToBankedSampleConverter.convert(dmpSample, transactionId);
 
         //then
         assertThat(bankedSample.getSpecimenType(), is(SpecimenType.RESECTION.getValue()));
@@ -243,10 +249,10 @@ public class DMPSampleToCMOBankedSampleConverterTest {
     @Test
     public void whenSampleClassIsMetastatic_shouldChangeItToMetastasis() throws Exception {
         //given
-        DMPSample.setSampleClass("Metastatic");
+        dmpSample.setSampleClass("Metastatic");
 
         //when
-        BankedSample bankedSample = externalToBankedSampleConverter.convert(DMPSample, transactionId);
+        BankedSample bankedSample = externalToBankedSampleConverter.convert(dmpSample, transactionId);
 
         //then
         assertThat(bankedSample.getSampleClass(), is(SampleClass.METASTASIS.getValue()));
@@ -255,10 +261,10 @@ public class DMPSampleToCMOBankedSampleConverterTest {
     @Test
     public void whenPreservationIsFFPE_shouldSetSampleOriginToBlock() throws Exception {
         //given
-        DMPSample.setPreservation("FFPE");
+        dmpSample.setPreservation("FFPE");
 
         //when
-        BankedSample bankedSample = externalToBankedSampleConverter.convert(DMPSample, transactionId);
+        BankedSample bankedSample = externalToBankedSampleConverter.convert(dmpSample, transactionId);
 
         //then
         assertThat(bankedSample.getSampleOrigin(), is(SampleOrigin.BLOCK.getValue()));
@@ -267,10 +273,10 @@ public class DMPSampleToCMOBankedSampleConverterTest {
     @Test
     public void whenPreservationIsBlood_shouldSetSampleOriginToWholeBlood() throws Exception {
         //given
-        DMPSample.setPreservation("Blood");
+        dmpSample.setPreservation("Blood");
 
         //when
-        BankedSample bankedSample = externalToBankedSampleConverter.convert(DMPSample, transactionId);
+        BankedSample bankedSample = externalToBankedSampleConverter.convert(dmpSample, transactionId);
 
         //then
         assertThat(bankedSample.getSampleOrigin(), is(SampleOrigin.WHOLE_BLOOD.getValue()));

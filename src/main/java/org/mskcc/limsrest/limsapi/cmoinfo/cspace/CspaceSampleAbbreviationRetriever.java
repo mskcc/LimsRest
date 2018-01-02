@@ -109,7 +109,7 @@ public class CspaceSampleAbbreviationRetriever implements SampleAbbreviationRetr
         String sampleTypeAbbrev = sampleClassToAbbreviation.get(correctedCmoSampleView.getSampleClass());
 
         LOGGER.info(String.format("Found mapping for Sample Class %s => %s for sample: %s", correctedCmoSampleView
-                .getSpecimenType(), sampleTypeAbbrev, correctedCmoSampleView.getId()));
+                .getSampleClass(), sampleTypeAbbrev, correctedCmoSampleView.getId()));
 
         return sampleTypeAbbrev;
     }

@@ -42,9 +42,30 @@ public class GenerateBankedSamplesFromDMPTest {
     }
 
     @Test
+    public void whenTrackingIdIsNotInCorrectFormat_shouldNotSaveAnyBankedSamples() throws Exception {
+        //given
+        String trackingId1 = "someId; update someting and break everything";
+        LocalDate date = LocalDate.of(2017, 11, 20);
+        List<String> trackingIds = Arrays.asList(trackingId1);
+        when(dmpSamplesRetriever.retrieveTrackingIds(date)).thenReturn(trackingIds);
+
+        when(limsDataRetriever.getBankedSamples(any(), any(), any())).thenReturn(Collections.emptyList());
+
+        List<DMPSample> tracking1DMPSamples = Arrays.asList(getDmpSample("id11", "i1"));
+        when(dmpSamplesRetriever.getDMPSamples(trackingId1)).thenReturn(tracking1DMPSamples);
+        generateBankedSamplesFromDMP.init(date);
+
+        //when
+        generateBankedSamplesFromDMP.execute(mock(VeloxConnection.class));
+
+        //then
+        assertThat(recordSaverSpy.createdBankedSamples.values().size(), is(0));
+    }
+
+    @Test
     public void whenOneTrackingIdNotProcessed_shouldSaveOneBankedSample() throws Exception {
         //given
-        String trackingId1 = "1";
+        String trackingId1 = "20170405MS";
         LocalDate date = LocalDate.of(2017, 11, 20);
         List<String> trackingIds = Arrays.asList(trackingId1);
         when(dmpSamplesRetriever.retrieveTrackingIds(date)).thenReturn(trackingIds);
