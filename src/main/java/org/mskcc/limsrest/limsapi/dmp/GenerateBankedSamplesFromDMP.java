@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 public class GenerateBankedSamplesFromDMP extends LimsTask {
     private static final Logger LOGGER = Logger.getLogger(GenerateBankedSamplesFromDMP.class);
 
+    private static final String TRACKING_ID_REGEX = "[a-zA-Z0-9_-]+";
     private final ExternalToBankedSampleConverter externalToBankedSampleConverter;
     private final DMPSamplesRetriever dmpSamplesRetriever;
     private final RecordSaver recordSaver;
@@ -83,19 +84,29 @@ public class GenerateBankedSamplesFromDMP extends LimsTask {
 
     private boolean shouldProcess(String trackingId) {
         try {
+            validateTrackingId(trackingId);
+
             String query = String.format("%s = '%s'", BankedSample.DMP_TRACKING_ID, trackingId);
             List<BankedSample> bankedSamples = limsDataRetriever.getBankedSamples(query, dataRecordManager, user);
+
             if (bankedSamples.size() == 0)
                 return true;
+            else
+                LOGGER.info(String.format("DMP tracking id: %s has already been processed and converted to Banked " +
+                        "Samples. Banked Samples for this tracking id won't be created", trackingId));
         } catch (Exception e) {
-            LOGGER.warn(String.format("Unable to check if tracking id: %s has already been process. This tracking id " +
-                    "will be processed anyway", trackingId));
+            LOGGER.warn(String.format("Unable to check if tracking id: \"%s\" has already been processed.",
+                    trackingId), e);
         }
 
-        LOGGER.info(String.format("DMP tracking id: %s has already been processed and converted to Banked Samples or " +
-                "it " +
-                "was impossible to verify that. Banked Samples for this tracking id won't be created", trackingId));
         return false;
+    }
+
+    private void validateTrackingId(String trackingId) {
+        if (!trackingId.matches(TRACKING_ID_REGEX)) {
+            throw new RuntimeException(String.format("DMP Tracking id: \"%s\" is not in correct format: %s Banked " +
+                    "Samples for that DMP Tracking id won't be created.", trackingId, TRACKING_ID_REGEX));
+        }
     }
 
     private void createBankedSamples(String trackingId, long transactionId) {
