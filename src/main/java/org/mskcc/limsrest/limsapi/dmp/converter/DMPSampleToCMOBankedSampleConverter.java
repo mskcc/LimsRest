@@ -17,9 +17,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DMPSampleToCMOBankedSampleConverter implements ExternalToBankedSampleConverter<DMPSample> {
+    public static final String BARCODE_ID_REGEX = "([A-Za-z]+)(0*)([0-9]+)";
+    public static final String PATIENT_ID_REGEX = "(P-[0-9]{7})-.*";
+    public static final int ROW_INDEX_OFFSET = 100;
     private static final Logger LOGGER = Logger.getLogger(DMPSampleToCMOBankedSampleConverter.class);
-
-    private static final String WELL_POSITION_REGEX = "([A-Z])([0-9]+)";
+    private static final String WELL_POSITION_REGEX = "([a-zA-Z])([0-9]+)";
     private Map<String, String> tumorTypeToCode;
 
     public DMPSampleToCMOBankedSampleConverter(TumorTypeRetriever tumorTypeRetriever) {
@@ -57,7 +59,7 @@ public class DMPSampleToCMOBankedSampleConverter implements ExternalToBankedSamp
 
         bankedSample.setConcentration(dmpSample.getConcentration());
         bankedSample.setConcentrationUnits(CMOSampleRequestDetailsResponse.Content.CONCENTRATION_UNITS);
-        bankedSample.setServiceId(dmpSample.getTrackingId());
+        bankedSample.setDMPTrackingId(dmpSample.getTrackingId());
         bankedSample.setGender(getValue(dmpSample.getSex()));
         bankedSample.setInvestigator(getValue(dmpSample.getPiName()));
         bankedSample.setNAtoExtract(getNucleidAcid(dmpSample.getNucleidAcidType()));
@@ -118,7 +120,7 @@ public class DMPSampleToCMOBankedSampleConverter implements ExternalToBankedSamp
         if (StringUtils.isEmpty(index))
             return "";
 
-        Pattern pattern = Pattern.compile("([A-Za-z]+)(0*)([0-9]+)");
+        Pattern pattern = Pattern.compile(BARCODE_ID_REGEX);
         Matcher matcher = pattern.matcher(index);
 
         if (matcher.matches()) {
@@ -136,14 +138,48 @@ public class DMPSampleToCMOBankedSampleConverter implements ExternalToBankedSamp
         return index;
     }
 
+    /**
+     * getRowIndex creates index for ordering samples on one plate. Each sample on one plate should have associated
+     * different rowIndex.
+     * <p>
+     * It maps:
+     * columnPosition = columnPosition * @ROW_INDEX_OFFSET
+     * eg. for ROW_INDEX_OFFSET = 100:
+     * 1 -> 100
+     * 2 -> 200
+     * .....
+     * 12 -> 1200
+     * <p>
+     * rowPosition = ASCII(upperCase(rowPosition)) - 'A'
+     * eg.:
+     * A -> 0
+     * a -> 0
+     * B -> 1
+     * b -> 1
+     * ....
+     * Z -> 25
+     * z -> 25
+     * <p>
+     * Mapped column position and row position are summed together to create rowIndex.
+     * getRowIndex returns the same value for lower and upper case row positions.
+     * eg.:
+     * "a1" -> 100
+     * "A1" -> 100
+     *
+     * @param wellPosition contains row and column position of sample on a plate
+     * @return rowIndex associated with row and column position in order: A1,B1,C1...H1,A2,B2,C2...H2,A3,B3,C3...H3,
+     * A12,B12,C12...H12
+     * <p>
+     * If wellPosition is null value "-1" is returned.
+     */
     private int getRowIndex(WellPosition wellPosition) {
         if (wellPosition == null)
             return -1;
 
-        char row = wellPosition.row;
+        char row = Character.toUpperCase(wellPosition.row);
         int column = wellPosition.column;
 
-        int rowIndex = column * 100 + (row - (int) 'A');
+        int rowIndex = column * ROW_INDEX_OFFSET + (row - (int) 'A');
         return rowIndex;
     }
 
@@ -165,7 +201,7 @@ public class DMPSampleToCMOBankedSampleConverter implements ExternalToBankedSamp
             return "";
         }
 
-        Pattern pattern = Pattern.compile("(P-[0-9]{7})-.*");
+        Pattern pattern = Pattern.compile(PATIENT_ID_REGEX);
         Matcher matcher = pattern.matcher(dmpId);
 
         if (!matcher.matches()) {
@@ -187,7 +223,7 @@ public class DMPSampleToCMOBankedSampleConverter implements ExternalToBankedSamp
             Matcher matcher = pattern.matcher(wellPosition);
 
             if (matcher.matches()) {
-                char rowPosition = matcher.group(1).toUpperCase().charAt(0);
+                char rowPosition = matcher.group(1).charAt(0);
                 int columnPosition = Integer.parseInt(matcher.group(2));
                 return new WellPosition(rowPosition, columnPosition);
             }
