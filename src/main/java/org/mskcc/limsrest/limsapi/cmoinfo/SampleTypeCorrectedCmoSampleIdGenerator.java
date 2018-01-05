@@ -4,9 +4,9 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.user.User;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.CorrectedCmoSampleView;
-import org.mskcc.limsrest.limsapi.LimsException;
 import org.mskcc.limsrest.limsapi.PatientSamplesRetriever;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.CmoSampleIdRetriever;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.CmoSampleIdRetrieverFactory;
@@ -16,6 +16,7 @@ import org.mskcc.util.notificator.Notificator;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.mskcc.domain.sample.SpecimenType.CELLLINE;
@@ -25,7 +26,7 @@ import static org.mskcc.domain.sample.SpecimenType.CELLLINE;
  * In case of Cmo Sample Id generation error notification will be sent.
  */
 public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSampleIdGenerator {
-    private static final Logger LOGGER = Logger.getLogger(SampleTypeCorrectedCmoSampleIdGenerator.class);
+    private final static Log LOGGER = LogFactory.getLog(SampleTypeCorrectedCmoSampleIdGenerator.class);
 
     private final CmoSampleIdRetrieverFactory cmoSampleIdRetrieverFactory;
     private final Multimap<String, CorrectedCmoSampleView> generatedSamples = HashMultimap.create();
@@ -42,7 +43,7 @@ public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSamp
 
     @Override
     public synchronized String generate(CorrectedCmoSampleView correctedCmoSampleView, String requestId,
-                                        DataRecordManager dataRecordManager, User user) throws LimsException {
+                                        DataRecordManager dataRecordManager, User user) {
         try {
             String patientId = correctedCmoSampleView.getPatientId();
             CommonUtils.requireNonNullNorEmpty(patientId, String.format("Patient id is not set for sample: %s",
@@ -55,26 +56,50 @@ public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSamp
                     (correctedCmoSampleView);
 
             cmoSampleViews.addAll(generatedSamples.get(patientId));
-            String cmoSampleId = cmoSampleIdRetriever.retrieve(correctedCmoSampleView, getAllNonCellLineViews
-                    (cmoSampleViews), requestId);
+            LOGGER.info(String.format("Added %d samples for patient %s generated during current run for cmo id " +
+                    "generation: %s", generatedSamples.size(), patientId, generatedSamples.values()));
+
+            List<CorrectedCmoSampleView> filteredViews = getFilteredCmoViews(correctedCmoSampleView, cmoSampleViews);
+            String cmoSampleId = cmoSampleIdRetriever.retrieve(correctedCmoSampleView, filteredViews, requestId);
 
             correctedCmoSampleView.setCorrectedCmoId(cmoSampleId);
             generatedSamples.put(patientId, correctedCmoSampleView);
 
             return cmoSampleId;
-        } catch (LimsException e) {
-            notifyAboutCorrectedCmoIdFailure(correctedCmoSampleView, requestId, e);
-            throw e;
         } catch (Exception e) {
             notifyAboutCorrectedCmoIdFailure(correctedCmoSampleView, requestId, e);
-            throw new LimsException(e.getMessage(), e);
+            throw new RuntimeException(e);
         }
     }
 
-    private List<CorrectedCmoSampleView> getAllNonCellLineViews(List<CorrectedCmoSampleView> cmoSampleViews) {
-        return cmoSampleViews.stream()
-                .filter(v -> v.getSpecimenType() != CELLLINE)
+    private List<CorrectedCmoSampleView> getFilteredCmoViews(CorrectedCmoSampleView correctedCmoSampleView,
+                                                             List<CorrectedCmoSampleView> cmoSampleViews) {
+        List<CorrectedCmoSampleView> cmoSampleViewWithoutCurrent = removeCurrent(cmoSampleViews,
+                correctedCmoSampleView);
+        return removeCellLineViews(cmoSampleViewWithoutCurrent);
+    }
+
+    private List<CorrectedCmoSampleView> removeCurrent(List<CorrectedCmoSampleView> cmoSampleViews,
+                                                       CorrectedCmoSampleView correctedCmoSampleView) {
+        List<CorrectedCmoSampleView> filteredCmoViews = cmoSampleViews.stream()
+                .filter(s -> !Objects.equals(s.getId(), correctedCmoSampleView.getId()))
                 .collect(Collectors.toList());
+        return filteredCmoViews;
+    }
+
+    private List<CorrectedCmoSampleView> removeCellLineViews(List<CorrectedCmoSampleView> cmoSampleViews) {
+        List<CorrectedCmoSampleView> cellLines = cmoSampleViews.stream()
+                .filter(v -> v.getSpecimenType() == CELLLINE)
+                .collect(Collectors.toList());
+
+        if (cellLines.size() > 0)
+            LOGGER.info(String.format("Omitting cell lines samples: %s", cellLines));
+
+        List<CorrectedCmoSampleView> nonCellLines = cmoSampleViews.stream()
+                .filter(s -> !cellLines.contains(s))
+                .collect(Collectors.toList());
+
+        return nonCellLines;
     }
 
     private void notifyAboutCorrectedCmoIdFailure(CorrectedCmoSampleView correctedCmoSampleView, String requestId,

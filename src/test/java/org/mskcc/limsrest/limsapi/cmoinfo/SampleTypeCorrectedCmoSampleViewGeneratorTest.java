@@ -57,7 +57,7 @@ public class SampleTypeCorrectedCmoSampleViewGeneratorTest {
     @Test
     public void whenThereAreNoPatientSamples_shouldReturnCmoIdWithNumber1() throws Exception {
         when(samplesRetriever.retrieve(any(), any(), any())).thenReturn(Collections.emptyList());
-        CorrectedCmoSampleView sample = getSample("4324", "1235", SpecimenType.XENOGRAFT, NucleicAcid.DNA);
+        CorrectedCmoSampleView sample = getSample("4324", "C-1235", SpecimenType.XENOGRAFT, NucleicAcid.DNA);
 
         String cmoId = sampleTypeCorrectedCmoSampleIdGenerator.generate(sample, "5432_P", drm, user);
 
@@ -69,7 +69,7 @@ public class SampleTypeCorrectedCmoSampleViewGeneratorTest {
         String requestId = "5432_P";
         when(samplesRetriever.retrieve(any(), any(), any())).thenReturn(Arrays.asList(getSample("C-1235-X001-d",
                 requestId)));
-        CorrectedCmoSampleView sample = getSample("4324", "1235", SpecimenType.XENOGRAFT, NucleicAcid.DNA);
+        CorrectedCmoSampleView sample = getSample("4324", "C-1235", SpecimenType.XENOGRAFT, NucleicAcid.DNA);
 
         String cmoId = sampleTypeCorrectedCmoSampleIdGenerator.generate(sample, requestId, drm, user);
 
@@ -82,7 +82,7 @@ public class SampleTypeCorrectedCmoSampleViewGeneratorTest {
         String requestId = "5432_P";
         when(samplesRetriever.retrieve(any(), any(), any())).thenReturn(Arrays.asList(getSample("C-1235-X012-d",
                 requestId)));
-        CorrectedCmoSampleView sample = getSample("4324", "1235", SpecimenType.XENOGRAFT, NucleicAcid.DNA);
+        CorrectedCmoSampleView sample = getSample("4324", "C-1235", SpecimenType.XENOGRAFT, NucleicAcid.DNA);
 
 
         String cmoId = sampleTypeCorrectedCmoSampleIdGenerator.generate(sample, requestId, drm, user);
@@ -95,7 +95,7 @@ public class SampleTypeCorrectedCmoSampleViewGeneratorTest {
     public void whenThereIsOnePatientSampleFromDifferentRequest_shouldReturnCmoIdWithNumber2() throws Exception {
         when(samplesRetriever.retrieve(any(), any(), any())).thenReturn(Arrays.asList(getSample("C-1235-X001-d",
                 "1234_A")));
-        CorrectedCmoSampleView sample = getSample("4324", "1235", SpecimenType.PDX, NucleicAcid.RNA);
+        CorrectedCmoSampleView sample = getSample("4324", "C-1235", SpecimenType.PDX, NucleicAcid.RNA);
 
         //when
         String cmoId = sampleTypeCorrectedCmoSampleIdGenerator.generate(sample, "5432_P", drm, user);
@@ -109,7 +109,7 @@ public class SampleTypeCorrectedCmoSampleViewGeneratorTest {
     whenThereAreNoPatientSamplesButOneWasAlreadyCreatedFromSameRequestSameSpecimenSampleNucl_shouldReturnCmoIdWithNumber2() throws Exception {
         //given
         when(samplesRetriever.retrieve(any(), any(), any())).thenReturn(new ArrayList<>());
-        String patientId = "1235";
+        String patientId = "C-1235";
         String requestId = "5432_P";
         CorrectedCmoSampleView sample1 = getSample("4324_1", patientId, SpecimenType.XENOGRAFT, NucleicAcid.DNA);
         CorrectedCmoSampleView sample2 = getSample("4324_2", patientId, SpecimenType.XENOGRAFT, NucleicAcid.DNA);
@@ -129,7 +129,7 @@ public class SampleTypeCorrectedCmoSampleViewGeneratorTest {
     whenThereAreNoPatientSamplesButOneWasAlreadyCreatedFromSameRequestSameSpecimenDifferentNucl_shouldReturnCmoIdWithNumber2() throws Exception {
         //given
         when(samplesRetriever.retrieve(any(), any(), any())).thenReturn(new ArrayList<>());
-        String patientId = "1235";
+        String patientId = "C-1235";
         String requestId = "5432_P";
         CorrectedCmoSampleView sample1 = getSample("4324_1", patientId, SpecimenType.XENOGRAFT, NucleicAcid.DNA);
         CorrectedCmoSampleView sample2 = getSample("4324_2", patientId, SpecimenType.XENOGRAFT, NucleicAcid.RNA);
@@ -150,7 +150,7 @@ public class SampleTypeCorrectedCmoSampleViewGeneratorTest {
             throws Exception {
         //given
         when(samplesRetriever.retrieve(any(), any(), any())).thenReturn(new ArrayList<>());
-        String patientId = "1235";
+        String patientId = "C-1235";
         String requestId = "5432_P";
         CorrectedCmoSampleView sample1 = getSample("4324_1", patientId, SpecimenType.XENOGRAFT, NucleicAcid.DNA);
         CorrectedCmoSampleView sample2 = getSample("4324_2", patientId, SpecimenType.PDX, NucleicAcid.DNA);
@@ -169,7 +169,7 @@ public class SampleTypeCorrectedCmoSampleViewGeneratorTest {
     public void
     whenThereAreNoPatientSamplesButOneWasAlreadyCreatedFromDifferentRequestsSampleSpecimen_shouldReturnCmoIdWithNumber2() throws Exception {
         when(samplesRetriever.retrieve(any(), any(), any())).thenReturn(new ArrayList<>());
-        String patientId = "1235";
+        String patientId = "C-1235";
         CorrectedCmoSampleView sample1 = getSample("4324_1", patientId, SpecimenType.ORGANOID, NucleicAcid.DNA);
         CorrectedCmoSampleView sample2 = getSample("4324_2", patientId, SpecimenType.ORGANOID, NucleicAcid.DNA);
 
@@ -181,9 +181,10 @@ public class SampleTypeCorrectedCmoSampleViewGeneratorTest {
     }
 
     private CorrectedCmoSampleView getSample(String correctedId, String reqId) {
-        CorrectedCmoSampleView sample = new CorrectedCmoSampleView("4324");
+        CorrectedCmoSampleView sample = new CorrectedCmoSampleView("5656");
         sample.setCorrectedCmoId(correctedId);
         sample.setRequestId(reqId);
+        sample.setSpecimenType(SpecimenType.XENOGRAFT);
 
         return sample;
     }

@@ -75,9 +75,9 @@ public class PromoteBankedTest {
     private static final String requestId2 = "PromoteBankedTest_B";
     private static final String normalizedRequestId2 = "PromoteBankedTestB";
     private static PromoteBanked promoteBanked;
-    private final String patientId1 = "promoteBankedTestPatient1";
-    private final String patientId2 = "promoteBankedTestPatient2";
-    private final String patientId3 = "promoteBankedTestPatient3";
+    private final String patientId1 = "C-promoteBankedTestPatient1";
+    private final String patientId2 = "C-promoteBankedTestPatient2";
+    private final String patientId3 = "C-promoteBankedTestPatient3";
     private List<DataRecord> createdBankedRecords;
     private VeloxConnection connection;
     private DataRecordManager dataRecordManager;
@@ -86,6 +86,7 @@ public class PromoteBankedTest {
     private DataRecordUtilManager drum;
     private VeloxStandaloneManagerContext managerContext;
     private DataRecord projectRecord;
+    private int id = 0;
 
     @Before
     public void setUp() throws Exception {
@@ -135,6 +136,20 @@ public class PromoteBankedTest {
     }
 
     @Test
+    public void whenCellFreeSampleIsPromoted_shouldPromoteBankedSampleWithNoCmoId() throws Exception {
+        //given
+        promoteSample(patientId3, SpecimenType.SALIVA, Optional.of(PLASMA), Optional.of(CELL_FREE), requestId1,
+                SAMPLE_ID4, OTHER_SAMPLE_ID2, requestId1, serviceId, projectId);
+
+        //then
+        assertPromoteSample(ImmutableMap.<String, List<String>>builder()
+                .put(
+                        requestId1,
+                        Collections.singletonList(""))
+                .build());
+    }
+
+    @Test
     public void whenMultipleCellLineSamplesArePromotedForSamePatient_shouldAssignCorrectedCmoId() throws Exception {
         //given
         DataRecord banked1 = addPromoteBanked(patientId1, CELLLINE, DNA, requestId1, USER_SAMP_ID1, OTHER_SAMPLE_ID1);
@@ -166,7 +181,7 @@ public class PromoteBankedTest {
         promoteSample(patientId1, ORGANOID, requestId1, SAMPLE_ID1, OTHER_SAMPLE_ID1, requestId1, serviceId, projectId);
 
         //then
-        List<String> correctedCmoIds = Arrays.asList(String.format("C-%s-%s%s-%s", patientId1, "G", "001", "d"));
+        List<String> correctedCmoIds = Arrays.asList(String.format("%s-%s%s-%s", patientId1, "G", "001", "d"));
 
         Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
         requestToCorrectedCmoIds.put(requestId1, correctedCmoIds);
@@ -181,7 +196,7 @@ public class PromoteBankedTest {
                 requestId1, serviceId, projectId);
 
         //then
-        List<String> correctedCmoIds = Arrays.asList(String.format("C-%s-%s%s-%s", patientId1, "U", "001", "d"));
+        List<String> correctedCmoIds = Arrays.asList(String.format("%s-%s%s-%s", patientId1, "U", "001", "d"));
 
         Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
         requestToCorrectedCmoIds.put(requestId1, correctedCmoIds);
@@ -196,7 +211,7 @@ public class PromoteBankedTest {
                 projectId);
 
         //then
-        List<String> correctedCmoIds = Arrays.asList(String.format("C-%s-%s%s-%s", patientId1, "G", "001", "d"));
+        List<String> correctedCmoIds = Arrays.asList(String.format("%s-%s%s-%s", patientId1, "G", "001", "d"));
 
         Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
         requestToCorrectedCmoIds.put(requestId1, correctedCmoIds);
@@ -215,8 +230,8 @@ public class PromoteBankedTest {
         promoteSample(patientId, ORGANOID, requestId1, "sample_2", "otherId_2", requestId1, serviceId, projectId);
 
         //then
-        List<String> correctedCmoIds = Arrays.asList(String.format("C-%s-%s%s-%s", patientId, "G", "001",
-                "d"), String.format("C-%s-%s%s-%s", patientId, "G", "002", "d"));
+        List<String> correctedCmoIds = Arrays.asList(String.format("%s-%s%s-%s", patientId, "G", "001",
+                "d"), String.format("%s-%s%s-%s", patientId, "G", "002", "d"));
 
         Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
         requestToCorrectedCmoIds.put(requestId1, correctedCmoIds);
@@ -241,7 +256,7 @@ public class PromoteBankedTest {
         //then
         List<String> correctedCmoIds = Arrays.asList(
                 String.format("%s-%s", cellLineSampleId, normalizedRequestId1),
-                String.format("C-%s-%s%s-%s", patientId, "X", "001", "d")
+                String.format("%s-%s%s-%s", patientId, "X", "001", "d")
         );
 
         Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
@@ -264,8 +279,8 @@ public class PromoteBankedTest {
 
         //then
         List<String> correctedCmoIds = Arrays.asList(
-                String.format("C-%s-%s%s-%s", patientId1, "G", "001", "d"),
-                String.format("C-%s-%s%s-%s", patientId2, "G", "001", "d")
+                String.format("%s-%s%s-%s", patientId1, "G", "001", "d"),
+                String.format("%s-%s%s-%s", patientId2, "G", "001", "d")
         );
 
         Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
@@ -286,9 +301,9 @@ public class PromoteBankedTest {
 
         //then
         Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
-        requestToCorrectedCmoIds.put(requestId1, Arrays.asList(String.format("C-%s-%s%s-%s", patientId, "G", "001",
+        requestToCorrectedCmoIds.put(requestId1, Arrays.asList(String.format("%s-%s%s-%s", patientId, "G", "001",
                 "d")));
-        requestToCorrectedCmoIds.put(requestId2, Arrays.asList(String.format("C-%s-%s%s-%s", patientId, "G", "002",
+        requestToCorrectedCmoIds.put(requestId2, Arrays.asList(String.format("%s-%s%s-%s", patientId, "G", "002",
                 "d")));
 
         assertPromoteSample(requestToCorrectedCmoIds);
@@ -316,12 +331,12 @@ public class PromoteBankedTest {
         Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
         requestToCorrectedCmoIds.put(PromoteBankedTest.requestId1,
                 Arrays.asList(
-                        String.format("C-%s-%s%s-%s", patientId, "G", "001", "d"),
-                        String.format("C-%s-%s%s-%s", patientId, "G", "002", "d"),
-                        String.format("C-%s-%s%s-%s", patientId, "G", "003", "d")
+                        String.format("%s-%s%s-%s", patientId, "G", "001", "d"),
+                        String.format("%s-%s%s-%s", patientId, "G", "002", "d"),
+                        String.format("%s-%s%s-%s", patientId, "G", "003", "d")
                 ));
 
-        requestToCorrectedCmoIds.put(requestId2, Arrays.asList(String.format("C-%s-%s%s-%s", patientId, "G", "004",
+        requestToCorrectedCmoIds.put(requestId2, Arrays.asList(String.format("%s-%s%s-%s", patientId, "G", "004",
                 "d")));
 
         assertPromoteSample(requestToCorrectedCmoIds);
@@ -338,8 +353,8 @@ public class PromoteBankedTest {
         promoteSample(patientId, PDX, requestId1, "sample_2", "otherId_2", requestId1, serviceId, projectId);
 
         //then
-        List<String> correctedCmoIds = Arrays.asList(String.format("C-%s-%s%s-%s", patientId, "X", "001",
-                "d"), String.format("C-%s-%s%s-%s", patientId, "X", "002", "d"));
+        List<String> correctedCmoIds = Arrays.asList(String.format("%s-%s%s-%s", patientId, "X", "001",
+                "d"), String.format("%s-%s%s-%s", patientId, "X", "002", "d"));
 
         Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
         requestToCorrectedCmoIds.put(requestId1, correctedCmoIds);
@@ -362,8 +377,8 @@ public class PromoteBankedTest {
         promoteBanked.call();
 
         //then
-        List<String> correctedCmoIds = Arrays.asList(String.format("C-%s-%s%s-%s", patientId, "X", "001",
-                "d"), String.format("C-%s-%s%s-%s", patientId, "X", "002", "r"));
+        List<String> correctedCmoIds = Arrays.asList(String.format("%s-%s%s-%s", patientId, "X", "001",
+                "d"), String.format("%s-%s%s-%s", patientId, "X", "002", "r"));
 
         Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
         requestToCorrectedCmoIds.put(requestId1, correctedCmoIds);
@@ -383,8 +398,8 @@ public class PromoteBankedTest {
         promoteBanked.call();
 
         //then
-        List<String> correctedCmoIds = Arrays.asList(String.format("C-%s-%s%s-%s", patientId1, "G", "001",
-                "d"), String.format("C-%s-%s%s-%s", patientId1, "G", "002", "d"));
+        List<String> correctedCmoIds = Arrays.asList(String.format("%s-%s%s-%s", patientId1, "G", "001",
+                "d"), String.format("%s-%s%s-%s", patientId1, "G", "002", "d"));
 
         Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
         requestToCorrectedCmoIds.put(requestId1, correctedCmoIds);
@@ -411,9 +426,9 @@ public class PromoteBankedTest {
         //then
         List<String> correctedCmoIds = Arrays.asList(
                 String.format("%s-%s", SAMPLE_ID1, normalizedRequestId1),
-                String.format("C-%s-%s%s-%s", patientId, "X", "001", "d"),
-                String.format("C-%s-%s%s-%s", patientId, "X", "002", "d"),
-                String.format("C-%s-%s%s-%s", patientId, "G", "001", "r")
+                String.format("%s-%s%s-%s", patientId, "X", "001", "d"),
+                String.format("%s-%s%s-%s", patientId, "X", "002", "d"),
+                String.format("%s-%s%s-%s", patientId, "G", "001", "r")
         );
 
         Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
@@ -426,21 +441,24 @@ public class PromoteBankedTest {
     public void whenMultipleSamplesArePromotedAtOnce_shouldSetCorrectedCmoId() throws
             Exception {
         //given
+        String cellLineId1 = getNextSampleId();
+        String cellLineId2 = getNextSampleId();
+
         List<DataRecord> bankedToPromote1 = new ArrayList<DataRecord>() {{
-            add(addPromoteBanked(patientId1, CELLLINE, DNA, requestId1, SAMPLE_ID1, OTHER_SAMPLE_ID1));
-            add(addPromoteBanked(patientId1, ORGANOID, DNA, requestId1, SAMPLE_ID2, OTHER_SAMPLE_ID2));
-            add(addPromoteBanked(patientId3, SALIVA, Optional.of(PLASMA), Optional.of(CELL_FREE), DNA,
-                    requestId1, SAMPLE_ID4, OTHER_SAMPLE_ID2));
+            add(addPromoteBanked(patientId1, CELLLINE, DNA, requestId1, cellLineId1, OTHER_SAMPLE_ID1));
+            add(addPromoteBanked(patientId1, ORGANOID, DNA, requestId1, getNextSampleId(), OTHER_SAMPLE_ID2));
+            add(addPromoteBanked(patientId3, SpecimenType.SALIVA, Optional.of(PLASMA), Optional.of(CELL_FREE), DNA,
+                    requestId1, getNextSampleId(), OTHER_SAMPLE_ID2));
             add(addPromoteBanked(patientId3, CFDNA, Optional.of(WHOLE_BLOOD), DNA,
-                    requestId1, SAMPLE_ID4, OTHER_SAMPLE_ID2));
+                    requestId1, getNextSampleId(), OTHER_SAMPLE_ID2));
             add(addPromoteBanked(patientId3, RAPIDAUTOPSY, Optional.of(WHOLE_BLOOD), Optional.of(NORMAL), DNA,
-                    requestId1, SAMPLE_ID4, OTHER_SAMPLE_ID2));
+                    requestId1, getNextSampleId(), OTHER_SAMPLE_ID2));
             add(addPromoteBanked(patientId3, RAPIDAUTOPSY, Optional.of(WHOLE_BLOOD), Optional.of(ADJACENT_NORMAL), DNA,
-                    requestId1, SAMPLE_ID4, OTHER_SAMPLE_ID2));
+                    requestId1, getNextSampleId(), OTHER_SAMPLE_ID2));
             add(addPromoteBanked(patientId3, CFDNA, Optional.of(CEREBROSPINAL_FLUID), Optional.of(LOCAL_RECURRENCE),
                     RNA,
-                    requestId1, "sample6", OTHER_SAMPLE_ID2));
-            add(addPromoteBanked(patientId3, CELLLINE, DNA, requestId1, SAMPLE_ID2, OTHER_SAMPLE_ID2));
+                    requestId1, getNextSampleId(), OTHER_SAMPLE_ID2));
+            add(addPromoteBanked(patientId3, CELLLINE, DNA, requestId1, cellLineId2, OTHER_SAMPLE_ID2));
         }};
 
         initPromoteBanked(bankedToPromote1, requestId1, serviceId, projectId);
@@ -448,10 +466,10 @@ public class PromoteBankedTest {
 
         //when
         List<DataRecord> bankedToPromote2 = new ArrayList<DataRecord>() {{
-            add(addPromoteBanked(patientId2, CFDNA, Optional.of(URINE), DNA, requestId2, SAMPLE_ID3,
+            add(addPromoteBanked(patientId2, CFDNA, Optional.of(URINE), DNA, requestId2, getNextSampleId(),
                     OTHER_SAMPLE_ID2));
             add(addPromoteBanked(patientId3, RAPIDAUTOPSY, Optional.of(CEREBROSPINAL_FLUID), Optional.of
-                    (ADJACENT_TISSUE), DNA, requestId2, "sample5", OTHER_SAMPLE_ID3));
+                    (ADJACENT_TISSUE), DNA, requestId2, getNextSampleId(), OTHER_SAMPLE_ID3));
         }};
 
         initPromoteBanked(bankedToPromote2, requestId2, serviceId, projectId);
@@ -459,19 +477,19 @@ public class PromoteBankedTest {
 
         //then
         List<String> req1CorrectedCmoIds = Arrays.asList(
-                String.format("%s-%s", SAMPLE_ID1, normalizedRequestId1),
-                String.format("C-%s-%s%s-%s", patientId1, "G", "001", "d"),
-                String.format("C-%s-%s%s-%s", patientId3, "L", "001", "d"),
-                String.format("C-%s-%s%s-%s", patientId3, "L", "002", "d"),
-                String.format("C-%s-%s%s-%s", patientId3, "N", "001", "d"),
-                String.format("C-%s-%s%s-%s", patientId3, "N", "002", "d"),
-                String.format("C-%s-%s%s-%s", patientId3, "S", "001", "r"),
-                String.format("%s-%s", SAMPLE_ID2, normalizedRequestId1)
+                String.format("%s-%s", cellLineId1, normalizedRequestId1),
+                String.format("%s-%s%s-%s", patientId1, "G", "001", "d"),
+                "",
+                String.format("%s-%s%s-%s", patientId3, "L", "001", "d"),
+                String.format("%s-%s%s-%s", patientId3, "N", "001", "d"),
+                String.format("%s-%s%s-%s", patientId3, "N", "002", "d"),
+                String.format("%s-%s%s-%s", patientId3, "S", "001", "r"),
+                String.format("%s-%s", cellLineId2, normalizedRequestId1)
         );
 
         List<String> req2CorrectedCmoIds = Arrays.asList(
-                String.format("C-%s-%s%s-%s", patientId2, "U", "001", "d"),
-                String.format("C-%s-%s%s-%s", patientId3, "T", "001", "d")
+                String.format("%s-%s%s-%s", patientId2, "U", "001", "d"),
+                String.format("%s-%s%s-%s", patientId3, "T", "001", "d")
         );
 
         Map<String, List<String>> requestToCorrectedCmoIds = new HashMap<>();
@@ -479,6 +497,10 @@ public class PromoteBankedTest {
         requestToCorrectedCmoIds.put(requestId2, req2CorrectedCmoIds);
 
         assertPromoteSample(requestToCorrectedCmoIds);
+    }
+
+    private String getNextSampleId() {
+        return "sample_id" + (id++);
     }
 
     private void promoteSample(String patientId, SpecimenType specimenType, Optional<SampleOrigin> sampleOrigin,

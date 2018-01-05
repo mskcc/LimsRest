@@ -126,6 +126,26 @@ public class IncrementalSampleCounterRetrieverTest {
                 .SampleCounterOverflowException.class));
     }
 
+    @Test
+    public void whenSampleCmoIdListContainsOneElementWithEmptyCmoId_shouldReturnOne() throws Exception {
+        List<CorrectedCmoSampleView> sampleCmoIds = Arrays.asList(getSample(""));
+        String sampleClassAbbr = "N";
+
+        int sampleCount = incrementalSampleCounterRetriever.retrieve(sampleCmoIds, sampleClassAbbr);
+
+        assertThat(sampleCount, is(1));
+    }
+
+    @Test
+    public void whenSampleCmoIdListContainsOneElementWithNullCmoId_shouldReturnOne() throws Exception {
+        List<CorrectedCmoSampleView> sampleCmoIds = Arrays.asList(getSample(null));
+        String sampleClassAbbr = "N";
+
+        int sampleCount = incrementalSampleCounterRetriever.retrieve(sampleCmoIds, sampleClassAbbr);
+
+        assertThat(sampleCount, is(1));
+    }
+
     private class ConverterFactoryMock implements CorrectedCmoIdConverterFactory {
         @Override
         public StringToSampleCmoIdConverter getConverter(String correctedCmoSampleId) {

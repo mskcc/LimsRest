@@ -29,4 +29,12 @@ public class CellLineCmoSampleId implements CmoSampleId {
     public String getRequestId() {
         return requestId;
     }
+
+    @Override
+    public String toString() {
+        return "CellLineCmoSampleId{" +
+                "sampleId='" + sampleId + '\'' +
+                ", requestId='" + requestId + '\'' +
+                '}';
+    }
 }

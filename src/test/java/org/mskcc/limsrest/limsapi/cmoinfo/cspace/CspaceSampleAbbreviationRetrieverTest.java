@@ -50,11 +50,14 @@ public class CspaceSampleAbbreviationRetrieverTest {
         assertSampleTypeAbbrev(SpecimenType.BLOOD, SampleOrigin.WHOLE_BLOOD, SampleClass.NORMAL, "N");
         assertSampleTypeAbbrev(SpecimenType.BIOPSY, SampleOrigin.WHOLE_BLOOD, SampleClass.ADJACENT_NORMAL, "N");
         assertSampleTypeAbbrev(SpecimenType.BLOOD, SampleOrigin.WHOLE_BLOOD, SampleClass.ADJACENT_TISSUE, "T");
+    }
 
-        assertSampleTypeAbbrev(SpecimenType.RAPIDAUTOPSY, SampleOrigin.URINE, SampleClass.CELL_FREE, "U");
-        assertSampleTypeAbbrev(SpecimenType.RAPIDAUTOPSY, SampleOrigin.CEREBROSPINAL_FLUID, SampleClass.CELL_FREE, "S");
-        assertSampleTypeAbbrev(SpecimenType.RAPIDAUTOPSY, SampleOrigin.PLASMA, SampleClass.CELL_FREE, "L");
-        assertSampleTypeAbbrev(SpecimenType.RAPIDAUTOPSY, SampleOrigin.WHOLE_BLOOD, SampleClass.CELL_FREE, "L");
+    @Test
+    public void whenSampleisCellFree_shouldThrowAnException() throws Exception {
+        Optional<Exception> exception = TestUtils.assertThrown(() -> assertSampleTypeAbbrev(SpecimenType.RAPIDAUTOPSY,
+                SampleOrigin.URINE, SampleClass.CELL_FREE, "U"));
+
+        assertThat(exception.isPresent(), is(true));
     }
 
     private void assertSampleTypeAbbrev(SpecimenType specimenType, SampleOrigin sampleOrigin, SampleClass sampleClass,

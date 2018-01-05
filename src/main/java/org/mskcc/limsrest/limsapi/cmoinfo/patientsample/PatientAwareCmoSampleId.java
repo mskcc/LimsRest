@@ -76,4 +76,14 @@ public class PatientAwareCmoSampleId implements CmoSampleId {
         result = 31 * result + (nucleicAcid != null ? nucleicAcid.hashCode() : 0);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "PatientAwareCmoSampleId{" +
+                "patientId='" + patientId + '\'' +
+                ", sampleTypeAbbr='" + sampleTypeAbbr + '\'' +
+                ", sampleCount=" + sampleCount +
+                ", nucleicAcid='" + nucleicAcid + '\'' +
+                '}';
+    }
 }

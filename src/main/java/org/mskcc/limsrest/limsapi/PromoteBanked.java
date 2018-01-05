@@ -326,6 +326,9 @@ public class PromoteBanked extends LimsTask {
             bankedFields.remove("RowIndex");
             bankedFields.remove("TransactionId");
             bankedFields.remove("RequestedReads");
+            bankedFields.remove("DMPTrackingId");
+            bankedFields.remove("NonLimsLibraryOutput");
+            bankedFields.remove("NonLimsLibraryInput");
             //remove micronic tube
             bankedFields.remove(RelatedRecords.MICRONIC_TUBE_REF);
             bankedFields.remove("NumTubes");
@@ -421,7 +424,7 @@ public class PromoteBanked extends LimsTask {
         cmoFields.put(CmoSampleInfo.ALT_ID, bankedFields.get("AltId"));
         cmoFields.put(CmoSampleInfo.CLINICAL_INFO, bankedFields.get("ClinicalInfo"));
         cmoFields.put(CmoSampleInfo.CMO_PATIENT_ID, bankedFields.get("PatientId"));
-        cmoFields.put(CmoSampleInfo.CMOSAMPLE_CLASS, bankedFields.get(BankedSample.SAMPLE_CLASS));
+        cmoFields.put(CmoSampleInfo.CMOSAMPLE_CLASS, bankedFields.get("CMOSampleClass"));
         cmoFields.put(CmoSampleInfo.COLLECTION_YEAR, bankedFields.get("CollectionYear"));
         cmoFields.put(CmoSampleInfo.CORRECTED_CMOID, correctedCmoSampleId);
 

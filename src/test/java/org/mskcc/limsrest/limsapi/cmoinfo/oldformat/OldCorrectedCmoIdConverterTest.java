@@ -5,6 +5,7 @@ import org.mskcc.domain.CorrectedCmoSampleView;
 import org.mskcc.domain.sample.NucleicAcid;
 import org.mskcc.domain.sample.SpecimenType;
 import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceSampleAbbreviationRetriever;
+import org.mskcc.limsrest.limsapi.cmoinfo.cspace.SpecimenTypeSampleAbbreviationResolver;
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientAwareCmoSampleId;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleAbbreviationRetriever;
 
@@ -56,7 +57,7 @@ public class OldCorrectedCmoIdConverterTest {
                 (sample)));
         assertThat(patientAwareCmoSampleId.getPatientId(), is(sample.getPatientId()));
         assertThat(patientAwareCmoSampleId.getSampleCount(), is(count));
-        assertThat(patientAwareCmoSampleId.getSampleTypeAbbr(), is(CspaceSampleAbbreviationRetriever
+        assertThat(patientAwareCmoSampleId.getSampleTypeAbbr(), is(SpecimenTypeSampleAbbreviationResolver
                 .getSpecimenTypeToAbbreviation().get(specimenType)));
     }
 
