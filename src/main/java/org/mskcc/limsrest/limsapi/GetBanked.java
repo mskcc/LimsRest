@@ -143,6 +143,10 @@ public class GetBanked  extends LimsTask
         try{ ss.setBarcodeId(sample.getStringVal("BarcodeId", user)); } catch(NullPointerException npe) {}
         try{ss.setRecipe(sample.getStringVal("Recipe", user)); } catch(NullPointerException npe) {}
         try{ss.setTumorType(sample.getStringVal("TumorType", user)); } catch(NullPointerException npe) {}
+        try{ss.setTumorType(sample.getStringVal("SpecimenType", user)); } catch(NullPointerException npe) {}
+        try{ss.setTumorType(sample.getStringVal("RequestedReads", user)); } catch(NullPointerException npe) {}
+        try{ss.setTumorType(sample.getStringVal("RunType", user)); } catch(NullPointerException npe) {}
+        try{ss.setTumorType(sample.getStringVal("SampleClass", user)); } catch(NullPointerException npe) {}
         if("ERROR".equals(ss.getBaseId())){
             ss.addBaseId("");
         }
