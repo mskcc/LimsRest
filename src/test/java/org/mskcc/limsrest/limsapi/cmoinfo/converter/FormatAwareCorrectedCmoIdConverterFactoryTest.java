@@ -3,11 +3,14 @@ package org.mskcc.limsrest.limsapi.cmoinfo.converter;
 import org.hamcrest.object.IsCompatibleType;
 import org.junit.Test;
 import org.mskcc.limsrest.limsapi.cmoinfo.cspace.PatientAwareCorrectedCmoIdConverter;
-import org.mskcc.limsrest.limsapi.cmoinfo.noformat.NoFormatCorrectedCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.oldformat.OldCorrectedCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleAbbreviationRetriever;
+import org.mskcc.util.TestUtils;
+
+import java.util.Optional;
 
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 public class FormatAwareCorrectedCmoIdConverterFactoryTest {
@@ -33,11 +36,11 @@ public class FormatAwareCorrectedCmoIdConverterFactoryTest {
     }
 
     @Test
-    public void whenCorrectedCmoIdIsInNoSpecifiedFormat_shouldReturnNoFormatConverter() throws Exception {
-        assertConverterType("gsg-gd543-12", NoFormatCorrectedCmoIdConverter.class);
-        assertConverterType("a12s", NoFormatCorrectedCmoIdConverter.class);
-        assertConverterType("12345", NoFormatCorrectedCmoIdConverter.class);
-        assertConverterType("gdgfd-02", NoFormatCorrectedCmoIdConverter.class);
+    public void whenCorrectedCmoIdIsInNoSpecifiedFormat_shouldThrowAnException() throws Exception {
+        assertExceptionThrown("gsg-gd543-12");
+        assertExceptionThrown("a12s");
+        assertExceptionThrown("12345");
+        assertExceptionThrown("gdgfd-02");
     }
 
     private void assertConverterType(String correctedCmoId, Class<? extends StringToSampleCmoIdConverter>
@@ -45,6 +48,15 @@ public class FormatAwareCorrectedCmoIdConverterFactoryTest {
         StringToSampleCmoIdConverter converter = formatAwareCorrectedCmoIdConverterFactory.getConverter(correctedCmoId);
 
         assertThat(converter.getClass(), IsCompatibleType.typeCompatibleWith(converterClass));
+    }
+
+    private void assertExceptionThrown(String correctedCmoId) {
+        Optional<Exception> exception = TestUtils.assertThrown(() -> formatAwareCorrectedCmoIdConverterFactory
+                .getConverter(correctedCmoId));
+
+        assertTrue(exception.isPresent());
+        assertThat(exception.get().getClass(), IsCompatibleType.typeCompatibleWith
+                (FormatAwareCorrectedCmoIdConverterFactory.UnsupportedCmoIdFormatException.class));
     }
 
 }

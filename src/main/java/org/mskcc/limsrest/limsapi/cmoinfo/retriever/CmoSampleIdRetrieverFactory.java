@@ -1,11 +1,12 @@
 package org.mskcc.limsrest.limsapi.cmoinfo.retriever;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.CorrectedCmoSampleView;
 import org.mskcc.domain.sample.SpecimenType;
 
 public class CmoSampleIdRetrieverFactory {
-    private static final Logger LOGGER = Logger.getLogger(CmoSampleIdRetrieverFactory.class);
+    private final static Log LOGGER = LogFactory.getLog(CmoSampleIdRetrieverFactory.class);
 
     private final CmoSampleIdRetriever patientCmoSampleIdRetriever;
     private final CmoSampleIdRetriever cellLineCmoSampleIdRetriever;
@@ -22,6 +23,7 @@ public class CmoSampleIdRetrieverFactory {
             return cellLineCmoSampleIdRetriever;
         }
 
+        LOGGER.info(String.format("Sample: %s is NOT CellLine", correctedCmoSampleView.getId()));
         return patientCmoSampleIdRetriever;
     }
 

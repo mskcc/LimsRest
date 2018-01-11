@@ -1,17 +1,22 @@
 package org.mskcc.limsrest.limsapi.cmoinfo.retriever;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.CorrectedCmoSampleView;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverterFactory;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.StringToSampleCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientAwareCmoSampleId;
 import org.mskcc.limsrest.staticstrings.Constants;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.OptionalLong;
 import java.util.stream.Collectors;
 
 public class IncrementalSampleCounterRetriever implements SampleCounterRetriever {
+    public static final int DEFAULT_COUNTER = 1;
+    private final static Log LOGGER = LogFactory.getLog(IncrementalSampleCounterRetriever.class);
     private final CorrectedCmoIdConverterFactory correctedCmoIdConverterFactory;
 
     public IncrementalSampleCounterRetriever(CorrectedCmoIdConverterFactory correctedCmoIdConverterFactory) {
@@ -20,21 +25,40 @@ public class IncrementalSampleCounterRetriever implements SampleCounterRetriever
 
     @Override
     public int retrieve(List<CorrectedCmoSampleView> patientCorrectedViews, String sampleClassAbbr) {
-        List<PatientAwareCmoSampleId> cmoSampleIds = patientCorrectedViews.stream()
-                .map(sampleCmoView -> {
-                    StringToSampleCmoIdConverter converter = correctedCmoIdConverterFactory.getConverter
-                            (sampleCmoView.getCorrectedCmoId());
-                    return converter.convert(sampleCmoView);
-                })
+        List<PatientAwareCmoSampleId> cmoSampleIds = new ArrayList<>();
+
+        LOGGER.info(String.format("Resolving sample counter out of patient samples: %s", patientCorrectedViews));
+
+        for (CorrectedCmoSampleView sampleCmoView : patientCorrectedViews) {
+            try {
+                StringToSampleCmoIdConverter converter = correctedCmoIdConverterFactory.getConverter
+                        (sampleCmoView.getCorrectedCmoId());
+
+                PatientAwareCmoSampleId patientAwareCmoSampleId = converter.convert(sampleCmoView);
+                cmoSampleIds.add(patientAwareCmoSampleId);
+            } catch (Exception e) {
+                LOGGER.warn(String.format("Error while retrieving information about current patient's sample: %s. " +
+                        "This sample won't be counted to retrieve sample counter", sampleCmoView.getId()), e);
+            }
+        }
+
+        List<PatientAwareCmoSampleId> samplesWithSameAbbr = cmoSampleIds.stream()
+                .filter(s -> Objects.equals(s.getSampleTypeAbbr(), sampleClassAbbr))
                 .collect(Collectors.toList());
 
-        OptionalLong maxSampleCount = cmoSampleIds.stream()
-                .filter(s -> Objects.equals(s.getSampleTypeAbbr(), sampleClassAbbr))
+        LOGGER.info(String.format("Found %d samples with current sample's abbreviation \"%s\": %s",
+                samplesWithSameAbbr.size(), sampleClassAbbr, samplesWithSameAbbr));
+
+        OptionalLong maxSampleCount = samplesWithSameAbbr.stream()
                 .mapToLong(PatientAwareCmoSampleId::getSampleCount)
                 .max();
 
         if (maxSampleCount.isPresent()) {
+            LOGGER.info(String.format("Max current counter found: %d", maxSampleCount.getAsLong()));
             long nextCounter = maxSampleCount.getAsLong() + 1;
+
+            LOGGER.info(String.format("Next counter to be set: %d", nextCounter));
+
             if (nextCounter >= Constants.SAMPLE_COUNT_MAX_VALUE)
                 throw new SampleCounterOverflowException(String.format("Sample counter (%s) exceeds maximum supported" +
                         " value: %s", nextCounter, Constants.SAMPLE_COUNT_MAX_VALUE));
@@ -42,13 +66,21 @@ public class IncrementalSampleCounterRetriever implements SampleCounterRetriever
             return Math.toIntExact(nextCounter);
         }
 
-        return 1;
+        LOGGER.info(String.format("No other samples found for patient %s with sample abbreviation %s. Setting default" +
+                " counter value: %d", getPatientId(patientCorrectedViews), sampleClassAbbr, DEFAULT_COUNTER));
+
+        return DEFAULT_COUNTER;
+    }
+
+    private String getPatientId(List<CorrectedCmoSampleView> patientCorrectedViews) {
+        if (patientCorrectedViews.size() == 0)
+            return "";
+        return patientCorrectedViews.get(0).getPatientId();
     }
 
     public class SampleCounterOverflowException extends RuntimeException {
         public SampleCounterOverflowException(String message) {
             super(message);
-
         }
     }
 }

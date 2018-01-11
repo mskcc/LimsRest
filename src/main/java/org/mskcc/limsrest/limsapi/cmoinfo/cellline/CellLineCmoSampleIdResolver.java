@@ -19,6 +19,9 @@ public class CellLineCmoSampleIdResolver implements CmoSampleIdResolver<CellLine
     }
 
     private String normalizeRequestId(String requestId) {
-        return requestId.replaceAll("_", "");
+        String normalized = requestId.replaceAll("_", "");
+        log.info(String.format("Normalizing request %s. Normalized name: %s", requestId, normalized));
+
+        return normalized;
     }
 }

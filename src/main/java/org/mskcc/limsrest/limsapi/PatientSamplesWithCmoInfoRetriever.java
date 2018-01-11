@@ -5,6 +5,8 @@ import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.CorrectedCmoSampleView;
 import org.mskcc.domain.sample.Sample;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverter;
@@ -20,6 +22,8 @@ import java.util.List;
  * PatientSamplesWithCmoInfoRetriever retrieves all samples for given patient from LIMS
  */
 public class PatientSamplesWithCmoInfoRetriever implements PatientSamplesRetriever {
+    private final static Log LOGGER = LogFactory.getLog(PatientSamplesWithCmoInfoRetriever.class);
+
     private final CorrectedCmoIdConverter<Sample> sampleToCorrectedCmoIdConverter;
     private final SampleRecordToSampleConverter sampleRecordToSampleConverter;
 
@@ -34,11 +38,15 @@ public class PatientSamplesWithCmoInfoRetriever implements PatientSamplesRetriev
             throws LimsException {
         CommonUtils.requireNonNullNorEmpty(patientId, "Patient id cannot be empty");
 
+        LOGGER.info(String.format("Retrieving samples for patient: %s needed to resolve CMO Sample Id counter",
+                patientId));
+
         try {
             List<CorrectedCmoSampleView> cmoSampleViews = new ArrayList<>();
             for (DataRecord sampleRecord : getSampleRecords(patientId, dataRecordManager, user))
                 cmoSampleViews.add(getCorrectedCmoSampleView(sampleRecord, user));
 
+            LOGGER.info(String.format("Found %d samples for patient %s: %s", cmoSampleViews.size(), patientId, cmoSampleViews));
             return cmoSampleViews;
         } catch (NotFound | RemoteException | IoError e) {
             throw new LimsException(String.format("Unable to retrieve samples for patient: %s. Cause: %s", patientId,
@@ -50,7 +58,7 @@ public class PatientSamplesWithCmoInfoRetriever implements PatientSamplesRetriev
             throws NotFound, IoError, RemoteException, LimsException {
         List<DataRecord> samples = new ArrayList<>();
         List<DataRecord> sampleInfoRecords = dataRecordManager.queryDataRecords(VeloxConstants
-                .SAMPLE_CMO_INFO_RECORDS, "PatientId = '" + patientId + "'", user);
+                .SAMPLE_CMO_INFO_RECORDS, "CmoPatientId = '" + patientId + "'", user);
 
         for (DataRecord sampleInfoRecord : sampleInfoRecords) {
             List<DataRecord> parentSamples = sampleInfoRecord.getParentsOfType(VeloxConstants.SAMPLE, user);
@@ -70,6 +78,9 @@ public class PatientSamplesWithCmoInfoRetriever implements PatientSamplesRetriev
         String sampleId = "";
         try {
             sampleId = sampleRecord.getStringVal(Sample.SAMPLE_ID, user);
+
+            LOGGER.info(String.format("Found sample %s. Retrieving information needed to generate CMO Sample Id", sampleId));
+
             Sample sample = sampleRecordToSampleConverter.convert(sampleRecord, user);
             return sampleToCorrectedCmoIdConverter.convert(sample);
         } catch (Exception e) {

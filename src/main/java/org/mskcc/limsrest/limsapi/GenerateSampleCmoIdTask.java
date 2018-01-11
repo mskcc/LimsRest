@@ -11,8 +11,6 @@ import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverter;
 import org.mskcc.limsrest.limsapi.converter.SampleRecordToSampleConverter;
 import org.mskcc.util.VeloxConstants;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
@@ -43,37 +41,35 @@ public class GenerateSampleCmoIdTask extends LimsTask {
 
     @PreAuthorize("hasRole('ADMIN')")
     @Override
-    public ResponseEntity<String> execute(VeloxConnection conn) {
-        try {
-            CorrectedCmoSampleView correctedCmoSampleView = getCorrectedCmoSampleView();
-            return ResponseEntity.ok(correctedCmoSampleIdGenerator.generate(correctedCmoSampleView,
-                    correctedCmoSampleView
-                    .getRequestId(), dataRecordManager, user));
-        } catch (Exception e) {
-            String message = String.format("Unable to generate corrected cmo sample id for sample: %s",
-                    sampleIgoId);
-            log.error(message, e);
+    public String execute(VeloxConnection conn) {
+        CorrectedCmoSampleView correctedCmoSampleView = getCorrectedCmoSampleView();
 
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        }
+        String cmoId = correctedCmoSampleIdGenerator.generate(correctedCmoSampleView,
+                correctedCmoSampleView.getRequestId(), dataRecordManager, user);
+
+        return cmoId;
     }
 
-    private CorrectedCmoSampleView getCorrectedCmoSampleView() throws LimsException {
+    private CorrectedCmoSampleView getCorrectedCmoSampleView() {
         try {
             List<DataRecord> sampleRecords = dataRecordManager.queryDataRecords(VeloxConstants.SAMPLE, "SampleId = '"
                     + sampleIgoId + "'", user);
 
             if (sampleRecords.size() == 0)
-                throw new LimsException(String.format("No sample found with id: %s", sampleIgoId));
+                throw new RuntimeException(String.format("No sample found with id: %s", sampleIgoId));
             if (sampleRecords.size() > 1)
-                throw new LimsException(String.format("Multiple samples found with id: %s", sampleIgoId));
+                throw new RuntimeException(String.format("Multiple samples found with id: %s", sampleIgoId));
 
             DataRecord sampleRecord = sampleRecords.get(0);
             Sample sample = sampleRecordToSampleConverter.convert(sampleRecord, user);
 
-            return sampleToCorrectedCmoIdConverter.convert(sample);
+            CorrectedCmoSampleView correctedCmoSampleView = sampleToCorrectedCmoIdConverter.convert(sample);
+
+            log.info(String.format("Converted corrected cmo sample view: %s", correctedCmoSampleView));
+
+            return correctedCmoSampleView;
         } catch (Exception e) {
-            throw new LimsException(e);
+            throw new RuntimeException(e);
         }
     }
 

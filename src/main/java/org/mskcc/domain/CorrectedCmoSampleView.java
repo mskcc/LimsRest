@@ -19,7 +19,7 @@ public class CorrectedCmoSampleView {
     private SampleOrigin sampleOrigin;
     private SpecimenType specimenType;
     private NucleicAcid nucleidAcid;
-    private String correctedCmoId;
+    private String correctedCmoId = "";
 
     public CorrectedCmoSampleView(String id) {
         CommonUtils.requireNonNullNorEmpty(id, String.format("Id is not set"));
@@ -92,5 +92,20 @@ public class CorrectedCmoSampleView {
 
     public String getId() {
         return id;
+    }
+
+    @Override
+    public String toString() {
+        return "CorrectedCmoSampleView{" +
+                "id='" + id + '\'' +
+                ", sampleId='" + sampleId + '\'' +
+                ", requestId='" + requestId + '\'' +
+                ", patientId='" + patientId + '\'' +
+                ", sampleClass=" + sampleClass +
+                ", sampleOrigin=" + sampleOrigin +
+                ", specimenType=" + specimenType +
+                ", nucleidAcid=" + nucleidAcid +
+                ", correctedCmoId='" + correctedCmoId + '\'' +
+                '}';
     }
 }
