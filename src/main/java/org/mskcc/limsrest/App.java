@@ -9,7 +9,6 @@ import org.mskcc.limsrest.limsapi.assignedprocess.AssignedProcessCreator;
 import org.mskcc.limsrest.limsapi.assignedprocess.QcStatusAwareProcessAssigner;
 import org.mskcc.limsrest.limsapi.assignedprocess.config.AssignedProcessConfigFactory;
 import org.mskcc.limsrest.limsapi.cmoinfo.CorrectedCmoSampleIdGenerator;
-import org.mskcc.limsrest.limsapi.cmoinfo.SampleTypeCorrectedCmoSampleIdGenerator;
 import org.mskcc.limsrest.limsapi.cmoinfo.cellline.CellLineCmoSampleIdFormatter;
 import org.mskcc.limsrest.limsapi.cmoinfo.cellline.CellLineCmoSampleIdResolver;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.BankedSampleToCorrectedCmoSampleIdConverter;
@@ -242,12 +241,6 @@ public class App extends SpringBootServletInitializer {
         return new GetBankedSamples(connectionQueue(), getBanked());
     }
 
-    @Bean
-    @Scope("request")
-    public PromoteBanked promoteBanked() {
-        return new PromoteBanked(bankedSampleToCorrectedCmoSampleIdConverter(),
-                sampleTypeCorrectedCmoSampleIdGenerator());
-    }
 
     @Bean
     @Scope("request")
@@ -317,12 +310,6 @@ public class App extends SpringBootServletInitializer {
         return new CspaceSampleAbbreviationRetriever();
     }
 
-    @Bean
-    @Scope("request")
-    public CorrectedCmoSampleIdGenerator sampleTypeCorrectedCmoSampleIdGenerator() {
-        return new SampleTypeCorrectedCmoSampleIdGenerator(cmoSampleIdRetrieverFactory(), patientSamplesRetriever(),
-                slackNotificator());
-    }
 
     @Bean
     @Scope("request")
@@ -339,8 +326,14 @@ public class App extends SpringBootServletInitializer {
 
     @Bean
     @Scope("request")
+    public PromoteBanked promoteBanked() {
+        return new PromoteBanked();
+    }
+
+    @Bean
+    @Scope("request")
     public PromoteBankedSample promoteBankedSample() {
-        return new PromoteBankedSample(connectionQueue(), promoteBanked());
+        return new PromoteBankedSample(connectionQueue(), promoteBanked() );
     }
 
     @Bean
@@ -439,18 +432,6 @@ public class App extends SpringBootServletInitializer {
         return new PairingInfo(connectionQueue(), setPairing());
     }
 
-    @Bean
-    @Scope("request")
-    public GetCorrectedSampleCmoId getCorrectedSampleCmoId() {
-        return new GetCorrectedSampleCmoId(connectionQueue(), generateSampleCmoIdTask());
-    }
-
-    @Bean
-    @Scope("request")
-    public GenerateSampleCmoIdTask generateSampleCmoIdTask() {
-        return new GenerateSampleCmoIdTask(sampleTypeCorrectedCmoSampleIdGenerator(), sampleToCorrectedCmoIdConverter
-                (), sampleRecordToSampleConverter());
-    }
 
     @Bean
     @Scope("request")

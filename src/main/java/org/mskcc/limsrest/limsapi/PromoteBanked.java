@@ -15,8 +15,6 @@ import org.mskcc.domain.CorrectedCmoSampleView;
 import org.mskcc.domain.sample.BankedSample;
 import org.mskcc.domain.sample.CmoSampleInfo;
 import org.mskcc.domain.sample.HumanSamplePredicate;
-import org.mskcc.limsrest.limsapi.cmoinfo.CorrectedCmoSampleIdGenerator;
-import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverter;
 import org.mskcc.limsrest.staticstrings.Constants;
 import org.mskcc.limsrest.staticstrings.Messages;
 import org.mskcc.limsrest.staticstrings.RelatedRecords;
@@ -46,8 +44,6 @@ import java.util.regex.Pattern;
 public class PromoteBanked extends LimsTask {
     private static final Log log = LogFactory.getLog(PromoteBanked.class);
 
-    private final CorrectedCmoIdConverter<BankedSample> bankedSampleToCorrectedCmoSampleIdConverter;
-    private final CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator;
     private final HumanSamplePredicate humanSamplePredicate = new HumanSamplePredicate();
     String[] bankedIds;
     String requestId;
@@ -57,11 +53,6 @@ public class PromoteBanked extends LimsTask {
     boolean dryrun = false;
     private Multimap<String, String> errors = HashMultimap.create();
 
-    public PromoteBanked(CorrectedCmoIdConverter<BankedSample> bankedSampleToCorrectedCmoSampleIdConverter,
-                         CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator) {
-        this.bankedSampleToCorrectedCmoSampleIdConverter = bankedSampleToCorrectedCmoSampleIdConverter;
-        this.correctedCmoSampleIdGenerator = correctedCmoSampleIdGenerator;
-    }
 
     public void init(String[] bankedIds, String projectId, String requestId, String serviceId, String igoUser, String
             dryrun) {
@@ -316,6 +307,15 @@ public class PromoteBanked extends LimsTask {
                 bankedFields.put("CMOSampleClass", bankedFields.get("SampleClass"));
                 bankedFields.remove("SampleClass");
             }
+            if(bankedFields.containsKey("DMPTrackingId")) {
+                bankedFields.remove("DMPTrackingId");
+            }
+            if(bankedFields.containsKey("NonLimsLibraryOutput")) {
+                bankedFields.remove("NonLimsLibraryOutput");
+            }
+            if(bankedFields.containsKey("NonLimsLibraryInput")) {
+                bankedFields.remove("NonLimsLibraryInput");
+            }
             String requestedReads = (String) bankedFields.get("RequestedReads");
             bankedFields.remove("Promoted");
             bankedFields.remove("PlateId");
@@ -460,10 +460,7 @@ public class PromoteBanked extends LimsTask {
                 return "";
             }
 
-            CorrectedCmoSampleView correctedCmoSampleView = convertBankedSampleToCorrectedCmoSampleId(bankedSample);
-
-            String cmoSampleId = correctedCmoSampleIdGenerator.generate(correctedCmoSampleView, requestId,
-                    dataRecordManager, user);
+            String cmoSampleId = ""; 
 
             log.info(String.format("Generated CMO Sample id for banked sample with is: %s (%s) is: %s", bankedSample
                     .getUserSampleID(), bankedSample.getOtherSampleId(), cmoSampleId));
@@ -482,10 +479,6 @@ public class PromoteBanked extends LimsTask {
         return humanSamplePredicate.test(bankedSample);
     }
 
-    private CorrectedCmoSampleView convertBankedSampleToCorrectedCmoSampleId(BankedSample bankedSample) throws
-            LimsException {
-        return bankedSampleToCorrectedCmoSampleIdConverter.convert(bankedSample);
-    }
 
     /**
      * Takes a sample id and removes the underscores and numbers indicating aliquots for the sample.
