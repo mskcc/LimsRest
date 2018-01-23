@@ -59,7 +59,7 @@ public class GetSampleQc extends LimsTask
       }
       log.info("Project " + sb.toString());
       List<DataRecord> requestList = this.dataRecordManager.queryDataRecords("Request", "RequestId in (" + sb.toString() + ")", this.user);
-      HashMap<String, String>  alt2base = new HashMap<>();
+      Map<String, String>  alt2base = new HashMap<>();
       for (DataRecord r : requestList) {
         
         DataRecord[] baseSamples = r.getChildrenOfType("Sample", user);
@@ -71,89 +71,65 @@ public class GetSampleQc extends LimsTask
             }
         }
         //this doesn't account for samples belonging to multiple pools in a run, but they haven't thought about this
-        HashMap<String, HashMap<String, String>> run2Sample2SequencerPool = new HashMap<>();
-        HashSet<String> sequencingRunTypes = new HashSet();
-        List<DataRecord> flowcells = r.getDescendantsOfType("FlowCell", user);
-        for(DataRecord flowcell : flowcells){
-             DataRecord experiment = flowcell.getParentsOfType("IlluminaSeqExperiment", user).get(0);
-             log.info("getting run type");
-             DataRecord[] hiseqParameters = experiment.getChildrenOfType("IlluminaHiSeqRunParameters", user);
-             DataRecord[] miseqParameters = experiment.getChildrenOfType("IlluminaMiSeqRunParameters", user);
-             DataRecord[] nextseqParameters = experiment.getChildrenOfType("IlluminaNextSeqRunParameters", user);
-             DataRecord[] novaseqParameters = experiment.getChildrenOfType("IlluminaNovaSeqRunParameters", user);
-             if(hiseqParameters.length > 0){
-                String read1 = hiseqParameters[0].getStringVal("Read1", user); 
-                String read2 = hiseqParameters[0].getStringVal("Read2", user);
-                Integer length = Integer.parseInt(read1) - 1;
-                String runLength = "PE" + length.toString() ;
-                if(read2 == null || read2.equals("")){
-                    runLength = "SR" + length.toString() ;
-                }
-                sequencingRunTypes.add(runLength);
-             } else if(miseqParameters.length > 0 ){
-                 String sampleSheetName = miseqParameters[0].getStringVal("SampleSheetName", user);
-                 String runLength = "NA";
-                 Pattern pat = Pattern.compile("[A-Z0-9]+-(\\d+)V[0-9]");
-                 Matcher fileInfo = pat.matcher(sampleSheetName);
-                 if(sampleSheetName != null && fileInfo.matches()){
-                    Integer length = Integer.parseInt(fileInfo.group(1));
-                    if(length == 50){
-                       runLength = "SR" + length.toString() ;
-                    } else {
-                       runLength =  "PE" + (new Integer(length/2)).toString() ;
-                    }
-                 }
-                 sequencingRunTypes.add(runLength);
-             } else if(nextseqParameters.length > 0){
-                Long read1 = nextseqParameters[0].getLongVal("Read1", user);
-                Long read2 = nextseqParameters[0].getLongVal("Read2", user);
-                Long length = read1 - 1;
-                String runLength = "PE" + length.toString() ;
-                if(read2 == null || read2.equals("")){
-                   runLength = "SR" + length.toString() ;
-                }
-                sequencingRunTypes.add(runLength);
-             } else if(novaseqParameters.length > 0){
-                Integer read1 = novaseqParameters[0].getIntegerVal("Read1NumberOfCycles", user);
-                Integer read2 = novaseqParameters[0].getIntegerVal("Read2NumberOfCycles",user);
-                Integer length = read1 - 1;
-                String runLength = "PE" + length.toString() ;
-                if(read2 == null || read2.equals("")){
-                   runLength = "SR" + length.toString() ;
-                } 
-                sequencingRunTypes.add(runLength);
-             }
-             String run = experiment.getStringVal("SequencerRunFolder", user);
-             DataRecord[] lanes = flowcell.getChildrenOfType("FlowCellLane", user);
-             for(DataRecord l : lanes){
-                 List<DataRecord> pooledSamples = l.getParentsOfType("Sample", user);
-                 for(DataRecord p : pooledSamples){
-                     String sequencerPool = p.getStringVal("SampleId", user);
-                     DataRecord intermediate = p;
-                     List<DataRecord> interParents = p.getParentsOfType("Sample", user);
-                     while(interParents.size() == 1){
-                          p = interParents.get(0);
-                     }
-                     LinkedList<DataRecord> sampQueue = new LinkedList<>(interParents);
-                     while(!sampQueue.isEmpty()){
-                         DataRecord n = sampQueue.removeFirst();
-                         if(n.getBooleanVal("IsPooled", user)){
-                              sampQueue.addAll(n.getParentsOfType("Sample", user));
-
-                         } else{
-                              if(!run2Sample2SequencerPool.containsKey(run)){
-                                  run2Sample2SequencerPool.put(run, new HashMap<String, String>());
-                              }
-                              run2Sample2SequencerPool.get(run).put(n.getStringVal("SampleId", user), sequencerPool);
-
-                         }
-                     }
-                 }
-             }
-
-
+        Map<String, String> run2Types = new HashMap<>();
+        Set<DataRecord> experimentSet = new HashSet<>();
+        List<DataRecord> flowcellLanes = r.getDescendantsOfType("FlowCellLane", user);
+        for(DataRecord lane : flowcellLanes){
+           experimentSet.addAll(lane.getAncestorsOfType("IlluminaSeqExperiment", user));
         }
-        String runType = sequencingRunTypes.stream().collect(Collectors.joining(","));
+        for(DataRecord experiment : experimentSet){
+           String runIdWithoutDate =  "";
+           String runLength = "NA";
+           try{
+              runIdWithoutDate = experiment.getStringVal("RunId", user).replaceFirst("^[0-9]{4,6}_", "");
+           } catch(NullPointerException npe){}
+           log.info("getting run type");
+           DataRecord[] hiseqParameters = experiment.getChildrenOfType("IlluminaHiSeqRunParameters", user);
+           DataRecord[] miseqParameters = experiment.getChildrenOfType("IlluminaMiSeqRunParameters", user);
+           DataRecord[] nextseqParameters = experiment.getChildrenOfType("IlluminaNextSeqRunParameters", user);
+           DataRecord[] novaseqParameters = experiment.getChildrenOfType("IlluminaNovaSeqRunParameters", user);
+           if(hiseqParameters.length > 0){
+              log.info("getting hiseq run info");
+               String read1 = hiseqParameters[0].getStringVal("Read1", user); 
+               String read2 = hiseqParameters[0].getStringVal("Read2", user);
+               Integer length = Integer.parseInt(read1) - 1;
+               runLength = "PE" + length.toString() ;
+               if(read2 == null || read2.equals("")){
+                   runLength = "SR" + length.toString() ;
+               }
+            } else if(miseqParameters.length > 0 ){
+               String sampleSheetName = miseqParameters[0].getStringVal("SampleSheetName", user);
+               Pattern pat = Pattern.compile("[A-Z0-9]+-(\\d+)V[0-9]");
+               Matcher fileInfo = pat.matcher(sampleSheetName);
+               if(sampleSheetName != null && fileInfo.matches()){
+                   Integer length = Integer.parseInt(fileInfo.group(1));
+                   if(length == 50){
+                      runLength = "SR" + length.toString() ;
+                   } else {
+                      runLength =  "PE" + (new Integer(length/2)).toString() ;
+                   }
+               }
+            } else if(nextseqParameters.length > 0){
+               Long read1 = nextseqParameters[0].getLongVal("Read1", user);
+               Long read2 = nextseqParameters[0].getLongVal("Read2", user);
+               Long length = read1 - 1;
+               runLength = "PE" + length.toString() ;
+               if(read2 == null || read2.equals("")){
+                  runLength = "SR" + length.toString() ;
+               }
+            } else if(novaseqParameters.length > 0){
+               Integer read1 = novaseqParameters[0].getIntegerVal("Read1NumberOfCycles", user);
+               Integer read2 = novaseqParameters[0].getIntegerVal("Read2NumberOfCycles",user);
+               Integer length = read1 - 1;
+               runLength = "PE" + length.toString() ;
+               if(read2 == null || read2.equals("")){
+                  runLength = "SR" + length.toString() ;
+               } 
+            }
+            log.info(runIdWithoutDate + " " + runLength);
+            run2Types.put(runIdWithoutDate, runLength);
+        }
+        String runType = run2Types.values().stream().collect(Collectors.joining(","));
         String project = r.getStringVal("RequestId", user);
         RequestSummary rs = new RequestSummary(project);
         annotateRequestSummary(rs, r);
@@ -166,7 +142,10 @@ public class GetSampleQc extends LimsTask
         for (DataRecord qc : qcs) {
           log.info("QCING");
           SampleSummary ss = new SampleSummary();
-          ss.setRunType(runType);
+          try{
+             ss.setRunType(run2Types.getOrDefault( qc.getStringVal("SequencerRunFolder", user), "NA"));
+          } 
+          catch(NullPointerException npe){}
           SampleQcSummary qcSummary = new SampleQcSummary();
           DataRecord parentSample = (DataRecord)qc.getParentsOfType("Sample", this.user).get(0);
           annotateQcSummary(qcSummary, qc);
@@ -212,7 +191,6 @@ public class GetSampleQc extends LimsTask
                    qcSummary.setQuantUnits((String)qcFields.get("ConcentrationUnits"));
                }
             }
-            DataRecord[] requirements = parentSample.getChildrenOfType("SeqRequirement", this.user);
             List<DataRecord> searchParents = parentSample.getAncestorsOfType("Sample", this.user);
             created = -1;
             double mass = 0.00000; 
@@ -245,19 +223,18 @@ public class GetSampleQc extends LimsTask
             if( mass > 0.000001){
                qcSummary.setStartingAmount(mass);
             }
-            ListIterator<DataRecord> ancestorIter = searchParents.listIterator();
-            LinkedList<DataRecord> queue = new LinkedList<>();
-            queue.addLast(parentSample);
+            LinkedList<DataRecord> stack = new LinkedList<>();
+            stack.push(parentSample);
             Set<DataRecord> visited = new HashSet<>();
-            while ((requirements.length == 0) &&  !queue.isEmpty()) {
-              DataRecord current = queue.pop();
+            DataRecord[] requirements = parentSample.getChildrenOfType("SeqRequirement", this.user);
+            while ((requirements.length == 0) &&  !stack.isEmpty()) {
+              DataRecord current = stack.pop();
               requirements = current.getChildrenOfType("SeqRequirement", this.user);
               List<DataRecord> parents = current.getParentsOfType("Sample", this.user);
               for(DataRecord parent : parents){
                   if(!visited.contains(parent)){
-                    queue.removeFirst();
+                    stack.push(parent);
                     visited.add(parent);
-                    queue.addLast(parent);
                   }
               }
             }
