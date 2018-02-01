@@ -256,11 +256,29 @@ public class PromoteBanked extends LimsTask {
         return message.toString();
     }
 
+    public void logBankedState(DataRecord bankedSample, StringBuilder logBuilder, AuditLog auditLog) throws RemoteException{
+        Map<String, Object> fields = bankedSample.getFields(user);
+        for(Map.Entry<String, Object> entry : fields.entrySet()){
+           if(entry.getValue() != null &&  !"".equals(entry.getValue())){
+              logBuilder.append("EDITING field: ").append(entry.getKey()).append(" to ").append(entry.getValue());
+              auditLog.logInfo(logBuilder.toString(), bankedSample, user);
+              logBuilder.setLength(0);
+           }
+        }
+    }
+
     public void createRecords(DataRecord bankedSampleRecord, DataRecord req, String requestId, HashMap<String,
             String> barcodeId2Sequence, HashMap<String, DataRecord> plateId2Plate, HashSet<String> existentIds, int
                                       maxExistentId, int offset) throws LimsException, InvalidValue, AlreadyExists,
             NotFound, IoError,
             RemoteException, ServerException {
+        try{
+            AuditLog auditLog = user.getAuditLog();
+            StringBuilder logBuilder = new StringBuilder();
+            logBankedState(bankedSampleRecord, logBuilder,  auditLog);
+        } catch(RemoteException rme){
+            log.info("ERROR: could not add the audit log information for promote");
+        }
         SloanCMOUtils util = new SloanCMOUtils(managerContext);
         Map<String, Object> bankedFields = bankedSampleRecord.getFields(user);
         BankedSample bankedSample = new BankedSample((String) bankedFields.get(BankedSample.USER_SAMPLE_ID),
