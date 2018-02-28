@@ -32,6 +32,7 @@ public class SampleSummary {
    private String tubeId;
    private String tumorType;
    private String tumorOrNormal;
+   private String sampleClass;
    private String sampleType;
    private String serviceId;
    private String runType;
@@ -138,6 +139,10 @@ public class SampleSummary {
 
    public void setPreservation(String preservation){
      this.preservation = preservation;
+   }
+
+   public void setSampleClass(String sampleClass){
+     this.sampleClass = sampleClass;
    }
 
    public void setSampleType(String sampleType){
@@ -312,6 +317,12 @@ public class SampleSummary {
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public String getPreservation(){
      return preservation;
+   }
+
+
+   @JsonInclude(JsonInclude.Include.NON_EMPTY)
+   public String getSampleClass(){
+       return sampleClass;
    }
 
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
