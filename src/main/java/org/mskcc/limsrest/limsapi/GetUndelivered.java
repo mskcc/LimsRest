@@ -76,7 +76,7 @@ public class GetUndelivered extends LimsTask
                         !failed.equals(qc.getPickListVal("SeqQcStatus", user))) {
                     reviewComplete = false;
                 } else{
-                    List<AuditLogEntry> qcHistory = auditlog.getAuditLogHistory(request, false, user);
+                    List<AuditLogEntry> qcHistory = auditlog.getAuditLogHistory(qc, false, user);
                     if(qcHistory.get(0).timestamp > deliveryDate){
                         requiresDelivery = true;
                     }
