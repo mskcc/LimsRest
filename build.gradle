@@ -16,6 +16,7 @@ apply plugin: 'war'
 apply plugin: 'idea'
 
 
+
 if(target== 'dev'){
     copy {
         from "src/dev/resources"
