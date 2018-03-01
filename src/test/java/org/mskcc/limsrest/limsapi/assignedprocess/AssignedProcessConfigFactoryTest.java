@@ -5,7 +5,7 @@ import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.user.User;
 import org.hamcrest.object.IsCompatibleType;
 import org.junit.Test;
-import org.mskcc.domain.QCStatus;
+import org.mskcc.domain.QcStatus;
 import org.mskcc.limsrest.limsapi.assignedprocess.config.AssignedProcessConfig;
 import org.mskcc.limsrest.limsapi.assignedprocess.config.AssignedProcessConfigFactory;
 import org.mskcc.limsrest.limsapi.assignedprocess.repoolsample.RepoolSampleAssignedAssignedProcessConfig;
@@ -24,8 +24,8 @@ public class AssignedProcessConfigFactoryTest {
 
     @Test
     public void whenFactoryMethodIsInvoked_shouldReturnProperAssignedProcessConfig() throws Exception {
-        assertAssignedProcessConfig(QCStatus.REPOOL_SAMPLE.getValue(), RepoolSampleAssignedAssignedProcessConfig.class);
-        assertAssignedProcessConfig(QCStatus.RESEQUENCE_POOL.getValue(), ResequencePoolAssignedProcessConfig.class);
+        assertAssignedProcessConfig(QcStatus.REPOOL_SAMPLE.getValue(), RepoolSampleAssignedAssignedProcessConfig.class);
+        assertAssignedProcessConfig(QcStatus.RESEQUENCE_POOL.getValue(), ResequencePoolAssignedProcessConfig.class);
     }
 
     private void assertAssignedProcessConfig(String qcStatus, Class<? extends AssignedProcessConfig> configClass) throws Exception {

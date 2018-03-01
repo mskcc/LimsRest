@@ -2,7 +2,7 @@ package org.mskcc.limsrest.limsapi;
 
 import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.user.User;
-import org.mskcc.domain.CorrectedCmoSampleView;
+import org.mskcc.domain.sample.CorrectedCmoSampleView;
 
 import java.util.List;
 

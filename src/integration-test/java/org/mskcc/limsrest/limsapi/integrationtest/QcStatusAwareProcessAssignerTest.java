@@ -10,7 +10,7 @@ import com.velox.sapioutils.client.standalone.VeloxConnectionException;
 import com.velox.sloan.cmo.staticstrings.datatypes.DT_AssignedProcess;
 import com.velox.sloan.cmo.staticstrings.datatypes.DT_Sample;
 import org.junit.*;
-import org.mskcc.domain.QCStatus;
+import org.mskcc.domain.QcStatus;
 import org.mskcc.limsrest.limsapi.assignedprocess.AssignedProcessCreator;
 import org.mskcc.limsrest.limsapi.assignedprocess.QcParentSampleRetriever;
 import org.mskcc.limsrest.limsapi.assignedprocess.QcStatusAwareProcessAssigner;
@@ -55,7 +55,7 @@ public class QcStatusAwareProcessAssignerTest {
         String sampleLevelQcRecordId = "258324";
         DataRecord seqQc = getSampleLevelQc(sampleLevelQcRecordId);
         DataRecord sample = getParentSample(seqQc);
-        assertAssignedProcess(QCStatus.REPOOL_SAMPLE.getValue(), seqQc, sample);
+        assertAssignedProcess(QcStatus.REPOOL_SAMPLE.getValue(), seqQc, sample);
     }
 
     @Test
@@ -63,7 +63,7 @@ public class QcStatusAwareProcessAssignerTest {
         String sampleLevelQcRecordId = "258324";
         DataRecord seqQc = getSampleLevelQc(sampleLevelQcRecordId);
         DataRecord sample = getPool(seqQc);
-        assertAssignedProcess(QCStatus.RESEQUENCE_POOL.getValue(), seqQc, sample);
+        assertAssignedProcess(QcStatus.RESEQUENCE_POOL.getValue(), seqQc, sample);
     }
 
     private void assertAssignedProcess(String qcStatus, DataRecord seqQc, DataRecord sample) throws Exception {

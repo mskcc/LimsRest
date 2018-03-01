@@ -1,7 +1,7 @@
 package org.mskcc.limsrest.limsapi.cmoinfo.cspace;
 
 import org.junit.Test;
-import org.mskcc.domain.CorrectedCmoSampleView;
+import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.domain.sample.NucleicAcid;
 import org.mskcc.domain.sample.SampleClass;
 import org.mskcc.domain.sample.SampleOrigin;

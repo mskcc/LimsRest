@@ -1,6 +1,6 @@
 package org.mskcc.limsrest.limsapi.cmoinfo.cspace;
 
-import org.mskcc.domain.CorrectedCmoSampleView;
+import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.domain.sample.SampleOrigin;
 
 import java.util.HashMap;

@@ -1,6 +1,6 @@
 package org.mskcc.limsrest.limsapi.cmoinfo.retriever;
 
-import org.mskcc.domain.CorrectedCmoSampleView;
+import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.limsrest.limsapi.cmoinfo.CmoSampleId;
 
 import java.util.List;

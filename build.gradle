@@ -13,6 +13,7 @@ buildscript {
 apply plugin: 'java'
 apply plugin: 'spring-boot'
 apply plugin: 'war'
+apply plugin: 'idea'
 
 if(target== 'dev'){
     copy {
@@ -74,7 +75,7 @@ dependencies {
     compile ("org.springframework.boot:spring-boot-starter-security")
     compile ('javax.servlet:jstl:1.2')
     compile (group: 'com.google.guava', name: 'guava', version: '18.+')
-    compile (group: 'org.mskcc.common', name:'common-domain', version: '2.1.0-SNAPSHOT')
+    compile (group: 'org.mskcc.common', name:'common-domain', version: '2.2.0-SNAPSHOT')
     compile fileTree (dir: 'libs', include: '*.jar')
 
     testCompile ('io.rest-assured:rest-assured:3.0.1')

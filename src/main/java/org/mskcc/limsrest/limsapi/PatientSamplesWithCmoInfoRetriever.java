@@ -7,7 +7,7 @@ import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.domain.CorrectedCmoSampleView;
+import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.domain.sample.Sample;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverter;
 import org.mskcc.limsrest.limsapi.converter.SampleRecordToSampleConverter;

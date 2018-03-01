@@ -4,7 +4,7 @@ import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.user.User;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mskcc.domain.CorrectedCmoSampleView;
+import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.limsrest.limsapi.LimsException;
 import org.mskcc.limsrest.limsapi.PatientSamplesRetriever;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.CmoSampleIdRetrieverFactory;

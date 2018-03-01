@@ -1,7 +1,7 @@
 package org.mskcc.limsrest.limsapi.cmoinfo;
 
 import org.junit.Test;
-import org.mskcc.domain.CorrectedCmoSampleView;
+import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverterFactory;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.StringToSampleCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.cspace.PatientAwareCorrectedCmoIdConverter;
@@ -18,15 +18,17 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.typeCompatibleWith;
 
 public class IncrementalSampleCounterRetrieverTest {
+    private CorrectedCmoSampleView correctedCmoSampleView = getCorrectedCmoSampleView();
+
     private CorrectedCmoIdConverterFactory converterFactory = new ConverterFactoryMock();
+
     private IncrementalSampleCounterRetriever incrementalSampleCounterRetriever = new
             IncrementalSampleCounterRetriever(converterFactory);
-
     @Test
     public void whenSampleCmoIdListIsEmpty_shouldReturnOne() throws Exception {
         List<CorrectedCmoSampleView> sampleCmoIds = Collections.emptyList();
 
-        int sampleCount = incrementalSampleCounterRetriever.retrieve(sampleCmoIds, "X");
+        int sampleCount = incrementalSampleCounterRetriever.retrieve(correctedCmoSampleView, sampleCmoIds, "X");
 
         assertThat(sampleCount, is(1));
     }
@@ -36,7 +38,7 @@ public class IncrementalSampleCounterRetrieverTest {
         List<CorrectedCmoSampleView> sampleCmoIds = Arrays.asList(getSample("C-123456-L001-d"));
         String sampleClassAbbr = "X";
 
-        int sampleCount = incrementalSampleCounterRetriever.retrieve(sampleCmoIds, sampleClassAbbr);
+        int sampleCount = incrementalSampleCounterRetriever.retrieve(correctedCmoSampleView, sampleCmoIds, sampleClassAbbr);
 
         assertThat(sampleCount, is(1));
     }
@@ -53,7 +55,7 @@ public class IncrementalSampleCounterRetrieverTest {
                 ("C-123456-L002-d"), getSample("C-123456-T001-d"), getSample("C-123456-N001-d"));
         String sampleClassAbbr = "X";
 
-        int sampleCount = incrementalSampleCounterRetriever.retrieve(sampleCmoIds, sampleClassAbbr);
+        int sampleCount = incrementalSampleCounterRetriever.retrieve(correctedCmoSampleView, sampleCmoIds, sampleClassAbbr);
 
         assertThat(sampleCount, is(1));
     }
@@ -66,7 +68,7 @@ public class IncrementalSampleCounterRetrieverTest {
                 ("C-123456-N001-d"));
         String sampleClassAbbr = "X";
 
-        int sampleCount = incrementalSampleCounterRetriever.retrieve(sampleCmoIds, sampleClassAbbr);
+        int sampleCount = incrementalSampleCounterRetriever.retrieve(correctedCmoSampleView, sampleCmoIds, sampleClassAbbr);
 
         assertThat(sampleCount, is(4));
     }
@@ -76,7 +78,7 @@ public class IncrementalSampleCounterRetrieverTest {
         List<CorrectedCmoSampleView> sampleCmoIds = Arrays.asList(getSample("C-123456-N001-d"));
         String sampleClassAbbr = "N";
 
-        int sampleCount = incrementalSampleCounterRetriever.retrieve(sampleCmoIds, sampleClassAbbr);
+        int sampleCount = incrementalSampleCounterRetriever.retrieve(correctedCmoSampleView, sampleCmoIds, sampleClassAbbr);
 
         assertThat(sampleCount, is(2));
     }
@@ -86,7 +88,7 @@ public class IncrementalSampleCounterRetrieverTest {
         List<CorrectedCmoSampleView> sampleCmoIds = Arrays.asList(getSample("C-123456-N006-d"));
         String sampleClassAbbr = "N";
 
-        int sampleCount = incrementalSampleCounterRetriever.retrieve(sampleCmoIds, sampleClassAbbr);
+        int sampleCount = incrementalSampleCounterRetriever.retrieve(correctedCmoSampleView, sampleCmoIds, sampleClassAbbr);
 
         assertThat(sampleCount, is(7));
     }
@@ -97,7 +99,7 @@ public class IncrementalSampleCounterRetrieverTest {
         List<CorrectedCmoSampleView> sampleCmoIds = Arrays.asList(getSample("C-123456-N010-d"));
         String sampleClassAbbr = "N";
 
-        int sampleCount = incrementalSampleCounterRetriever.retrieve(sampleCmoIds, sampleClassAbbr);
+        int sampleCount = incrementalSampleCounterRetriever.retrieve(correctedCmoSampleView, sampleCmoIds, sampleClassAbbr);
 
         assertThat(sampleCount, is(11));
     }
@@ -108,7 +110,7 @@ public class IncrementalSampleCounterRetrieverTest {
         List<CorrectedCmoSampleView> sampleCmoIds = Arrays.asList(getSample("C-123456-N654-d"));
         String sampleClassAbbr = "N";
 
-        int sampleCount = incrementalSampleCounterRetriever.retrieve(sampleCmoIds, sampleClassAbbr);
+        int sampleCount = incrementalSampleCounterRetriever.retrieve(correctedCmoSampleView, sampleCmoIds, sampleClassAbbr);
 
         assertThat(sampleCount, is(655));
     }
@@ -119,7 +121,7 @@ public class IncrementalSampleCounterRetrieverTest {
         String sampleClassAbbr = "N";
 
         Optional<Exception> exception = TestUtils.assertThrown(() -> incrementalSampleCounterRetriever.retrieve
-                (sampleCmoIds, sampleClassAbbr));
+                (correctedCmoSampleView, sampleCmoIds, sampleClassAbbr));
 
         assertThat(exception.isPresent(), is(true));
         assertThat(exception.get().getClass(), typeCompatibleWith(IncrementalSampleCounterRetriever
@@ -131,7 +133,7 @@ public class IncrementalSampleCounterRetrieverTest {
         List<CorrectedCmoSampleView> sampleCmoIds = Arrays.asList(getSample(""));
         String sampleClassAbbr = "N";
 
-        int sampleCount = incrementalSampleCounterRetriever.retrieve(sampleCmoIds, sampleClassAbbr);
+        int sampleCount = incrementalSampleCounterRetriever.retrieve(correctedCmoSampleView, sampleCmoIds, sampleClassAbbr);
 
         assertThat(sampleCount, is(1));
     }
@@ -141,15 +143,44 @@ public class IncrementalSampleCounterRetrieverTest {
         List<CorrectedCmoSampleView> sampleCmoIds = Arrays.asList(getSample(null));
         String sampleClassAbbr = "N";
 
-        int sampleCount = incrementalSampleCounterRetriever.retrieve(sampleCmoIds, sampleClassAbbr);
+        int sampleCount = incrementalSampleCounterRetriever.retrieve(correctedCmoSampleView, sampleCmoIds, sampleClassAbbr);
 
         assertThat(sampleCount, is(1));
     }
 
+    @Test
+    public void whenCounterIsAlreadySet_shouldUseThatOne() throws Exception {
+        //given
+        List<CorrectedCmoSampleView> sampleCmoIds = Arrays.asList(getSample("C-123456-N123-d"));
+        String sampleClassAbbr = "N";
+
+        //when
+        int counter = 3;
+        int sampleCount = incrementalSampleCounterRetriever.retrieve(getSampleViewWithCounter(counter), sampleCmoIds, sampleClassAbbr);
+
+        //then
+        assertThat(sampleCount, is(counter));
+    }
+
+    private CorrectedCmoSampleView getSampleViewWithCounter(int counter) {
+        CorrectedCmoSampleView correctedCmoSampleView = new CorrectedCmoSampleView("id3");
+        correctedCmoSampleView.setCounter(counter);
+
+        return correctedCmoSampleView;
+    }
+
     private class ConverterFactoryMock implements CorrectedCmoIdConverterFactory {
+
         @Override
         public StringToSampleCmoIdConverter getConverter(String correctedCmoSampleId) {
             return new PatientAwareCorrectedCmoIdConverter();
         }
+    }
+
+    private CorrectedCmoSampleView getCorrectedCmoSampleView() {
+        CorrectedCmoSampleView correctedCmoSampleView = new CorrectedCmoSampleView("id");
+
+
+        return correctedCmoSampleView;
     }
 }

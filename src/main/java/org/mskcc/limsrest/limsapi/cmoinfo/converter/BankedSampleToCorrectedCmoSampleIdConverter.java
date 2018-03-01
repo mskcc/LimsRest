@@ -3,7 +3,7 @@ package org.mskcc.limsrest.limsapi.cmoinfo.converter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.domain.CorrectedCmoSampleView;
+import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.domain.sample.*;
 import org.mskcc.limsrest.limsapi.PatientSamplesWithCmoInfoRetriever;
 

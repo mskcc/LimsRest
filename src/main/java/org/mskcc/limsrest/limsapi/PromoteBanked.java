@@ -11,7 +11,7 @@ import com.velox.sloan.cmo.utilities.UuidGenerator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.domain.CorrectedCmoSampleView;
+import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.domain.sample.BankedSample;
 import org.mskcc.domain.sample.CmoSampleInfo;
 import org.mskcc.domain.sample.HumanSamplePredicate;
@@ -347,6 +347,8 @@ public class PromoteBanked extends LimsTask {
             bankedFields.remove("DMPTrackingId");
             bankedFields.remove("NonLimsLibraryOutput");
             bankedFields.remove("NonLimsLibraryInput");
+            bankedFields.remove("NormalizedPatientId");
+            bankedFields.remove("CMOPatientId");
             //remove micronic tube
             bankedFields.remove(RelatedRecords.MICRONIC_TUBE_REF);
             bankedFields.remove("NumTubes");
@@ -406,7 +408,7 @@ public class PromoteBanked extends LimsTask {
                 req.addChild("PairingInfo", pairingMap, user);
             }
 
-            Map<String, Object> cmoFields = getCmoFields(bankedFields, correctedCmoSampleId, requestId, newIgoId);
+            Map<String, Object> cmoFields = getCmoFields(bankedFields, correctedCmoSampleId, requestId, newIgoId, uuid);
             promotedSample.addChild("SampleCMOInfoRecords", cmoFields, user);
 
             Map<String, Object> srFields = new HashMap<>();
@@ -437,32 +439,32 @@ public class PromoteBanked extends LimsTask {
     }
 
     private Map<String, Object> getCmoFields(Map<String, Object> bankedFields, String correctedCmoSampleId, String
-            assignedRequestId, String igoId) {
+            assignedRequestId, String igoId, String uuid) {
         Map<String, Object> cmoFields = new HashMap<>();
-        cmoFields.put(CmoSampleInfo.ALT_ID, bankedFields.get("AltId"));
-        cmoFields.put(CmoSampleInfo.CLINICAL_INFO, bankedFields.get("ClinicalInfo"));
-        cmoFields.put(CmoSampleInfo.CMO_PATIENT_ID, bankedFields.get("PatientId"));
-        cmoFields.put(CmoSampleInfo.CMOSAMPLE_CLASS, bankedFields.get("CMOSampleClass"));
-        cmoFields.put(CmoSampleInfo.COLLECTION_YEAR, bankedFields.get("CollectionYear"));
+        cmoFields.put(CmoSampleInfo.ALT_ID, uuid);
+        cmoFields.put(CmoSampleInfo.CLINICAL_INFO, bankedFields.get(BankedSample.CLINICAL_INFO));
+        cmoFields.put(CmoSampleInfo.CMO_PATIENT_ID, bankedFields.get(BankedSample.CMO_PATIENT_ID));
+        cmoFields.put(CmoSampleInfo.CMOSAMPLE_CLASS, bankedFields.get(BankedSample.SAMPLE_CLASS));
+        cmoFields.put(CmoSampleInfo.COLLECTION_YEAR, bankedFields.get(BankedSample.COLLECTION_YEAR));
         cmoFields.put(CmoSampleInfo.CORRECTED_CMOID, correctedCmoSampleId);
 
-        cmoFields.put(CmoSampleInfo.CORRECTED_INVEST_PATIENT_ID, bankedFields.get("PatientId"));
+        cmoFields.put(CmoSampleInfo.CORRECTED_INVEST_PATIENT_ID, bankedFields.get(BankedSample.PATIENT_ID));
 
-        cmoFields.put(CmoSampleInfo.ESTIMATED_PURITY, bankedFields.get("EstimatedPurity"));
-        cmoFields.put(CmoSampleInfo.GENDER, bankedFields.get("Gender"));
-        cmoFields.put(CmoSampleInfo.GENETIC_ALTERATIONS, bankedFields.get("GeneticAlterations"));
+        cmoFields.put(CmoSampleInfo.ESTIMATED_PURITY, bankedFields.get(BankedSample.ESTIMATED_PURITY));
+        cmoFields.put(CmoSampleInfo.GENDER, bankedFields.get(BankedSample.GENDER));
+        cmoFields.put(CmoSampleInfo.GENETIC_ALTERATIONS, bankedFields.get(BankedSample.GENETIC_ALTERATIONS));
         cmoFields.put(CmoSampleInfo.OTHER_SAMPLE_ID, bankedFields.get(BankedSample.OTHER_SAMPLE_ID));
-        cmoFields.put(CmoSampleInfo.PATIENT_ID, bankedFields.get("PatientId"));
-        cmoFields.put(CmoSampleInfo.PRESERVATION, bankedFields.get("Preservation"));
+        cmoFields.put(CmoSampleInfo.PATIENT_ID, bankedFields.get(BankedSample.PATIENT_ID));
+        cmoFields.put(CmoSampleInfo.PRESERVATION, bankedFields.get(BankedSample.PRESERVATION));
 
         cmoFields.put(CmoSampleInfo.REQUEST_ID, assignedRequestId);
         cmoFields.put(CmoSampleInfo.SAMPLE_ID, igoId);
 
         cmoFields.put(CmoSampleInfo.SAMPLE_ORIGIN, bankedFields.get(BankedSample.SAMPLE_ORIGIN));
-        cmoFields.put(CmoSampleInfo.SPECIES, bankedFields.get("Species"));
+        cmoFields.put(CmoSampleInfo.SPECIES, bankedFields.get(BankedSample.SPECIES));
         cmoFields.put(CmoSampleInfo.SPECIMEN_TYPE, bankedFields.get(BankedSample.SPECIMEN_TYPE));
 
-        cmoFields.put(CmoSampleInfo.TISSUE_LOCATION, BankedSample.TISSUE_SITE);
+        cmoFields.put(CmoSampleInfo.TISSUE_LOCATION, bankedFields.get(BankedSample.TISSUE_SITE));
 
         cmoFields.put(CmoSampleInfo.TUMOR_OR_NORMAL, bankedFields.get(BankedSample.TUMOR_OR_NORMAL));
 
