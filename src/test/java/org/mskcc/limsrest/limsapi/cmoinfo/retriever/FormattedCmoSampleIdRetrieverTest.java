@@ -2,7 +2,7 @@ package org.mskcc.limsrest.limsapi.cmoinfo.retriever;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mskcc.domain.CorrectedCmoSampleView;
+import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.limsrest.limsapi.cmoinfo.cellline.CellLineCmoSampleId;
 import org.mskcc.limsrest.limsapi.cmoinfo.formatter.CmoSampleIdFormatter;
 

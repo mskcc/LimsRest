@@ -2,7 +2,7 @@ package org.mskcc.limsrest.limsapi.cmoinfo.cspace;
 
 import org.hamcrest.object.IsCompatibleType;
 import org.junit.Test;
-import org.mskcc.domain.CorrectedCmoSampleView;
+import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.util.TestUtils;
 
 import java.util.Optional;

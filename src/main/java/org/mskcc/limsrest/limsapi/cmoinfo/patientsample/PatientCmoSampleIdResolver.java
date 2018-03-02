@@ -3,7 +3,7 @@ package org.mskcc.limsrest.limsapi.cmoinfo.patientsample;
 import com.google.common.base.Preconditions;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.domain.CorrectedCmoSampleView;
+import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceSampleAbbreviationRetriever;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.CmoSampleIdResolver;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleAbbreviationRetriever;
@@ -35,7 +35,7 @@ public class PatientCmoSampleIdResolver implements CmoSampleIdResolver<PatientAw
                 correctedCmoSampleView.getId()));
 
         String sampleClassAbbr = sampleTypeAbbreviationRetriever.retrieve(correctedCmoSampleView);
-        int sampleCount = sampleCounterRetriever.retrieve(cmoSampleViews, sampleClassAbbr);
+        int sampleCount = sampleCounterRetriever.retrieve(correctedCmoSampleView, cmoSampleViews, sampleClassAbbr);
 
         return new PatientAwareCmoSampleId(
                 correctedCmoSampleView.getPatientId(),

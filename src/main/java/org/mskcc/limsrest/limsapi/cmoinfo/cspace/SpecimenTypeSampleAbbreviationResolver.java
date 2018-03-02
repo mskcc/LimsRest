@@ -2,7 +2,7 @@ package org.mskcc.limsrest.limsapi.cmoinfo.cspace;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.domain.CorrectedCmoSampleView;
+import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.domain.sample.SpecimenType;
 
 import java.util.HashMap;

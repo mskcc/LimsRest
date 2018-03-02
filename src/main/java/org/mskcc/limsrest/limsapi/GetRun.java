@@ -46,10 +46,8 @@ import org.apache.commons.logging.LogFactory;
 public class GetRun  extends LimsTask 
 {
    private Log log = LogFactory.getLog(GetRun.class);
- 
 
-
- //execute the velox call
+    //execute the velox call
 @PreAuthorize("hasRole('READ')")
 @Override
  public Object execute(VeloxConnection conn){

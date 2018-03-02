@@ -2,7 +2,7 @@ package org.mskcc.limsrest.limsapi.cmoinfo;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mskcc.domain.CorrectedCmoSampleView;
+import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.domain.sample.NucleicAcid;
 import org.mskcc.domain.sample.SampleClass;
 import org.mskcc.domain.sample.SampleOrigin;
@@ -41,7 +41,7 @@ public class PatientAwareCmoSampleIdResolverTest {
     public void setUp() throws Exception {
         patientCmoSampleIdResolver = new PatientCmoSampleIdResolver(countRetriever, sampleTypeAbbreviationRetriever);
         sample = new CorrectedCmoSampleView(sampleId);
-        when(countRetriever.retrieve(any(), any())).thenReturn(1);
+        when(countRetriever.retrieve(any(), any(), any())).thenReturn(1);
     }
 
     @Test

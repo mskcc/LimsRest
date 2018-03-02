@@ -2,7 +2,7 @@ package org.mskcc.limsrest.limsapi.cmoinfo.retriever;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.domain.CorrectedCmoSampleView;
+import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverterFactory;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.StringToSampleCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientAwareCmoSampleId;
@@ -24,7 +24,14 @@ public class IncrementalSampleCounterRetriever implements SampleCounterRetriever
     }
 
     @Override
-    public int retrieve(List<CorrectedCmoSampleView> patientCorrectedViews, String sampleClassAbbr) {
+    public int retrieve(CorrectedCmoSampleView correctedCmoSampleView, List<CorrectedCmoSampleView>
+            patientCorrectedViews, String sampleClassAbbr) {
+        if (isCounterSet(correctedCmoSampleView)) {
+            LOGGER.info(String.format("Cmo Sample id counter is set to value: %d. This value will be used.",
+                    correctedCmoSampleView.getCounter()));
+            return correctedCmoSampleView.getCounter();
+        }
+
         List<PatientAwareCmoSampleId> cmoSampleIds = new ArrayList<>();
 
         LOGGER.info(String.format("Resolving sample counter out of patient samples: %s", patientCorrectedViews));
@@ -70,6 +77,10 @@ public class IncrementalSampleCounterRetriever implements SampleCounterRetriever
                 " counter value: %d", getPatientId(patientCorrectedViews), sampleClassAbbr, DEFAULT_COUNTER));
 
         return DEFAULT_COUNTER;
+    }
+
+    private boolean isCounterSet(CorrectedCmoSampleView correctedCmoSampleView) {
+        return correctedCmoSampleView.getCounter() != null;
     }
 
     private String getPatientId(List<CorrectedCmoSampleView> patientCorrectedViews) {

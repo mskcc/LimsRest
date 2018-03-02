@@ -23,11 +23,11 @@ public class FormatAwareCorrectedCmoIdConverterFactory implements CorrectedCmoId
     }
 
     private boolean isInCspaceFormat(String correctedCmoSampleId) {
-        return correctedCmoSampleId.matches(PatientAwareCorrectedCmoIdConverter.PATTERN);
+        return correctedCmoSampleId.matches(PatientAwareCorrectedCmoIdConverter.CMO_SAMPLE_ID_PATTERN);
     }
 
     private boolean isInOldFormat(String correctedCmoSampleId) {
-        return correctedCmoSampleId.matches(OldCorrectedCmoIdConverter.PATTERN);
+        return correctedCmoSampleId.matches(OldCorrectedCmoIdConverter.OLD_CMO_SAMPLE_ID_PATTERN);
     }
 
     public static class UnsupportedCmoIdFormatException extends RuntimeException {

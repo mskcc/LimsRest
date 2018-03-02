@@ -1,9 +1,9 @@
 package org.mskcc.limsrest.limsapi.cmoinfo.retriever;
 
-import org.mskcc.domain.CorrectedCmoSampleView;
+import org.mskcc.domain.sample.CorrectedCmoSampleView;
 
 import java.util.List;
 
 public interface SampleCounterRetriever {
-    int retrieve(List<CorrectedCmoSampleView> patientCorrectedIds, String sampleClassAbbr);
+    int retrieve(CorrectedCmoSampleView correctedCmoSampleView, List<CorrectedCmoSampleView> patientCorrectedIds, String sampleClassAbbr);
 }

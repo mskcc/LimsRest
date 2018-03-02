@@ -3,7 +3,7 @@ package org.mskcc.limsrest.limsapi.cmoinfo.cspace;
 import com.google.common.base.Preconditions;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.domain.CorrectedCmoSampleView;
+import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.domain.sample.SampleClass;
 
 import java.util.HashMap;
