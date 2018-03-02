@@ -10,7 +10,9 @@ import com.velox.sapioutils.client.standalone.VeloxStandaloneManagerContext;
 import com.velox.sapioutils.shared.managers.DataRecordUtilManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.mskcc.domain.sample.*;
 import org.mskcc.limsrest.limsapi.PatientSamplesRetriever;
 import org.mskcc.limsrest.limsapi.PatientSamplesWithCmoInfoRetriever;
@@ -546,23 +548,13 @@ public class PromoteBankedTest {
     }
 
     private String getNextSampleId() {
-        return "SampleId" + (igit d++);
+        return "SampleId" + (id++);
     }
 
-    private DataRecord promoteSample(String patientId, SpecimenType specimenType, Optional<SampleOrigin> sampleOrigin,
-<<<<<<< HEAD
-                               Optional<SampleClass>
-                                       sampleClass, String bankedReqId, String sampleId, String otherSampleId, String
-                                       promoteRequest, String
-                                       serviceId, String projectId) throws Exception {
-=======
-                                     Optional<SampleClass>
-                                             sampleClass, String bankedReqId, String sampleId, String otherSampleId,
-                                     String
-                                             promoteRequest, String
-                                             serviceId, String projectId) throws Exception {
->>>>>>> a14932d604272619c23d8fbb3b524dc05260696e
-
+    private DataRecord promoteSample(String patientId, SpecimenType specimenType, Optional<SampleOrigin>
+            sampleOrigin, Optional<SampleClass> sampleClass, String bankedReqId, String sampleId, String
+                                             otherSampleId, String promoteRequest, String serviceId, String
+                                             projectId) throws Exception {
         DataRecord banked = addPromoteBanked(patientId, specimenType, sampleOrigin, sampleClass, DNA, bankedReqId,
                 sampleId, otherSampleId);
         initPromoteBanked(Arrays.asList(banked), promoteRequest, serviceId, projectId);

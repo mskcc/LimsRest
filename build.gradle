@@ -15,11 +15,6 @@ apply plugin: 'spring-boot'
 apply plugin: 'war'
 apply plugin: 'idea'
 
-<<<<<<< HEAD
-=======
-
->>>>>>> a14932d604272619c23d8fbb3b524dc05260696e
-
 if(target== 'dev'){
     copy {
         from "src/dev/resources"

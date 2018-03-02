@@ -59,8 +59,4 @@ public class WebServiceDMPSamplesRetriever implements DMPSamplesRetriever {
                 .map(s -> s.getStudySampleId())
                 .collect(Collectors.toList());
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> a14932d604272619c23d8fbb3b524dc05260696e

@@ -28,13 +28,10 @@ import org.mskcc.limsrest.limsapi.dmp.converter.DMPSampleToCMOBankedSampleConver
 import org.mskcc.limsrest.limsapi.promote.BankedSampleToSampleConverter;
 import org.mskcc.limsrest.limsapi.retriever.LimsDataRetriever;
 import org.mskcc.limsrest.limsapi.retriever.VeloxLimsDataRetriever;
-<<<<<<< HEAD
 import org.mskcc.limsrest.limsapi.dmp.converter.DMPSampleToCMOBankedSampleConverter;
 import org.mskcc.limsrest.limsapi.promote.BankedSampleToSampleConverter;
 import org.mskcc.limsrest.limsapi.retriever.LimsDataRetriever;
 import org.mskcc.limsrest.limsapi.retriever.VeloxLimsDataRetriever;
-=======
->>>>>>> a14932d604272619c23d8fbb3b524dc05260696e
 import org.mskcc.limsrest.limsapi.store.RecordSaver;
 import org.mskcc.limsrest.limsapi.store.VeloxRecordSaver;
 import org.mskcc.limsrest.web.*;
@@ -55,12 +52,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.core.env.Environment;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
-<<<<<<< HEAD
-=======
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.web.SpringBootServletInitializer;
->>>>>>> a14932d604272619c23d8fbb3b524dc05260696e
-
 
 @Configuration
 @EnableAutoConfiguration
