@@ -195,4 +195,8 @@ public class CMOSampleRequestDetailsResponse {
             public static final String WELL_POSITION = "Well Position";
         }
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> a14932d604272619c23d8fbb3b524dc05260696e

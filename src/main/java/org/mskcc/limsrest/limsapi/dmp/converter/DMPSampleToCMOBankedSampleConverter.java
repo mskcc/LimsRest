@@ -17,10 +17,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DMPSampleToCMOBankedSampleConverter implements ExternalToBankedSampleConverter<DMPSample> {
-    private static final Logger LOGGER = Logger.getLogger(DMPSampleToCMOBankedSampleConverter.class);
     public static final String BARCODE_ID_REGEX = "([A-Za-z]+)(0*)([0-9]+)";
     public static final String PATIENT_ID_REGEX = "(P-[0-9]{7})-.*";
     public static final int ROW_INDEX_OFFSET = 100;
+    private static final Logger LOGGER = Logger.getLogger(DMPSampleToCMOBankedSampleConverter.class);
     private static final String WELL_POSITION_REGEX = "([a-zA-Z])([0-9]+)";
     private Map<String, String> tumorTypeToCode;
 

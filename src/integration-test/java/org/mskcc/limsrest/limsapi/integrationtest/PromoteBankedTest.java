@@ -480,13 +480,10 @@ public class PromoteBankedTest {
     public void whenMultipleSamplesArePromotedAtOnce_shouldSetCorrectedCmoId() throws
             Exception {
         //given
-        String cellLineId1 = getNextSampleId();
-        String cellLineId2 = getNextSampleId();
-
         List<DataRecord> bankedToPromote1 = new ArrayList<DataRecord>() {{
-            add(addPromoteBanked(patientId1, CELLLINE, DNA, requestId1, cellLineId1, OTHER_SAMPLE_ID1));
+            add(addPromoteBanked(patientId1, CELLLINE, DNA, requestId1, SAMPLE_ID1, OTHER_SAMPLE_ID1));
             add(addPromoteBanked(patientId1, ORGANOID, DNA, requestId1, getNextSampleId(), OTHER_SAMPLE_ID2));
-            add(addPromoteBanked(patientId3, SpecimenType.SALIVA, Optional.of(PLASMA), Optional.of(CELL_FREE), DNA,
+            add(addPromoteBanked(patientId3, SALIVA, Optional.of(PLASMA), Optional.of(METASTASIS), DNA,
                     requestId1, getNextSampleId(), OTHER_SAMPLE_ID2));
             add(addPromoteBanked(patientId3, CFDNA, Optional.of(WHOLE_BLOOD), DNA,
                     requestId1, getNextSampleId(), OTHER_SAMPLE_ID2));
@@ -496,8 +493,8 @@ public class PromoteBankedTest {
                     requestId1, getNextSampleId(), OTHER_SAMPLE_ID2));
             add(addPromoteBanked(patientId3, CFDNA, Optional.of(CEREBROSPINAL_FLUID), Optional.of(LOCAL_RECURRENCE),
                     RNA,
-                    requestId1, getNextSampleId(), OTHER_SAMPLE_ID2));
-            add(addPromoteBanked(patientId3, CELLLINE, DNA, requestId1, cellLineId2, OTHER_SAMPLE_ID2));
+                    requestId1, "sample6", OTHER_SAMPLE_ID2));
+            add(addPromoteBanked(patientId3, CELLLINE, DNA, requestId1, SAMPLE_ID2, OTHER_SAMPLE_ID2));
         }};
 
         initPromoteBanked(bankedToPromote1, requestId1, serviceId, projectId);
@@ -549,14 +546,22 @@ public class PromoteBankedTest {
     }
 
     private String getNextSampleId() {
-        return "sample_id" + (id++);
+        return "SampleId" + (igit d++);
     }
 
     private DataRecord promoteSample(String patientId, SpecimenType specimenType, Optional<SampleOrigin> sampleOrigin,
+<<<<<<< HEAD
                                Optional<SampleClass>
                                        sampleClass, String bankedReqId, String sampleId, String otherSampleId, String
                                        promoteRequest, String
                                        serviceId, String projectId) throws Exception {
+=======
+                                     Optional<SampleClass>
+                                             sampleClass, String bankedReqId, String sampleId, String otherSampleId,
+                                     String
+                                             promoteRequest, String
+                                             serviceId, String projectId) throws Exception {
+>>>>>>> a14932d604272619c23d8fbb3b524dc05260696e
 
         DataRecord banked = addPromoteBanked(patientId, specimenType, sampleOrigin, sampleClass, DNA, bankedReqId,
                 sampleId, otherSampleId);

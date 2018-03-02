@@ -28,10 +28,13 @@ import org.mskcc.limsrest.limsapi.dmp.converter.DMPSampleToCMOBankedSampleConver
 import org.mskcc.limsrest.limsapi.promote.BankedSampleToSampleConverter;
 import org.mskcc.limsrest.limsapi.retriever.LimsDataRetriever;
 import org.mskcc.limsrest.limsapi.retriever.VeloxLimsDataRetriever;
+<<<<<<< HEAD
 import org.mskcc.limsrest.limsapi.dmp.converter.DMPSampleToCMOBankedSampleConverter;
 import org.mskcc.limsrest.limsapi.promote.BankedSampleToSampleConverter;
 import org.mskcc.limsrest.limsapi.retriever.LimsDataRetriever;
 import org.mskcc.limsrest.limsapi.retriever.VeloxLimsDataRetriever;
+=======
+>>>>>>> a14932d604272619c23d8fbb3b524dc05260696e
 import org.mskcc.limsrest.limsapi.store.RecordSaver;
 import org.mskcc.limsrest.limsapi.store.VeloxRecordSaver;
 import org.mskcc.limsrest.web.*;
@@ -45,7 +48,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.boot.context.web.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
@@ -53,6 +55,11 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.core.env.Environment;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
+<<<<<<< HEAD
+=======
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.web.SpringBootServletInitializer;
+>>>>>>> a14932d604272619c23d8fbb3b524dc05260696e
 
 
 @Configuration
