@@ -394,6 +394,11 @@ public class SampleSummary {
         return tubeId;
    }
 
+   @JsonInclude(JsonInclude.Include.NON_EMPTY)
+   public String getCellCount(){
+        return cellCount;
+   }
+
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public String getClinicalInfo(){
         return clinicalInfo;
