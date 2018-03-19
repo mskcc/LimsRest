@@ -246,16 +246,15 @@ public class GetSampleQc extends LimsTask
                qcSummary.setStartingAmount(mass);
             }
             ListIterator<DataRecord> ancestorIter = searchParents.listIterator();
-            LinkedList<DataRecord> queue = new LinkedList<>();
+            Deque<DataRecord> queue = new LinkedList<>();
             queue.addLast(parentSample);
             Set<DataRecord> visited = new HashSet<>();
             while ((requirements.length == 0) &&  !queue.isEmpty()) {
-              DataRecord current = queue.pop();
+              DataRecord current = queue.removeFirst();
               requirements = current.getChildrenOfType("SeqRequirement", this.user);
               List<DataRecord> parents = current.getParentsOfType("Sample", this.user);
               for(DataRecord parent : parents){
                   if(!visited.contains(parent)){
-                    queue.removeFirst();
                     visited.add(parent);
                     queue.addLast(parent);
                   }
