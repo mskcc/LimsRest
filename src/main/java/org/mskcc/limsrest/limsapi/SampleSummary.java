@@ -12,16 +12,20 @@ public class SampleSummary {
    private String userId;
    private String assay;
    private String barcodeId;
+   private String cellCount;
    private String clinicalInfo;
    private String collectionYear;
    private String gender;
    private String geneticAlterations;
    private String investigator; 
    private String initialPool;
+   private String micronicTubeBarcode;
    private String preservation;
    private String specimenType;
    private String spikeInGenes;
    private String tissueType;
+   private String naToExtract;
+   private String numTubes;
    private String patientId;
    private String platform;
    private String project;
@@ -108,6 +112,10 @@ public class SampleSummary {
         this.barcodeId = barcodeId;
    }
 
+   public void setCellCount(String cc){
+      this.cellCount = cc;
+   }
+
    public void setClinicalInfo(String ci){
       this.clinicalInfo = ci;
    }     
@@ -133,6 +141,18 @@ public class SampleSummary {
    public void setInvestigator(String investigator){
     this.investigator = investigator;
    }
+
+   public void setMicronicTubeBarcode(String micronic){
+     this.micronicTubeBarcode = micronic;
+   }
+   public void setNaToExtract(String naToExtract){
+     this.naToExtract = naToExtract;
+   }
+
+   public void setNumTubes(String numTubes){
+     this.numTubes = numTubes;
+   }
+
    public void setPatientId(String patientId){
     this.patientId = patientId;
    }
@@ -269,6 +289,16 @@ public class SampleSummary {
    }
 
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+   public String getNumTubes(){
+        return numTubes;
+   }
+
+   @JsonInclude(JsonInclude.Include.NON_EMPTY)
+   public String getNaToExtract(){
+        return naToExtract;
+   }
+
+   @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public String getPatientId(){
         return patientId;
    }
@@ -312,6 +342,11 @@ public class SampleSummary {
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public String getInvestigator(){
       return investigator;
+   }
+
+   @JsonInclude(JsonInclude.Include.NON_EMPTY)
+   public String getMicronicTubeBarcode(){
+      return micronicTubeBarcode;
    }
  
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -357,6 +392,11 @@ public class SampleSummary {
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public String getTubeId(){
         return tubeId;
+   }
+
+   @JsonInclude(JsonInclude.Include.NON_EMPTY)
+   public String getCellCount(){
+        return cellCount;
    }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

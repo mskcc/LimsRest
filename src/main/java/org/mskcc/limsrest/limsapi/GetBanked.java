@@ -151,8 +151,13 @@ public class GetBanked  extends LimsTask
             log.info("Warning: " + sample.getStringVal("RequestedReads", user) + " incorrect format.");
             ss.setRequestedReadNumber(-1);
           }
+        try{ss.setCellCount(sample.getStringVal("CellCount", user)); } catch(NullPointerException npe) {}
+        try{ss.setMicronicTubeBarcode(sample.getStringVal("MicronicTubeBarcode", user)); } catch(NullPointerException npe) {}
+        try{ss.setNaToExtract(sample.getPickListVal("NAtoExtract", user)); } catch(NullPointerException npe) {}
+        try{ss.setNumTubes(sample.getStringVal("NumTubes", user)); } catch(NullPointerException npe) {}
         try{ss.setRunType(sample.getStringVal("RunType", user)); } catch(NullPointerException npe) {}
         try{ss.setSampleClass(sample.getStringVal("SampleClass", user)); } catch(NullPointerException npe) {}
+        try{ss.setSampleType(sample.getStringVal("SampleType", user)); } catch(NullPointerException npe) {}
         if("ERROR".equals(ss.getBaseId())){
             ss.addBaseId("");
         }
