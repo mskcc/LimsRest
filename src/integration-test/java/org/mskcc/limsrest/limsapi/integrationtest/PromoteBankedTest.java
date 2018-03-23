@@ -592,6 +592,7 @@ public class PromoteBankedTest {
         fields.put(BankedSample.ASSAY, "assay");
         fields.put(BankedSample.CELL_COUNT, 2);
         fields.put(BankedSample.CLINICAL_INFO, "clinicalInfo");
+        fields.put(BankedSample.CMO_PATIENT_ID, patientId);
         fields.put(BankedSample.COL_POSITION, "C");
         fields.put(BankedSample.COLLECTION_YEAR, "1998");
         fields.put(BankedSample.CONCENTRATION, 23.5);

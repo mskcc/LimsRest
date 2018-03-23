@@ -6,7 +6,6 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.*;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.GenerateSampleCmoIdTask;
-
 import org.mskcc.limsrest.staticstrings.Constants;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -32,20 +31,23 @@ public class GetCorrectedSampleCmoId {
 
     /**
      * This function retrieves information about sample from lims and generated CMO Sample Id.
+     *
      * @param sampleIgoId
      * @return CMO Sample Id
      */
     @RequestMapping("/getSampleCmoId")
     public ResponseEntity<String> getSampleCmoIdByIgoId(@RequestParam(value = "sampleIgoId") String sampleIgoId) {
-        log.info(String.format("Starting to generate sample cmo id for sample igo id: %s", sampleIgoId));
-
-        log.info("Creating Generate sample cmo id task");
-        task.init(sampleIgoId);
-
-        log.info("Getting result of Generate sample cmo id task");
-        Future<Object> result = connQueue.submitTask(task);
-
         try {
+            validateSampleId(sampleIgoId);
+
+            log.info(String.format("Starting to generate sample cmo id for sample igo id: %s", sampleIgoId));
+
+            log.info("Creating Generate sample cmo id task");
+            task.init(sampleIgoId);
+
+            log.info("Getting result of Generate sample cmo id task");
+            Future<Object> result = connQueue.submitTask(task);
+
             String correctedSampleCmoId = (String) result.get();
 
             log.info(String.format("Generated CMO Sample ID: %s", correctedSampleCmoId));
@@ -63,6 +65,7 @@ public class GetCorrectedSampleCmoId {
 
     /**
      * This function generates CMO Sample Id for DMP Samples from parameters passed in a query
+     *
      * @param sampleId
      * @param requestId
      * @param patientId
@@ -87,6 +90,7 @@ public class GetCorrectedSampleCmoId {
         CorrectedCmoSampleView correctedCmoSampleView = new CorrectedCmoSampleView(sampleId);
 
         try {
+            validateSampleId(sampleId);
             correctedCmoSampleView.setSampleId(sampleId);
             correctedCmoSampleView.setRequestId(requestId);
             correctedCmoSampleView.setPatientId(patientId);
@@ -124,8 +128,18 @@ public class GetCorrectedSampleCmoId {
         }
     }
 
+    private void validateSampleId(String sampleIgoId) {
+        Whitelists whitelists = new Whitelists();
+
+        if (!whitelists.sampleMatches(sampleIgoId))
+            throw new IncorrectSampleIgoIdFormatException(String.format("Sample igo id provided %s is in incorrect " +
+                    "format. Expected " +
+                    "format: %s", sampleIgoId, whitelists.sampleNamePattern));
+    }
+
     /**
      * This function generates CMO Sample Id from parameters passed to a query
+     *
      * @param igoId
      * @param userSampleId
      * @param requestId
@@ -150,6 +164,7 @@ public class GetCorrectedSampleCmoId {
         CorrectedCmoSampleView correctedCmoSampleView = new CorrectedCmoSampleView(igoId);
 
         try {
+            validateSampleId(igoId);
             correctedCmoSampleView.setSampleId(userSampleId);
             correctedCmoSampleView.setRequestId(requestId);
             correctedCmoSampleView.setPatientId(patientId);
@@ -180,6 +195,12 @@ public class GetCorrectedSampleCmoId {
                     "%s", correctedCmoSampleView, ExceptionUtils.getRootCauseMessage(e)));
 
             return new ResponseEntity<>(headers, HttpStatus.OK);
+        }
+    }
+
+    private class IncorrectSampleIgoIdFormatException extends RuntimeException {
+        public IncorrectSampleIgoIdFormatException(String message) {
+            super(message);
         }
     }
 }
