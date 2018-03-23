@@ -1,32 +1,25 @@
 package org.mskcc.limsrest.limsapi;
 
 import com.velox.api.datarecord.DataRecord;
-import com.velox.api.datarecord.DataRecordManager;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
-import java.util.List;
-import java.util.LinkedList;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.stream.*;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class GetSampleQc extends LimsTask
 {
-  private Log log = LogFactory.getLog(GetSampleQc.class);
   protected String[] projectList;
   boolean poolsNeeded;
+    private Log log = LogFactory.getLog(GetSampleQc.class);
 
   public void init(String[] project)
   {
