@@ -2,13 +2,13 @@ package org.mskcc.limsrest.limsapi.cmoinfo.converter;
 
 import org.mskcc.limsrest.limsapi.cmoinfo.cspace.PatientAwareCorrectedCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.oldformat.OldCorrectedCmoIdConverter;
-import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleAbbreviationRetriever;
+import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleTypeAbbreviationRetriever;
 
 public class FormatAwareCorrectedCmoIdConverterFactory implements CorrectedCmoIdConverterFactory {
-    private final SampleAbbreviationRetriever sampleAbbreviationRetriever;
+    private final SampleTypeAbbreviationRetriever sampleTypeAbbreviationRetriever;
 
-    public FormatAwareCorrectedCmoIdConverterFactory(SampleAbbreviationRetriever sampleAbbreviationRetriever) {
-        this.sampleAbbreviationRetriever = sampleAbbreviationRetriever;
+    public FormatAwareCorrectedCmoIdConverterFactory(SampleTypeAbbreviationRetriever sampleTypeAbbreviationRetriever) {
+        this.sampleTypeAbbreviationRetriever = sampleTypeAbbreviationRetriever;
     }
 
     @Override
@@ -17,7 +17,7 @@ public class FormatAwareCorrectedCmoIdConverterFactory implements CorrectedCmoId
             return new PatientAwareCorrectedCmoIdConverter();
 
         if (isInOldFormat(correctedCmoSampleId))
-            return new OldCorrectedCmoIdConverter(sampleAbbreviationRetriever);
+            return new OldCorrectedCmoIdConverter(sampleTypeAbbreviationRetriever);
 
         throw new UnsupportedCmoIdFormatException();
     }

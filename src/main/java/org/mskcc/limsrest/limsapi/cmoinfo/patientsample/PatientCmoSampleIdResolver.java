@@ -4,10 +4,9 @@ import com.google.common.base.Preconditions;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.CorrectedCmoSampleView;
-import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceSampleAbbreviationRetriever;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.CmoSampleIdResolver;
-import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleAbbreviationRetriever;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleCounterRetriever;
+import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleTypeAbbreviationRetriever;
 import org.mskcc.util.CommonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -17,10 +16,10 @@ public class PatientCmoSampleIdResolver implements CmoSampleIdResolver<PatientAw
     private static final Log LOG = LogFactory.getLog(PatientCmoSampleIdResolver.class);
 
     private final SampleCounterRetriever sampleCounterRetriever;
-    private final SampleAbbreviationRetriever sampleTypeAbbreviationRetriever;
+    private final SampleTypeAbbreviationRetriever sampleTypeAbbreviationRetriever;
 
     @Autowired
-    public PatientCmoSampleIdResolver(SampleCounterRetriever sampleCounterRetriever, SampleAbbreviationRetriever
+    public PatientCmoSampleIdResolver(SampleCounterRetriever sampleCounterRetriever, SampleTypeAbbreviationRetriever
             sampleTypeAbbreviationRetriever) {
         this.sampleCounterRetriever = sampleCounterRetriever;
         this.sampleTypeAbbreviationRetriever = sampleTypeAbbreviationRetriever;
@@ -34,14 +33,14 @@ public class PatientCmoSampleIdResolver implements CmoSampleIdResolver<PatientAw
         LOG.debug(String.format("Resolving corrected cmo id for patient correctedCmoSampleId: %s",
                 correctedCmoSampleView.getId()));
 
-        String sampleClassAbbr = sampleTypeAbbreviationRetriever.retrieve(correctedCmoSampleView);
+        String sampleClassAbbr = sampleTypeAbbreviationRetriever.getSampleTypeAbbr(correctedCmoSampleView);
         int sampleCount = sampleCounterRetriever.retrieve(correctedCmoSampleView, cmoSampleViews, sampleClassAbbr);
 
         return new PatientAwareCmoSampleId(
                 correctedCmoSampleView.getPatientId(),
                 sampleClassAbbr,
                 sampleCount,
-                CspaceSampleAbbreviationRetriever.getNucleicAcidAbbr(correctedCmoSampleView));
+                sampleTypeAbbreviationRetriever.getNucleicAcidAbbr(correctedCmoSampleView));
     }
 
     private void validateRequiredFields(CorrectedCmoSampleView correctedCmoSampleView) {

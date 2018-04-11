@@ -462,7 +462,7 @@ public class PromoteBanked extends LimsTask {
                 return "";
             }
 
-            CorrectedCmoSampleView correctedCmoSampleView = convertBankedSampleToCorrectedCmoSampleId(bankedSample);
+            CorrectedCmoSampleView correctedCmoSampleView = convert(bankedSample);
 
             String cmoSampleId = correctedCmoSampleIdGenerator.generate(correctedCmoSampleView, requestId,
                     dataRecordManager, user);
@@ -484,7 +484,7 @@ public class PromoteBanked extends LimsTask {
         return humanSamplePredicate.test(bankedSample);
     }
 
-    private CorrectedCmoSampleView convertBankedSampleToCorrectedCmoSampleId(BankedSample bankedSample) throws
+    private CorrectedCmoSampleView convert(BankedSample bankedSample) throws
             LimsException {
         return bankedSampleToCorrectedCmoSampleIdConverter.convert(bankedSample);
     }

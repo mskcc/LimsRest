@@ -20,7 +20,8 @@ public class BankedSampleToCorrectedCmoSampleIdConverter implements CorrectedCmo
             correctedCmoSampleView.setPatientId(bankedSample.getCMOPatientId());
             correctedCmoSampleView.setRequestId(bankedSample.getRequestId());
 
-            correctedCmoSampleView.setNucleidAcid(NucleicAcid.fromValue(bankedSample.getNAtoExtract()));
+            correctedCmoSampleView.setNucleidAcid(getNucleicAcid(bankedSample));
+            correctedCmoSampleView.setSampleType(getSampleType(bankedSample));
             correctedCmoSampleView.setSpecimenType(SpecimenType.fromValue(bankedSample.getSpecimenType()));
 
             if (!StringUtils.isEmpty(bankedSample.getSampleClass()))
@@ -37,5 +38,13 @@ public class BankedSampleToCorrectedCmoSampleIdConverter implements CorrectedCmo
             throw new RuntimeException(String.format("Error while retrieving information for sample: %s. Couse: %s",
                     bankedSample.getId(), e.getMessage()));
         }
+    }
+
+    private NucleicAcid getNucleicAcid(BankedSample bankedSample) {
+        return NucleicAcid.fromValue(bankedSample.getNAtoExtract());
+    }
+
+    private SampleType getSampleType(BankedSample bankedSample) {
+        return SampleType.fromString(bankedSample.getSampleType());
     }
 }

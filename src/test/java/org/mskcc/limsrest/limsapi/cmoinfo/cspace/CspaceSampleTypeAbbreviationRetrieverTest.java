@@ -1,11 +1,8 @@
 package org.mskcc.limsrest.limsapi.cmoinfo.cspace;
 
 import org.junit.Test;
-import org.mskcc.domain.sample.CorrectedCmoSampleView;
-import org.mskcc.domain.sample.NucleicAcid;
-import org.mskcc.domain.sample.SampleClass;
-import org.mskcc.domain.sample.SampleOrigin;
-import org.mskcc.domain.sample.SpecimenType;
+import org.mskcc.domain.sample.*;
+import org.mskcc.util.Constants;
 import org.mskcc.util.TestUtils;
 
 import java.util.Optional;
@@ -15,9 +12,9 @@ import static org.junit.Assert.assertThat;
 import static org.mskcc.domain.sample.SampleOrigin.TISSUE;
 import static org.mskcc.domain.sample.SpecimenType.CFDNA;
 
-public class CspaceSampleAbbreviationRetrieverTest {
-    private CspaceSampleAbbreviationRetriever cspaceSampleAbbreviationRetriever = new
-            CspaceSampleAbbreviationRetriever();
+public class CspaceSampleTypeAbbreviationRetrieverTest {
+    private CspaceSampleTypeAbbreviationRetriever cspaceSampleAbbreviationRetriever = new
+            CspaceSampleTypeAbbreviationRetriever();
 
     @Test
     public void whenPropertiesAreCorrectlySet_shouldReturnSampleTypeAbbrev() throws Exception {
@@ -53,7 +50,67 @@ public class CspaceSampleAbbreviationRetrieverTest {
     }
 
     @Test
-    public void whenSampleisCellFree_shouldThrowAnException() throws Exception {
+    public void whenSampleTypeIsResolvableAndNucleicAcidIsEmpty_shouldReturnCorrectAbbrev() throws Exception {
+        assertNucleicAcidAbbrevBySampleType(SampleType.DNA, Constants.DNA_ABBREV);
+        assertNucleicAcidAbbrevBySampleType(SampleType.DNA_LIBRARY, Constants.DNA_ABBREV);
+        assertNucleicAcidAbbrevBySampleType(SampleType.CFDNA, Constants.DNA_ABBREV);
+        assertNucleicAcidAbbrevBySampleType(SampleType.RNA, Constants.RNA_ABBREV);
+    }
+
+    @Test
+    public void whenSampleTypeIsNotResolvable_shouldResolveByNucleicAcid() throws Exception {
+        assertNucleicAcidAbbrev(SampleType.BLOCKS_SLIDES, NucleicAcid.DNA, Constants.DNA_ABBREV);
+        assertNucleicAcidAbbrev(SampleType.BUFFY_COAT, NucleicAcid.DNA_AND_RNA, Constants.DNA_ABBREV);
+        assertNucleicAcidAbbrev(SampleType.CELLS, NucleicAcid.CFDNA, Constants.DNA_ABBREV);
+        assertNucleicAcidAbbrev(SampleType.OTHER, NucleicAcid.RNA, Constants.RNA_ABBREV);
+    }
+
+    @Test
+    public void whenSampleTypeAndNucleicAcidAreDifferent_shouldResolveBySampleType() throws Exception {
+        assertNucleicAcidAbbrev(SampleType.DNA, NucleicAcid.RNA, Constants.DNA_ABBREV);
+        assertNucleicAcidAbbrev(SampleType.RNA, NucleicAcid.DNA, Constants.RNA_ABBREV);
+        assertNucleicAcidAbbrev(SampleType.RNA, NucleicAcid.DNA_AND_RNA, Constants.RNA_ABBREV);
+        assertNucleicAcidAbbrev(SampleType.RNA, NucleicAcid.CFDNA, Constants.RNA_ABBREV);
+    }
+
+    private void assertNucleicAcidAbbrev(SampleType sampleType, NucleicAcid nucleicAcid, String abbrev) {
+        CorrectedCmoSampleView correctedCmoSampleView = new CorrectedCmoSampleView("id");
+        correctedCmoSampleView.setNucleidAcid(nucleicAcid);
+        correctedCmoSampleView.setSampleType(sampleType);
+
+        String nucleicAcidAbbr = cspaceSampleAbbreviationRetriever.getNucleicAcidAbbr(correctedCmoSampleView);
+
+        assertThat(nucleicAcidAbbr, is(abbrev));
+    }
+
+    @Test
+    public void whenSampleTypeIsEmpty_shouldResolveByNucleicAcid() throws Exception {
+        assertNucleicAcidAbbrevByNucleicAcid(NucleicAcid.DNA, Constants.DNA_ABBREV);
+        assertNucleicAcidAbbrevByNucleicAcid(NucleicAcid.DNA_AND_RNA, Constants.DNA_ABBREV);
+        assertNucleicAcidAbbrevByNucleicAcid(NucleicAcid.CFDNA, Constants.DNA_ABBREV);
+        assertNucleicAcidAbbrevByNucleicAcid(NucleicAcid.RNA, Constants.RNA_ABBREV);
+    }
+
+    private void assertNucleicAcidAbbrevByNucleicAcid(NucleicAcid nucleidAcid, String abbrev) {
+        CorrectedCmoSampleView correctedCmoSampleView = new CorrectedCmoSampleView("id");
+        correctedCmoSampleView.setNucleidAcid(nucleidAcid);
+
+        String nucleicAcidAbbr = cspaceSampleAbbreviationRetriever.getNucleicAcidAbbr(correctedCmoSampleView);
+
+        assertThat(nucleicAcidAbbr, is(abbrev));
+    }
+
+    private void assertNucleicAcidAbbrevBySampleType(SampleType sampleType, String dnaabbrev) {
+        CorrectedCmoSampleView correctedCmoSampleView = new CorrectedCmoSampleView("id");
+        correctedCmoSampleView.setSampleType(sampleType);
+
+        String nucleicAcidAbbr = cspaceSampleAbbreviationRetriever.getNucleicAcidAbbr(correctedCmoSampleView);
+
+        assertThat(nucleicAcidAbbr, is(dnaabbrev));
+    }
+
+    @Test
+    public void whenSampleIsCellFree_shouldThrowAnException() throws Exception {
         Optional<Exception> exception = TestUtils.assertThrown(() -> assertSampleTypeAbbrev(SpecimenType.RAPIDAUTOPSY,
                 SampleOrigin.URINE, SampleClass.CELL_FREE, "U"));
 
@@ -82,13 +139,13 @@ public class CspaceSampleAbbreviationRetrieverTest {
         sampleOrigin.ifPresent((sampleOrigin1) -> correctedCmoSampleView.setSampleOrigin(sampleOrigin1));
         correctedCmoSampleView.setSpecimenType(specimenType);
 
-        String typeAbbrev = cspaceSampleAbbreviationRetriever.retrieve(correctedCmoSampleView);
+        String typeAbbrev = cspaceSampleAbbreviationRetriever.getSampleTypeAbbr(correctedCmoSampleView);
 
         assertThat(typeAbbrev, is(abbrev));
     }
 
     @Test
-    public void whenSpeciemnIsCfdnaAndOriginIsTissueAndClassIsCellFree_shouldThrowAnException() throws Exception {
+    public void whenSpecimenIsCfDNAAndOriginIsTissueAndClassIsCellFree_shouldThrowAnException() throws Exception {
         CorrectedCmoSampleView view = new CorrectedCmoSampleView("sampleId");
         String patientId = "12345";
         view.setPatientId(patientId);
@@ -97,7 +154,8 @@ public class CspaceSampleAbbreviationRetrieverTest {
         view.setSampleClass(SampleClass.CELL_FREE);
         view.setNucleidAcid(NucleicAcid.DNA);
 
-        Optional<Exception> exception = TestUtils.assertThrown(() -> cspaceSampleAbbreviationRetriever.retrieve(view));
+        Optional<Exception> exception = TestUtils.assertThrown(() -> cspaceSampleAbbreviationRetriever
+                .getSampleTypeAbbr(view));
 
         assertThat(exception.isPresent(), is(true));
     }
