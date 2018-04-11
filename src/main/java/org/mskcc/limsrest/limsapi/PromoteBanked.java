@@ -298,8 +298,7 @@ public class PromoteBanked extends LimsTask {
                     "promoted to sample", bankedSample.getUserSampleID()));
         }
 
-        String correctedCmoSampleId = bankedSample.getOtherSampleId(); //getCorrectedCmoSampleId(bankedSample,
-        // requestId);
+        String correctedCmoSampleId = getCorrectedCmoSampleId(bankedSample, requestId);
         String otherSampleId = bankedSample.getOtherSampleId();
 
         log.debug(String.format("Generated corrected cmo id: %s", correctedCmoSampleId));

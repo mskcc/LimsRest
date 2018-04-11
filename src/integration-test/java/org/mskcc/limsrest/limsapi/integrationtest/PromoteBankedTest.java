@@ -536,9 +536,9 @@ public class PromoteBankedTest {
                 new BankedWithCorrectedCmoId(bankedToPromote1.get(2), String.format("%s-%s%s-%s", patientId3, "M",
                         "001", Constants.DNA_ABBREV)),
                 new BankedWithCorrectedCmoId(bankedToPromote1.get(3), String.format("%s-%s%s-%s", patientId3, "L",
-                        "001", Constants.DNA_ABBREV)),
-                new BankedWithCorrectedCmoId(bankedToPromote1.get(4), String.format("%s-%s%s-%s", patientId3, "N",
                         "001", Constants.RNA_ABBREV)),
+                new BankedWithCorrectedCmoId(bankedToPromote1.get(4), String.format("%s-%s%s-%s", patientId3, "N",
+                        "001", Constants.DNA_ABBREV)),
                 new BankedWithCorrectedCmoId(bankedToPromote1.get(5), String.format("%s-%s%s-%s", patientId3, "N",
                         "002", Constants.DNA_ABBREV)),
                 new BankedWithCorrectedCmoId(bankedToPromote1.get(6), String.format("%s-%s%s-%s", patientId3, "S",
@@ -597,8 +597,8 @@ public class PromoteBankedTest {
     }
 
     private DataRecord addPromoteBanked(String patientId, SpecimenType specimenType, Optional<SampleOrigin>
-            sampleOrigin, Optional<SampleClass> sampleClass,
-                                        NucleicAcid nucleicAcid, String requestId, String sampleId, String
+            sampleOrigin, Optional<SampleClass> sampleClass, NucleicAcid nucleicAcid, String requestId, String
+            sampleId, String
                                                 otherSampleId, SampleType sampleType) throws Exception {
         DataRecord bankedSampleRecord = dataRecordManager.addDataRecord(BankedSample.DATA_TYPE_NAME, user);
         Map<String, Object> fields = new HashMap<>();
@@ -655,8 +655,7 @@ public class PromoteBankedTest {
     }
 
     private DataRecord addPromoteBanked(String patientId, SpecimenType specimenType, Optional<SampleOrigin>
-            sampleOrigin,
-                                        NucleicAcid nucleicAcid, String requestId, String sampleId, String
+            sampleOrigin, NucleicAcid nucleicAcid, String requestId, String sampleId, String
                                                 otherSampleId, SampleType sampleType) throws Exception {
         return addPromoteBanked(patientId, specimenType, sampleOrigin, Optional.empty(), nucleicAcid, requestId,
                 sampleId, otherSampleId, sampleType);
