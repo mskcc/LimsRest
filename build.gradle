@@ -69,7 +69,7 @@ dependencies {
     compile ('javax.servlet:jstl:1.2')
     compile("com.fasterxml.jackson.core:jackson-databind")
     compile (group: 'com.google.guava', name: 'guava', version: '18.+')
-    compile (group: 'org.mskcc.common', name:'common-domain', version: '2.3.0-SNAPSHOT')
+    compile (group: 'org.mskcc.common', name:'common-domain', version: '2.4.0-SNAPSHOT')
     compile fileTree (dir: 'libs', include: '*.jar')
 
     testCompile ('io.rest-assured:rest-assured:3.0.1')

@@ -29,6 +29,8 @@ public class BankedSampleToSampleConverter {
         sample.setGender(bankedSample.getGender());
         sample.setGeneticAlterations(bankedSample.getGeneticAlterations());
 
+        sample.setMicronicTubeBarcode(bankedSample.getMicronicTubeBarcode());
+
         sample.setNAtoExtract(bankedSample.getNAtoExtract());
 
         sample.setOtherSampleId(bankedSample.getOtherSampleId());
