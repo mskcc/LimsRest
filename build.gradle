@@ -1,10 +1,11 @@
 group 'org.mskcc.limsrest'
-version '1.1.0-SNAPSHOT'
+version '1.2.0-SNAPSHOT'
 
 buildscript {
     repositories {
         mavenCentral()
-    }
+        mavenLocal()
+   }
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:1.2.5.RELEASE")
     }
@@ -17,27 +18,29 @@ apply plugin: 'idea'
 
 if(target== 'dev'){
     copy {
-        from "src/dev/resources/connect.txt"
-        into "src/main/resources/"
-    }
-    copy {
-        from "src/dev/resources/slack.properties"
-        into "src/main/resources/"
+        from "src/dev/resources"
+        into "src/main/resources"
     }
     copy {
         from "src/dev/RelatedRecords.java"
         into "src/main/java/org/mskcc/limsrest/staticstrings/"
     }
 
+} else if(target == 'test'){
+    copy {
+        from "src/test-site-res/resources"
+        into "src/main/resources"
+    }
+    copy {
+        from "src/production/RelatedRecords.java"
+        into "src/main/java/org/mskcc/limsrest/staticstrings/"
+    }
+
 }
 else {
     copy {
-        from "src/production/resources/connect.txt"
-        into "src/main/resources/"
-    }
-    copy {
-        from "src/production/resources/slack.properties"
-        into "src/main/resources/"
+        from "src/production/resources"
+        into "src/main/resources"
     }
     copy {
         from "src/production/RelatedRecords.java"
@@ -47,6 +50,9 @@ else {
 
 war{
     baseName = 'LimsRest##'
+    if(target == 'test'){
+       baseName = 'TestRest##'
+    }
 }
 
 jar {
@@ -74,8 +80,9 @@ dependencies {
     compile ("org.springframework.boot:spring-boot-starter-web")
     compile ("org.springframework.boot:spring-boot-starter-security")
     compile ('javax.servlet:jstl:1.2')
+    compile("com.fasterxml.jackson.core:jackson-databind")
     compile (group: 'com.google.guava', name: 'guava', version: '18.+')
-    compile (group: 'org.mskcc.common', name:'common-domain', version: '2.2.0')
+    compile (group: 'org.mskcc.common', name:'common-domain', version: '2.4.0-SNAPSHOT')
     compile fileTree (dir: 'libs', include: '*.jar')
 
     testCompile ('io.rest-assured:rest-assured:3.0.1')
