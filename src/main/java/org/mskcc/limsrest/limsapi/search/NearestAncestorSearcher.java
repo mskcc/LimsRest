@@ -14,7 +14,10 @@ public class NearestAncestorSearcher {
         long mostRecentAncestorWithPlan = Long.MAX_VALUE;
         long mostRecentAncestorWithReq = Long.MAX_VALUE;
         Map<String, Map<String, Object>> resultMaps = new HashMap<>();
-
+        Map<String, Object> emptyMap = new HashMap<>();
+        resultMaps.put("BarcodeFields", emptyMap);
+        resultMaps.put("PlanFields", emptyMap);
+        resultMaps.put("ReqFields", emptyMap);
         for(int ancestorIndex = 0; ancestorIndex < ancestorSampleDates.size(); ancestorIndex++){
             long ancestorCreateDate =  Long.MAX_VALUE;
             try {

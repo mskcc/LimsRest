@@ -65,6 +65,15 @@ public class GetReadyForIllumina extends LimsTask
             if(sampleId.startsWith("Pool-")){
                 Deque<DataRecord> queue = new LinkedList<>();
                 Set<DataRecord> visited = new HashSet<>();
+                double poolConcentration = 0.0;
+                try{
+                    poolConcentration = sample.getDoubleVal("Concentration", user);
+                } catch (NullPointerException npe){}
+                double poolVolume = 0.0;
+                try{
+                    poolVolume = sample.getDoubleVal("Volume", user);
+                }catch (NullPointerException npe){}
+                String status = sample.getStringVal("ExemplarSampleStatus", user);
                 queue.add(sample);
                 while(!queue.isEmpty()){
                     DataRecord current = queue.removeFirst();
@@ -77,7 +86,12 @@ public class GetReadyForIllumina extends LimsTask
                             }
                         }
                     } else{
-                        results.add(annotateUnpooledSample(current));
+                        RunSummary runSummary = annotateUnpooledSample(current);
+                        runSummary.setPool(sampleId);
+                        runSummary.setConcentration(poolConcentration);
+                        runSummary.setVolume(Double.toString(poolVolume));
+                        runSummary.setStatus(status);
+                        results.add(runSummary);
                     }
                     visited.add(current);
                 }
@@ -128,6 +142,7 @@ private Long getCreateDate(DataRecord record){
 
 
             List<DataRecord> ancestorSamples = sample.getAncestorsOfType("Sample", user);
+            ancestorSamples.add(0, sample);
             List<Long> ancestorSamplesCreateDate = new LinkedList<>();
             ancestorSamplesCreateDate = ancestorSamples.stream().
                     map(this::getCreateDate).
@@ -138,11 +153,10 @@ private Long getCreateDate(DataRecord record){
 
             Map<String, Map<String, Object>> nearestAncestorFields =
                     NearestAncestorSearcher.findMostRecentAncestorFields(ancestorSamplesCreateDate,
-                            ancestorBarcodes, ancestorPlanningProtocols,ancestorSeqRequirements);
+                            ancestorBarcodes, ancestorPlanningProtocols, ancestorSeqRequirements);
             Map<String, Object> barcodeFields = nearestAncestorFields.get("BarcodeFields");
             Map<String, Object> planFields = nearestAncestorFields.get("PlanFields");
             Map<String, Object> reqFields = nearestAncestorFields.get("ReqFields");
-
 
             summary.setBarcodeId((String) barcodeFields.getOrDefault("IndexId", ""));
             summary.setBarcodeSeq((String) barcodeFields.getOrDefault("IndexTag", ""));

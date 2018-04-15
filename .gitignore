@@ -18,6 +18,7 @@ logs/
 
 src/dev/
 src/production/
+src/test-site-res/
 src/webapp/
 src/main/resources/
 src/main/java/org/mskcc/limsrest/receiver/SecurityConfiguration.java
