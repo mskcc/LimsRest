@@ -178,7 +178,7 @@ public class SetOrCreateBanked  extends LimsTask
         
     }
     //default species values for recipes
-    if(recipe.startsWith("IMPACT")){
+    if(recipe.startsWith("IMPACT") || recipe.startsWith("HemePACT")){
         organism = "Human";
     }
     if(recipe.startsWith("M-IMPACT")){
