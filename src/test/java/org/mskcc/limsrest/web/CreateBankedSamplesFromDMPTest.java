@@ -30,7 +30,7 @@ public class CreateBankedSamplesFromDMPTest {
     }
 
     @Test
-    public void whenDateIsNullAndNoErrors_shouldRetuurnOk() throws Exception {
+    public void whenDateIsNullAndNoErrors_shouldReturnOk() throws Exception {
         when(connQueue.submitTask(any())).thenReturn(mock(FutureTask.class));
 
         ResponseEntity<String> response = createBankedSamplesFromDMP.getSampleCmoId(null);
