@@ -1,8 +1,10 @@
 package org.mskcc.limsrest.limsapi.search;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 
 public class NearestAncestorSearcher {
     public static  Map<String, Map<String, Object>> findMostRecentAncestorFields(List<Long> ancestorSampleDates,
@@ -14,7 +16,7 @@ public class NearestAncestorSearcher {
         long mostRecentAncestorWithPlan = Long.MAX_VALUE;
         long mostRecentAncestorWithReq = Long.MAX_VALUE;
         Map<String, Map<String, Object>> resultMaps = new HashMap<>();
-        Map<String, Object> emptyMap = new HashMap<>();
+        Map<String, Object> emptyMap = Collections.emptyMap();
         resultMaps.put("BarcodeFields", emptyMap);
         resultMaps.put("PlanFields", emptyMap);
         resultMaps.put("ReqFields", emptyMap);
