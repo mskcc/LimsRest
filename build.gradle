@@ -26,6 +26,16 @@ if(target== 'dev'){
         into "src/main/java/org/mskcc/limsrest/staticstrings/"
     }
 
+} else if(target == 'test'){
+    copy {
+        from "src/test-site-res/resources"
+        into "src/main/resources"
+    }
+    copy {
+        from "src/production/RelatedRecords.java"
+        into "src/main/java/org/mskcc/limsrest/staticstrings/"
+    }
+
 }
 else {
     copy {
@@ -40,6 +50,9 @@ else {
 
 war{
     baseName = 'LimsRest##'
+    if(target == 'test'){
+       baseName = 'TestRest##'
+    }
 }
 
 jar {
