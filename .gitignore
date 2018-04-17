@@ -21,6 +21,7 @@ src/production/
 src/test-site-res/
 src/webapp/
 src/main/resources/
+src/integration-test/resources/
 src/main/java/org/mskcc/limsrest/receiver/SecurityConfiguration.java
 src/main/java/org/mskcc/limsrest/web/SecurityConfiguration.java
 GRADLECALL

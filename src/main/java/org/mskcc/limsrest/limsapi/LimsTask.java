@@ -305,6 +305,8 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
             ss.addExpName((String) sampleFields.get("UserSampleID"));
             ss.setGeneticAlterations((String) sampleFields.get("GeneticAlterations"));
             ss.setPatientId((String) sampleFields.get("PatientId"));
+            ss.setNormalizedPatientId((String) sampleFields.get("NormalizedPatientId"));
+            ss.setCmoPatientId((String) sampleFields.get("CMOPatientId"));
             ss.setPreservation((String) sampleFields.get("Preservation"));
             ss.setSpecimenType((String) sampleFields.get("SpecimenType"));
             ss.setSpikeInGenes((String) sampleFields.get("SpikeInGenes"));

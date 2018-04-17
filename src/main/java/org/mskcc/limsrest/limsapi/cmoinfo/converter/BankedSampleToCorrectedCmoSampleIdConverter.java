@@ -3,7 +3,6 @@ package org.mskcc.limsrest.limsapi.cmoinfo.converter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.domain.sample.*;
 import org.mskcc.limsrest.limsapi.PatientSamplesWithCmoInfoRetriever;
 
@@ -18,7 +17,7 @@ public class BankedSampleToCorrectedCmoSampleIdConverter implements CorrectedCmo
             CorrectedCmoSampleView correctedCmoSampleView = new CorrectedCmoSampleView(bankedSample.getUserSampleID());
 
             correctedCmoSampleView.setSampleId(bankedSample.getUserSampleID());
-            correctedCmoSampleView.setPatientId(bankedSample.getPatientId());
+            correctedCmoSampleView.setPatientId(bankedSample.getCMOPatientId());
             correctedCmoSampleView.setRequestId(bankedSample.getRequestId());
 
             correctedCmoSampleView.setNucleidAcid(NucleicAcid.fromValue(bankedSample.getNAtoExtract()));

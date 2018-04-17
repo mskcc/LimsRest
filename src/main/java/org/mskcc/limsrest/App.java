@@ -1,6 +1,7 @@
 package org.mskcc.limsrest;
 
 import com.fasterxml.jackson.databind.SerializationFeature;
+import org.apache.log4j.Logger;
 import org.mskcc.domain.sample.BankedSample;
 import org.mskcc.domain.sample.Sample;
 import org.mskcc.limsrest.connection.ConnectionQueue;
@@ -20,10 +21,24 @@ import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceSampleAbbreviationRetriev
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdFormatter;
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdResolver;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.*;
+import org.mskcc.limsrest.limsapi.converter.ExternalToBankedSampleConverter;
 import org.mskcc.limsrest.limsapi.converter.SampleRecordToSampleConverter;
+import org.mskcc.limsrest.limsapi.dmp.*;
+import org.mskcc.limsrest.limsapi.dmp.converter.DMPSampleToCMOBankedSampleConverter;
+import org.mskcc.limsrest.limsapi.promote.BankedSampleToSampleConverter;
+import org.mskcc.limsrest.limsapi.retriever.LimsDataRetriever;
+import org.mskcc.limsrest.limsapi.retriever.VeloxLimsDataRetriever;
+import org.mskcc.limsrest.limsapi.dmp.converter.DMPSampleToCMOBankedSampleConverter;
+import org.mskcc.limsrest.limsapi.promote.BankedSampleToSampleConverter;
+import org.mskcc.limsrest.limsapi.retriever.LimsDataRetriever;
+import org.mskcc.limsrest.limsapi.retriever.VeloxLimsDataRetriever;
+import org.mskcc.limsrest.limsapi.store.RecordSaver;
+import org.mskcc.limsrest.limsapi.store.VeloxRecordSaver;
 import org.mskcc.limsrest.web.*;
 import org.mskcc.util.notificator.Notificator;
 import org.mskcc.util.notificator.SlackNotificator;
+import org.mskcc.util.tumortype.OncotreeTumorTypeRetriever;
+import org.mskcc.util.tumortype.TumorTypeRetriever;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,11 +55,12 @@ import org.springframework.web.filter.CommonsRequestLoggingFilter;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.web.SpringBootServletInitializer;
 
-
 @Configuration
 @EnableAutoConfiguration
-@PropertySource({"classpath:/connect.txt", "classpath:/slack.properties"})
+@PropertySource({"classpath:/connect.txt", "classpath:/slack.properties", "classpath:/app.properties"})
 public class App extends SpringBootServletInitializer {
+    private static final Logger LOGGER = Logger.getLogger(App.class);
+
     @Autowired
     private Environment env;
 
@@ -59,6 +75,12 @@ public class App extends SpringBootServletInitializer {
 
     @Value("${icon}")
     private String icon;
+
+    @Value("${dmpRestUrl}")
+    private String dmpRestUrl;
+
+    @Value("${oncotreeRestUrl}")
+    private String oncotreeRestUrl;
 
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
@@ -247,8 +269,17 @@ public class App extends SpringBootServletInitializer {
     @Bean
     @Scope("request")
     public PromoteBanked promoteBanked() {
-        return new PromoteBanked(bankedSampleToCorrectedCmoSampleIdConverter(),
-                sampleTypeCorrectedCmoSampleIdGenerator());
+        return new PromoteBanked(
+                bankedSampleToCorrectedCmoSampleIdConverter(),
+                sampleTypeCorrectedCmoSampleIdGenerator(),
+                bankedSampleToSampleConverter()
+        );
+    }
+
+    @Bean
+    @Scope("request")
+    public BankedSampleToSampleConverter bankedSampleToSampleConverter() {
+        return new BankedSampleToSampleConverter();
     }
 
     @Bean
@@ -449,9 +480,58 @@ public class App extends SpringBootServletInitializer {
 
     @Bean
     @Scope("request")
+    public CreateBankedSamplesFromDMP createBankedSamplesFromDMP() {
+        return new CreateBankedSamplesFromDMP(connectionQueue(), generateBankedSamplesFromDMP(), dateRetriever());
+    }
+
+    @Bean
+    @Scope("request")
+    public DateRetriever dateRetriever() {
+        return new DefaultTodayDateRetriever();
+    }
+
+    @Bean
+    @Scope("request")
     public GenerateSampleCmoIdTask generateSampleCmoIdTask() {
         return new GenerateSampleCmoIdTask(sampleTypeCorrectedCmoSampleIdGenerator(), sampleToCorrectedCmoIdConverter
                 (), sampleRecordToSampleConverter());
+    }
+
+    @Bean
+    @Scope("request")
+    public GenerateBankedSamplesFromDMP generateBankedSamplesFromDMP() {
+        return new GenerateBankedSamplesFromDMP(dmpToBankedSampleConverter(), dmpSamplesRetriever(), recordSaver(),
+                limsDataRetriever());
+    }
+
+    @Bean
+    @Scope("request")
+    public LimsDataRetriever limsDataRetriever() {
+        return new VeloxLimsDataRetriever();
+    }
+
+    @Bean
+    @Scope("request")
+    public TumorTypeRetriever tumorTypeRetriever() {
+        return new OncotreeTumorTypeRetriever(oncotreeRestUrl);
+    }
+
+    @Bean
+    @Scope("request")
+    public RecordSaver recordSaver() {
+        return new VeloxRecordSaver();
+    }
+
+    @Bean
+    @Scope("request")
+    public DMPSamplesRetriever dmpSamplesRetriever() {
+        return new WebServiceDMPSamplesRetriever(dmpRestUrl);
+    }
+
+    @Bean
+    @Scope("request")
+    public ExternalToBankedSampleConverter dmpToBankedSampleConverter() {
+        return new DMPSampleToCMOBankedSampleConverter(tumorTypeRetriever());
     }
 
     @Bean
