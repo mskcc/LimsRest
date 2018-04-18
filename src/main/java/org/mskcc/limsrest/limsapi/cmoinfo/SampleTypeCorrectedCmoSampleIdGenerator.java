@@ -47,6 +47,8 @@ public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSamp
     @Override
     public synchronized String generate(CorrectedCmoSampleView correctedCmoSampleView, String requestId,
                                         DataRecordManager dataRecordManager, User user) {
+        LOGGER.info(String.format("Generating cmo id for view: %s", correctedCmoSampleView));
+
         try {
             String patientId = correctedCmoSampleView.getPatientId();
             CommonUtils.requireNonNullNorEmpty(patientId, String.format("Patient id is not set for sample: %s",
@@ -83,22 +85,28 @@ public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSamp
     }
 
     private boolean isSame(String current, String potential) {
-        StringCmoIdToCmoIdConverter stringCmoIdToCmoIdConverter = new StringCmoIdToCmoIdConverter();
+        try {
+            StringCmoIdToCmoIdConverter stringCmoIdToCmoIdConverter = new StringCmoIdToCmoIdConverter();
 
-        PatientAwareCmoSampleId currentId = stringCmoIdToCmoIdConverter.convert(current);
-        PatientAwareCmoSampleId potentialId = stringCmoIdToCmoIdConverter.convert(potential);
+            PatientAwareCmoSampleId currentId = stringCmoIdToCmoIdConverter.convert(current);
+            PatientAwareCmoSampleId potentialId = stringCmoIdToCmoIdConverter.convert(potential);
 
-        if (!Objects.equals(currentId.getNucleicAcid(), potentialId.getNucleicAcid()))
+            if (!Objects.equals(currentId.getNucleicAcid(), potentialId.getNucleicAcid()))
+                return false;
+            if (!Objects.equals(currentId.getPatientId(), potentialId.getPatientId()))
+                return false;
+            if (!Objects.equals(currentId.getSampleTypeAbbr(), potentialId.getSampleTypeAbbr()))
+                return false;
+
+            LOGGER.info(String.format("Current cmo sample id %s and potential new one %s are the same. The only " +
+                    "difference is the counter thus leaving current value", current, potential));
+
+            return true;
+        } catch (Exception e) {
+            LOGGER.warn(String.format("Cannot determine if current: %s and new: %s cmo sample id are the same thus " +
+                    "forcing overriding", current, potential), e);
             return false;
-        if (!Objects.equals(currentId.getPatientId(), potentialId.getPatientId()))
-            return false;
-        if (!Objects.equals(currentId.getSampleTypeAbbr(), potentialId.getSampleTypeAbbr()))
-            return false;
-
-        LOGGER.info(String.format("Current cmo sample id %s and potential new one %s are the same. The only " +
-                "difference is the counter thus leaving current value", current, potential));
-
-        return true;
+        }
     }
 
     private List<CorrectedCmoSampleView> getFilteredCmoViews(CorrectedCmoSampleView correctedCmoSampleView,

@@ -2,6 +2,7 @@ package org.mskcc.limsrest.limsapi;
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.CorrectedCmoSampleView;
@@ -38,22 +39,26 @@ public class GenerateSampleCmoIdTask extends LimsTask {
 
     public void init(String sampleIgoId) {
         this.sampleIgoId = sampleIgoId;
-        this.correctedCmoSampleView = getCorrectedCmoSampleView();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @Override
     public String execute(VeloxConnection conn) {
+        if (correctedCmoSampleView == null)
+            correctedCmoSampleView = getCorrectedCmoSampleView(sampleIgoId);
+        else if (StringUtils.isEmpty(correctedCmoSampleView.getCorrectedCmoId()))
+            correctedCmoSampleView.setCorrectedCmoId(getCorrectedCmoSampleView(sampleIgoId).getCorrectedCmoId());
+
         String cmoId = correctedCmoSampleIdGenerator.generate(correctedCmoSampleView,
                 correctedCmoSampleView.getRequestId(), dataRecordManager, user);
 
         return cmoId;
     }
 
-    private CorrectedCmoSampleView getCorrectedCmoSampleView() {
+    private CorrectedCmoSampleView getCorrectedCmoSampleView(String igoId) {
         try {
             List<DataRecord> sampleRecords = dataRecordManager.queryDataRecords(VeloxConstants.SAMPLE, "SampleId = '"
-                    + sampleIgoId + "'", user);
+                    + igoId + "'", user);
 
             if (sampleRecords.size() == 0)
                 throw new RuntimeException(String.format("No sample found with id: %s", sampleIgoId));
@@ -75,5 +80,6 @@ public class GenerateSampleCmoIdTask extends LimsTask {
 
     public void init(CorrectedCmoSampleView correctedCmoSampleView) {
         this.correctedCmoSampleView = correctedCmoSampleView;
+        this.sampleIgoId = correctedCmoSampleView.getId();
     }
 }
