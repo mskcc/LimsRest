@@ -2,19 +2,15 @@ package org.mskcc.limsrest.limsapi.cmoinfo;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mskcc.domain.sample.CorrectedCmoSampleView;
-import org.mskcc.domain.sample.NucleicAcid;
-import org.mskcc.domain.sample.SampleClass;
-import org.mskcc.domain.sample.SampleOrigin;
-import org.mskcc.domain.sample.SpecimenType;
+import org.mskcc.domain.sample.*;
 import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CfDnaSampleAbbreviationResolver;
 import org.mskcc.limsrest.limsapi.cmoinfo.cspace.ClassSampleAbbreviationResolver;
-import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceSampleAbbreviationRetriever;
+import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceSampleTypeAbbreviationRetriever;
 import org.mskcc.limsrest.limsapi.cmoinfo.cspace.SpecimenTypeSampleAbbreviationResolver;
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientAwareCmoSampleId;
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdResolver;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.IncrementalSampleCounterRetriever;
-import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleAbbreviationRetriever;
+import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleTypeAbbreviationRetriever;
 import org.mskcc.util.TestUtils;
 
 import java.util.Collections;
@@ -35,7 +31,8 @@ public class PatientAwareCmoSampleIdResolverTest {
     private IncrementalSampleCounterRetriever countRetriever = mock(IncrementalSampleCounterRetriever.class);
     private String requestId = "6543w2_O";
     private String sampleId = "s43222";
-    private SampleAbbreviationRetriever sampleTypeAbbreviationRetriever = new CspaceSampleAbbreviationRetriever();
+    private SampleTypeAbbreviationRetriever sampleTypeAbbreviationRetriever = new
+            CspaceSampleTypeAbbreviationRetriever();
 
     @Before
     public void setUp() throws Exception {
@@ -168,7 +165,8 @@ public class PatientAwareCmoSampleIdResolverTest {
         assertThat(cmoSampleId.getSampleTypeAbbr(), is(CfDnaSampleAbbreviationResolver
                 .getSampleOriginToAbbreviation().get(sampleOrigin)));
         assertThat(cmoSampleId.getSampleCount(), is(1));
-        assertThat(cmoSampleId.getNucleicAcid(), is(CspaceSampleAbbreviationRetriever.getNucleicAcidToAbbreviation().get(nucleicAcid)));
+        assertThat(cmoSampleId.getNucleicAcid(), is(CspaceSampleTypeAbbreviationRetriever.getNucleicAcid2Abbreviation
+                ().get(nucleicAcid)));
     }
 
     @Test
@@ -200,7 +198,7 @@ public class PatientAwareCmoSampleIdResolverTest {
         assertThat(cmoSampleId.getSampleTypeAbbr(), is(ClassSampleAbbreviationResolver.getSampleClassToAbbreviation
                 ().get(sampleClass)));
         assertThat(cmoSampleId.getSampleCount(), is(1));
-        assertThat(cmoSampleId.getNucleicAcid(), is(CspaceSampleAbbreviationRetriever.getNucleicAcidToAbbreviation().get(nucleicAcid)));
+        assertThat(cmoSampleId.getNucleicAcid(), is(CspaceSampleTypeAbbreviationRetriever.getNucleicAcid2Abbreviation().get(nucleicAcid)));
     }
 
     private void assertCmoSampleIdBySpecimen(String patientId, NucleicAcid nucleicAcid, SpecimenType specimenType) {
@@ -218,7 +216,7 @@ public class PatientAwareCmoSampleIdResolverTest {
         assertThat(cmoSampleId.getSampleTypeAbbr(), is(SpecimenTypeSampleAbbreviationResolver
                 .getSpecimenTypeToAbbreviation().get(specimenType)));
         assertThat(cmoSampleId.getSampleCount(), is(1));
-        assertThat(cmoSampleId.getNucleicAcid(), is(CspaceSampleAbbreviationRetriever.getNucleicAcidToAbbreviation().get(nucleicAcid)));
+        assertThat(cmoSampleId.getNucleicAcid(), is(CspaceSampleTypeAbbreviationRetriever.getNucleicAcid2Abbreviation().get(nucleicAcid)));
     }
 
     @Test

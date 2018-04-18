@@ -17,17 +17,13 @@ import org.mskcc.limsrest.limsapi.cmoinfo.converter.BankedSampleToCorrectedCmoSa
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.FormatAwareCorrectedCmoIdConverterFactory;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.SampleToCorrectedCmoIdConverter;
-import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceSampleAbbreviationRetriever;
+import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceSampleTypeAbbreviationRetriever;
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdFormatter;
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdResolver;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.*;
 import org.mskcc.limsrest.limsapi.converter.ExternalToBankedSampleConverter;
 import org.mskcc.limsrest.limsapi.converter.SampleRecordToSampleConverter;
 import org.mskcc.limsrest.limsapi.dmp.*;
-import org.mskcc.limsrest.limsapi.dmp.converter.DMPSampleToCMOBankedSampleConverter;
-import org.mskcc.limsrest.limsapi.promote.BankedSampleToSampleConverter;
-import org.mskcc.limsrest.limsapi.retriever.LimsDataRetriever;
-import org.mskcc.limsrest.limsapi.retriever.VeloxLimsDataRetriever;
 import org.mskcc.limsrest.limsapi.dmp.converter.DMPSampleToCMOBankedSampleConverter;
 import org.mskcc.limsrest.limsapi.promote.BankedSampleToSampleConverter;
 import org.mskcc.limsrest.limsapi.retriever.LimsDataRetriever;
@@ -45,6 +41,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.context.web.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
@@ -52,8 +49,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.core.env.Environment;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.web.SpringBootServletInitializer;
 
 @Configuration
 @EnableAutoConfiguration
@@ -346,8 +341,8 @@ public class App extends SpringBootServletInitializer {
 
     @Bean
     @Scope("request")
-    public SampleAbbreviationRetriever sampleTypeAbbreviationRetriever() {
-        return new CspaceSampleAbbreviationRetriever();
+    public SampleTypeAbbreviationRetriever sampleTypeAbbreviationRetriever() {
+        return new CspaceSampleTypeAbbreviationRetriever();
     }
 
     @Bean

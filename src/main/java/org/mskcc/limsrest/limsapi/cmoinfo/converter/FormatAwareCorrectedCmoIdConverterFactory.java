@@ -1,29 +1,30 @@
 package org.mskcc.limsrest.limsapi.cmoinfo.converter;
 
 import org.mskcc.limsrest.limsapi.cmoinfo.cspace.PatientAwareCorrectedCmoIdConverter;
+import org.mskcc.limsrest.limsapi.cmoinfo.cspace.StringCmoIdToCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.oldformat.OldCorrectedCmoIdConverter;
-import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleAbbreviationRetriever;
+import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleTypeAbbreviationRetriever;
 
 public class FormatAwareCorrectedCmoIdConverterFactory implements CorrectedCmoIdConverterFactory {
-    private final SampleAbbreviationRetriever sampleAbbreviationRetriever;
+    private final SampleTypeAbbreviationRetriever sampleTypeAbbreviationRetriever;
 
-    public FormatAwareCorrectedCmoIdConverterFactory(SampleAbbreviationRetriever sampleAbbreviationRetriever) {
-        this.sampleAbbreviationRetriever = sampleAbbreviationRetriever;
+    public FormatAwareCorrectedCmoIdConverterFactory(SampleTypeAbbreviationRetriever sampleTypeAbbreviationRetriever) {
+        this.sampleTypeAbbreviationRetriever = sampleTypeAbbreviationRetriever;
     }
 
     @Override
-    public StringToSampleCmoIdConverter getConverter(String correctedCmoSampleId) {
+    public CorrectedCmoSampleViewToSampleCmoIdConverter getConverter(String correctedCmoSampleId) {
         if (isInCspaceFormat(correctedCmoSampleId))
             return new PatientAwareCorrectedCmoIdConverter();
 
         if (isInOldFormat(correctedCmoSampleId))
-            return new OldCorrectedCmoIdConverter(sampleAbbreviationRetriever);
+            return new OldCorrectedCmoIdConverter(sampleTypeAbbreviationRetriever);
 
         throw new UnsupportedCmoIdFormatException();
     }
 
     private boolean isInCspaceFormat(String correctedCmoSampleId) {
-        return correctedCmoSampleId.matches(PatientAwareCorrectedCmoIdConverter.CMO_SAMPLE_ID_PATTERN);
+        return correctedCmoSampleId.matches(StringCmoIdToCmoIdConverter.CMO_SAMPLE_ID_PATTERN);
     }
 
     private boolean isInOldFormat(String correctedCmoSampleId) {

@@ -147,6 +147,7 @@ public class GetCorrectedSampleCmoId {
      * @param sampleClass
      * @param sampleOrigin
      * @param specimenType
+     * @param cmoSampleId
      * @param nucleidAcid
      * @return CMO Sample Id
      */
@@ -173,8 +174,7 @@ public class GetCorrectedSampleCmoId {
             correctedCmoSampleView.setSpecimenType(SpecimenType.fromValue(specimenType));
             correctedCmoSampleView.setNucleidAcid(NucleicAcid.fromValue(nucleidAcid));
 
-            log.info(String.format("Starting to generate sample cmo id for cmo sample view: %s",
-                    correctedCmoSampleView));
+            log.info(String.format("Starting to generate sample cmo id for igo id: %s", igoId));
 
             log.info("Creating Generate sample cmo id task");
             task.init(correctedCmoSampleView);

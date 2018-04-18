@@ -5,6 +5,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.*;
 import org.mskcc.limsrest.limsapi.PatientSamplesWithCmoInfoRetriever;
+import org.mskcc.limsrest.util.Utils;
+
+import java.util.Optional;
 
 public class BankedSampleToCorrectedCmoSampleIdConverter implements CorrectedCmoIdConverter<BankedSample> {
     private final static Log LOGGER = LogFactory.getLog(PatientSamplesWithCmoInfoRetriever.class);
@@ -20,7 +23,11 @@ public class BankedSampleToCorrectedCmoSampleIdConverter implements CorrectedCmo
             correctedCmoSampleView.setPatientId(bankedSample.getCMOPatientId());
             correctedCmoSampleView.setRequestId(bankedSample.getRequestId());
 
-            correctedCmoSampleView.setNucleidAcid(NucleicAcid.fromValue(bankedSample.getNAtoExtract()));
+            Optional<NucleicAcid> nucleicAcid = Utils.getOptionalNucleicAcid(bankedSample.getNAtoExtract(),
+                    bankedSample.getId());
+            nucleicAcid.ifPresent(correctedCmoSampleView::setNucleidAcid);
+
+            correctedCmoSampleView.setSampleType(getSampleType(bankedSample));
             correctedCmoSampleView.setSpecimenType(SpecimenType.fromValue(bankedSample.getSpecimenType()));
 
             if (!StringUtils.isEmpty(bankedSample.getSampleClass()))
@@ -37,5 +44,9 @@ public class BankedSampleToCorrectedCmoSampleIdConverter implements CorrectedCmo
             throw new RuntimeException(String.format("Error while retrieving information for sample: %s. Couse: %s",
                     bankedSample.getId(), e.getMessage()));
         }
+    }
+
+    private SampleType getSampleType(BankedSample bankedSample) {
+        return SampleType.fromString(bankedSample.getSampleType());
     }
 }

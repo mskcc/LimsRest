@@ -4,10 +4,13 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.user.User;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.limsrest.limsapi.PatientSamplesRetriever;
+import org.mskcc.limsrest.limsapi.cmoinfo.cspace.StringCmoIdToCmoIdConverter;
+import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientAwareCmoSampleId;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.CmoSampleIdRetriever;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.CmoSampleIdRetrieverFactory;
 import org.mskcc.util.CommonUtils;
@@ -44,6 +47,8 @@ public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSamp
     @Override
     public synchronized String generate(CorrectedCmoSampleView correctedCmoSampleView, String requestId,
                                         DataRecordManager dataRecordManager, User user) {
+        LOGGER.info(String.format("Generating cmo id for view: %s", correctedCmoSampleView));
+
         try {
             String patientId = correctedCmoSampleView.getPatientId();
             CommonUtils.requireNonNullNorEmpty(patientId, String.format("Patient id is not set for sample: %s",
@@ -62,13 +67,45 @@ public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSamp
             List<CorrectedCmoSampleView> filteredViews = getFilteredCmoViews(correctedCmoSampleView, cmoSampleViews);
             String cmoSampleId = cmoSampleIdRetriever.retrieve(correctedCmoSampleView, filteredViews, requestId);
 
-            correctedCmoSampleView.setCorrectedCmoId(cmoSampleId);
+            if (shouldOverrideCmoId(correctedCmoSampleView, cmoSampleId))
+                correctedCmoSampleView.setCorrectedCmoId(cmoSampleId);
+
             generatedSamples.put(patientId, correctedCmoSampleView);
 
-            return cmoSampleId;
+            return correctedCmoSampleView.getCorrectedCmoId();
         } catch (Exception e) {
             notifyAboutCorrectedCmoIdFailure(correctedCmoSampleView, requestId, e);
             throw new RuntimeException(e);
+        }
+    }
+
+    private boolean shouldOverrideCmoId(CorrectedCmoSampleView correctedCmoSampleView, String cmoSampleId) {
+        return StringUtils.isEmpty(correctedCmoSampleView.getCorrectedCmoId()) || !isSame(correctedCmoSampleView
+                .getCorrectedCmoId(), cmoSampleId);
+    }
+
+    private boolean isSame(String current, String potential) {
+        try {
+            StringCmoIdToCmoIdConverter stringCmoIdToCmoIdConverter = new StringCmoIdToCmoIdConverter();
+
+            PatientAwareCmoSampleId currentId = stringCmoIdToCmoIdConverter.convert(current);
+            PatientAwareCmoSampleId potentialId = stringCmoIdToCmoIdConverter.convert(potential);
+
+            if (!Objects.equals(currentId.getNucleicAcid(), potentialId.getNucleicAcid()))
+                return false;
+            if (!Objects.equals(currentId.getPatientId(), potentialId.getPatientId()))
+                return false;
+            if (!Objects.equals(currentId.getSampleTypeAbbr(), potentialId.getSampleTypeAbbr()))
+                return false;
+
+            LOGGER.info(String.format("Current cmo sample id %s and potential new one %s are the same. The only " +
+                    "difference is the counter thus leaving current value", current, potential));
+
+            return true;
+        } catch (Exception e) {
+            LOGGER.warn(String.format("Cannot determine if current: %s and new: %s cmo sample id are the same thus " +
+                    "forcing overriding", current, potential), e);
+            return false;
         }
     }
 
