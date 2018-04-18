@@ -4,7 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverterFactory;
-import org.mskcc.limsrest.limsapi.cmoinfo.converter.StringToSampleCmoIdConverter;
+import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoSampleViewToSampleCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientAwareCmoSampleId;
 import org.mskcc.limsrest.staticstrings.Constants;
 
@@ -38,7 +38,7 @@ public class IncrementalSampleCounterRetriever implements SampleCounterRetriever
 
         for (CorrectedCmoSampleView sampleCmoView : patientCorrectedViews) {
             try {
-                StringToSampleCmoIdConverter converter = correctedCmoIdConverterFactory.getConverter
+                CorrectedCmoSampleViewToSampleCmoIdConverter converter = correctedCmoIdConverterFactory.getConverter
                         (sampleCmoView.getCorrectedCmoId());
 
                 PatientAwareCmoSampleId patientAwareCmoSampleId = converter.convert(sampleCmoView);

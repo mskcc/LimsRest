@@ -298,8 +298,7 @@ public class PromoteBanked extends LimsTask {
                     "promoted to sample", bankedSample.getUserSampleID()));
         }
 
-        String correctedCmoSampleId = bankedSample.getOtherSampleId(); //getCorrectedCmoSampleId(bankedSample,
-        // requestId);
+        String correctedCmoSampleId = getCorrectedCmoSampleId(bankedSample, requestId);
         String otherSampleId = bankedSample.getOtherSampleId();
 
         log.debug(String.format("Generated corrected cmo id: %s", correctedCmoSampleId));
@@ -462,12 +461,12 @@ public class PromoteBanked extends LimsTask {
                 return "";
             }
 
-            CorrectedCmoSampleView correctedCmoSampleView = convertBankedSampleToCorrectedCmoSampleId(bankedSample);
+            CorrectedCmoSampleView correctedCmoSampleView = createFrom(bankedSample);
 
             String cmoSampleId = correctedCmoSampleIdGenerator.generate(correctedCmoSampleView, requestId,
                     dataRecordManager, user);
 
-            log.info(String.format("Generated CMO Sample id for banked sample with is: %s (%s) is: %s", bankedSample
+            log.info(String.format("Generated CMO Sample id for banked sample with id: %s (%s) is: %s", bankedSample
                     .getUserSampleID(), bankedSample.getOtherSampleId(), cmoSampleId));
             return cmoSampleId;
         } catch (Exception e) {
@@ -484,7 +483,7 @@ public class PromoteBanked extends LimsTask {
         return humanSamplePredicate.test(bankedSample);
     }
 
-    private CorrectedCmoSampleView convertBankedSampleToCorrectedCmoSampleId(BankedSample bankedSample) throws
+    private CorrectedCmoSampleView createFrom(BankedSample bankedSample) throws
             LimsException {
         return bankedSampleToCorrectedCmoSampleIdConverter.convert(bankedSample);
     }

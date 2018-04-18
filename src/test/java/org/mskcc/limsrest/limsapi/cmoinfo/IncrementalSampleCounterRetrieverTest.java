@@ -3,7 +3,7 @@ package org.mskcc.limsrest.limsapi.cmoinfo;
 import org.junit.Test;
 import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverterFactory;
-import org.mskcc.limsrest.limsapi.cmoinfo.converter.StringToSampleCmoIdConverter;
+import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoSampleViewToSampleCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.cspace.PatientAwareCorrectedCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.IncrementalSampleCounterRetriever;
 import org.mskcc.util.TestUtils;
@@ -169,18 +169,18 @@ public class IncrementalSampleCounterRetrieverTest {
         return correctedCmoSampleView;
     }
 
-    private class ConverterFactoryMock implements CorrectedCmoIdConverterFactory {
-
-        @Override
-        public StringToSampleCmoIdConverter getConverter(String correctedCmoSampleId) {
-            return new PatientAwareCorrectedCmoIdConverter();
-        }
-    }
-
     private CorrectedCmoSampleView getCorrectedCmoSampleView() {
         CorrectedCmoSampleView correctedCmoSampleView = new CorrectedCmoSampleView("id");
 
 
         return correctedCmoSampleView;
+    }
+
+    private class ConverterFactoryMock implements CorrectedCmoIdConverterFactory {
+
+        @Override
+        public CorrectedCmoSampleViewToSampleCmoIdConverter getConverter(String correctedCmoSampleId) {
+            return new PatientAwareCorrectedCmoIdConverter();
+        }
     }
 }

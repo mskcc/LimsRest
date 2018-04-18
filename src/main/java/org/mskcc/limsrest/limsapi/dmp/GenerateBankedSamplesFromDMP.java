@@ -8,7 +8,6 @@ import org.mskcc.limsrest.limsapi.converter.ExternalToBankedSampleConverter;
 import org.mskcc.limsrest.limsapi.retriever.LimsDataRetriever;
 import org.mskcc.limsrest.limsapi.store.RecordSaver;
 import org.mskcc.limsrest.staticstrings.Messages;
-import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -41,7 +40,7 @@ public class GenerateBankedSamplesFromDMP extends LimsTask {
     }
 
     @Override
-    public ResponseEntity<String> execute(VeloxConnection conn) {
+    public String execute(VeloxConnection conn) {
         try {
             LOGGER.info(String.format("Retrieving tracking ids for date: %s", date));
             List<String> cmoTrackingIds = dmpSamplesRetriever.retrieveTrackingIds(date);
@@ -62,11 +61,9 @@ public class GenerateBankedSamplesFromDMP extends LimsTask {
                 }
             }
 
-            return ResponseEntity.ok(Messages.SUCCESS);
+            return Messages.SUCCESS;
         } catch (Exception e) {
-            LOGGER.error(String.format("Unable to retrieve CMO Sample Request Details for date: %s", date), e);
-            return ResponseEntity.ok(Messages.ERROR_IN + " retrieving CMO Sample Request Details for date: " +
-                    date);
+            throw new RuntimeException(e);
         }
     }
 

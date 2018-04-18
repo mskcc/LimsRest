@@ -7,10 +7,15 @@ import org.junit.Test;
 import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.limsrest.limsapi.LimsException;
 import org.mskcc.limsrest.limsapi.PatientSamplesRetriever;
+import org.mskcc.limsrest.limsapi.cmoinfo.retriever.CmoSampleIdRetriever;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.CmoSampleIdRetrieverFactory;
 import org.mskcc.util.notificator.Notificator;
 import org.mskcc.util.notificator.SlackNotificator;
 
+import java.util.List;
+
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -34,5 +39,31 @@ public class SampleTypeCorrectedCmoSampleIdGeneratorTest {
 
         sampleTypeCorrectedCmoSampleIdGenerator.generate(mock(CorrectedCmoSampleView.class), "reqId", mock
                 (DataRecordManager.class), mock(User.class));
+    }
+
+    @Test
+    public void whenCmoSampleIdIsSameAsBefore_shouldNotOverrideIt() throws Exception {
+        //given
+        when(factory.getCmoSampleIdRetriever(any())).thenReturn(new CmoSampleIdRetriever() {
+            @Override
+            public String retrieve(CorrectedCmoSampleView correctedCmoSampleView, List<CorrectedCmoSampleView>
+                    patientSamples, String requestId) {
+                return "C-123456-X002-d";
+            }
+        });
+
+        CorrectedCmoSampleView correctedCmoSampleView = new CorrectedCmoSampleView("sampId");
+        String currentId = "C-123456-X001-d";
+        correctedCmoSampleView.setCorrectedCmoId(currentId);
+        correctedCmoSampleView.setPatientId("patId");
+
+        //when
+        String id = sampleTypeCorrectedCmoSampleIdGenerator.generate(correctedCmoSampleView, "id", mock
+                (DataRecordManager
+                .class), mock(User.class));
+
+        //then
+        assertThat(id, is(currentId));
+
     }
 }

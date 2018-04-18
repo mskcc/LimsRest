@@ -1,11 +1,7 @@
 package org.mskcc.limsrest.limsapi.cmoinfo.cspace;
 
 import org.junit.Test;
-import org.mskcc.domain.sample.CorrectedCmoSampleView;
-import org.mskcc.domain.sample.NucleicAcid;
-import org.mskcc.domain.sample.SampleClass;
-import org.mskcc.domain.sample.SampleOrigin;
-import org.mskcc.domain.sample.SpecimenType;
+import org.mskcc.domain.sample.*;
 import org.mskcc.util.TestUtils;
 
 import java.util.Optional;
@@ -16,8 +12,8 @@ import static org.mskcc.domain.sample.SampleOrigin.TISSUE;
 import static org.mskcc.domain.sample.SpecimenType.CFDNA;
 
 public class CspaceSampleAbbreviationRetrieverTest {
-    private CspaceSampleAbbreviationRetriever cspaceSampleAbbreviationRetriever = new
-            CspaceSampleAbbreviationRetriever();
+    private CspaceSampleTypeAbbreviationRetriever cspaceSampleAbbreviationRetriever = new
+            CspaceSampleTypeAbbreviationRetriever();
 
     @Test
     public void whenPropertiesAreCorrectlySet_shouldReturnSampleTypeAbbrev() throws Exception {
@@ -82,7 +78,7 @@ public class CspaceSampleAbbreviationRetrieverTest {
         sampleOrigin.ifPresent((sampleOrigin1) -> correctedCmoSampleView.setSampleOrigin(sampleOrigin1));
         correctedCmoSampleView.setSpecimenType(specimenType);
 
-        String typeAbbrev = cspaceSampleAbbreviationRetriever.retrieve(correctedCmoSampleView);
+        String typeAbbrev = cspaceSampleAbbreviationRetriever.getSampleTypeAbbr(correctedCmoSampleView);
 
         assertThat(typeAbbrev, is(abbrev));
     }
@@ -97,7 +93,8 @@ public class CspaceSampleAbbreviationRetrieverTest {
         view.setSampleClass(SampleClass.CELL_FREE);
         view.setNucleidAcid(NucleicAcid.DNA);
 
-        Optional<Exception> exception = TestUtils.assertThrown(() -> cspaceSampleAbbreviationRetriever.retrieve(view));
+        Optional<Exception> exception = TestUtils.assertThrown(() -> cspaceSampleAbbreviationRetriever
+                .getSampleTypeAbbr(view));
 
         assertThat(exception.isPresent(), is(true));
     }

@@ -25,7 +25,7 @@ import org.mskcc.limsrest.limsapi.cmoinfo.converter.BankedSampleToCorrectedCmoSa
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverterFactory;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.FormatAwareCorrectedCmoIdConverterFactory;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.SampleToCorrectedCmoIdConverter;
-import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceSampleAbbreviationRetriever;
+import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceSampleTypeAbbreviationRetriever;
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdFormatter;
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdResolver;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.*;
@@ -158,10 +158,14 @@ public class PromoteBankedTest {
     @Test
     public void whenMultipleCellLineSamplesArePromotedForSamePatient_shouldAssignCorrectedCmoId() throws Exception {
         //given
-        DataRecord banked1 = addPromoteBanked(patientId1, CELLLINE, DNA, requestId1, USER_SAMP_ID1, OTHER_SAMPLE_ID1);
-        DataRecord banked2 = addPromoteBanked(patientId1, CELLLINE, RNA, requestId1, USER_SAMP_ID2, OTHER_SAMPLE_ID2);
-        DataRecord banked3 = addPromoteBanked(patientId1, CELLLINE, DNA, requestId1, USER_SAMP_ID3, OTHER_SAMPLE_ID3);
-        DataRecord banked4 = addPromoteBanked(patientId1, CELLLINE, DNA, requestId1, USER_SAMP_ID4, OTHER_SAMPLE_ID4);
+        DataRecord banked1 = addPromoteBanked(patientId1, CELLLINE, DNA, requestId1, USER_SAMP_ID1, OTHER_SAMPLE_ID1,
+                SampleType.DNA);
+        DataRecord banked2 = addPromoteBanked(patientId1, CELLLINE, RNA, requestId1, USER_SAMP_ID2, OTHER_SAMPLE_ID2,
+                SampleType.DNA);
+        DataRecord banked3 = addPromoteBanked(patientId1, CELLLINE, DNA, requestId1, USER_SAMP_ID3, OTHER_SAMPLE_ID3,
+                SampleType.DNA);
+        DataRecord banked4 = addPromoteBanked(patientId1, CELLLINE, DNA, requestId1, USER_SAMP_ID4, OTHER_SAMPLE_ID4,
+                SampleType.DNA);
         initPromoteBanked(Arrays.asList(banked1, banked2, banked3, banked4), requestId1, serviceId, projectId);
 
         //when
@@ -409,7 +413,7 @@ public class PromoteBankedTest {
         DataRecord banked1 = promoteSample(patientId, XENOGRAFT, requestId1, "sample_1", "otherId_1", requestId1,
                 serviceId, projectId);
 
-        DataRecord banked2 = addPromoteBanked(patientId, PDX, RNA, requestId1, "sample_2", "otherId_2");
+        DataRecord banked2 = addPromoteBanked(patientId, PDX, RNA, requestId1, "sample_2", "otherId_2", SampleType.RNA);
         initPromoteBanked(Arrays.asList(banked2), requestId1, serviceId, projectId);
 
         //when
@@ -430,8 +434,10 @@ public class PromoteBankedTest {
     public void whenTwoSamplesArePromotedAtOnceOfSameTypeForSameRequest_shouldSetCorrectedCmoIdWithCount1And2() throws
             Exception {
         //given
-        DataRecord banked1 = addPromoteBanked(patientId1, ORGANOID, DNA, requestId1, SAMPLE_ID1, OTHER_SAMPLE_ID1);
-        DataRecord banked2 = addPromoteBanked(patientId1, ORGANOID, DNA, requestId1, SAMPLE_ID2, OTHER_SAMPLE_ID2);
+        DataRecord banked1 = addPromoteBanked(patientId1, ORGANOID, DNA, requestId1, SAMPLE_ID1, OTHER_SAMPLE_ID1,
+                SampleType.DNA);
+        DataRecord banked2 = addPromoteBanked(patientId1, ORGANOID, DNA, requestId1, SAMPLE_ID2, OTHER_SAMPLE_ID2,
+                SampleType.DNA);
         initPromoteBanked(Arrays.asList(banked1, banked2), requestId1, serviceId, projectId);
 
         //when
@@ -455,10 +461,12 @@ public class PromoteBankedTest {
         //given
         String patientId = patientId1;
         DataRecord cellLine = addPromoteBanked(patientId, CELLLINE, Optional.of(URINE), Optional.of(LOCAL_RECURRENCE)
-                , RNA, requestId1, SAMPLE_ID1, OTHER_SAMPLE_ID1);
-        DataRecord banked1 = addPromoteBanked(patientId, PDX, DNA, requestId1, SAMPLE_ID2, OTHER_SAMPLE_ID2);
-        DataRecord banked2 = addPromoteBanked(patientId, XENOGRAFT, DNA, requestId1, SAMPLE_ID3, OTHER_SAMPLE_ID3);
-        DataRecord banked3 = addPromoteBanked(patientId, ORGANOID, RNA, requestId1, SAMPLE_ID4, OTHER_SAMPLE_ID4);
+                , RNA, requestId1, SAMPLE_ID1, OTHER_SAMPLE_ID1, SampleType.RNA);
+        DataRecord banked1 = addPromoteBanked(patientId, PDX, DNA, requestId1, SAMPLE_ID2, OTHER_SAMPLE_ID2,
+                SampleType.DNA);
+        DataRecord banked2 = addPromoteBanked(patientId, XENOGRAFT, DNA, requestId1, SAMPLE_ID3, OTHER_SAMPLE_ID3,
+                SampleType.DNA);
+        DataRecord banked3 = addPromoteBanked(patientId, ORGANOID, RNA, requestId1, SAMPLE_ID4, OTHER_SAMPLE_ID4, SampleType.RNA);
         initPromoteBanked(Arrays.asList(cellLine, banked1, banked2, banked3), requestId1, serviceId, projectId);
 
         //when
@@ -483,20 +491,26 @@ public class PromoteBankedTest {
             Exception {
         //given
         List<DataRecord> bankedToPromote1 = new ArrayList<DataRecord>() {{
-            add(addPromoteBanked(patientId1, CELLLINE, DNA, requestId1, SAMPLE_ID1, OTHER_SAMPLE_ID1));
-            add(addPromoteBanked(patientId1, ORGANOID, DNA, requestId1, getNextSampleId(), OTHER_SAMPLE_ID2));
+            add(addPromoteBanked(patientId1, CELLLINE, DNA, requestId1, SAMPLE_ID1, OTHER_SAMPLE_ID1, SampleType.DNA));
+
+            add(addPromoteBanked(patientId1, ORGANOID, DNA, requestId1, getNextSampleId(), OTHER_SAMPLE_ID2, SampleType.DNA_LIBRARY));
+
             add(addPromoteBanked(patientId3, SALIVA, Optional.of(PLASMA), Optional.of(METASTASIS), DNA,
-                    requestId1, getNextSampleId(), OTHER_SAMPLE_ID2));
+                    requestId1, getNextSampleId(), OTHER_SAMPLE_ID2, SampleType.CFDNA));
+
             add(addPromoteBanked(patientId3, CFDNA, Optional.of(WHOLE_BLOOD), DNA,
-                    requestId1, getNextSampleId(), OTHER_SAMPLE_ID2));
+                    requestId1, getNextSampleId(), OTHER_SAMPLE_ID2, SampleType.RNA));
+
             add(addPromoteBanked(patientId3, RAPIDAUTOPSY, Optional.of(WHOLE_BLOOD), Optional.of(NORMAL), DNA,
-                    requestId1, getNextSampleId(), OTHER_SAMPLE_ID2));
+                    requestId1, getNextSampleId(), OTHER_SAMPLE_ID2, SampleType.DNA));
+
             add(addPromoteBanked(patientId3, RAPIDAUTOPSY, Optional.of(WHOLE_BLOOD), Optional.of(ADJACENT_NORMAL), DNA,
-                    requestId1, getNextSampleId(), OTHER_SAMPLE_ID2));
+                    requestId1, getNextSampleId(), OTHER_SAMPLE_ID2, SampleType.DNA));
+
             add(addPromoteBanked(patientId3, CFDNA, Optional.of(CEREBROSPINAL_FLUID), Optional.of(LOCAL_RECURRENCE),
-                    RNA,
-                    requestId1, "sample6", OTHER_SAMPLE_ID2));
-            add(addPromoteBanked(patientId3, CELLLINE, DNA, requestId1, SAMPLE_ID2, OTHER_SAMPLE_ID2));
+                    RNA, requestId1, "sample6", OTHER_SAMPLE_ID2, SampleType.BLOCKS_SLIDES));
+
+            add(addPromoteBanked(patientId3, CELLLINE, DNA, requestId1, SAMPLE_ID2, OTHER_SAMPLE_ID2, SampleType.DNA));
         }};
 
         initPromoteBanked(bankedToPromote1, requestId1, serviceId, projectId);
@@ -505,9 +519,10 @@ public class PromoteBankedTest {
         //when
         List<DataRecord> bankedToPromote2 = new ArrayList<DataRecord>() {{
             add(addPromoteBanked(patientId2, CFDNA, Optional.of(URINE), DNA, requestId2, getNextSampleId(),
-                    OTHER_SAMPLE_ID2));
+                    OTHER_SAMPLE_ID2, SampleType.DNA));
+
             add(addPromoteBanked(patientId3, RAPIDAUTOPSY, Optional.of(CEREBROSPINAL_FLUID), Optional.of
-                    (ADJACENT_TISSUE), DNA, requestId2, getNextSampleId(), OTHER_SAMPLE_ID3));
+                    (ADJACENT_TISSUE), DNA, requestId2, getNextSampleId(), OTHER_SAMPLE_ID3, SampleType.DNA));
         }};
 
         initPromoteBanked(bankedToPromote2, requestId2, serviceId, projectId);
@@ -518,26 +533,26 @@ public class PromoteBankedTest {
                 new BankedWithCorrectedCmoId(bankedToPromote1.get(0), String.format("%s-%s", SAMPLE_ID1,
                         normalizedRequestId1)),
                 new BankedWithCorrectedCmoId(bankedToPromote1.get(1), String.format("%s-%s%s-%s", patientId1, "G",
-                        "001", "d")),
+                        "001", Constants.DNA_ABBREV)),
                 new BankedWithCorrectedCmoId(bankedToPromote1.get(2), String.format("%s-%s%s-%s", patientId3, "M",
-                        "001", "d")),
+                        "001", Constants.DNA_ABBREV)),
                 new BankedWithCorrectedCmoId(bankedToPromote1.get(3), String.format("%s-%s%s-%s", patientId3, "L",
-                        "001", "d")),
+                        "001", Constants.RNA_ABBREV)),
                 new BankedWithCorrectedCmoId(bankedToPromote1.get(4), String.format("%s-%s%s-%s", patientId3, "N",
-                        "001", "d")),
+                        "001", Constants.DNA_ABBREV)),
                 new BankedWithCorrectedCmoId(bankedToPromote1.get(5), String.format("%s-%s%s-%s", patientId3, "N",
-                        "002", "d")),
+                        "002", Constants.DNA_ABBREV)),
                 new BankedWithCorrectedCmoId(bankedToPromote1.get(6), String.format("%s-%s%s-%s", patientId3, "S",
-                        "001", "r")),
+                        "001", Constants.RNA_ABBREV)),
                 new BankedWithCorrectedCmoId(bankedToPromote1.get(7), String.format("%s-%s", SAMPLE_ID2,
                         normalizedRequestId1))
         );
 
         List<BankedWithCorrectedCmoId> req2CorrectedCmoIds = Arrays.asList(
                 new BankedWithCorrectedCmoId(bankedToPromote2.get(0), String.format("%s-%s%s-%s", patientId2, "U",
-                        "001", "d")),
+                        "001", Constants.DNA_ABBREV)),
                 new BankedWithCorrectedCmoId(bankedToPromote2.get(1), String.format("%s-%s%s-%s", patientId3, "T",
-                        "001", "d"))
+                        "001", Constants.DNA_ABBREV))
         );
 
         Map<String, List<BankedWithCorrectedCmoId>> requestToCorrectedCmoIds = new HashMap<>();
@@ -556,7 +571,7 @@ public class PromoteBankedTest {
                                              otherSampleId, String promoteRequest, String serviceId, String
                                              projectId) throws Exception {
         DataRecord banked = addPromoteBanked(patientId, specimenType, sampleOrigin, sampleClass, DNA, bankedReqId,
-                sampleId, otherSampleId);
+                sampleId, otherSampleId, SampleType.DNA);
         initPromoteBanked(Arrays.asList(banked), promoteRequest, serviceId, projectId);
 
         promoteBanked.call();
@@ -583,9 +598,9 @@ public class PromoteBankedTest {
     }
 
     private DataRecord addPromoteBanked(String patientId, SpecimenType specimenType, Optional<SampleOrigin>
-            sampleOrigin, Optional<SampleClass> sampleClass,
-                                        NucleicAcid nucleicAcid, String requestId, String sampleId, String
-                                                otherSampleId) throws Exception {
+            sampleOrigin, Optional<SampleClass> sampleClass, NucleicAcid nucleicAcid, String requestId, String
+                                                sampleId, String
+                                                otherSampleId, SampleType sampleType) throws Exception {
         DataRecord bankedSampleRecord = dataRecordManager.addDataRecord(BankedSample.DATA_TYPE_NAME, user);
         Map<String, Object> fields = new HashMap<>();
 
@@ -616,7 +631,7 @@ public class PromoteBankedTest {
         fields.put(BankedSample.REQUESTED_READS, "12345");
         fields.put(BankedSample.ROW_INDEX, 2);
         fields.put(BankedSample.RUN_TYPE, "runTYpe");
-        fields.put(BankedSample.SAMPLE_TYPE, "sampleType");
+        fields.put(BankedSample.SAMPLE_TYPE, sampleType.toString());
         fields.put(BankedSample.SERVICE_ID, serviceId);
         fields.put(BankedSample.SPECIES, "Human");
         fields.put(BankedSample.SPECIMEN_TYPE, specimenType.getValue());
@@ -641,18 +656,17 @@ public class PromoteBankedTest {
     }
 
     private DataRecord addPromoteBanked(String patientId, SpecimenType specimenType, Optional<SampleOrigin>
-            sampleOrigin,
-                                        NucleicAcid nucleicAcid, String requestId, String sampleId, String
-                                                otherSampleId) throws Exception {
+            sampleOrigin, NucleicAcid nucleicAcid, String requestId, String sampleId, String
+                                                otherSampleId, SampleType sampleType) throws Exception {
         return addPromoteBanked(patientId, specimenType, sampleOrigin, Optional.empty(), nucleicAcid, requestId,
-                sampleId, otherSampleId);
+                sampleId, otherSampleId, sampleType);
     }
 
     private DataRecord addPromoteBanked(String patientId, SpecimenType specimenType, NucleicAcid nucleicAcid, String
-            requestId, String sampleId, String otherSampleId) throws
+            requestId, String sampleId, String otherSampleId, SampleType sampleType) throws
             Exception {
         return addPromoteBanked(patientId, specimenType, Optional.empty(), nucleicAcid, requestId, sampleId,
-                otherSampleId);
+                otherSampleId, sampleType);
 
     }
 
@@ -785,7 +799,7 @@ public class PromoteBankedTest {
     }
 
     private CorrectedCmoSampleIdGenerator getCorrectedCmoSampleIdGenerator() throws Exception {
-        SampleAbbreviationRetriever sampleAbbrRetr = new CspaceSampleAbbreviationRetriever();
+        SampleTypeAbbreviationRetriever sampleAbbrRetr = new CspaceSampleTypeAbbreviationRetriever();
 
         SampleToCorrectedCmoIdConverter sampleToCorrectedCmoIdConv = new SampleToCorrectedCmoIdConverter();
 

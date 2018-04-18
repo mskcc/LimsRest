@@ -42,21 +42,24 @@ public class CreateBankedSamplesFromDMP {
 
             log.info("Getting result");
             Future<Object> result = connQueue.submitTask(task);
+
             String response = (String) result.get();
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            String message = String.format("Unable to create Banked Samples from DMP Samples for date: %s", getDateUsed(date, localDate));
+            String message = String.format("Unable to create Banked Samples from DMP Samples for date: %s",
+                    getDateUsed(date, localDate));
             log.error(message, e);
 
-            ResponseEntity<String> responseEntity = new ResponseEntity<>(e.getMessage() + " Cause: " + message, HttpStatus.NOT_FOUND);
+            ResponseEntity<String> responseEntity = new ResponseEntity<>(message + " Cause: " + e.getMessage(),
+                    HttpStatus.NOT_FOUND);
             return responseEntity;
         }
     }
 
     private Object getDateUsed(@RequestParam(value = "date", required = false) String date, LocalDate localDate) {
-        if(localDate == null) {
-            if(date == null)
+        if (localDate == null) {
+            if (date == null)
                 return "no date provided and unable to resolve default date";
             return date;
         }

@@ -3,10 +3,10 @@ package org.mskcc.limsrest.limsapi.cmoinfo.converter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.domain.sample.*;
 import org.mskcc.limsrest.limsapi.LimsException;
 import org.mskcc.limsrest.limsapi.PatientSamplesWithCmoInfoRetriever;
+import org.mskcc.limsrest.util.Utils;
 
 public class SampleToCorrectedCmoIdConverter implements CorrectedCmoIdConverter<Sample> {
     private final static Log LOGGER = LogFactory.getLog(PatientSamplesWithCmoInfoRetriever.class);
@@ -19,7 +19,10 @@ public class SampleToCorrectedCmoIdConverter implements CorrectedCmoIdConverter<
             CorrectedCmoSampleView correctedCmoSampleView = new CorrectedCmoSampleView(sample.getIgoId());
 
             correctedCmoSampleView.setSampleId(sample.getCmoSampleInfo().getUserSampleID());
-            correctedCmoSampleView.setNucleidAcid(NucleicAcid.fromValue(sample.getNAtoExtract()));
+
+            Utils.getOptionalNucleicAcid(sample.getNAtoExtract(), sample.getIgoId()).ifPresent
+                    (correctedCmoSampleView::setNucleidAcid);
+
             correctedCmoSampleView.setPatientId(sample.getCmoSampleInfo().getCmoPatientId());
             correctedCmoSampleView.setRequestId(sample.getRequestId());
 
