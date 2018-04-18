@@ -4,7 +4,7 @@ import org.hamcrest.object.IsCompatibleType;
 import org.junit.Test;
 import org.mskcc.limsrest.limsapi.cmoinfo.cspace.PatientAwareCorrectedCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.oldformat.OldCorrectedCmoIdConverter;
-import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleAbbreviationRetriever;
+import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleTypeAbbreviationRetriever;
 import org.mskcc.util.TestUtils;
 
 import java.util.Optional;
@@ -14,7 +14,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 public class FormatAwareCorrectedCmoIdConverterFactoryTest {
-    private SampleAbbreviationRetriever abbrRetriever = mock(SampleAbbreviationRetriever.class);
+    private SampleTypeAbbreviationRetriever abbrRetriever = mock(SampleTypeAbbreviationRetriever.class);
     private FormatAwareCorrectedCmoIdConverterFactory formatAwareCorrectedCmoIdConverterFactory = new
             FormatAwareCorrectedCmoIdConverterFactory(abbrRetriever);
 

@@ -12,7 +12,7 @@ import org.mskcc.limsrest.limsapi.cmoinfo.cellline.CellLineCmoSampleIdFormatter;
 import org.mskcc.limsrest.limsapi.cmoinfo.cellline.CellLineCmoSampleIdResolver;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverterFactory;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.FormatAwareCorrectedCmoIdConverterFactory;
-import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceSampleAbbreviationRetriever;
+import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceSampleTypeAbbreviationRetriever;
 import org.mskcc.limsrest.limsapi.cmoinfo.formatter.CmoSampleIdFormatter;
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdFormatter;
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdResolver;
@@ -36,7 +36,7 @@ public class SampleTypeCorrectedCmoSampleViewGeneratorTest {
     private DataRecordManager drm = mock(DataRecordManager.class);
     private User user = mock(User.class);
     private CmoSampleIdRetrieverFactory retrieverFactory;
-    private SampleAbbreviationRetriever abbrRetriever = new CspaceSampleAbbreviationRetriever();
+    private SampleTypeAbbreviationRetriever abbrRetriever = new CspaceSampleTypeAbbreviationRetriever();
     private CorrectedCmoIdConverterFactory convFactory = new FormatAwareCorrectedCmoIdConverterFactory(abbrRetriever);
 
     @Before
