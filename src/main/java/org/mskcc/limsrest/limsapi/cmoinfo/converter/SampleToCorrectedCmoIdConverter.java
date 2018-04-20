@@ -18,6 +18,7 @@ public class SampleToCorrectedCmoIdConverter implements CorrectedCmoIdConverter<
         try {
             CorrectedCmoSampleView correctedCmoSampleView = new CorrectedCmoSampleView(sample.getIgoId());
             correctedCmoSampleView.setCorrectedCmoId(sample.getCorrectedCmoSampleId());
+            correctedCmoSampleView.setSampleType(SampleType.fromString(sample.getExemplarSampleType()));
 
             correctedCmoSampleView.setSampleId(sample.getCmoSampleInfo().getUserSampleID());
 

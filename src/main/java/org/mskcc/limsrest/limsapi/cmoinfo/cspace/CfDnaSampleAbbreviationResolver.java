@@ -38,7 +38,7 @@ public class CfDnaSampleAbbreviationResolver implements SampleAbbreviationResolv
         String sampleTypeAbbrev = sampleOriginToAbbreviation.get(correctedCmoSampleView.getSampleOrigin());
 
         LOGGER.info(String.format("Found mapping for Sample Origin %s => %s for sample: %s", correctedCmoSampleView
-                .getSpecimenType(), sampleTypeAbbrev, correctedCmoSampleView.getId()));
+                .getSampleOrigin(), sampleTypeAbbrev, correctedCmoSampleView.getId()));
 
         return sampleTypeAbbrev;
     }

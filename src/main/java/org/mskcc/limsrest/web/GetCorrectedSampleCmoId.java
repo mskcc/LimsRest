@@ -7,6 +7,7 @@ import org.mskcc.domain.sample.*;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.GenerateSampleCmoIdTask;
 import org.mskcc.limsrest.staticstrings.Constants;
+import org.mskcc.limsrest.util.Utils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -147,7 +148,6 @@ public class GetCorrectedSampleCmoId {
      * @param sampleClass
      * @param sampleOrigin
      * @param specimenType
-     * @param cmoSampleId
      * @param nucleidAcid
      * @return CMO Sample Id
      */
@@ -172,9 +172,9 @@ public class GetCorrectedSampleCmoId {
             correctedCmoSampleView.setSampleClass(SampleClass.fromValue(sampleClass));
             correctedCmoSampleView.setSampleOrigin(SampleOrigin.fromValue(sampleOrigin));
             correctedCmoSampleView.setSpecimenType(SpecimenType.fromValue(specimenType));
-            correctedCmoSampleView.setNucleidAcid(NucleicAcid.fromValue(nucleidAcid));
+            Utils.getOptionalNucleicAcid(nucleidAcid, igoId).ifPresent(correctedCmoSampleView::setNucleidAcid);
 
-            log.info(String.format("Starting to generate sample cmo id for igo id: %s", igoId));
+            log.info(String.format("Starting to generate sample cmo id for sample: %s", correctedCmoSampleView));
 
             log.info("Creating Generate sample cmo id task");
             task.init(correctedCmoSampleView);
