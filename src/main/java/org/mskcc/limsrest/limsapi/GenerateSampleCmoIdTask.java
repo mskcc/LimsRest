@@ -2,7 +2,6 @@ package org.mskcc.limsrest.limsapi;
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.CorrectedCmoSampleView;
@@ -44,13 +43,15 @@ public class GenerateSampleCmoIdTask extends LimsTask {
     @PreAuthorize("hasRole('ADMIN')")
     @Override
     public String execute(VeloxConnection conn) {
-        if (correctedCmoSampleView == null)
-            correctedCmoSampleView = getCorrectedCmoSampleView(sampleIgoId);
-        else if (StringUtils.isEmpty(correctedCmoSampleView.getCorrectedCmoId()))
-            correctedCmoSampleView.setCorrectedCmoId(getCorrectedCmoSampleView(sampleIgoId).getCorrectedCmoId());
+        CorrectedCmoSampleView currentView = getCorrectedCmoSampleView(sampleIgoId);
+        if (this.correctedCmoSampleView == null)
+            this.correctedCmoSampleView = currentView;
 
-        String cmoId = correctedCmoSampleIdGenerator.generate(correctedCmoSampleView,
-                correctedCmoSampleView.getRequestId(), dataRecordManager, user);
+        this.correctedCmoSampleView.setCorrectedCmoId(currentView.getCorrectedCmoId());
+        this.correctedCmoSampleView.setSampleType(currentView.getSampleType());
+
+        String cmoId = correctedCmoSampleIdGenerator.generate(this.correctedCmoSampleView,
+                this.correctedCmoSampleView.getRequestId(), dataRecordManager, user);
 
         return cmoId;
     }
