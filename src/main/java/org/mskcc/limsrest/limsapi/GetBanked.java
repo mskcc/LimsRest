@@ -132,12 +132,9 @@ public class GetBanked extends LimsTask {
                 } catch (NullPointerException npe) {
                 }
                 try {
-                    ss.setRequestedReadNumber(Long.parseLong(sample.getStringVal("RequestedReads", user)));
+                    ss.setReadSummary(sample.getStringVal("RequestedReads", user));
                 } catch (NullPointerException npe) {
-                } catch (NumberFormatException nfe) {
-                    log.info("Warning: " + sample.getStringVal("RequestedReads", user) + " incorrect format.");
-                    ss.setRequestedReadNumber(-1);
-                }
+                } 
                 try {
                     ss.setCellCount(sample.getStringVal("CellCount", user));
                 } catch (NullPointerException npe) {

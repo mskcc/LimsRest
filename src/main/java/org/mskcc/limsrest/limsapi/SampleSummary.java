@@ -37,6 +37,7 @@ public class SampleSummary {
     private String tubeId;
     private String tumorType;
     private String tumorOrNormal;
+    private String readSummary;
     private String sampleClass;
     private String sampleType;
     private String serviceId;
@@ -412,6 +413,15 @@ public class SampleSummary {
         this.recipe = recipe;
 
     }
+
+    public void setReadSummary(String readSummary) {
+        this.readSummary = readSummary;
+    }
+    
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getReadSummary() {
+        return readSummary;
+    } 
 
     public String getCancerType() {
         if (tumorType == null) {
