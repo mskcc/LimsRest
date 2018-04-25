@@ -173,7 +173,8 @@ public class PromoteBanked extends LimsTask {
                     String reqServiceId = "";
                     try {
                         reqServiceId = possibleRequest.getStringVal("IlabRequest", user);
-                    } catch (NullPointerException npe) {}
+                    } catch (NullPointerException npe) {
+                    }
                     if (serviceId.equals(reqServiceId)) {
                         req = possibleRequest;
                         requestId = req.getStringVal("RequestId", user);
@@ -210,7 +211,8 @@ public class PromoteBanked extends LimsTask {
                     if (currentId > maxId) {
                         maxId = currentId;
                     }
-                } catch (NullPointerException npe) {}
+                } catch (NullPointerException npe) {
+                }
             }
             int offset = 1;
             HashMap<String, DataRecord> plateId2Plate = new HashMap<>();
@@ -265,14 +267,15 @@ public class PromoteBanked extends LimsTask {
         return message.toString();
     }
 
-    public void logBankedState(DataRecord bankedSample, StringBuilder logBuilder, AuditLog auditLog) throws RemoteException{
+    public void logBankedState(DataRecord bankedSample, StringBuilder logBuilder, AuditLog auditLog) throws
+            RemoteException {
         Map<String, Object> fields = bankedSample.getFields(user);
-        for(Map.Entry<String, Object> entry : fields.entrySet()){
-           if(entry.getValue() != null &&  !"".equals(entry.getValue())){
-              logBuilder.append("EDITING field: ").append(entry.getKey()).append(" to ").append(entry.getValue());
-              auditLog.logInfo(logBuilder.toString(), bankedSample, user);
-              logBuilder.setLength(0);
-           }
+        for (Map.Entry<String, Object> entry : fields.entrySet()) {
+            if (entry.getValue() != null && !"".equals(entry.getValue())) {
+                logBuilder.append("EDITING field: ").append(entry.getKey()).append(" to ").append(entry.getValue());
+                auditLog.logInfo(logBuilder.toString(), bankedSample, user);
+                logBuilder.setLength(0);
+            }
         }
     }
 
@@ -281,11 +284,11 @@ public class PromoteBanked extends LimsTask {
                                       maxExistentId, int offset) throws LimsException, InvalidValue, AlreadyExists,
             NotFound, IoError,
             RemoteException, ServerException {
-        try{
+        try {
             AuditLog auditLog = user.getAuditLog();
             StringBuilder logBuilder = new StringBuilder();
-            logBankedState(bankedSampleRecord, logBuilder,  auditLog);
-        } catch(RemoteException rme){
+            logBankedState(bankedSampleRecord, logBuilder, auditLog);
+        } catch (RemoteException rme) {
             log.info("ERROR: could not add the audit log information for promote");
         }
         SloanCMOUtils util = new SloanCMOUtils(managerContext);
@@ -403,7 +406,17 @@ public class PromoteBanked extends LimsTask {
             }
             promotedSampleRecord.addChild("SeqRequirement", srFields, user);
 
-        } catch (NullPointerException npe) {}
+        } catch (NullPointerException npe) {
+        }
+    }
+
+    private void validateBankedSample(BankedSample bankedSample) {
+        CommonUtils.requireNonNullNorEmpty(bankedSample.getCMOPatientId(), String.format("Cmo Patient id is empty for" +
+                " banked " +
+                "sample: %s", bankedSample.getId()));
+        CommonUtils.requireNonNullNorEmpty(bankedSample.getSampleType(), String.format("Sample Type is empty for " +
+                "banked sample: " +
+                "%s", bankedSample.getId()));
     }
 
     private Sample getPromotedSample(BankedSample bankedSample, String uuid, String newIgoId, String
@@ -425,7 +438,8 @@ public class PromoteBanked extends LimsTask {
 
         cmoFields.put(CmoSampleInfo.DMPLIBRARY_INPUT, bankedFields.getOrDefault(BankedSample.NON_LIMS_LIBRARY_INPUT,
                 ""));
-        cmoFields.put(CmoSampleInfo.DMPLIBRARY_OUTPUT, bankedFields.getOrDefault(BankedSample.NON_LIMS_LIBRARY_OUTPUT, ""));
+        cmoFields.put(CmoSampleInfo.DMPLIBRARY_OUTPUT, bankedFields.getOrDefault(BankedSample
+                .NON_LIMS_LIBRARY_OUTPUT, ""));
 
         cmoFields.put(CmoSampleInfo.ESTIMATED_PURITY, bankedFields.get(BankedSample.ESTIMATED_PURITY));
         cmoFields.put(CmoSampleInfo.GENDER, bankedFields.get(BankedSample.GENDER));
@@ -454,6 +468,8 @@ public class PromoteBanked extends LimsTask {
 
     private String getCorrectedCmoSampleId(BankedSample bankedSample, String requestId) {
         try {
+            validateBankedSample(bankedSample);
+
             if (!isHumanSample(bankedSample)) {
                 log.info(String.format("Non-Human sample: %s with species: %s won't have cmo sample id generated.",
                         bankedSample.getUserSampleID(), bankedSample.getSpecies()));
