@@ -173,7 +173,7 @@ public class SetOrCreateBanked extends LimsTask {
 
             DataRecord banked;
             HashMap<String, Object> bankedFields = new HashMap<>();
-
+            boolean setInvestigator = true;
             if (matchedBanked.size() < 1) {
                 banked = dataRecordManager.addDataRecord("BankedSample", user);
                 bankedFields.put("OtherSampleId", sampleId);
@@ -181,6 +181,11 @@ public class SetOrCreateBanked extends LimsTask {
                 bankedFields.put("TransactionId", transactionId);
             } else {
                 banked = matchedBanked.get(0);
+                try{
+                   if(!"".equals(banked.getStringVal("Investigator", user))){
+                       setInvestigator = false;
+                   }
+                } catch(NullPointerException npe){}
             }
 
             StringBuffer sb = new StringBuffer();
@@ -206,9 +211,10 @@ public class SetOrCreateBanked extends LimsTask {
                 bankedFields.put("Assay", assayString);
             }
             if (!"NULL".equals(sampleId)) {
+                bankedFields.put("OtherSampleId", userId);
                 bankedFields.put("UserSampleID", userId);
             }
-            if (!"NULL".equals(investigator)) {
+            if (!"NULL".equals(investigator) && setInvestigator) {
                 bankedFields.put("Investigator", investigator);
             }
             if (!"NULL".equals(clinicalInfo)) {
