@@ -46,7 +46,8 @@ public class PatientSamplesWithCmoInfoRetriever implements PatientSamplesRetriev
             for (DataRecord sampleRecord : getSampleRecords(patientId, dataRecordManager, user))
                 cmoSampleViews.add(getCorrectedCmoSampleView(sampleRecord, user));
 
-            LOGGER.info(String.format("Found %d samples for patient %s: %s", cmoSampleViews.size(), patientId, cmoSampleViews));
+            LOGGER.info(String.format("Found %d samples for patient %s: %s", cmoSampleViews.size(), patientId,
+                    cmoSampleViews));
             return cmoSampleViews;
         } catch (NotFound | RemoteException | IoError e) {
             throw new LimsException(String.format("Unable to retrieve samples for patient: %s. Cause: %s", patientId,
@@ -79,7 +80,8 @@ public class PatientSamplesWithCmoInfoRetriever implements PatientSamplesRetriev
         try {
             sampleId = sampleRecord.getStringVal(Sample.SAMPLE_ID, user);
 
-            LOGGER.info(String.format("Found sample %s. Retrieving information needed to generate CMO Sample Id", sampleId));
+            LOGGER.info(String.format("Found sample %s. Retrieving information needed to generate CMO Sample Id",
+                    sampleId));
 
             Sample sample = sampleRecordToSampleConverter.convert(sampleRecord, user);
             return sampleToCorrectedCmoIdConverter.convert(sample);
