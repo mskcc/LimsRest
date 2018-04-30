@@ -10,14 +10,9 @@ import java.io.StringWriter;
 import java.rmi.RemoteException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -44,7 +39,6 @@ import com.velox.sapioutils.client.standalone.VeloxExecutable;
 public class AddOrCreateSet  extends LimsTask 
 {
   String[] requestIds;
-  String[] samples;
   String[] igoIds;
   String[] pairs;
   String[] categories;
@@ -52,19 +46,21 @@ public class AddOrCreateSet  extends LimsTask
   String setName;
   String mapName;
   String baitSet;
-  String primeRecipe;
+  String recipe;
+  String primeRequest;
   boolean validate;
 
-  public void init(String igoUser, String setName, String mapName, String[] requests, String[] samples, String[] igoIds, String[] pairs, String[] categories, String baitSet, String primeRecipe, boolean validate){
+  public void init(String igoUser, String setName, String mapName, String[] requests, String[] igoIds,
+                   String[] pairs, String[] categories, String baitSet, String primeRecipe, String primeRequest,
+                   boolean validate){
     this.igoUser = igoUser;
     this.setName = setName;
     this.mapName = mapName;
     this.baitSet = baitSet;
-    this.primeRecipe = primeRecipe;
+    this.recipe = primeRecipe;
+    this.primeRequest = primeRequest;
     if(requests != null)
         this.requestIds = requests.clone();
-    if(samples != null)
-        this.samples = samples.clone();
     if(igoIds != null)
         this.igoIds = igoIds.clone();
     if(pairs != null)
@@ -78,9 +74,10 @@ public class AddOrCreateSet  extends LimsTask
 @Override
  public Object execute(VeloxConnection conn){
 // private void runProgram(User apiUser, DataRecordManager dataRecordManager) {
-  if(samples == null && requestIds == null && igoIds == null && pairs == null ){
+  if(requestIds == null && igoIds == null && pairs == null ){
      return "FAILURE: You must specify at least one request or sample or have new pairing info";
   }
+  StringBuilder errorList = new StringBuilder();
   String recordId = "-1";
   try { 
     List<DataRecord> allRequests = new LinkedList<>();
@@ -110,7 +107,7 @@ public class AddOrCreateSet  extends LimsTask
     //if the service is just adding pairing and category information to an existing request
     if(requestIds != null && requestIds.length == 1 && setName == null){
         parent = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestIds[0]  + "'", user).get(0);
-    
+
     } else{
         List<DataRecord> matchedSets = dataRecordManager.queryDataRecords("SampleSet", "Name = '" + setName  + "'", user);
         if(matchedSets.size() < 1){
@@ -120,7 +117,7 @@ public class AddOrCreateSet  extends LimsTask
             sampleSet = matchedSets.get(0);
         }
         parent = sampleSet;
-    
+
     }
     HashSet<String> nameSet = new HashSet<>();
     if(validate){
@@ -160,75 +157,23 @@ public class AddOrCreateSet  extends LimsTask
     }
 
     if(requestIds != null){
-      for(int i = 0; i < requestIds.length; i++){
-    
-         List<DataRecord> matchedReq = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestIds[i] + "'", user);
-         if(matchedReq.size() == 0){
-           return "FAILURE: You have selected to add a request " + requestIds[i] + " that is not in the LIMS";
-         }
-         allRequests.add(matchedReq.get(0));
-      }
-    }
-    if(samples != null){
-      HashSet<String> parentRequests = new HashSet<>();
-
-      for(int i = 0; i < samples.length; i++){
-         String sampleRequest = "";
-         String sampleName = "";
-         try{
-            sampleRequest = samples[i].split(":")[0];
-            sampleName = samples[i].split(":")[1];
-         } catch( ArrayIndexOutOfBoundsException aie){
-            return "FAILURE: " + samples[i] + " is not of the format REQUESTID:SAMPLEID";
-         }
-         parentRequests.add(sampleRequest);
-      }
-      StringBuffer sb = new StringBuffer();
-      sb.append("(");
-      for(String element : parentRequests){
-        sb.append(element);
-        sb.append(",");
-
-      }
-      sb.insert( sb.length() - 1, ")");
-      List<DataRecord> matchedRequests = dataRecordManager.queryDataRecords("Request", "RequestId in " + sb.toString(), user);  
-      List<List<DataRecord>> childSamples = dataRecordManager.getChildrenOfType(matchedRequests, "Sample", user);
-      HashMap<String, DataRecord> requestCorrectedSample2Sample = new HashMap<>();
-      for(int i = 0; i < matchedRequests.size(); i++){
-        String reqId = "";
-        try{ reqId =  matchedRequests.get(i).getStringVal("RequestId", user); } catch(NullPointerException npe){};
-        List<List<DataRecord>> samplesInfos = dataRecordManager.getChildrenOfType(childSamples.get(i), "SampleCMOInfoRecords", user);
-        for(int j = 0; j < childSamples.get(i).size(); j++){
-            List<DataRecord> infos = samplesInfos.get(j);
-            if(infos.size() > 0){
-                String key = reqId + ":" + infos.get(0).getStringVal("CorrectedCMOID", user);
-                requestCorrectedSample2Sample.put(key,childSamples.get(i).get(j));
-            }
-        }
-      }
-      for(int i = 0; i < samples.length; i++){
-        if(requestCorrectedSample2Sample.containsKey(samples[i])){
-            allSamples.add(requestCorrectedSample2Sample.get(samples[i]));
-        } else{
-            return "FAILURE: There is no known request:sample pair with value " + samples[i] + ". Make sure you are using the correct igo id";
-        }
-      }
-    }
-    if(igoIds != null){
-        for(int i = 0; i < igoIds.length; i++){
-           List<DataRecord> matchedSample = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + igoIds[i] + "'", user);
-           if(matchedSample.size() == 0){
-              return "FAILURE: You have selected to add a sample " + igoIds[i] + " that is not in the LIMS";
-           }
-           allSamples.add(matchedSample.get(0));
-        }
+        allRequests.addAll(addOffRequestId(errorList));
     }
 
-    for(DataRecord childReq : allRequests){
-       sampleSet.addChild(childReq, user);
+    if(igoIds != null && igoIds.length > 0) {
+        allSamples.addAll(addOffIgoIds(errorList));
     }
-    for(DataRecord childSamp : allSamples){
-       sampleSet.addChild(childSamp, user);
+
+    sampleSet.addChildren(allRequests, user);
+    sampleSet.addChildren(allSamples, user);
+    if(baitSet != null) {
+        sampleSet.setDataField("BaitSet", baitSet, user);
+    }
+    if(recipe != null){
+        sampleSet.setDataField("Recipe", recipe, user);
+    }
+    if(primeRequest != null){
+        sampleSet.setDataField("PrimeRequest", primeRequest, user );
     }
 
 
@@ -245,5 +190,42 @@ public class AddOrCreateSet  extends LimsTask
 
   return recordId; 
  }
+
+    List<DataRecord> addOffRequestId(StringBuilder errorList) throws NotFound, IoError, RemoteException {
+      String match = Arrays.stream(requestIds).map(s -> String.format("\'%s\'")).
+                collect(Collectors.joining(",", "(", ")"));
+      List<DataRecord> matchedReq = dataRecordManager.queryDataRecords("Request", "RequestId in " +
+              match, user);
+
+        validateMatch(errorList, matchedReq, igoIds, "RequestId");
+
+        return matchedReq;
+    }
+
+    List<DataRecord> addOffIgoIds(StringBuilder errorList) throws NotFound, IoError, RemoteException {
+      String match = Arrays.stream(igoIds).map(s -> String.format("\'%s\'", s)).
+                    collect(Collectors.joining(",", "(", ")"));
+      List<DataRecord> matchedSamples = dataRecordManager.queryDataRecords("Sample", "SampleId in " +
+                    match, user);
+        validateMatch(errorList, matchedSamples, igoIds, "SampleId");
+        return matchedSamples;
+    }
+
+    private void validateMatch(StringBuilder errorList, List<DataRecord> matchedRecords,
+                               String[] recIds, String idField) throws NotFound, RemoteException {
+        if(matchedRecords.size() < recIds.length){
+            Set<String> matchedIds = new HashSet<>();
+            for(DataRecord matchedSample : matchedRecords){
+                matchedIds.add(matchedSample.getStringVal(idField, user));
+            }
+            for (String recordId : recIds){
+                if(!matchedIds.contains(recordId)){
+                    errorList.append("FAILURE: There is no record matching requested id ").append(recordId);
+                }
+            }
+        } else if(matchedRecords.size() > recIds.length) {
+            errorList.append("FAILURE: There are more records matching those ids than is expected");
+        }
+    }
 
 }
