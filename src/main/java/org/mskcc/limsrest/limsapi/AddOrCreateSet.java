@@ -48,11 +48,10 @@ public class AddOrCreateSet  extends LimsTask
   String baitSet;
   String recipe;
   String primeRequest;
-  boolean validate;
 
   public void init(String igoUser, String setName, String mapName, String[] requests, String[] igoIds,
-                   String[] pairs, String[] categories, String baitSet, String primeRecipe, String primeRequest,
-                   boolean validate){
+                   String[] pairs, String[] categories, String baitSet, String primeRecipe, String primeRequest
+                  ){
     this.igoUser = igoUser;
     this.setName = setName;
     this.mapName = mapName;
@@ -67,7 +66,6 @@ public class AddOrCreateSet  extends LimsTask
         this.pairs = pairs.clone();
     if(categories != null)
         this.categories = categories.clone();
-    this.validate = validate;
   }
  //execute the velox call
 @PreAuthorize("hasRole('ADMIN')")
@@ -120,7 +118,7 @@ public class AddOrCreateSet  extends LimsTask
 
     }
     HashSet<String> nameSet = new HashSet<>();
-    if(validate){
+    if(igoIds != null){
         List<DataRecord> descSamples = parent.getDescendantsOfType("Sample", user);
         List names = dataRecordManager.getValueList(descSamples, "SampleId", user);
         for(Object name : names){
@@ -131,7 +129,7 @@ public class AddOrCreateSet  extends LimsTask
         }
     }
     for(int i = 0; i < normalPairing.length; i++){
-       if(validate && (!nameSet.contains(tumorPairing[i]) || !nameSet.contains(normalPairing[i]))){
+       if(!nameSet.contains(tumorPairing[i]) || !nameSet.contains(normalPairing[i])){
             return "FAILURE: Please confirm that " + tumorPairing[i] + " and "  + normalPairing[i] + " are known samples.";
        }
        DataRecord pairInfo = parent.addChild("PairingInfo", user);
@@ -141,7 +139,7 @@ public class AddOrCreateSet  extends LimsTask
     }
 
     for(int i = 0; i < categoryKeys.length; i++){
-       if(validate && !nameSet.contains(categoryKeys[i])){
+       if(!nameSet.contains(categoryKeys[i])){
             return "FAILURE: Please confirm that " + categoryKeys[i] + " is a known sample.";
        }
        DataRecord categoryMap = parent.addChild("CategoryMap", user);
@@ -164,6 +162,9 @@ public class AddOrCreateSet  extends LimsTask
         allSamples.addAll(addOffIgoIds(errorList));
     }
 
+    if(errorList.length() > 0){
+       throw new LimsException(errorList.toString());
+    }
     sampleSet.addChildren(allRequests, user);
     sampleSet.addChildren(allSamples, user);
     if(baitSet != null) {
@@ -184,7 +185,7 @@ public class AddOrCreateSet  extends LimsTask
           StringWriter sw = new StringWriter();
           PrintWriter pw = new PrintWriter(sw);
           e.printStackTrace(pw);
-           return "FAILURE: " + e.getMessage();
+           return "FAILURE: " +  e.getMessage() + " TRACE:" + sw.toString();
   
   }
 
@@ -192,12 +193,12 @@ public class AddOrCreateSet  extends LimsTask
  }
 
     List<DataRecord> addOffRequestId(StringBuilder errorList) throws NotFound, IoError, RemoteException {
-      String match = Arrays.stream(requestIds).map(s -> String.format("\'%s\'")).
+      String match = Arrays.stream(requestIds).map(r -> String.format("\'%s\'", r)).
                 collect(Collectors.joining(",", "(", ")"));
       List<DataRecord> matchedReq = dataRecordManager.queryDataRecords("Request", "RequestId in " +
               match, user);
 
-        validateMatch(errorList, matchedReq, igoIds, "RequestId");
+        validateMatch(errorList, matchedReq, requestIds, "RequestId");
 
         return matchedReq;
     }

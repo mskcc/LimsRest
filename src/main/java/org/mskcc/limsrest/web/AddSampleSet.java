@@ -36,7 +36,7 @@ public class AddSampleSet {
     @RequestMapping("/addSampleSet")
     public String getContent( @RequestParam(value="igoId", required=false) String[] igoId,
                                @RequestParam(value="user") String user, @RequestParam(value="pair", required=false) String[] pair,  @RequestParam(value="category", required=false) String[] category,
-                               @RequestParam(value="project", required=false) String[] request, @RequestParam(value="igoUser") String igoUser, @RequestParam(value="validate", defaultValue="false") String validate,
+                               @RequestParam(value="project", required=false) String[] request, @RequestParam(value="igoUser") String igoUser,
                                @RequestParam(value="setName", required=false) String name, @RequestParam(value="mapName", required=false) String mapName, 
                                @RequestParam(value="baitSet", required=false) String baitSet, @RequestParam(value="primeRecipe", required=false) String primeRecipe,
                                 @RequestParam(value="primeRequest", required=false) String primeRequest) {
@@ -67,11 +67,7 @@ public class AddSampleSet {
            return "FAILURE: primeRecipe is not using a valid format";
         }
 
-       boolean val  = false;
-       if(validate.equalsIgnoreCase("true")){
-          val = true;
-       }
-      task.init(igoUser, name, mapName, request, igoId, pair, category, baitSet, primeRecipe, primeRequest, true);       
+      task.init(igoUser, name, mapName, request, igoId, pair, category, baitSet, primeRecipe, primeRequest);       
        Future<Object> result = connQueue.submitTask(task);
        String returnCode = "";
        try{
