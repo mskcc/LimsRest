@@ -12,10 +12,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Future;
 
 @RestController
@@ -196,6 +196,46 @@ public class GetCorrectedSampleCmoId {
 
             return new ResponseEntity<>(headers, HttpStatus.OK);
         }
+    }
+
+    /**
+     * This function generates CMO Sample Id from parameters passed to a query
+     *
+     * @param correctedCmoSampleViews
+     * @return Map of Igo id to CMO Sample Id
+     */
+    @RequestMapping(name = "/getBulkSampleCmoIdsFromParams", method = RequestMethod.POST)
+    public ResponseEntity<Map<String, String>> getSampleCmoIdByCmoSampleView(
+            @RequestBody CorrectedCmoSampleView[] correctedCmoSampleViews) {
+
+        Map<String, String> cmoSampleIds = new HashMap<>();
+        try {
+            for (CorrectedCmoSampleView correctedCmoSampleView : correctedCmoSampleViews) {
+                log.info(String.format("Starting to generate sample cmo id for sample: %s", correctedCmoSampleViews));
+
+                log.info("Creating Generate sample cmo id task");
+                task.init(correctedCmoSampleView);
+
+                log.info("Getting result of Generate sample cmo id task");
+                Future<Object> result = connQueue.submitTask(task);
+
+                String correctedSampleCmoId = (String) result.get();
+                log.info(String.format("Generated CMO Sample ID: %s", correctedSampleCmoId));
+
+                cmoSampleIds.put(correctedCmoSampleView.getId(), correctedSampleCmoId);
+            }
+        } catch (Exception e) {
+            log.error(String.format("Error while generating CMO Sample Id for cmo sample view: %s",
+                    correctedCmoSampleViews), e);
+
+            MultiValueMap<String, String> headers = new HttpHeaders();
+            headers.add("ERRORS", String.format("Error while generating CMO Sample Id for sample: %s. Cause: " +
+                    "%s", correctedCmoSampleViews, ExceptionUtils.getRootCauseMessage(e)));
+
+            return new ResponseEntity<>(headers, HttpStatus.OK);
+        }
+
+        return ResponseEntity.ok(cmoSampleIds);
     }
 
     private class IncorrectSampleIgoIdFormatException extends RuntimeException {
