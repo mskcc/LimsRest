@@ -28,6 +28,7 @@ import com.velox.sapioutils.client.standalone.VeloxStandaloneException;
 import com.velox.sapioutils.client.standalone.VeloxStandaloneManagerContext;
 import com.velox.sapioutils.client.standalone.VeloxExecutable;
 
+import org.mskcc.util.VeloxConstants;
 
 /**
  * A queued task that takes requests and samples, and makes a SampleSet record in the lims with this information.
@@ -48,10 +49,11 @@ public class AddOrCreateSet  extends LimsTask
   String baitSet;
   String recipe;
   String primeRequest;
+  String[] externalSpecimens;
 
   public void init(String igoUser, String setName, String mapName, String[] requests, String[] igoIds,
-                   String[] pairs, String[] categories, String baitSet, String primeRecipe, String primeRequest
-                  ){
+                   String[] pairs, String[] categories, String baitSet, String primeRecipe, String primeRequest,
+                   String[] externalSpecimens){
     this.igoUser = igoUser;
     this.setName = setName;
     this.mapName = mapName;
@@ -62,6 +64,8 @@ public class AddOrCreateSet  extends LimsTask
         this.requestIds = requests.clone();
     if(igoIds != null)
         this.igoIds = igoIds.clone();
+    if(externalSpecimens != null)
+        this.externalSpecimens = externalSpecimens.clone();
     if(pairs != null)
         this.pairs = pairs.clone();
     if(categories != null)
@@ -160,6 +164,14 @@ public class AddOrCreateSet  extends LimsTask
 
     if(igoIds != null && igoIds.length > 0) {
         allSamples.addAll(addOffIgoIds(errorList));
+    }
+    
+    if(externalSpecimens != null){
+        for(String spec : externalSpecimens){
+            Map<String, Object> fields = new HashMap();
+            fields.put(VeloxConstants.EXTERNAL_ID, spec);
+            sampleSet.addChild(VeloxConstants.EXTERNAL_SPECIMEN, fields, user);
+        }
     }
 
     if(errorList.length() > 0){
