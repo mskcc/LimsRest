@@ -1,5 +1,5 @@
 group 'org.mskcc.limsrest'
-version '1.6.0'
+version '1.7.0-SNAPSHOT'
 
 buildscript {
     repositories {
@@ -11,10 +11,13 @@ buildscript {
     }
 
 }
+
 apply plugin: 'java'
+apply plugin: 'application'
+apply plugin: 'idea'
+apply plugin: 'maven'
 apply plugin: 'spring-boot'
 apply plugin: 'war'
-apply plugin: 'idea'
 
 if(target== 'dev'){
     copy {
@@ -63,10 +66,16 @@ jar {
 repositories {
     mavenCentral()
     mavenLocal()
+    maven { url "${nexusUrlReleases}" }
+    maven { url "${nexusUrlSnapshots}" }
 }
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
+
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
 
 configurations {
     providedRuntime
@@ -149,5 +158,28 @@ task integrationTest(type: Test) {
     classpath = sourceSets.integrationTest.runtimeClasspath
     description = "Integration Tests"
     outputs.upToDateWhen { false }
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(
+                    url: "${nexusUrlReleases}") {
+                authentication(userName: nexusUsername, password: nexusPassword)
+            }
+            snapshotRepository(
+                    url: "${nexusUrlSnapshots}") {
+                authentication(userName: nexusUsername, password: nexusPassword)
+            }
+
+            pom.project {
+                parent {
+                    groupId 'io.spring.platform'
+                    artifactId 'platform-bom'
+                    version '1.0.2.RELEASE'
+                }
+            }
+        }
+    }
 }
 
