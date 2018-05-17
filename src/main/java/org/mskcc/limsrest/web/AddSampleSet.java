@@ -39,7 +39,7 @@ public class AddSampleSet {
                                @RequestParam(value="project", required=false) String[] request, @RequestParam(value="igoUser") String igoUser,
                                @RequestParam(value="setName", required=false) String name, @RequestParam(value="mapName", required=false) String mapName, 
                                @RequestParam(value="baitSet", required=false) String baitSet, @RequestParam(value="primeRecipe", required=false) String primeRecipe,
-                                @RequestParam(value="primeRequest", required=false) String primeRequest) {
+                                @RequestParam(value="primeRequest", required=false) String primeRequest, @RequestParam(value="externalSpecimen", required=false) String[] externalSpecimen) {
        log.info("Adding to sample set " + name + " at a request by user " + user);
        Whitelists wl = new Whitelists();
         if(igoId != null){
@@ -67,7 +67,14 @@ public class AddSampleSet {
            return "FAILURE: primeRecipe is not using a valid format";
         }
 
-      task.init(igoUser, name, mapName, request, igoId, pair, category, baitSet, primeRecipe, primeRequest);       
+       if(externalSpecimen != null){
+          for(String spec : externalSpecimen){
+             if(!wl.textMatches(spec)){
+                return "FAILURE: externalSpecimen is not using a valid format";
+             }
+          }
+      }
+      task.init(igoUser, name, mapName, request, igoId, pair, category, baitSet, primeRecipe, primeRequest, externalSpecimen);       
        Future<Object> result = connQueue.submitTask(task);
        String returnCode = "";
        try{
