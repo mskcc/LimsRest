@@ -148,6 +148,8 @@ public class GetCorrectedSampleCmoId {
      * @param sampleClass
      * @param sampleOrigin
      * @param specimenType
+     * @param sampleType
+     * @param currentCmoSampleId
      * @param nucleidAcid
      * @return CMO Sample Id
      */
@@ -160,6 +162,8 @@ public class GetCorrectedSampleCmoId {
             @RequestParam String sampleClass,
             @RequestParam String sampleOrigin,
             @RequestParam String specimenType,
+            @RequestParam String sampleType,
+            @RequestParam String currentCmoSampleId,
             @RequestParam String nucleidAcid) {
 
         CorrectedCmoSampleView correctedCmoSampleView = new CorrectedCmoSampleView(igoId);
@@ -172,6 +176,8 @@ public class GetCorrectedSampleCmoId {
             correctedCmoSampleView.setSampleClass(SampleClass.fromValue(sampleClass));
             correctedCmoSampleView.setSampleOrigin(SampleOrigin.fromValue(sampleOrigin));
             correctedCmoSampleView.setSpecimenType(SpecimenType.fromValue(specimenType));
+            correctedCmoSampleView.setSampleType(SampleType.fromString(sampleType));
+            correctedCmoSampleView.setCorrectedCmoId(currentCmoSampleId);
             Utils.getOptionalNucleicAcid(nucleidAcid, igoId).ifPresent(correctedCmoSampleView::setNucleidAcid);
 
             log.info(String.format("Starting to generate sample cmo id for sample: %s", correctedCmoSampleView));
