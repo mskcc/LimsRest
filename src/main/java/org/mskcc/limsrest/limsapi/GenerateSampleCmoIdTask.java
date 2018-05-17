@@ -43,12 +43,8 @@ public class GenerateSampleCmoIdTask extends LimsTask {
     @PreAuthorize("hasRole('ADMIN')")
     @Override
     public String execute(VeloxConnection conn) {
-        CorrectedCmoSampleView currentView = getCorrectedCmoSampleView(sampleIgoId);
         if (this.correctedCmoSampleView == null)
-            this.correctedCmoSampleView = currentView;
-
-        this.correctedCmoSampleView.setCorrectedCmoId(currentView.getCorrectedCmoId());
-        this.correctedCmoSampleView.setSampleType(currentView.getSampleType());
+            this.correctedCmoSampleView = getCorrectedCmoSampleView(sampleIgoId);
 
         String cmoId = correctedCmoSampleIdGenerator.generate(this.correctedCmoSampleView,
                 this.correctedCmoSampleView.getRequestId(), dataRecordManager, user);
