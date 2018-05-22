@@ -121,7 +121,7 @@ public class AddOrCreateSet  extends LimsTask
         parent = sampleSet;
 
     }
-    HashSet<String> nameSet = new HashSet<>();
+    Set<String> nameSet = new HashSet<>();
     if(igoIds != null){
         List<DataRecord> descSamples = parent.getDescendantsOfType("Sample", user);
         List names = dataRecordManager.getValueList(descSamples, "SampleId", user);
@@ -131,6 +131,15 @@ public class AddOrCreateSet  extends LimsTask
         for(String igoId : igoIds){
            nameSet.add(igoId);
         }
+    }
+    if(externalSpecimens != null){
+        for(String externalSpecimen : externalSpecimens){
+            nameSet.add(externalSpecimen);
+        }
+    }
+    List<DataRecord> previousExternalSpecimen = parent.getDescendantsOfType(VeloxConstants.EXTERNAL_SPECIMEN,user);
+    for(DataRecord previousExternal : previousExternalSpecimen){
+        nameSet.add(previousExternal.getStringVal(VeloxConstants.EXTERNAL_ID, user));
     }
     for(int i = 0; i < normalPairing.length; i++){
        if(!nameSet.contains(tumorPairing[i]) || !nameSet.contains(normalPairing[i])){
@@ -167,10 +176,22 @@ public class AddOrCreateSet  extends LimsTask
     }
     
     if(externalSpecimens != null){
+        String match = Arrays.stream(externalSpecimens).map(x -> String.format("\'%s\'", x)).
+                collect(Collectors.joining(",", "(", ")"));
+        List<DataRecord> knownExternals = dataRecordManager.queryDataRecords(VeloxConstants.EXTERNAL_SPECIMEN, 
+              VeloxConstants.EXTERNAL_ID + " in " + match, user);
+        Map<String, DataRecord> knownIdToRecord = new HashMap<>();
+        for(DataRecord external : knownExternals){
+            knownIdToRecord.put(external.getStringVal(VeloxConstants.EXTERNAL_ID, user), external);
+        }
         for(String spec : externalSpecimens){
-            Map<String, Object> fields = new HashMap();
-            fields.put(VeloxConstants.EXTERNAL_ID, spec);
-            sampleSet.addChild(VeloxConstants.EXTERNAL_SPECIMEN, fields, user);
+            if(knownIdToRecord.containsKey(spec)){
+               sampleSet.addChild(knownIdToRecord.get(spec), user);
+            } else{
+                Map<String, Object> fields = new HashMap();
+                fields.put(VeloxConstants.EXTERNAL_ID, spec);
+                sampleSet.addChild(VeloxConstants.EXTERNAL_SPECIMEN, fields, user);
+            }
         }
     }
 

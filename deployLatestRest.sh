@@ -11,7 +11,7 @@ for file in LimsRest*.war; do
   [[ $file -nt $newestLims ]] && newestLims=$file
 done
 cd $tomcatLocation
-jar xvf $newestLims WEB-INF/classes/connect.txt
+jar xvf $currentDir/$newestLims WEB-INF/classes/connect.txt
 machine=$(hostname)
 machineName=${machine/.*/}
 machineMatch=$(grep $machineName WEB-INF/classes/connect.txt)
