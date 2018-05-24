@@ -17,6 +17,7 @@ public class BankedSampleToSampleConverter {
         sample.setCellCount(bankedSample.getCellCount());
         sample.setClinicalInfo(bankedSample.getClinicalInfo());
         sample.setCMOSampleClass(bankedSample.getSampleClass());
+        sample.setCmoPatientId(bankedSample.getCMOPatientId());
         sample.setCollectionYear(bankedSample.getCollectionYear());
         sample.setColPosition(bankedSample.getColPosition());
         sample.setConcentration(bankedSample.getConcentration());

@@ -217,7 +217,8 @@ public class GetCorrectedSampleCmoId {
         Map<String, String> cmoSampleIds = new HashMap<>();
         try {
             for (CorrectedCmoSampleView correctedCmoSampleView : correctedCmoSampleViews) {
-                log.info(String.format("Starting to generate sample cmo id for sample: %s", correctedCmoSampleViews));
+                log.info(String.format("Starting to generate sample cmo id for sample: %s", correctedCmoSampleViews
+                        .toString()));
 
                 log.info("Creating Generate sample cmo id task");
                 task.init(correctedCmoSampleView);
@@ -232,7 +233,7 @@ public class GetCorrectedSampleCmoId {
             }
         } catch (Exception e) {
             log.error(String.format("Error while generating CMO Sample Id for cmo sample view: %s",
-                    correctedCmoSampleViews), e);
+                    correctedCmoSampleViews.toString()), e);
 
             MultiValueMap<String, String> headers = new HttpHeaders();
             headers.add("ERRORS", String.format("Error while generating CMO Sample Id for sample: %s. Cause: " +
