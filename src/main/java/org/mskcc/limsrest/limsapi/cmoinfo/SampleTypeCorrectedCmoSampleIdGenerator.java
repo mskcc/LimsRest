@@ -16,8 +16,6 @@ import org.mskcc.limsrest.limsapi.cmoinfo.retriever.CmoSampleIdRetrieverFactory;
 import org.mskcc.util.CommonUtils;
 import org.mskcc.util.notificator.Notificator;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -143,7 +141,7 @@ public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSamp
                                                   Exception exception) {
         String message = String.format(":-1: Corrected cmo id autogeneration failed for sample: *%s (%s)* :-1: \n " +
                         "Cause: %s",
-                correctedCmoSampleView.getSampleId(), correctedCmoSampleView.getId(), getStackTraceAsString(exception));
+                correctedCmoSampleView.getSampleId(), correctedCmoSampleView.getId(), exception.getMessage());
 
         try {
             notificator.notifyMessage(requestId, message);
@@ -151,12 +149,5 @@ public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSamp
             LOGGER.warn(String.format("Sending notification about failure to autogenerate corrected cmo id failed for" +
                     " sample: %s", correctedCmoSampleView.getId()));
         }
-    }
-
-    private String getStackTraceAsString(Exception e) {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        e.printStackTrace(pw);
-        return sw.toString();
     }
 }
