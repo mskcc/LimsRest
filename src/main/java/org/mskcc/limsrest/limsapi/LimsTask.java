@@ -40,10 +40,8 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
     public LimsTask() {
     }
 
-
     public void setVeloxConnection(VeloxConnection conn) {
         velox_conn = conn;
-
     }
 
     //put it in the completion service
