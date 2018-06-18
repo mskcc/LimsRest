@@ -1,27 +1,23 @@
 package org.mskcc.limsrest.limsapi;
 
-import java.util.List;
-import java.util.LinkedList;
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
-public class Delivery extends RestDescriptor{
-   private String sampleId; 
-   private String requestId;
+public class Delivery extends RestDescriptor {
+    private String sampleId;
+    private String requestId;
 
-   public Delivery(String requestId, String sampleId){
+    public Delivery(String requestId, String sampleId) {
         this.requestId = requestId;
-        this.sampleId = sampleId; 
-   }
+        this.sampleId = sampleId;
+    }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getRequestId() {
+        return requestId;
+    }
 
-
-
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getRequestId(){
-    return requestId;
-  }
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getSampleId(){
-    return sampleId;
-  }
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getSampleId() {
+        return sampleId;
+    }
 }

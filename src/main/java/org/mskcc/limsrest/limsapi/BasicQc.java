@@ -1,14 +1,12 @@
 package org.mskcc.limsrest.limsapi;
 
-import java.util.ArrayList;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.Collections;
-import com.fasterxml.jackson.annotation.*;
-
 
 
 public class BasicQc {
