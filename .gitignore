@@ -16,6 +16,10 @@ build/*
 
 logs/
 
+out/*
+
+.DS_STORE*
+
 src/dev/
 src/production/
 src/test-site-res/
