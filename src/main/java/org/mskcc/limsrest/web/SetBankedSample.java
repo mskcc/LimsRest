@@ -93,11 +93,10 @@ public class SetBankedSample {
             }
         }
 
-        Whitelists wl = new Whitelists();
-        if (!wl.textMatches(serviceId)) {
+        if (!Whitelists.textMatches(serviceId)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Request is not using a valid format");
         }
-        if (!wl.sampleMatches(userId)) {
+        if (!Whitelists.sampleMatches(userId)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("userId is not using a valid format");
         }
 

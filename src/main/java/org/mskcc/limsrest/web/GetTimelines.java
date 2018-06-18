@@ -1,25 +1,19 @@
 package org.mskcc.limsrest.web;
 
-import java.util.concurrent.Future;
-import java.util.LinkedList;
-import java.util.Set;
-import java.io.FileWriter;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
-import org.springframework.stereotype.Service;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.limsapi.GetProjectHistory;
+import org.mskcc.limsrest.limsapi.HistoricalEvent;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import org.mskcc.limsrest.limsapi.*;
-import org.mskcc.limsrest.connection.*;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.LinkedList;
+import java.util.Set;
+import java.util.concurrent.Future;
 
 @RestController
 public class GetTimelines {
@@ -33,14 +27,11 @@ public class GetTimelines {
         this.task = getHistory;
     }
 
-
-
     @RequestMapping("/getTimeline")
     public LinkedList<HistoricalEvent> getContent(@RequestParam(value="project") String[] project) {
         LinkedList<HistoricalEvent> timeline = new LinkedList<>();
         for(int i = 0; i < project.length; i++){
-            Whitelists wl = new Whitelists();
-            if(!wl.requestMatches(project[i])){
+            if(!Whitelists.requestMatches(project[i])){
                 return timeline;                 
             }
         }

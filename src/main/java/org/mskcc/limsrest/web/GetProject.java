@@ -4,11 +4,9 @@ import java.util.concurrent.Future;
 import java.util.List;
 import java.util.LinkedList;
 
-import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import org.mskcc.limsrest.limsapi.*;
 import org.mskcc.limsrest.connection.*;
@@ -29,15 +27,12 @@ public class GetProject {
         this.task = getSamples;
     }
 
-
-
     @RequestMapping("/getPmProject")
     public List<RequestSummary> getContent(@RequestParam(value="project") String[] project, @RequestParam(value="filter", defaultValue="false") String filter) {
-        Whitelists wl = new Whitelists();
         List<RequestSummary> rss = new LinkedList<>();
         StringBuffer sb = new StringBuffer();
         for(int i = 0; i < project.length; i++){
-           if(!wl.requestMatches(project[i])){
+           if(!Whitelists.requestMatches(project[i])){
                log.info("FAILURE: project is not using a valid format");
                return rss;
            } else{
@@ -60,7 +55,4 @@ public class GetProject {
        }
        return rss;
    }
-
-   
 }
-

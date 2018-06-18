@@ -1,27 +1,21 @@
 package org.mskcc.limsrest.web;
 
-import java.util.concurrent.Future;
-import java.util.List;
-import java.util.LinkedList;
-
-import org.springframework.stereotype.Service;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.limsapi.FindBarcodeSequence;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import org.mskcc.limsrest.limsapi.*;
-import org.mskcc.limsrest.connection.*;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import java.util.concurrent.Future;
 
 @RestController
 public class GetBarcodeSequence{
 
     private final ConnectionQueue connQueue; 
     private final FindBarcodeSequence task;
-   private Log log = LogFactory.getLog(GetBarcodeSequence.class);
+    private Log log = LogFactory.getLog(GetBarcodeSequence.class);
 
     public GetBarcodeSequence( ConnectionQueue connQueue, FindBarcodeSequence findSeq){
         this.connQueue = connQueue;
@@ -29,12 +23,10 @@ public class GetBarcodeSequence{
     }
 
 
-
     @RequestMapping("/getBarcodeSequence")
     public String getContent(@RequestParam(value="user") String user, 
-                          @RequestParam(value="barcodeId") String barcodeId) {                          
-        Whitelists wl = new Whitelists();
-        if(!wl.textMatches(barcodeId))
+                          @RequestParam(value="barcodeId") String barcodeId) {
+        if(!Whitelists.textMatches(barcodeId))
             return "FAILURE: flowcell is not using a valid format";
 
        task.init(barcodeId);
@@ -47,6 +39,4 @@ public class GetBarcodeSequence{
        }
        return seq;
     }
-
 }
-

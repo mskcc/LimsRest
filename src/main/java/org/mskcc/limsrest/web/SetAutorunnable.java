@@ -1,38 +1,32 @@
 package org.mskcc.limsrest.web;
 
-import java.util.concurrent.Future;
-import java.util.List;
-import java.util.LinkedList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.springframework.stereotype.Service;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.limsapi.ToggleAutorunnable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import org.mskcc.limsrest.limsapi.*;
-import org.mskcc.limsrest.connection.*;
-
-import java.io.StringWriter;
 import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Future;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 @RestController
 public class SetAutorunnable {
 
     private final ConnectionQueue connQueue; 
     private final ToggleAutorunnable task;
-     private Log log = LogFactory.getLog(SetAutorunnable.class);
+    private Log log = LogFactory.getLog(SetAutorunnable.class);
 
     public SetAutorunnable( ConnectionQueue connQueue, ToggleAutorunnable toggle){
         this.connQueue = connQueue;
         this.task = toggle;
     }
-
-
 
     @RequestMapping("/setAllAutorunnable")
     public List<String> getContent() {
@@ -57,12 +51,11 @@ public class SetAutorunnable {
      Pattern requestPattern = Pattern.compile("[0-9]{5,7}(_[A-Z]+)?");
      Matcher matcher = requestPattern.matcher(req);
      List<String> values = new LinkedList<>();
-     Whitelists wl = new Whitelists();
      if(req == null || !matcher.matches() || status == null || !(status.toLowerCase().equals("true") || status.toLowerCase().equals("false"))){
         values.add("ERROR: Must define request and status and must be a valid request id and status may only be true or false");
         return values;
      }
-     if(!wl.textMatches(igoUser)){
+     if(!Whitelists.textMatches(igoUser)){
         values.add("FAILURE: igoUser is not using a valid format");
         return values;
      }

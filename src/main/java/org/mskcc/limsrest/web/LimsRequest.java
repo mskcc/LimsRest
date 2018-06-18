@@ -1,34 +1,30 @@
 package org.mskcc.limsrest.web;
 
-import java.util.concurrent.Future;
-import java.util.HashMap;
-import java.util.List;
-import java.util.LinkedList;
-
-import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
-
-
-import org.mskcc.limsrest.staticstrings.Messages;
-import org.mskcc.limsrest.limsapi.*;
-import org.mskcc.limsrest.connection.*;
-
-import java.io.StringWriter;
-import java.io.PrintWriter;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.limsapi.GetRequest;
+import org.mskcc.limsrest.limsapi.LimsException;
+import org.mskcc.limsrest.limsapi.RequestDetailed;
+import org.mskcc.limsrest.limsapi.SetRequest;
+import org.mskcc.limsrest.staticstrings.Messages;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Future;
 
 
 @RestController
 public class LimsRequest {
-
 
     private final ConnectionQueue connQueue; 
     private final SetRequest task;
@@ -46,13 +42,12 @@ public class LimsRequest {
     public ResponseEntity<String> setContent(@RequestParam(value="request") String request, @RequestParam(value="igoUser") String igoUser, 
                            @RequestParam(value="user") String user, 
                            @RequestParam(value="readMe") String readMe){
-       log.info("Starting a note with " + readMe + " on request " + request); 
-       Whitelists wl = new Whitelists();
-       if(!wl.textMatches(igoUser))
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("igoUser is not using a valid format. " + wl.textFormatText());
-       if(!wl.requestMatches(request)){
-           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("request is not using a valid format. " + wl.requestFormatText()); 
-        } 
+       log.info("Starting a note with " + readMe + " on request " + request);
+       if(!Whitelists.textMatches(igoUser))
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("igoUser is not using a valid format. " + Whitelists.textFormatText());
+       if(!Whitelists.requestMatches(request))
+           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("request is not using a valid format. " + Whitelists.requestFormatText());
+
 
        HashMap<String, Object> requestFields = new HashMap<>();
        requestFields.put("ReadMe", readMe);
@@ -83,15 +78,14 @@ public class LimsRequest {
                            @RequestParam(value="field", defaultValue = "NULL") String[] fieldName){
       LinkedList<RequestDetailed> reqSummary = new LinkedList<>();
       log.info("Getting a request " + request[0] + " for field" + fieldName[0]);
-      Whitelists wl = new Whitelists();
       for(String r : request){
-          if(!wl.requestMatches(r)){
+          if(!Whitelists.requestMatches(r)){
 
            return new ResponseEntity(reqSummary, HttpStatus.BAD_REQUEST);
           }
       }
       for(String f : fieldName){
-        if(!wl.textMatches(igoUser))
+        if(!Whitelists.textMatches(igoUser))
            return new ResponseEntity(reqSummary, HttpStatus.BAD_REQUEST);
       }     
       reader.init(igoUser, request, fieldName);
@@ -104,4 +98,3 @@ public class LimsRequest {
        return ResponseEntity.ok((List<RequestDetailed>)reqSummary);
     }
 }
-

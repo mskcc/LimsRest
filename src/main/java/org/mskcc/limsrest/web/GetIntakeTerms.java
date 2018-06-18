@@ -5,11 +5,9 @@ import java.util.List;
 import java.util.LinkedList;
 import java.util.Arrays;
 
-import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import org.mskcc.limsrest.limsapi.*;
 import org.mskcc.limsrest.connection.*;
@@ -22,7 +20,7 @@ public class GetIntakeTerms {
 
     private final ConnectionQueue connQueue; 
     private final GetIntakeFormDescription task;
-   private Log log = LogFactory.getLog(GetIntakeTerms.class);
+    private Log log = LogFactory.getLog(GetIntakeTerms.class);
 
     public GetIntakeTerms( ConnectionQueue connQueue, GetIntakeFormDescription intake){
         this.connQueue = connQueue;
@@ -30,17 +28,15 @@ public class GetIntakeTerms {
     }
 
 
-
     @RequestMapping("/getIntakeTerms")
     public List<List<String>> getContent(@RequestParam(value="type", defaultValue="NULL") String type, @RequestParam(value="recipe", defaultValue="NULL") String recipe) {
       List<List<String>> values = new LinkedList<>();
-       Whitelists wl = new Whitelists();
-       if(!wl.textMatches(type)){
+       if(!Whitelists.textMatches(type)){
           log.info( "FAILURE: type is not using a valid format");
            values.add(Arrays.asList("", "", "FAILURE: type is not using a valid format"));
            return values;
        } 
-       if(!wl.specialMatches(recipe)){
+       if(!Whitelists.specialMatches(recipe)){
           log.info( "FAILURE: recipe is not using a valid format");
            values.add(Arrays.asList("", "", "FAILURE: recipe is not using a valid format"));
            return values;
@@ -57,6 +53,4 @@ public class GetIntakeTerms {
        }
        return values;
     }
-
 }
-

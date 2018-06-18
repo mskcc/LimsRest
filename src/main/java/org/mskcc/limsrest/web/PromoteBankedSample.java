@@ -41,30 +41,26 @@ public class PromoteBankedSample {
         log.info("Starting to promote banked sample " + bankedId[0] + " to request " + request + ":" + service + ":"
                 + project + " by service " + user + " and igo user: " + igoUser);
 
-        Whitelists wl = new Whitelists();
-
         for (String bid : bankedId) {
-            if (!wl.sampleMatches(bid))
+            if (!Whitelists.sampleMatches(bid))
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("bankedId " + bid + " is not using a valid " +
-                        "format. " + wl.sampleFormatText());
+                        "format. " + Whitelists.sampleFormatText());
         }
 
-        if (!wl.textMatches(igoUser))
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("igoUser is not using a valid format. " + wl
+        if (!Whitelists.textMatches(igoUser))
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("igoUser is not using a valid format. " + Whitelists
                     .textFormatText());
 
-        if (!wl.requestMatches(request))
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("requestId is not using a valid format. " + wl
+        if (!Whitelists.requestMatches(request))
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("requestId is not using a valid format. " + Whitelists
                     .requestFormatText());
 
 
-        if (!wl.requestMatches(project))
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("projectId is not using a valid format. " + wl
-                    .requestFormatText());
+        if (!Whitelists.requestMatches(project))
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("projectId is not using a valid format. " + Whitelists.requestFormatText());
 
-        if (!wl.serviceMatches(service))
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("serviceId is not using a valid format. " + wl
-                    .serviceFormatText());
+        if (!Whitelists.serviceMatches(service))
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("serviceId is not using a valid format. " + Whitelists.serviceFormatText());
 
         dryrun = dryrun.toLowerCase();
         log.info("Creating task");
@@ -92,4 +88,3 @@ public class PromoteBankedSample {
         return returnCode;
     }
 }
-

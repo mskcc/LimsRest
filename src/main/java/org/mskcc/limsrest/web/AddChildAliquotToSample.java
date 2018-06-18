@@ -41,8 +41,7 @@ public class AddChildAliquotToSample{
                            @RequestParam(value="additionalType", defaultValue="NULL") String additionalType,
                            @RequestParam(value="igoUser") String igoUser,
                            @RequestParam(value="childSample", defaultValue="NULL") String childSample){
-       Whitelists wl = new Whitelists();
-       if(!wl.sampleMatches(sample))
+       if(!Whitelists.sampleMatches(sample))
             return "FAILURE: sample is not using a valid format";
        log.info("Starting to add child aliquot to " + sample + " by"  + igoUser);
        task.init( sample, status, additionalType, igoUser, childSample);

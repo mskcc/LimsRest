@@ -8,11 +8,9 @@ import java.util.concurrent.Future;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import org.mskcc.limsrest.limsapi.*;
 import org.mskcc.limsrest.connection.*;
@@ -36,14 +34,13 @@ public class GetPairingInfo {
     @RequestMapping("/getCategoryMapping")
        public List<HashMap<String, String>> getMappingContent(@RequestParam(value="project", required=false) String requestId, @RequestParam(value="setName", required=false) String set, @RequestParam(value="mapName", required = false) String mapName, @RequestParam(value="user") String user){
        List<HashMap<String, String>> typeToId = new LinkedList<>();
-       Whitelists wl = new Whitelists();
-       if(!wl.sampleMatches(set)){
+       if(!Whitelists.sampleMatches(set)){
             HashMap<String, String> result = new HashMap<>();
             result.put("ERROR", "setName is not using a valid format");
             typeToId.add(result);
             return typeToId;
         }
-       if(!wl.requestMatches(requestId)){
+       if(!Whitelists.requestMatches(requestId)){
             HashMap<String, String> result = new HashMap<>();
             result.put("ERROR", "project is not using a valid format");
             typeToId.add(result);
@@ -70,14 +67,13 @@ public class GetPairingInfo {
     @RequestMapping("/getPairingInfo")
         public List<HashMap<String, String>> getContent(@RequestParam(value="project", required=false) String requestId, @RequestParam(value="setName", required=false) String set,@RequestParam(value="user") String user) {
             List<HashMap<String, String>> typeToId = new LinkedList<>();
-            Whitelists wl = new Whitelists();
-            if(!wl.sampleMatches(set)){
+            if(!Whitelists.sampleMatches(set)){
                 HashMap<String, String> result = new HashMap<>();
                 result.put("ERROR", "setName is not using a valid format");
                 typeToId.add(result);
                 return typeToId;
             }
-            if(!wl.requestMatches(requestId)){
+            if(!Whitelists.requestMatches(requestId)){
                 HashMap<String, String> result = new HashMap<>();
                 result.put("ERROR", "project is not using a valid format");
                 typeToId.add(result);
@@ -101,7 +97,4 @@ public class GetPairingInfo {
             }
             return typeToId;
         }
-
-
 }
-

@@ -1,28 +1,19 @@
 package org.mskcc.limsrest.web;
 
-import java.util.concurrent.Future;
-import java.util.List;
-import java.util.LinkedList;
-
-import org.springframework.stereotype.Service;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.limsapi.SetSampleStatus;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import org.mskcc.limsrest.limsapi.*;
-import org.mskcc.limsrest.connection.*;
-
-import java.io.StringWriter;
 import java.io.PrintWriter;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
+import java.io.StringWriter;
+import java.util.concurrent.Future;
 
 @RestController
-public class FixSampleStatus{ 
-
+public class FixSampleStatus{
 
     private final ConnectionQueue connQueue; 
     private final SetSampleStatus task;
@@ -33,13 +24,10 @@ public class FixSampleStatus{
         this.task = setter;
     }
 
-
-
     @RequestMapping("/fixSampleStatus")
     public String getContent(@RequestParam(value="sample") String sample, 
                            @RequestParam(value="status") String status, @RequestParam(value="igoUser") String igoUser){
-       Whitelists wl = new Whitelists();
-       if(!wl.sampleMatches(sample))
+       if(!Whitelists.sampleMatches(sample))
             return "FAILURE: sample is not using a valid format";
     log.info("Starting to fix status by user " + igoUser);
        task.init(sample, status, igoUser);
@@ -55,6 +43,4 @@ public class FixSampleStatus{
        }
        return returnCode;
     }
-
 }
-

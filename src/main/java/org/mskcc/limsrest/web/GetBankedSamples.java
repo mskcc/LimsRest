@@ -40,9 +40,8 @@ public class GetBankedSamples {
                                                           @RequestParam(value = "investigator", required = false)
                                                                   String investigator) {
         LinkedList<SampleSummary> samples = new LinkedList<>();
-        Whitelists wl = new Whitelists();
         if (project != null) {
-            if (!wl.requestMatches(project)) {
+            if (!Whitelists.requestMatches(project)) {
                 log.info("FAILURE: project is not using a valid format");
                 return new ResponseEntity(samples, HttpStatus.BAD_REQUEST);
             }
@@ -52,7 +51,7 @@ public class GetBankedSamples {
         if (userId != null) {
             log.info("Getting banked samples for name: " + userId[0]);
             for (int i = 0; i < userId.length; i++) {
-                if (!wl.sampleMatches(userId[i])) {
+                if (!Whitelists.sampleMatches(userId[i])) {
                     log.info("FAILURE: userId is not using a valid format");
                     return new ResponseEntity(samples, HttpStatus.BAD_REQUEST);
                 }
@@ -60,7 +59,7 @@ public class GetBankedSamples {
             task.init(userId);
         }
         if (serviceRequest != null) {
-            if (!wl.textMatches(serviceRequest)) {
+            if (!Whitelists.textMatches(serviceRequest)) {
                 log.info("FAILURE: serviceRequest is not using a valid format");
                 return new ResponseEntity(samples, HttpStatus.BAD_REQUEST);
             }
@@ -68,7 +67,7 @@ public class GetBankedSamples {
             task.initServiceId(serviceRequest);
         }
         if (investigator != null) {
-            if (!wl.textMatches(investigator)) {
+            if (!Whitelists.textMatches(investigator)) {
                 log.info("FAILURE: investigator is not using a valid format: " + investigator);
                 return new ResponseEntity(samples, HttpStatus.BAD_REQUEST);
             }
@@ -92,7 +91,4 @@ public class GetBankedSamples {
         }
         return ResponseEntity.ok((List<SampleSummary>) samples);
     }
-
-
 }
-

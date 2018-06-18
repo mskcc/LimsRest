@@ -2,11 +2,9 @@ package org.mskcc.limsrest.web;
 
 import java.util.concurrent.Future;
 
-import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import org.mskcc.limsrest.limsapi.*;
 import org.mskcc.limsrest.connection.*;
@@ -43,8 +41,8 @@ public class GetPassingSamplesForProject{
                 monthParam = Integer.valueOf(month);
                 yearParam = Integer.valueOf(year);
             }
-            Whitelists wl = new Whitelists();
-            if(!wl.requestMatches(project)){
+
+            if(!Whitelists.requestMatches(project)){
                  rs.setRestStatus("ERROR: projectis not using a valid format"); 
                  return rs;
             }
@@ -58,8 +56,4 @@ public class GetPassingSamplesForProject{
             }
             return rs;
         }
-
-
-
 }
-

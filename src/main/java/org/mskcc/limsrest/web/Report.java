@@ -1,24 +1,19 @@
 package org.mskcc.limsrest.web;
 
-import java.util.concurrent.Future;
-import java.util.LinkedList;
-import java.io.FileWriter;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
-import org.springframework.stereotype.Service;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.limsapi.GetHiseq;
+import org.mskcc.limsrest.limsapi.GetReadyForIllumina;
+import org.mskcc.limsrest.limsapi.RunSummary;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import org.mskcc.limsrest.limsapi.*;
-import org.mskcc.limsrest.connection.*;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.LinkedList;
+import java.util.concurrent.Future;
 
 @RestController
 public class Report {
@@ -34,16 +29,13 @@ public class Report {
         this.illuminaTask = illuminaTask;
     }
 
-
-
     @RequestMapping("/getHiseq")
     public LinkedList<RunSummary> getContent(@RequestParam(value="run", required=false) String run, @RequestParam(value="project", required=false) String[] projs) {
 
        RunSummary rs = new RunSummary("BLANK_RUN", "BLANK_REQUEST");
        LinkedList<RunSummary> runSums = new LinkedList<>();
-       Whitelists wl = new Whitelists();
        if(run != null){
-         if(!wl.textMatches(run)){
+         if(!Whitelists.textMatches(run)){
             runSums.add(rs);
             log.info("FAILURE: run is not a valid format");
             return runSums;
@@ -52,7 +44,7 @@ public class Report {
          task.init(run);
        } else if(projs != null){
            for(int i = 0; i < projs.length; i++){
-                if(!wl.requestMatches(projs[i])){
+                if(!Whitelists.requestMatches(projs[i])){
                     runSums.add(rs);
                     log.info("FAILURE: project is not a valid format");
                     return runSums;
@@ -118,4 +110,3 @@ public class Report {
 
    }
 }
-

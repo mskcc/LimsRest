@@ -41,35 +41,34 @@ public class AddSampleSet {
                                @RequestParam(value="baitSet", required=false) String baitSet, @RequestParam(value="primeRecipe", required=false) String primeRecipe,
                                 @RequestParam(value="primeRequest", required=false) String primeRequest, @RequestParam(value="externalSpecimen", required=false) String[] externalSpecimen) {
        log.info("Adding to sample set " + name + " at a request by user " + user);
-       Whitelists wl = new Whitelists();
         if(igoId != null){
             for(int i = 0; i < igoId.length; i++){
-                if(!wl.sampleMatches(igoId[i]))
+                if(!Whitelists.sampleMatches(igoId[i]))
                     return "FAILURE: igoId is not using a valid format";
             }
         }
-       if(!wl.textMatches(igoUser))
+       if(!Whitelists.textMatches(igoUser))
             return "FAILURE: igoUser is not using a valid format";
         
-        if(!wl.textMatches(name)){
+        if(!Whitelists.textMatches(name)){
             return "FAILURE: setName is not using a valid format";
         }
         if(request != null){
             for(int i = 0; i < request.length; i++){
-                if(!wl.requestMatches(request[i]))
+                if(!Whitelists.requestMatches(request[i]))
                     return "FAILURE: project is not using a valid format";
             }
         }
-        if(!wl.textMatches(baitSet)){
+        if(!Whitelists.textMatches(baitSet)){
            return "FAILURE: baitSet is not using a valid format";
         }
-        if(!wl.textMatches(primeRecipe)){
+        if(!Whitelists.textMatches(primeRecipe)){
            return "FAILURE: primeRecipe is not using a valid format";
         }
 
        if(externalSpecimen != null){
           for(String spec : externalSpecimen){
-             if(!wl.textMatches(spec)){
+             if(!Whitelists.textMatches(spec)){
                 return "FAILURE: externalSpecimen is not using a valid format";
              }
           }

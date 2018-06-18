@@ -130,12 +130,10 @@ public class GetCorrectedSampleCmoId {
     }
 
     private void validateSampleId(String sampleIgoId) {
-        Whitelists whitelists = new Whitelists();
-
-        if (!whitelists.sampleMatches(sampleIgoId))
+        if (!Whitelists.sampleMatches(sampleIgoId))
             throw new IncorrectSampleIgoIdFormatException(String.format("Sample igo id provided %s is in incorrect " +
                     "format. Expected " +
-                    "format: %s", sampleIgoId, whitelists.sampleNamePattern));
+                    "format: %s", sampleIgoId, Whitelists.SAMPLE_NAME_PATTERN));
     }
 
     /**

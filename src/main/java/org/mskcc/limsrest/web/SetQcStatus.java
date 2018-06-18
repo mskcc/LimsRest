@@ -1,23 +1,16 @@
 package org.mskcc.limsrest.web;
 
-import java.util.concurrent.Future;
-import java.util.List;
-import java.util.LinkedList;
-
-import org.springframework.stereotype.Service;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.limsapi.ToggleSampleQcStatus;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import org.mskcc.limsrest.limsapi.*;
-import org.mskcc.limsrest.connection.*;
-
-import java.io.StringWriter;
 import java.io.PrintWriter;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import java.io.StringWriter;
+import java.util.concurrent.Future;
 
 
 @RestController
@@ -32,8 +25,6 @@ public class SetQcStatus {
         this.task = toggle;
     }
 
-
-
     @RequestMapping("/setQcStatus")
     public String getContent(@RequestParam(value="record", required=false) String recordId, @RequestParam(value="status") String status,
                              @RequestParam(value="project", required=false) String request, @RequestParam(value="sample", required=false) String sample,
@@ -41,15 +32,14 @@ public class SetQcStatus {
                              @RequestParam(value="analyst", required=false) String analyst, @RequestParam(value="note", required=false) String note,
                              @RequestParam(value="fastqPath", required=false) String fastqPath, @RequestParam(value="user", defaultValue="") String user){
        log.info("Starting to seq Qc status to " + status + "for service" + user);
-       Whitelists wl = new Whitelists();
-       if(!wl.requestMatches(request)){
-            return "FAILURE: The project is not using a valid format. " + wl.requestFormatText(); 
+       if(!Whitelists.requestMatches(request)){
+            return "FAILURE: The project is not using a valid format. " + Whitelists.requestFormatText();
        }
-       if(!wl.textMatches(status)){
-            return "FAILURE: The status is not using a valid format. " + wl.textFormatText();
+       if(!Whitelists.textMatches(status)){
+            return "FAILURE: The status is not using a valid format. " + Whitelists.textFormatText();
        }
-       if(!wl.filePathMatches(fastqPath)){
-            return "FAILURE: The fastq path is not using a valid format. " + wl.filePathFormatText();
+       if(!Whitelists.filePathMatches(fastqPath)){
+            return "FAILURE: The fastq path is not using a valid format. " + Whitelists.filePathFormatText();
        }
        if(!qcType.equals("Seq") && !qcType.equals("Post")){
           return "ERROR: The only valid qc types for this service are Seq and Post";
@@ -76,6 +66,4 @@ public class SetQcStatus {
        }
        return returnCode;
     }
-
 }
-

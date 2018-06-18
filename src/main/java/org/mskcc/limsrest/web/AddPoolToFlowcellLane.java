@@ -40,16 +40,15 @@ public class AddPoolToFlowcellLane{
                            @RequestParam(value="flowcell") String flowcell, @RequestParam(value="igoUser") String igoUser,
                             @RequestParam(value="lane") String lane, @RequestParam(value="force", defaultValue="NULL") String force){
        log.info("Starting to add pool " + sample + " to flowcell lane " + lane  + "  by user " + igoUser);
-        Whitelists wl = new Whitelists();
-        if(!wl.sampleMatches(lane))
+        if(!Whitelists.sampleMatches(lane))
             return "FAILURE: lane is not using a valid format";
-        if(!wl.textMatches(flowcell))
+        if(!Whitelists.textMatches(flowcell))
             return "FAILURE: flowcell is not using a valid format";
-        if(!wl.sampleMatches(sample))
+        if(!Whitelists.sampleMatches(sample))
             return "FAILURE: sample is not using a valid format";
-        if(!wl.sampleMatches(removeSample))
+        if(!Whitelists.sampleMatches(removeSample))
             return "FAILURE: removeSample is not using a valid format";
-        if(!wl.textMatches(igoUser))
+        if(!Whitelists.textMatches(igoUser))
             return "FAILURE: igoUser is not using a valid format";
 
        boolean isForce = false;
