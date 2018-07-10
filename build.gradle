@@ -1,5 +1,5 @@
 group 'org.mskcc.limsrest'
-version '1.10.0'
+version '1.11.3'
 
 buildscript {
     repositories {
@@ -9,7 +9,6 @@ buildscript {
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:1.2.5.RELEASE")
     }
-
 }
 
 apply plugin: 'java'
@@ -19,7 +18,7 @@ apply plugin: 'maven'
 apply plugin: 'spring-boot'
 apply plugin: 'war'
 
-if(target== 'dev'){
+if (target== 'dev'){
     copy {
         from "src/dev/resources"
         into "src/main/resources"
@@ -28,7 +27,7 @@ if(target== 'dev'){
         from "src/dev/RelatedRecords.java"
         into "src/main/java/org/mskcc/limsrest/staticstrings/"
     }
-
+    version += 'd'
 } else if(target == 'test'){
     copy {
         from "src/test-site-res/resources"
@@ -39,8 +38,7 @@ if(target== 'dev'){
         into "src/main/java/org/mskcc/limsrest/staticstrings/"
     }
 
-}
-else {
+} else {
     copy {
         from "src/production/resources"
         into "src/main/resources"
