@@ -162,8 +162,7 @@ public class SetOrCreateBanked extends LimsTask {
     @PreAuthorize("hasRole('ADMIN')")
     @Override
     public Object execute(VeloxConnection conn) {
-// private void runProgram(User apiUser, DataRecordManager dataRecordManager) {
-        String recordId = "-1";
+        String recordId;
         try {
             if (sampleId == null || sampleId.equals("")) {
                 throw new LimsException("Must have a sample id to set banked sample");
@@ -188,26 +187,21 @@ public class SetOrCreateBanked extends LimsTask {
                 } catch(NullPointerException npe){}
             }
 
-            StringBuffer sb = new StringBuffer();
-            for (int i = 0; i < assay.length - 1; i++) {
-                sb.append("'");
-                sb.append(assay[i]);
-                sb.append("',");
-            }
-            sb.append(assay[assay.length - 1]);
-            String assayString = sb.toString();
-            if (requestedReads != null) {
-
-            }
             //default species values for recipes
             if (recipe.startsWith("IMPACT") || recipe.startsWith("HemePACT")) {
                 organism = "Human";
-            }
-            if (recipe.startsWith("M-IMPACT")) {
+            } else if (recipe.startsWith("M-IMPACT")) {
                 organism = "Mouse";
             }
-            SloanCMOUtils utils = new SloanCMOUtils(managerContext);
             if (assay != null && assay.length > 0 && !"".equals(assay[0])) {
+                StringBuffer sb = new StringBuffer();
+                for (int i = 0; i < assay.length - 1; i++) {
+                    sb.append("'");
+                    sb.append(assay[i]);
+                    sb.append("',");
+                }
+                sb.append(assay[assay.length - 1]);
+                String assayString = sb.toString();
                 bankedFields.put("Assay", assayString);
             }
             if (!"NULL".equals(sampleId)) {
@@ -310,7 +304,7 @@ public class SetOrCreateBanked extends LimsTask {
             if (estimatedPurity != null && !"".equals(estimatedPurity)) {
                 bankedFields.put("EstimatedPurity", estimatedPurity);
             }
-            if ("Normal".equals(cancerType) || "Normal".equals(sampleClass)) {
+            if ("Normal".equals(cancerType) || "Normal".equals(sampleClass) || "Adjacent Normal".equals(sampleClass)) {
                 bankedFields.put("TumorOrNormal", "Normal");
             } else if (!cancerType.equals("NULL")) {
                 bankedFields.put("TumorOrNormal", "Tumor");
@@ -325,20 +319,16 @@ public class SetOrCreateBanked extends LimsTask {
             recordId = Long.toString(banked.getRecordId());
             banked.setFields(bankedFields, user);
             AuditLog log = user.getAuditLog();
-            log.stopLogging(); //because users of this service might include phi in their banked sample which will
-            // need corrected
+            log.stopLogging(); //because users of this service might include PHI in their banked sample which will need corrected
             dataRecordManager.storeAndCommit(igoUser + " added information to banked sample " + sampleId, user);
             log.startLogging();
-
         } catch (Throwable e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
             return Messages.ERROR_IN + " SETTING BANKED SAMPLE: " + e.getMessage() + "TRACE: " + sw.toString();
-
         }
 
         return recordId;
     }
-
 }
