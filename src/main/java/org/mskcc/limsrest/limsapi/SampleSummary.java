@@ -539,4 +539,59 @@ public class SampleSummary {
     public void setCmoPatientId(String cmoPatientId) {
         this.cmoPatientId = cmoPatientId;
     }
+
+    @Override
+    public String toString() {
+        return "SampleSummary{" +
+                "id='" + id + '\'' +
+                ", cmoId='" + cmoId + '\'' +
+                ", correctedCmoId='" + correctedCmoId + '\'' +
+                ", userId='" + userId + '\'' +
+                ", assay='" + assay + '\'' +
+                ", barcodeId='" + barcodeId + '\'' +
+                ", cellCount='" + cellCount + '\'' +
+                ", clinicalInfo='" + clinicalInfo + '\'' +
+                ", collectionYear='" + collectionYear + '\'' +
+                ", gender='" + gender + '\'' +
+                ", geneticAlterations='" + geneticAlterations + '\'' +
+                ", investigator='" + investigator + '\'' +
+                ", initialPool='" + initialPool + '\'' +
+                ", micronicTubeBarcode='" + micronicTubeBarcode + '\'' +
+                ", preservation='" + preservation + '\'' +
+                ", specimenType='" + specimenType + '\'' +
+                ", spikeInGenes='" + spikeInGenes + '\'' +
+                ", tissueType='" + tissueType + '\'' +
+                ", naToExtract='" + naToExtract + '\'' +
+                ", numTubes='" + numTubes + '\'' +
+                ", patientId='" + patientId + '\'' +
+                ", normalizedPatientId='" + normalizedPatientId + '\'' +
+                ", cmoPatientId='" + cmoPatientId + '\'' +
+                ", platform='" + platform + '\'' +
+                ", project='" + project + '\'' +
+                ", recipe='" + recipe + '\'' +
+                ", qc=" + qc +
+                ", basicQcs=" + basicQcs +
+                ", organism='" + organism + '\'' +
+                ", tubeId='" + tubeId + '\'' +
+                ", tumorType='" + tumorType + '\'' +
+                ", tumorOrNormal='" + tumorOrNormal + '\'' +
+                ", readSummary='" + readSummary + '\'' +
+                ", sampleClass='" + sampleClass + '\'' +
+                ", sampleType='" + sampleType + '\'' +
+                ", serviceId='" + serviceId + '\'' +
+                ", runType='" + runType + '\'' +
+                ", rowPosition='" + rowPosition + '\'' +
+                ", colPosition='" + colPosition + '\'' +
+                ", concentration=" + concentration +
+                ", yield=" + yield +
+                ", estimatedPurity=" + estimatedPurity +
+                ", volume=" + volume +
+                ", dropOffDate=" + dropOffDate +
+                ", readNumber=" + readNumber +
+                ", recordId=" + recordId +
+                ", coverage=" + coverage +
+                ", concentrationUnits='" + concentrationUnits + '\'' +
+                ", plateId='" + plateId + '\'' +
+                '}';
+    }
 }

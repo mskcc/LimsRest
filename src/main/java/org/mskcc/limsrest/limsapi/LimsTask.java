@@ -279,55 +279,6 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
         }
     }
 
-    public void annotateSampleDetailed(SampleSummary ss, DataRecord sample) {
-        try {
-            Map sampleFields = sample.getFields(user);
-            ss.setRecordId((Long) sampleFields.get("RecordId"));
-            if (sampleFields.containsKey("Organism") && sampleFields.get("Organism") != null && !sampleFields.get
-                    ("Organism").equals("")) {
-                ss.setSpecies((String) sampleFields.get("Organism"));
-            } else if (sampleFields.containsKey("Species")) {
-                ss.setSpecies((String) sampleFields.get("Species"));
-            }
-            ss.setAssay((String) sampleFields.get("Assay"));
-            ss.setClinicalInfo((String) sampleFields.get("ClinicalInfo"));
-            ss.setCollectionYear((String) sampleFields.get("CollectionYear"));
-            if (sampleFields.containsKey("TumorType")) { //not relying ob catching the error since underlying map
-                // could switch in future releases
-                ss.setTumorType((String) sampleFields.get("TumorType"));
-                ss.setTumorOrNormal("Tumor");
-            } else {
-                ss.setTumorOrNormal("Normal");
-            }
-            ss.setGender((String) sampleFields.get("Gender"));
-            ss.addExpName((String) sampleFields.get("UserSampleID"));
-            ss.setGeneticAlterations((String) sampleFields.get("GeneticAlterations"));
-            ss.setPatientId((String) sampleFields.get("PatientId"));
-            ss.setNormalizedPatientId((String) sampleFields.get("NormalizedPatientId"));
-            ss.setCmoPatientId((String) sampleFields.get("CMOPatientId"));
-            ss.setPreservation((String) sampleFields.get("Preservation"));
-            ss.setSpecimenType((String) sampleFields.get("SpecimenType"));
-            ss.setSpikeInGenes((String) sampleFields.get("SpikeInGenes"));
-            ss.setTubeId((String) sampleFields.get("TubeBarcode"));
-            ss.setTissueSite((String) sampleFields.get("TissueSite"));
-            ss.addRequest((String) sampleFields.get("RequestId"));
-            ss.addCmoId((String) sampleFields.get("OtherSampleId"));
-            runAndCatchNpe(() -> ss.addConcentration((Double) sampleFields.get("Concentration")));
-            ss.addConcentrationUnits((String) sampleFields.get("ConcentrationUnits"));
-            runAndCatchNpe(() -> ss.addVolume((Double) sampleFields.get("Volume")));
-            runAndCatchNpe(() -> ss.setEstimatedPurity((Double) sampleFields.get("EstimatedPurity")));
-            ss.setPlatform((String) sampleFields.get("Platform"));
-            runAndCatchNpe(() -> ss.setDropOffDate((Long) sampleFields.get("DateCreated")));
-            runAndCatchNpe(() -> ss.setServiceId((String) sampleFields.get("ServiceId")));
-        } catch (Throwable e) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            log.info(e.getMessage() + " TRACE: " + sw.toString());
-            ss.addCmoId(Messages.ERROR_IN + " Annotation:" + e.getMessage());
-        }
-    }
-
     /**
      * put as a method in LimsTask because it reoccurs in sevaral tasks and how this record is being used keeps
      * shifting. Maybe once it stabilizes we can put this elsewhere.
