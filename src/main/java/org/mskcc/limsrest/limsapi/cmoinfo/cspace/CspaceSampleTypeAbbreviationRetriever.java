@@ -2,6 +2,7 @@ package org.mskcc.limsrest.limsapi.cmoinfo.cspace;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.domain.Recipe;
 import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.domain.sample.NucleicAcid;
 import org.mskcc.domain.sample.SampleType;
@@ -52,12 +53,23 @@ public class CspaceSampleTypeAbbreviationRetriever implements SampleTypeAbbrevia
     public String getNucleicAcidAbbr(CorrectedCmoSampleView correctedCmoSampleView) {
         SampleType sampleType = correctedCmoSampleView.getSampleType();
 
+        if (sampleType == SampleType.POOLED_LIBRARY)
+            return getNucleicAcidAbbrForPooledLibrary(correctedCmoSampleView);
+
         if (sampleType2Abbreviation.containsKey(sampleType)) {
             LOGGER.info(String.format("Resolving Nucleic Acid Abbreviation with Sample Type: \"%s\"", sampleType));
             return sampleType2Abbreviation.get(sampleType);
         }
 
         return resolveByNucleicAcid(correctedCmoSampleView);
+    }
+
+    private String getNucleicAcidAbbrForPooledLibrary(CorrectedCmoSampleView correctedCmoSampleView) {
+        LOGGER.info(String.format("Sample Type for sample %s is Pooled Library. Resolving Nucleic Acid abbreviation " +
+                "by Recipe: %s", correctedCmoSampleView.getSampleId(), correctedCmoSampleView.getRecipe()));
+        if (correctedCmoSampleView.getRecipe() == Recipe.RNA_SEQ)
+            return Constants.RNA_ABBREV;
+        return Constants.DNA_ABBREV;
     }
 
     @Override

@@ -45,8 +45,8 @@ public class PatientCmoSampleIdResolver implements CmoSampleIdResolver<PatientAw
 
     private void validateRequiredFields(CorrectedCmoSampleView correctedCmoSampleView) {
         CommonUtils.requireNonNullNorEmpty(correctedCmoSampleView.getPatientId(), String.format("Patient id is not " +
-                "set for banked sample: %s", correctedCmoSampleView.getId()));
+                "set for sample: %s", correctedCmoSampleView.getId()));
         Objects.requireNonNull(correctedCmoSampleView.getSpecimenType(), String.format("Specimen type is not set " +
-                "for banked sample: %s", correctedCmoSampleView.getId()));
+                "for sample: %s", correctedCmoSampleView.getId()));
     }
 }

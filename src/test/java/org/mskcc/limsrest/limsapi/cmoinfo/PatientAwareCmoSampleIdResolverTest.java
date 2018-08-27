@@ -2,6 +2,7 @@ package org.mskcc.limsrest.limsapi.cmoinfo;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mskcc.domain.Recipe;
 import org.mskcc.domain.sample.*;
 import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CfDnaSampleAbbreviationResolver;
 import org.mskcc.limsrest.limsapi.cmoinfo.cspace.ClassSampleAbbreviationResolver;
@@ -11,6 +12,7 @@ import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientAwareCmoSampleId;
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdResolver;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.IncrementalSampleCounterRetriever;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.SampleTypeAbbreviationRetriever;
+import org.mskcc.util.Constants;
 import org.mskcc.util.TestUtils;
 
 import java.util.Collections;
@@ -217,6 +219,31 @@ public class PatientAwareCmoSampleIdResolverTest {
                 .getSpecimenTypeToAbbreviation().get(specimenType)));
         assertThat(cmoSampleId.getSampleCount(), is(1));
         assertThat(cmoSampleId.getNucleicAcid(), is(CspaceSampleTypeAbbreviationRetriever.getNucleicAcid2Abbreviation().get(nucleicAcid)));
+    }
+
+    @Test
+    public void whenSampleTypeIsPooledLibraryAndRecipeRNASeq_shouldSetRNA() throws Exception {
+        //given
+        CorrectedCmoSampleView sample = new CorrectedCmoSampleView("sampleId");
+        String patientId = getRandomPatientId();
+        SpecimenType specimenType = SpecimenType.XENOGRAFT;
+
+        sample.setPatientId(patientId);
+        sample.setSpecimenType(specimenType);
+        sample.setSampleType(SampleType.POOLED_LIBRARY);
+        sample.setRecipe(Recipe.RNA_SEQ);
+
+        //when
+        PatientAwareCmoSampleId cmoSampleId = patientCmoSampleIdResolver.resolve(sample, Collections.emptyList(),
+                requestId);
+
+        //then
+        assertThat(cmoSampleId.getPatientId(), is(patientId));
+        assertThat(cmoSampleId.getSampleTypeAbbr(), is(SpecimenTypeSampleAbbreviationResolver
+                .getSpecimenTypeToAbbreviation().get(specimenType)));
+        assertThat(cmoSampleId.getSampleCount(), is(1));
+        assertThat(cmoSampleId.getNucleicAcid(), is(Constants.RNA_ABBREV));
+
     }
 
     @Test

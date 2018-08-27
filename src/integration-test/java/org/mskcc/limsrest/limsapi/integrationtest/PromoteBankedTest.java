@@ -13,6 +13,7 @@ import org.apache.commons.logging.LogFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mskcc.domain.Recipe;
 import org.mskcc.domain.sample.*;
 import org.mskcc.limsrest.limsapi.PatientSamplesRetriever;
 import org.mskcc.limsrest.limsapi.PatientSamplesWithCmoInfoRetriever;
@@ -631,7 +632,7 @@ public class PromoteBankedTest {
         fields.put(BankedSample.PLATFORM, "platform");
         fields.put(BankedSample.PRESERVATION, "preservation");
         fields.put(BankedSample.PROMOTED, "false");
-        fields.put(BankedSample.RECIPE, "recipe");
+        fields.put(BankedSample.RECIPE, Recipe.WHOLE_EXOME_SEQUENCING.getValue());
         fields.put(BankedSample.REQUEST_ID, requestId);
         fields.put(BankedSample.REQUESTED_READS, "12345");
         fields.put(BankedSample.ROW_INDEX, 2);

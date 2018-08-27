@@ -1,6 +1,7 @@
 package org.mskcc.limsrest.limsapi.cmoinfo.converter;
 
 import org.junit.Test;
+import org.mskcc.domain.Recipe;
 import org.mskcc.domain.sample.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -18,6 +19,7 @@ public class BankedSampleToCorrectedCmoSampleIdConverterTest {
         String cmoPatId = "cmoPatId";
         String reqId = "reqId";
         NucleicAcid naToExtract = NucleicAcid.CFDNA;
+        Recipe recipe = Recipe.AMPLI_SEQ;
         SampleType sampleType = SampleType.RNA;
         SpecimenType specimenType = SpecimenType.BLOOD;
         SampleClass sampleClass = SampleClass.ADJACENT_TISSUE;
@@ -28,6 +30,7 @@ public class BankedSampleToCorrectedCmoSampleIdConverterTest {
         bankedSample.setCMOPatientId(cmoPatId);
         bankedSample.setRequestId(reqId);
         bankedSample.setNAtoExtract(naToExtract.getValue());
+        bankedSample.setRecipe(recipe.getValue());
         bankedSample.setSampleType(sampleType.toString());
         bankedSample.setSpecimenType(specimenType.getValue());
         bankedSample.setSampleClass(sampleClass.getValue());
