@@ -6,10 +6,8 @@ import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
-import com.velox.sapioutils.client.standalone.VeloxConnectionException;
 import com.velox.sloan.cmo.staticstrings.datatypes.DT_AssignedProcess;
 import com.velox.sloan.cmo.staticstrings.datatypes.DT_Sample;
-import org.junit.*;
 import org.mskcc.domain.QcStatus;
 import org.mskcc.limsrest.limsapi.assignedprocess.AssignedProcessCreator;
 import org.mskcc.limsrest.limsapi.assignedprocess.QcParentSampleRetriever;
@@ -19,6 +17,7 @@ import org.mskcc.limsrest.limsapi.assignedprocess.resequencepool.InitialPoolRetr
 import org.mskcc.util.VeloxConstants;
 
 import java.rmi.RemoteException;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -26,6 +25,11 @@ import static org.hamcrest.Matchers.is;
 import static org.mskcc.domain.AssignedProcess.PRE_SEQUENCING_POOLING_OF_LIBRARIES;
 
 public class QcStatusAwareProcessAssignerTest {
+    private final static String REQUEST_ID = "02756_B";
+    private final static String IGO_ID = "02756_B_666";
+    private final static String CHILD_IGO_ID = "02756_B_1_666";
+    private final static String CMO_SAMPLE_ID = "C-666666-Y6-d";
+    private final static String CHILD_CMO_SAMPLE_ID = "C-666666-Y61-d";
     private static String connectionFile = "src/integration-test/resources/Connection-test.txt";
     private static DataRecordManager dataRecordManager;
     private static User user;
@@ -35,35 +39,56 @@ public class QcStatusAwareProcessAssignerTest {
     private final InitialPoolRetriever initialPoolRetriever = new InitialPoolRetriever();
     private final QcParentSampleRetriever qcParentSampleRetriever = new QcParentSampleRetriever();
     private QcStatusAwareProcessAssigner qcStatusAwareProcessAssigner;
+    private DataRecord sample;
+    private DataRecord seqQc;
+    private DataRecord childSample;
 
     @Before
-    public void init() throws VeloxConnectionException {
+    public void init() throws Exception {
         veloxConnection = new VeloxConnection(connectionFile);
         veloxConnection.open();
         dataRecordManager = veloxConnection.getDataRecordManager();
         user = veloxConnection.getUser();
         qcStatusAwareProcessAssigner = new QcStatusAwareProcessAssigner(configFactory, processCreator);
+
+        List<DataRecord> requests = dataRecordManager.queryDataRecords("Request", "RequestId = '" + REQUEST_ID + "'",
+                user);
+
+        DataRecord request = requests.get(0);
+
+        sample = request.addChild(VeloxConstants.SAMPLE, user);
+        sample.setDataField(DT_Sample.REQUEST_RECORD_ID_LIST, REQUEST_ID, user);
+        sample.setDataField(DT_Sample.SAMPLE_ID, IGO_ID, user);
+        sample.setDataField(DT_Sample.OTHER_SAMPLE_ID, CMO_SAMPLE_ID, user);
+
+        childSample = sample.addChild(VeloxConstants.SAMPLE, user);
+        childSample.setDataField(DT_Sample.REQUEST_RECORD_ID_LIST, REQUEST_ID, user);
+        childSample.setDataField(DT_Sample.SAMPLE_ID, CHILD_IGO_ID, user);
+        childSample.setDataField(DT_Sample.OTHER_SAMPLE_ID, CHILD_CMO_SAMPLE_ID, user);
+        seqQc = sample.addChild("SeqAnalysisSampleQC", user);
+
+        dataRecordManager.storeAndCommit("Initiating records for QcStatus assign integration test", null, user);
     }
 
     @After
     public void tearDown() throws Exception {
-        veloxConnection.close();
+        try {
+            dataRecordManager.deleteDataRecords(Arrays.asList(seqQc, sample, childSample), null, true, user);
+
+            dataRecordManager.storeAndCommit("Cleaning up after Qc Assign integration test", null, user);
+        } finally {
+            veloxConnection.close();
+        }
     }
 
     @Test
     public void whenStatusIsChangedToRepoolSample_shouldCreateAssignedProcessForParentSampleAssignItAsChildAndChandeSampleStatus() throws Exception {
-        String sampleLevelQcRecordId = "258324";
-        DataRecord seqQc = getSampleLevelQc(sampleLevelQcRecordId);
-        DataRecord sample = getParentSample(seqQc);
         assertAssignedProcess(QcStatus.REPOOL_SAMPLE.getValue(), seqQc, sample);
     }
 
     @Test
     public void whenStatusIsChangedToResequencePool_shouldCreateAssignedProcessForPoolAssignItAsChildAndChangeSampleStatus() throws Exception {
-        String sampleLevelQcRecordId = "258324";
-        DataRecord seqQc = getSampleLevelQc(sampleLevelQcRecordId);
-        DataRecord sample = getPool(seqQc);
-        assertAssignedProcess(QcStatus.RESEQUENCE_POOL.getValue(), seqQc, sample);
+        assertAssignedProcess(QcStatus.RESEQUENCE_POOL.getValue(), seqQc, childSample);
     }
 
     private void assertAssignedProcess(String qcStatus, DataRecord seqQc, DataRecord sample) throws Exception {
