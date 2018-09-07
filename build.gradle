@@ -23,29 +23,16 @@ if (target== 'dev'){
         from "src/dev/resources"
         into "src/main/resources"
     }
-    copy {
-        from "src/dev/RelatedRecords.java"
-        into "src/main/java/org/mskcc/limsrest/staticstrings/"
-    }
     version += 'd'
 } else if(target == 'test'){
     copy {
         from "src/test-site-res/resources"
         into "src/main/resources"
     }
-    copy {
-        from "src/production/RelatedRecords.java"
-        into "src/main/java/org/mskcc/limsrest/staticstrings/"
-    }
-
 } else {
     copy {
         from "src/production/resources"
         into "src/main/resources"
-    }
-    copy {
-        from "src/production/RelatedRecords.java"
-        into "src/main/java/org/mskcc/limsrest/staticstrings/"
     }
 }
 
