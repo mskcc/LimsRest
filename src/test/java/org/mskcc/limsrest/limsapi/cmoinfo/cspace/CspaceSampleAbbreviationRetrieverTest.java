@@ -1,7 +1,9 @@
 package org.mskcc.limsrest.limsapi.cmoinfo.cspace;
 
 import org.junit.Test;
+import org.mskcc.domain.Recipe;
 import org.mskcc.domain.sample.*;
+import org.mskcc.util.Constants;
 import org.mskcc.util.TestUtils;
 
 import java.util.Optional;
@@ -14,6 +16,60 @@ import static org.mskcc.domain.sample.SpecimenType.CFDNA;
 public class CspaceSampleAbbreviationRetrieverTest {
     private CspaceSampleTypeAbbreviationRetriever cspaceSampleAbbreviationRetriever = new
             CspaceSampleTypeAbbreviationRetriever();
+
+    @Test
+    public void whenSampleTypeIsPooledLibrary_shouldResolveNucleicAcidByRecipe() throws Exception {
+        assertNucleicAcidAbbrev(SampleType.POOLED_LIBRARY, Recipe.RNA_SEQ, Constants.RNA_ABBREV);
+
+        assertNucleicAcidAbbrev(SampleType.POOLED_LIBRARY, Recipe.WHOLE_EXOME_SEQUENCING, Constants.DNA_ABBREV);
+        assertNucleicAcidAbbrev(SampleType.POOLED_LIBRARY, Recipe.SMARTER_AMP_SEQ, Constants.DNA_ABBREV);
+        assertNucleicAcidAbbrev(SampleType.POOLED_LIBRARY, Recipe.RNA_SEQ_POLY_A, Constants.DNA_ABBREV);
+        assertNucleicAcidAbbrev(SampleType.POOLED_LIBRARY, Recipe.RNA_SEQ_RIBO_DEPLETE, Constants.DNA_ABBREV);
+        assertNucleicAcidAbbrev(SampleType.POOLED_LIBRARY, Recipe.TEN_X_Genomics_RNA, Constants.DNA_ABBREV);
+        assertNucleicAcidAbbrev(SampleType.POOLED_LIBRARY, Recipe.SH_RNA_SEQ, Constants.DNA_ABBREV);
+    }
+
+    private void assertNucleicAcidAbbrev(SampleType sampleType, Recipe recipe, String nucleicAcidAbbrev) {
+        assertNucleicAcidAbbrev(sampleType, recipe, Optional.empty(), nucleicAcidAbbrev);
+    }
+
+
+    private void assertNucleicAcidAbbrev(SampleType sampleType, Recipe recipe, Optional<NucleicAcid> nucleicAcid,
+                                         String nucleicAcidAbbrev) {
+        //given
+        CorrectedCmoSampleView correctedCmoSampleView = new CorrectedCmoSampleView("id");
+        correctedCmoSampleView.setSampleType(sampleType);
+        correctedCmoSampleView.setRecipe(recipe);
+
+        if (nucleicAcid.isPresent())
+            correctedCmoSampleView.setNucleidAcid(nucleicAcid.get());
+
+        //when
+        String nucleicAcidAbbr = cspaceSampleAbbreviationRetriever.getNucleicAcidAbbr(correctedCmoSampleView);
+
+        //then
+        assertThat(nucleicAcidAbbr, is(nucleicAcidAbbrev));
+    }
+
+    @Test
+    public void whenSampleTypeIsNotPooledLibraryAndRecipeIsRNASeq_shouldResolveNucleicAcidByNaToExtract() throws
+            Exception {
+        assertNucleicAcidAbbrev(SampleType.BLOCKS_SLIDES, Recipe.RNA_SEQ, Optional.of(NucleicAcid.DNA), Constants
+                .DNA_ABBREV);
+        assertNucleicAcidAbbrev(SampleType.DNA_LIBRARY, Recipe.RNA_SEQ, Optional.of(NucleicAcid.DNA), Constants
+                .DNA_ABBREV);
+        assertNucleicAcidAbbrev(SampleType.TISSUE, Recipe.RNA_SEQ, Optional.of(NucleicAcid.DNA), Constants.DNA_ABBREV);
+        assertNucleicAcidAbbrev(SampleType.DNA, Recipe.RNA_SEQ, Optional.of(NucleicAcid.DNA), Constants.DNA_ABBREV);
+        assertNucleicAcidAbbrev(SampleType.CFDNA, Recipe.RNA_SEQ, Optional.of(NucleicAcid.DNA), Constants.DNA_ABBREV);
+        assertNucleicAcidAbbrev(SampleType.CELLS, Recipe.RNA_SEQ, Optional.of(NucleicAcid.DNA), Constants.DNA_ABBREV);
+        assertNucleicAcidAbbrev(SampleType.BLOOD, Recipe.RNA_SEQ, Optional.of(NucleicAcid.DNA), Constants.DNA_ABBREV);
+
+        assertNucleicAcidAbbrev(SampleType.BLOOD, Recipe.RNA_SEQ, Optional.of(NucleicAcid.RNA), Constants.RNA_ABBREV);
+        assertNucleicAcidAbbrev(SampleType.BUFFY_COAT, Recipe.RNA_SEQ, Optional.of(NucleicAcid.RNA), Constants
+                .RNA_ABBREV);
+        assertNucleicAcidAbbrev(SampleType.BLOCKS_SLIDES, Recipe.RNA_SEQ, Optional.of(NucleicAcid.RNA), Constants
+                .RNA_ABBREV);
+    }
 
     @Test
     public void whenPropertiesAreCorrectlySet_shouldReturnSampleTypeAbbrev() throws Exception {

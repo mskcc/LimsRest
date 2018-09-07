@@ -27,6 +27,7 @@ public class SampleToCorrectedCmoIdConverter implements CorrectedCmoIdConverter<
 
             correctedCmoSampleView.setPatientId(sample.getCmoSampleInfo().getCmoPatientId());
             correctedCmoSampleView.setRequestId(sample.getRequestId());
+            correctedCmoSampleView.setRecipe(sample.getRecipe());
 
             if (!StringUtils.isEmpty(sample.getCorrectedSampleClass()))
                 correctedCmoSampleView.setSampleClass(SampleClass.fromValue(sample.getCorrectedSampleClass()));

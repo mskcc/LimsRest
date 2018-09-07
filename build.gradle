@@ -1,5 +1,5 @@
 group 'org.mskcc.limsrest'
-version '1.11.3'
+version '1.13.0-SNAPSHOT'
 
 buildscript {
     repositories {
@@ -76,7 +76,7 @@ dependencies {
     compile ('javax.servlet:jstl:1.2')
     compile("com.fasterxml.jackson.core:jackson-databind")
     compile (group: 'com.google.guava', name: 'guava', version: '18.+')
-    compile (group: 'org.mskcc.common', name:'common-domain', version: '2.8.0')
+    compile (group: 'org.mskcc.common', name:'common-domain', version: '2.10.0-SNAPSHOT')
     compile fileTree (dir: 'libs', include: '*.jar')
 
     testCompile ('io.rest-assured:rest-assured:3.0.1')
