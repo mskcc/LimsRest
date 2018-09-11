@@ -30,7 +30,9 @@ public class BankedSampleToCorrectedCmoSampleIdConverter implements CorrectedCmo
 
             correctedCmoSampleView.setSampleType(getSampleType(bankedSample));
             correctedCmoSampleView.setSpecimenType(SpecimenType.fromValue(bankedSample.getSpecimenType()));
-            correctedCmoSampleView.setRecipe(Recipe.getRecipeByValue(bankedSample.getRecipe()));
+
+            if (!StringUtils.isEmpty(bankedSample.getRecipe()))
+                correctedCmoSampleView.setRecipe(Recipe.getRecipeByValue(bankedSample.getRecipe()));
 
             if (!StringUtils.isEmpty(bankedSample.getSampleClass()))
                 correctedCmoSampleView.setSampleClass(SampleClass.fromValue(bankedSample.getSampleClass()));
