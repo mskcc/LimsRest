@@ -44,7 +44,7 @@ public class GenerateBankedSamplesFromDMPTest {
     @Test
     public void whenTrackingIdIsNotInCorrectFormat_shouldNotSaveAnyBankedSamples() throws Exception {
         //given
-        String trackingId1 = "someId; update someting and break everything";
+        String trackingId1 = "someId1";
         LocalDate date = LocalDate.of(2017, 11, 20);
         List<String> trackingIds = Arrays.asList(trackingId1);
         when(dmpSamplesRetriever.retrieveTrackingIds(date)).thenReturn(trackingIds);

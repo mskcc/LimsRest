@@ -119,7 +119,8 @@ public class PromoteBankedTest {
             deleteBankedSampleRecords();
             dataRecordManager.storeAndCommit("Deleted records for promoted banked test", user);
         } catch (Exception e) {
-            LOG.error(e);
+            LOG.error(String.format("Unable to clear after integration tests. You may need to manually delete " +
+                    "project", projectId), e);
         } finally {
             connection.close();
             LOG.info("Closed LIMS connection");
@@ -860,6 +861,8 @@ public class PromoteBankedTest {
     }
 
     private void addProjectWithRequests() throws RemoteException, ServerException, AlreadyExists, NotFound, IoError {
+        LOG.info(String.format("Adding project %s", projectId));
+
         Map<String, Object> projectFields = new HashMap<>();
         projectFields.put("ProjectId", projectId);
         projectRecord = drum.addDataRecord(VeloxConstants.PROJECT, projectFields);
@@ -877,6 +880,8 @@ public class PromoteBankedTest {
     }
 
     private void deleteRecord(DataRecord record) throws IoError, RemoteException, NotFound {
+        LOG.info(String.format("Deleting project record id %s", record.getRecordId()));
+
         DataRecord[] requests = record.getChildrenOfType(VeloxConstants.REQUEST, user);
 
         for (DataRecord request : requests) {
@@ -887,6 +892,7 @@ public class PromoteBankedTest {
         drum.deleteRecords(Arrays.asList(requests), true);
 
         drum.deleteRecords(Arrays.asList(record), true);
+
         LOG.info(String.format("Deleted record of type: %s, with record id: %s", record.getDataTypeName(), record
                 .getRecordId()));
     }
