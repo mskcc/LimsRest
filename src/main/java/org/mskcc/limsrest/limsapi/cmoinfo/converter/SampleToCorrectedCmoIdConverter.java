@@ -3,6 +3,7 @@ package org.mskcc.limsrest.limsapi.cmoinfo.converter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.domain.Recipe;
 import org.mskcc.domain.sample.*;
 import org.mskcc.limsrest.limsapi.LimsException;
 import org.mskcc.limsrest.limsapi.PatientSamplesWithCmoInfoRetriever;
@@ -27,7 +28,9 @@ public class SampleToCorrectedCmoIdConverter implements CorrectedCmoIdConverter<
 
             correctedCmoSampleView.setPatientId(sample.getCmoSampleInfo().getCmoPatientId());
             correctedCmoSampleView.setRequestId(sample.getRequestId());
-            correctedCmoSampleView.setRecipe(sample.getRecipe());
+
+            if (!StringUtils.isEmpty(sample.get(Sample.RECIPE)))
+                correctedCmoSampleView.setRecipe(Recipe.getRecipeByValue(sample.get(Sample.RECIPE)));
 
             if (!StringUtils.isEmpty(sample.getCorrectedSampleClass()))
                 correctedCmoSampleView.setSampleClass(SampleClass.fromValue(sample.getCorrectedSampleClass()));
