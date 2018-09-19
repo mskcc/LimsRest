@@ -350,11 +350,20 @@ Adjacent Tissue, or Local Recurrence	Tumor, Other, blank or null	    Tumor
     public static String setTumorOrNormal(String sampleClass, String tumorType) throws IllegalArgumentException {
         if ("Normal".equals(sampleClass) || "Adjacent Normal".equals(sampleClass)) {
             return "Normal";
-        } else if (("Unknown Tumor".equals(sampleClass) || "Primary".equals(sampleClass) || "Metastasis".equals(sampleClass) || "Adjacent Tissue".equals(sampleClass)) &&
-                "Normal".equals(tumorType)){
-            throw new IllegalArgumentException("Inconsistent Tumor Type & Sample Class values.");
-        } else {
-            return "Tumor";
         }
+
+        if ("Unknown Tumor".equals(sampleClass) ||
+                "Primary".equals(sampleClass) ||
+                "Metastasis".equals(sampleClass) ||
+                "Adjacent Tissue".equals(sampleClass) ||
+                "Local Recurrence".equals(sampleClass)) {
+            if ("Normal".equals(tumorType)) {
+                throw new IllegalArgumentException("Inconsistent Tumor Type & Sample Class values.");
+            } else {
+                return "Tumor";
+            }
+        }
+
+        throw new IllegalArgumentException("Unknown Sample Class values.");
     }
 }

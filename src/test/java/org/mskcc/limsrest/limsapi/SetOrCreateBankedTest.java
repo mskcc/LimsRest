@@ -16,11 +16,17 @@ public class SetOrCreateBankedTest {
     @Test
     public void setTumorOrNormalToTumor() {
         assertEquals("Tumor", SetOrCreateBanked.setTumorOrNormal("Adjacent Tissue", "Tumor"));
-        assertEquals("Tumor", SetOrCreateBanked.setTumorOrNormal("Unkown Tumor", ""));
+        assertEquals("Tumor", SetOrCreateBanked.setTumorOrNormal("Unknown Tumor", ""));
+        assertEquals("Tumor", SetOrCreateBanked.setTumorOrNormal("Local Recurrence", ""));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void setTumorOrNormalError() {
         SetOrCreateBanked.setTumorOrNormal("Primary", "Normal");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void setTumorOrNormalErrorUnknownSampleClass() {
+        SetOrCreateBanked.setTumorOrNormal("unknown-sample-class", "Normal");
     }
 }
