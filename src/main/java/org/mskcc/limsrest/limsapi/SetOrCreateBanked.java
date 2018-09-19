@@ -304,12 +304,11 @@ public class SetOrCreateBanked extends LimsTask {
             if (estimatedPurity != null && !"".equals(estimatedPurity)) {
                 bankedFields.put("EstimatedPurity", estimatedPurity);
             }
-            if ("Normal".equals(cancerType) || "Normal".equals(sampleClass) || "Adjacent Normal".equals(sampleClass)) {
-                bankedFields.put("TumorOrNormal", "Normal");
-            } else if (!cancerType.equals("NULL")) {
-                bankedFields.put("TumorOrNormal", "Tumor");
+            if (!cancerType.equals("NULL")) {
                 bankedFields.put("TumorType", cancerType);
             }
+            bankedFields.put("TumorOrNormal", setTumorOrNormal(sampleClass, cancerType));
+
             if (vol > 0.0) {
                 banked.setDataField("Volume", vol, user);
             }
@@ -330,5 +329,32 @@ public class SetOrCreateBanked extends LimsTask {
         }
 
         return recordId;
+    }
+
+
+    /*
+Based on Sample Class & Tumor Type set the derived field TumorOrNormal
+
+Sample Class (REX)	                    Tumor Type (REX)                TumororNormal (LIMS)
+
+Normal or Adjacent Normal	            Normal, Other, blank or null 	Normal
+
+Normal or Adjacent Normal	            Tumor	                        Normal
+
+Unknown Tumor, Primary, Metastasis,
+Adjacent Tissue, Local Recurrence	    Normal 	                        Error message at upload
+
+Unknown Tumor, Primary, Metastasis,
+Adjacent Tissue, or Local Recurrence	Tumor, Other, blank or null	    Tumor
+     */
+    public static String setTumorOrNormal(String sampleClass, String tumorType) throws IllegalArgumentException {
+        if ("Normal".equals(sampleClass) || "Adjacent Normal".equals(sampleClass)) {
+            return "Normal";
+        } else if (("Unknown Tumor".equals(sampleClass) || "Primary".equals(sampleClass) || "Metastasis".equals(sampleClass) || "Adjacent Tissue".equals(sampleClass)) &&
+                "Normal".equals(tumorType)){
+            throw new IllegalArgumentException("Inconsistent Tumor Type & Sample Class values.");
+        } else {
+            return "Tumor";
+        }
     }
 }

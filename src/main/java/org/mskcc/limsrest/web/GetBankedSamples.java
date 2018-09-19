@@ -18,6 +18,20 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 
+/**
+ One endpoint called by Rex.mskcc.org, all endpoints invoked by REX are:
+ <BR>
+  getBankedSamples
+  promoteBankedSample
+  setBankedSample
+  getPickListValues
+  getIntakeTerms
+  getBarcodeList
+  pairingInfo
+  getAllStudies
+  getPmProject
+  addSampleSet
+ */
 @RestController
 public class GetBankedSamples {
 
