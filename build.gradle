@@ -17,6 +17,7 @@ apply plugin: 'idea'
 apply plugin: 'maven'
 apply plugin: 'spring-boot'
 apply plugin: 'war'
+apply plugin: 'jacoco'
 
 if (target== 'dev'){
     copy {
