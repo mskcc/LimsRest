@@ -19,6 +19,10 @@ apply plugin: 'spring-boot'
 apply plugin: 'war'
 apply plugin: 'jacoco'
 
+jacoco {
+    toolVersion = "0.8.2"
+}
+
 if (target== 'dev'){
     copy {
         from "src/dev/resources"
