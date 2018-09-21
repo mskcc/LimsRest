@@ -6,54 +6,56 @@ import java.util.LinkedList;
 
 public class SampleSummary {
     private String id;
-    private String cmoId;
-    private String correctedCmoId;
-    private String userId;
+
     private String assay;
     private String barcodeId;
     private String cellCount;
     private String clinicalInfo;
+    private String cmoId; // OtherSampleId
+    private String cmoPatientId;
     private String collectionYear;
+    private String colPosition;
+    private double concentration;
+    private String concentrationUnits;
+    private String correctedCmoId;  // missing
+    private Integer coverage; // missing
+    private long dropOffDate;
+    private double estimatedPurity;
     private String gender;
     private String geneticAlterations;
+    private String initialPool;  // missing
     private String investigator;
-    private String initialPool;
     private String micronicTubeBarcode;
-    private String preservation;
-    private String specimenType;
-    private String spikeInGenes;
-    private String tissueType;
     private String naToExtract;
-    private String numTubes;
-    private String patientId;
     private String normalizedPatientId;
-    private String cmoPatientId;
-    private String platform;
-    private String project;
-    private String recipe;
-    private SampleQcSummary qc;
-    private LinkedList<BasicQc> basicQcs;
+    private String numTubes;
     private String organism;
-    private String tubeId;
-    private String tumorType;
-    private String tumorOrNormal;
-    private String readSummary;
+    private String patientId;
+    private String plateId;
+    private String platform;
+    private String preservation;
+    private String project;  // request
+    private String recipe;
+    private Long readNumber;  // missing
+    private String readSummary; // missing
+    private Long recordId;
+    private String rowPosition;
+    private String runType;
     private String sampleClass;
     private String sampleType;
     private String serviceId;
-    private String runType;
-    private String rowPosition;
-    private String colPosition;
-    private double concentration;
-    private double yield;
-    private double estimatedPurity;
+    private String specimenType;
+    private String spikeInGenes;
+    private String tissueType; // TissueSite
+    private String tubeId;  // TubeBarcode
+    private String tumorType;
+    private String tumorOrNormal;
+    private String userId; // expName
     private double volume;
-    private long dropOffDate;
-    private Long readNumber;
-    private Long recordId;
-    private Integer coverage;
-    private String concentrationUnits;
-    private String plateId;
+    private double yield;  // missing
+
+    private SampleQcSummary qc;
+    private LinkedList<BasicQc> basicQcs;
 
     public SampleSummary() {
         id = "ERROR";
@@ -65,24 +67,17 @@ public class SampleSummary {
         serviceId = "";
     }
 
-
     public void addBasicQc(BasicQc qc) {
         if (basicQcs == null) {
             basicQcs = new LinkedList<>();
-
         }
         basicQcs.add(qc);
     }
 
-    public void addExpName(String userId) {
-        this.userId = userId;
-
-    }
-
+    public void addExpName(String userId) { this.userId = userId; }
 
     public void addBaseId(String id) {
         this.id = id;
-
     }
 
     public void addCmoId(String otherId) {
@@ -97,11 +92,7 @@ public class SampleSummary {
         this.concentrationUnits = units;
     }
 
-
-    public void addRequest(String proj) {
-        this.project = proj;
-
-    }
+    public void addRequest(String proj) { this.project = proj; }
 
     public void addVolume(double volume) {
         this.volume = volume;
@@ -209,9 +200,7 @@ public class SampleSummary {
         return barcodeId;
     }
 
-    public void setBarcodeId(String barcodeId) {
-        this.barcodeId = barcodeId;
-    }
+    public void setBarcodeId(String barcodeId) { this.barcodeId = barcodeId; }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getGeneticAlterations() {
@@ -409,19 +398,16 @@ public class SampleSummary {
         return recipe;
     }
 
-    public void setRecipe(String recipe) {
-        this.recipe = recipe;
+    public void setRecipe(String recipe) { this.recipe = recipe; }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getReadSummary() {
+        return readSummary;
     }
 
     public void setReadSummary(String readSummary) {
         this.readSummary = readSummary;
     }
-    
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public String getReadSummary() {
-        return readSummary;
-    } 
 
     public String getCancerType() {
         if (tumorType == null) {
@@ -539,59 +525,58 @@ public class SampleSummary {
     public void setCmoPatientId(String cmoPatientId) {
         this.cmoPatientId = cmoPatientId;
     }
-
     @Override
     public String toString() {
         return "SampleSummary{" +
                 "id='" + id + '\'' +
-                ", cmoId='" + cmoId + '\'' +
-                ", correctedCmoId='" + correctedCmoId + '\'' +
-                ", userId='" + userId + '\'' +
                 ", assay='" + assay + '\'' +
                 ", barcodeId='" + barcodeId + '\'' +
                 ", cellCount='" + cellCount + '\'' +
                 ", clinicalInfo='" + clinicalInfo + '\'' +
+                ", cmoId='" + cmoId + '\'' +
+                ", cmoPatientId='" + cmoPatientId + '\'' +
                 ", collectionYear='" + collectionYear + '\'' +
+                ", colPosition='" + colPosition + '\'' +
+                ", concentration=" + concentration +
+                ", concentrationUnits='" + concentrationUnits + '\'' +
+                ", correctedCmoId='" + correctedCmoId + '\'' +
+                ", coverage=" + coverage +
+                ", dropOffDate=" + dropOffDate +
+                ", estimatedPurity=" + estimatedPurity +
                 ", gender='" + gender + '\'' +
                 ", geneticAlterations='" + geneticAlterations + '\'' +
-                ", investigator='" + investigator + '\'' +
                 ", initialPool='" + initialPool + '\'' +
+                ", investigator='" + investigator + '\'' +
                 ", micronicTubeBarcode='" + micronicTubeBarcode + '\'' +
-                ", preservation='" + preservation + '\'' +
-                ", specimenType='" + specimenType + '\'' +
-                ", spikeInGenes='" + spikeInGenes + '\'' +
-                ", tissueType='" + tissueType + '\'' +
                 ", naToExtract='" + naToExtract + '\'' +
-                ", numTubes='" + numTubes + '\'' +
-                ", patientId='" + patientId + '\'' +
                 ", normalizedPatientId='" + normalizedPatientId + '\'' +
-                ", cmoPatientId='" + cmoPatientId + '\'' +
+                ", numTubes='" + numTubes + '\'' +
+                ", organism='" + organism + '\'' +
+                ", patientId='" + patientId + '\'' +
+                ", plateId='" + plateId + '\'' +
                 ", platform='" + platform + '\'' +
+                ", preservation='" + preservation + '\'' +
                 ", project='" + project + '\'' +
                 ", recipe='" + recipe + '\'' +
-                ", qc=" + qc +
-                ", basicQcs=" + basicQcs +
-                ", organism='" + organism + '\'' +
-                ", tubeId='" + tubeId + '\'' +
-                ", tumorType='" + tumorType + '\'' +
-                ", tumorOrNormal='" + tumorOrNormal + '\'' +
+                ", readNumber=" + readNumber +
                 ", readSummary='" + readSummary + '\'' +
+                ", recordId=" + recordId +
+                ", rowPosition='" + rowPosition + '\'' +
+                ", runType='" + runType + '\'' +
                 ", sampleClass='" + sampleClass + '\'' +
                 ", sampleType='" + sampleType + '\'' +
                 ", serviceId='" + serviceId + '\'' +
-                ", runType='" + runType + '\'' +
-                ", rowPosition='" + rowPosition + '\'' +
-                ", colPosition='" + colPosition + '\'' +
-                ", concentration=" + concentration +
-                ", yield=" + yield +
-                ", estimatedPurity=" + estimatedPurity +
+                ", specimenType='" + specimenType + '\'' +
+                ", spikeInGenes='" + spikeInGenes + '\'' +
+                ", tissueType='" + tissueType + '\'' +
+                ", tubeId='" + tubeId + '\'' +
+                ", tumorType='" + tumorType + '\'' +
+                ", tumorOrNormal='" + tumorOrNormal + '\'' +
+                ", userId='" + userId + '\'' +
                 ", volume=" + volume +
-                ", dropOffDate=" + dropOffDate +
-                ", readNumber=" + readNumber +
-                ", recordId=" + recordId +
-                ", coverage=" + coverage +
-                ", concentrationUnits='" + concentrationUnits + '\'' +
-                ", plateId='" + plateId + '\'' +
+                ", yield=" + yield +
+                ", qc=" + qc +
+                ", basicQcs=" + basicQcs +
                 '}';
     }
 }
