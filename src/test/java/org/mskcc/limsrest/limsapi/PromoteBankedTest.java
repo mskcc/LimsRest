@@ -16,6 +16,11 @@ public class PromoteBankedTest {
         assertEquals(14.0, map.get("RequestedReads"));
         assertEquals(500, map.get("CoverageTarget"));
 
+        PromoteBanked.setSeqReq("M-IMPACT_v1", "Tumor", map);
+        assertEquals("PE100", (String) map.get("SequencingRunType"));
+        assertEquals(14.0, map.get("RequestedReads"));
+        assertEquals(500, map.get("CoverageTarget"));
+
         PromoteBanked.setSeqReq("IMPACT468", "Normal", map);
         assertEquals("PE100", (String) map.get("SequencingRunType"));
         assertEquals(7.0, map.get("RequestedReads"));
