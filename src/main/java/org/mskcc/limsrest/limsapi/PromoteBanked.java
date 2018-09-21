@@ -63,8 +63,7 @@ public class PromoteBanked extends LimsTask {
         this.bankedSampleToSampleConverter = bankedSampleToSampleConverter;
     }
 
-    public void init(String[] bankedIds, String projectId, String requestId, String serviceId, String igoUser, String
-            dryrun) {
+    public void init(String[] bankedIds, String projectId, String requestId, String serviceId, String igoUser, String dryrun) {
         this.bankedIds = bankedIds;
         this.projectId = projectId;
         this.requestId = requestId;
@@ -75,7 +74,6 @@ public class PromoteBanked extends LimsTask {
         }
     }
 
-    //execute the velox call
     @PreAuthorize("hasRole('ADMIN')")
     @Override
     public ResponseEntity<String> execute(VeloxConnection conn) {
@@ -279,11 +277,10 @@ public class PromoteBanked extends LimsTask {
         }
     }
 
-    public void createRecords(DataRecord bankedSampleRecord, DataRecord req, String requestId, HashMap<String,
-            String> barcodeId2Sequence, HashMap<String, DataRecord> plateId2Plate, HashSet<String> existentIds, int
-                                      maxExistentId, int offset) throws LimsException, InvalidValue, AlreadyExists,
-            NotFound, IoError,
-            RemoteException, ServerException {
+    public void createRecords(DataRecord bankedSampleRecord, DataRecord req, String requestId,
+                              HashMap<String, String> barcodeId2Sequence, HashMap<String, DataRecord> plateId2Plate,
+                              HashSet<String> existentIds, int maxExistentId, int offset)
+            throws LimsException, InvalidValue, AlreadyExists, NotFound, IoError, RemoteException, ServerException {
         try {
             AuditLog auditLog = user.getAuditLog();
             StringBuilder logBuilder = new StringBuilder();
@@ -317,8 +314,7 @@ public class PromoteBanked extends LimsTask {
         } catch (IOException e) {
             throw new LimsException("UUID generation failed for sample due to IOException " + e.getMessage());
         } catch (ClassNotFoundException e) {
-            throw new LimsException("UUID generation failed for sample due to ClassNotFoundException " + e.getMessage
-                    ());
+            throw new LimsException("UUID generation failed for sample due to ClassNotFoundException " + e.getMessage());
         } catch (Exception e) {
             throw new LimsException("UUID generation failed for sample due to " + e.getMessage());
         }
@@ -334,8 +330,6 @@ public class PromoteBanked extends LimsTask {
                 runType = "";
             }
             Sample promotedSample = getPromotedSample(bankedSample, uuid, newIgoId, requestId);
-            String requestedReads = bankedSample.getRequestedReads();
-
             promotedSampleRecord.setFields(promotedSample.getFields(), user);
 
             if (plateId != null && !plateId.equals("")) {
@@ -382,16 +376,16 @@ public class PromoteBanked extends LimsTask {
             Map<String, Object> cmoFields = getCmoFields(bankedFields, correctedCmoSampleId, requestId, newIgoId, uuid);
             promotedSampleRecord.addChild("SampleCMOInfoRecords", cmoFields, user);
 
-            Map<String, Object> srFields = new HashMap<>();
-            srFields.put("OtherSampleId", otherSampleId);
-            srFields.put("SampleId", newIgoId);
-            srFields.put("SequencingRunType", runType);
+            Map<String, Object> seqRequirementMap = new HashMap<>();
+            seqRequirementMap.put("OtherSampleId", otherSampleId);
+            seqRequirementMap.put("SampleId", newIgoId);
+            seqRequirementMap.put("SequencingRunType", runType);
+            String recipe = (String) bankedFields.getOrDefault("Recipe", "");
+            String requestedReads = bankedSample.getRequestedReads();
             if (requestedReads != null && !requestedReads.equals("") &&
                     !requestedReads.equals("<10 million") && !requestedReads.equals(">100 million") &&
                     !requestedReads.equals("Does Not Apply")) {
-
                 Double rrMapped;
-
                 Pattern depthPattern = Pattern.compile("([0-9]+)[xX]");
                 Matcher depthMatch = depthPattern.matcher(requestedReads);
                 if (requestedReads.equals("MiSeq-SingleRun")) {
@@ -402,12 +396,48 @@ public class PromoteBanked extends LimsTask {
                 } else { //the value is expressed as a coverage
                     rrMapped = Double.parseDouble(depthMatch.group(1));
                 }
-                srFields.put("RequestedReads", rrMapped);
+                seqRequirementMap.put("RequestedReads", rrMapped);
+            } else if (recipe.startsWith("Heme") || recipe.startsWith("IMPACT")) {
+                String tumorOrNormal = (String) bankedFields.getOrDefault("TumorOrNormal", "");
+                setSeqReq(recipe, tumorOrNormal, seqRequirementMap);
             }
-            promotedSampleRecord.addChild("SeqRequirement", srFields, user);
-
+            promotedSampleRecord.addChild("SeqRequirement", seqRequirementMap, user);
         } catch (NullPointerException npe) {
         }
+    }
+
+    /*
+     * Automated addition of read length, minimum number of requested reads, and coverage to seqrequirement table
+     * on promote for IMPACT & HemePACT
+     * <BR>
+     * Requested during LIMS meeting 2018-8-28
+     */
+    public static void setSeqReq(String recipe, String tumorOrNormal, Map<String, Object> seqRequirementMap) {
+        if (!"Tumor".equals(tumorOrNormal) && !"Normal".equals(tumorOrNormal))
+            return;
+
+        String seqRunType = "PE100";
+        seqRequirementMap.put("SequencingRunType", seqRunType);
+
+        int coverageTarget = 500;
+        boolean normal = "Normal".equals(tumorOrNormal);
+        if (normal)
+            coverageTarget = 250;
+        seqRequirementMap.put("CoverageTarget", coverageTarget);
+
+        double requestedReads;
+        if (recipe.startsWith("IMPACT")) {
+            if (normal)
+                requestedReads = 7.0;
+            else
+                requestedReads = 14.0;
+        } else {
+            if (normal)
+                requestedReads = 10.0;
+            else
+                requestedReads = 20.0;
+        }
+        seqRequirementMap.put("RequestedReads", requestedReads);
     }
 
     private void validateBankedSample(BankedSample bankedSample) {
