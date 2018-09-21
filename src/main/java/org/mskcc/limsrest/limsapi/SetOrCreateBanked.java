@@ -68,6 +68,9 @@ public class SetOrCreateBanked extends LimsTask {
     int rowIndex;
     long transactionId;
 
+    private static final String NORMAL = "Normal";
+    private static final String TUMOR = "Tumor";
+
     public void init(
             String igoUser,
             String investigator,
@@ -181,9 +184,9 @@ public class SetOrCreateBanked extends LimsTask {
             } else {
                 banked = matchedBanked.get(0);
                 try{
-                   if(!"".equals(banked.getStringVal("Investigator", user))){
-                       setInvestigator = false;
-                   }
+                    if(!"".equals(banked.getStringVal("Investigator", user))){
+                        setInvestigator = false;
+                    }
                 } catch(NullPointerException npe){}
             }
 
@@ -331,39 +334,44 @@ public class SetOrCreateBanked extends LimsTask {
         return recordId;
     }
 
-
     /*
 Based on Sample Class & Tumor Type set the derived field TumorOrNormal
-
 Sample Class (REX)	                    Tumor Type (REX)                TumororNormal (LIMS)
-
 Normal or Adjacent Normal	            Normal, Other, blank or null 	Normal
-
 Normal or Adjacent Normal	            Tumor	                        Normal
-
 Unknown Tumor, Primary, Metastasis,
 Adjacent Tissue, Local Recurrence	    Normal 	                        Error message at upload
-
 Unknown Tumor, Primary, Metastasis,
 Adjacent Tissue, or Local Recurrence	Tumor, Other, blank or null	    Tumor
+Other	                                Normal, Other, blank or null	Normal
+Other	                                Tumor	                        Tumor
      */
-    public static String setTumorOrNormal(String sampleClass, String tumorType) throws IllegalArgumentException {
-        if ("Normal".equals(sampleClass) || "Adjacent Normal".equals(sampleClass)) {
-            return "Normal";
-        }
+    public String setTumorOrNormal(String sampleClass, String tumorType) throws IllegalArgumentException {
+        switch (sampleClass) {
+            case "Normal":
+            case "Adjacent Normal":
+                return NORMAL;
 
-        if ("Unknown Tumor".equals(sampleClass) ||
-                "Primary".equals(sampleClass) ||
-                "Metastasis".equals(sampleClass) ||
-                "Adjacent Tissue".equals(sampleClass) ||
-                "Local Recurrence".equals(sampleClass)) {
-            if ("Normal".equals(tumorType)) {
-                throw new IllegalArgumentException("Inconsistent Tumor Type & Sample Class values.");
-            } else {
-                return "Tumor";
-            }
-        }
+            case "Unknown Tumor":
+            case "Primary":
+            case "Metastasis":
+            case "Adjacent Tissue":
+            case "Local Recurrence":
+                if ("Normal".equals(tumorType)) {
+                    throw new IllegalArgumentException("Tumor Type Inconsistent With Sample Class.");
+                } else {
+                    return TUMOR;
+                }
 
-        throw new IllegalArgumentException("Unknown Sample Class values.");
+            case "Other":
+                if ("Tumor".equals(tumorType)) {
+                    return TUMOR;
+                } else {
+                    return NORMAL;
+                }
+
+            default:
+                throw new IllegalArgumentException("Unknown Sample Class values.");
+        }
     }
 }
