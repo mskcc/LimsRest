@@ -222,26 +222,12 @@ public class PromoteBanked extends LimsTask {
                 bankedSample.setDataField("RequestId", requestId, user);
             }
             dataRecordManager.storeAndCommit(igoUser + "  promoted the banked samples " + sb.toString(), user);
-        } catch (InvalidValue | AlreadyExists | NotFound | IoError | RemoteException | ServerException |
-                LimsException | CommonUtils.NullOrEmptyException e) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            log.info(e.getMessage() + " TRACE: " + sw.toString());
-
-            MultiValueMap<String, String> headers = new HttpHeaders();
-            headers.add(Constants.ERRORS, Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + e.getMessage());
-
-            return new ResponseEntity<>(headers, HttpStatus.OK);
         } catch (Exception e) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            log.info(e.getMessage() + " TRACE: " + sw.toString());
+            log.error(e);
 
             MultiValueMap<String, String> headers = new HttpHeaders();
-            headers.add(Constants.ERRORS, Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + e.toString() + ": " + e
-                    .getMessage());
+            headers.add(Constants.ERRORS,
+                    Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + e.toString() + ": " + e.getMessage());
 
             return new ResponseEntity<>(headers, HttpStatus.OK);
         }
@@ -299,22 +285,17 @@ public class PromoteBanked extends LimsTask {
         }
 
         String correctedCmoSampleId = getCorrectedCmoSampleId(bankedSample, requestId);
-        String otherSampleId = bankedSample.getOtherSampleId();
-
         log.debug(String.format("Generated corrected cmo id: %s", correctedCmoSampleId));
 
+        String otherSampleId = bankedSample.getOtherSampleId();
         if (existentIds.contains(otherSampleId)) {
             throw new LimsException("There already is a sample in the project with the name: " + otherSampleId);
         }
-        log.info("uuiding");
+        log.info("uuiding generating");
         UuidGenerator uuidGen = new UuidGenerator();
         String uuid;
         try {
             uuid = uuidGen.integerToUUID(Integer.parseInt(util.getNextBankedId()), 32);
-        } catch (IOException e) {
-            throw new LimsException("UUID generation failed for sample due to IOException " + e.getMessage());
-        } catch (ClassNotFoundException e) {
-            throw new LimsException("UUID generation failed for sample due to ClassNotFoundException " + e.getMessage());
         } catch (Exception e) {
             throw new LimsException("UUID generation failed for sample due to " + e.getMessage());
         }
@@ -381,6 +362,7 @@ public class PromoteBanked extends LimsTask {
             seqRequirementMap.put("SampleId", newIgoId);
             seqRequirementMap.put("SequencingRunType", runType);
             String recipe = (String) bankedFields.getOrDefault("Recipe", "");
+            // banked Sample requested reads is a string, but a double in seqRequirement
             String requestedReads = bankedSample.getRequestedReads();
             if (requestedReads != null && !requestedReads.equals("") &&
                     !requestedReads.equals("<10 million") && !requestedReads.equals(">100 million") &&
@@ -503,7 +485,6 @@ public class PromoteBanked extends LimsTask {
             if (!isHumanSample(bankedSample)) {
                 log.info(String.format("Non-Human sample: %s with species: %s won't have cmo sample id generated.",
                         bankedSample.getUserSampleID(), bankedSample.getSpecies()));
-
                 return "";
             }
 
