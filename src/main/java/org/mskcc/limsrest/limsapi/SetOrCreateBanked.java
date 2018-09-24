@@ -358,7 +358,7 @@ Other	                                Tumor	                        Tumor
             case "Adjacent Tissue":
             case "Local Recurrence":
                 if ("Normal".equals(tumorType)) {
-                    throw new IllegalArgumentException("Tumor Type Inconsistent With Sample Class.");
+                    throw new IllegalArgumentException(String.format("Tumor Type %s Inconsistent With Sample Class %s.", tumorType, sampleClass));
                 } else {
                     return TUMOR;
                 }
@@ -371,7 +371,7 @@ Other	                                Tumor	                        Tumor
                 }
 
             default:
-                throw new IllegalArgumentException("Unknown Sample Class values.");
+                throw new IllegalArgumentException("Unknown Sample Class Value: " + sampleClass);
         }
     }
 }
