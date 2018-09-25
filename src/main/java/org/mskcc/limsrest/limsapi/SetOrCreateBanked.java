@@ -5,6 +5,8 @@ import com.velox.api.datarecord.AuditLog;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.utilities.SloanCMOUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.staticstrings.Messages;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,8 @@ import java.util.List;
  */
 @Service
 public class SetOrCreateBanked extends LimsTask {
+    private Log log = LogFactory.getLog(SetOrCreateBanked.class);
+
     String[] assay;
     String barcodePosition;
     String cellCount;
@@ -160,8 +164,7 @@ public class SetOrCreateBanked extends LimsTask {
         this.rowIndex = rowIndex;
         this.transactionId = transactionId;
     }
-
-    //execute the velox call
+    
     @PreAuthorize("hasRole('ADMIN')")
     @Override
     public Object execute(VeloxConnection conn) {
@@ -325,10 +328,8 @@ public class SetOrCreateBanked extends LimsTask {
             dataRecordManager.storeAndCommit(igoUser + " added information to banked sample " + sampleId, user);
             log.startLogging();
         } catch (Throwable e) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            return Messages.ERROR_IN + " SETTING BANKED SAMPLE: " + e.getMessage() + "TRACE: " + sw.toString();
+            log.error(e.getMessage(),e);
+            return Messages.ERROR_IN + " SETTING BANKED SAMPLE: " + e.getMessage();
         }
 
         return recordId;
