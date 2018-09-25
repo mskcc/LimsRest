@@ -310,7 +310,7 @@ public class SetOrCreateBanked extends LimsTask {
             if (!cancerType.equals("NULL")) {
                 bankedFields.put("TumorType", cancerType);
             }
-            bankedFields.put("TumorOrNormal", setTumorOrNormal(sampleClass, cancerType));
+            bankedFields.put("TumorOrNormal", setTumorOrNormal(sampleClass, cancerType, sampleId));
 
             if (vol > 0.0) {
                 banked.setDataField("Volume", vol, user);
@@ -344,7 +344,7 @@ Adjacent Tissue, or Local Recurrence	Tumor, Other, blank or null	    Tumor
 Other	                                Normal, Other, blank or null	Normal
 Other	                                Tumor	                        Tumor
      */
-    public String setTumorOrNormal(String sampleClass, String tumorType) throws IllegalArgumentException {
+    public String setTumorOrNormal(String sampleClass, String tumorType, String sampleId) throws IllegalArgumentException {
         switch (sampleClass) {
             case "Normal":
             case "Adjacent Normal":
@@ -356,7 +356,7 @@ Other	                                Tumor	                        Tumor
             case "Adjacent Tissue":
             case "Local Recurrence":
                 if ("Normal".equals(tumorType)) {
-                    throw new IllegalArgumentException(String.format("Tumor Type %s Inconsistent With Sample Class %s.", tumorType, sampleClass));
+                    throw new IllegalArgumentException(String.format("Tumor Type (%s) Inconsistent With Sample Class (%s) for SampleID: %s.", tumorType, sampleClass, sampleId));
                 } else {
                     return TUMOR;
                 }
@@ -369,7 +369,7 @@ Other	                                Tumor	                        Tumor
                 }
 
             default:
-                throw new IllegalArgumentException("Unknown Sample Class Value: " + sampleClass);
+                throw new IllegalArgumentException(String.format("Unknown Sample Class Value (%s) for SampleID: %s", sampleClass, sampleId));
         }
     }
 }

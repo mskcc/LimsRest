@@ -8,9 +8,11 @@ import java.lang.reflect.Method;
 
 import static org.junit.Assert.*;
 
+// TODO: integration test for SetOrCreateBanked
 public class SetOrCreateBankedTest {
 
     private SetOrCreateBanked setOrCreateBanked;
+    private String sampleId = "111";
 
     @Before
     public void setupSetOrCreateBanked() {
@@ -29,11 +31,10 @@ public class SetOrCreateBankedTest {
 
         for (String sampleClass: sampleClasses) {
             for (String tumorType: tumorTypes) {
-                String tumorOrNormal = setOrCreateBanked.setTumorOrNormal(sampleClass, tumorType);
+                String tumorOrNormal = setOrCreateBanked.setTumorOrNormal(sampleClass, tumorType, sampleId);
                 assertEquals("Normal", tumorOrNormal);
             }
         }
-
     }
 
     @Test
@@ -48,7 +49,7 @@ public class SetOrCreateBankedTest {
 
         for (String sampleClass: sampleClasses) {
             for (String tumorType: tumorTypes) {
-                String tumorOrNormal = setOrCreateBanked.setTumorOrNormal(sampleClass, tumorType);
+                String tumorOrNormal = setOrCreateBanked.setTumorOrNormal(sampleClass, tumorType, sampleId);
                 assertEquals("Tumor", tumorOrNormal);
             }
         }
@@ -56,35 +57,35 @@ public class SetOrCreateBankedTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void setTumorOrNormalError() {
-        setOrCreateBanked.setTumorOrNormal("Primary", "Normal");
+        setOrCreateBanked.setTumorOrNormal("Primary", "Normal", sampleId);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void setTumorOrNormalErrorUnknownSampleClass() {
-        setOrCreateBanked.setTumorOrNormal("unknown-sample-class", "Normal");
+        setOrCreateBanked.setTumorOrNormal("unknown-sample-class", "Normal", sampleId);
     }
 
     @Test
     public void whenSampleClassIsOtherTumorTypeIsTumor_thenTumor() {
-        String tumorOrNormal = setOrCreateBanked.setTumorOrNormal("Other", "Tumor");
+        String tumorOrNormal = setOrCreateBanked.setTumorOrNormal("Other", "Tumor", sampleId);
         assertEquals("Tumor", tumorOrNormal);
     }
 
     @Test
     public void whenSampleClassIsOtherTumorTypeIsNormal_thenNormal() {
-        String tumorOrNormal = setOrCreateBanked.setTumorOrNormal("Other", "Normal");
+        String tumorOrNormal = setOrCreateBanked.setTumorOrNormal("Other", "Normal", sampleId);
         assertEquals("Normal", tumorOrNormal);
     }
 
     @Test
     public void whenSampleClassIsOtherTumorTypeIsOther_thenNormal() {
-        String tumorOrNormal = setOrCreateBanked.setTumorOrNormal("Other", "Other");
+        String tumorOrNormal = setOrCreateBanked.setTumorOrNormal("Other", "Other", sampleId);
         assertEquals("Normal", tumorOrNormal);
     }
 
     @Test
     public void whenSampleClassIsOtherTumorTypeIsBlank_thenNormal() {
-        String tumorOrNormal = setOrCreateBanked.setTumorOrNormal("Other", "");
+        String tumorOrNormal = setOrCreateBanked.setTumorOrNormal("Other", "", sampleId);
         assertEquals("Normal", tumorOrNormal);
     }
 }

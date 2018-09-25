@@ -59,7 +59,7 @@ public class SetBankedSample {
             @RequestParam(value = "requestedReads", required = false) String requestedReads,
             @RequestParam(value = "spikeInGenes", defaultValue = "NULL") String spikeInGenes,
             @RequestParam(value = "tissueType", defaultValue = "NULL") String tissueType,
-            @RequestParam(value = "cancerType", defaultValue = "Normal") String cancerType,
+            @RequestParam(value = "cancerType", defaultValue = "") String cancerType,
             @RequestParam(value = "recipe", defaultValue = "NULL") String recipe,
             @RequestParam(value = "runType", defaultValue = "NULL") String runType,
             @RequestParam(value = "investigator", defaultValue = "NULL") String investigator,
