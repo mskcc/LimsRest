@@ -35,7 +35,7 @@ public class CreateBankedSamplesFromDMPIntegrationTest {
 
     @Test
     public void whenIncorrectFormatDateProvided_shouldReturnError() throws Exception {
-        this.mockMvc.perform(get("/createBankedSamplesFromDMP?date=2017-11-10"))
+        this.mockMvc.perform(get("/createBankedSamplesFromDMP?date=11-10-2017"))
                 .andExpect(status().isNotFound());
     }
 }

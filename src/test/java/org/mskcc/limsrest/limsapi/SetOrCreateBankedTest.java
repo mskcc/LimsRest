@@ -44,7 +44,7 @@ public class SetOrCreateBankedTest {
         };
 
         String[] tumorTypes = {
-                "Other", "", null, "Tumor"
+                "Other", "", null, "TMT", "UCS"
         };
 
         for (String sampleClass: sampleClasses) {

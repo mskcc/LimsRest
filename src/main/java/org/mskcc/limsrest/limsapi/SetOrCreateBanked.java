@@ -362,10 +362,11 @@ Other	                                Tumor	                        Tumor
                 }
 
             case "Other":
-                if ("Tumor".equals(tumorType)) {
-                    return TUMOR;
-                } else {
+                // Normal, Other, blank or null
+                if (tumorType == null || tumorType.trim().isEmpty() || "Other".equals(tumorType) || "Normal".equals(tumorType)) {
                     return NORMAL;
+                } else {
+                    return TUMOR;
                 }
 
             default:
