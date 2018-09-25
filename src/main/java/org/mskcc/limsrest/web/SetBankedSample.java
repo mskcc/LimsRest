@@ -154,11 +154,8 @@ public class SetBankedSample {
             }
             returnCode = "Record Id:" + returnCode;
         } catch (Exception e) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            returnCode = e.getMessage() + "\nTRACE: " + sw.toString();
-
+            log.error(e);
+            returnCode = e.getMessage();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(returnCode);
         }
 
