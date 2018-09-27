@@ -5,6 +5,7 @@ import com.velox.api.datarecord.AuditLog;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.utilities.SloanCMOUtils;
+import org.mskcc.domain.sample.TumorNormalType;
 import org.mskcc.limsrest.staticstrings.Messages;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -67,9 +68,6 @@ public class SetOrCreateBanked extends LimsTask {
     double concentration;
     int rowIndex;
     long transactionId;
-
-    private static final String NORMAL = "Normal";
-    private static final String TUMOR = "Tumor";
 
     public void init(
             String igoUser,
@@ -307,7 +305,7 @@ public class SetOrCreateBanked extends LimsTask {
             if (estimatedPurity != null && !"".equals(estimatedPurity)) {
                 bankedFields.put("EstimatedPurity", estimatedPurity);
             }
-            if (!cancerType.equals("NULL")) {
+            if (cancerType != null && !cancerType.isEmpty()) {
                 bankedFields.put("TumorType", cancerType);
             }
             bankedFields.put("TumorOrNormal", setTumorOrNormal(sampleClass, cancerType, sampleId));
@@ -348,29 +346,29 @@ Other	                                Tumor	                        Tumor
         switch (sampleClass) {
             case "Normal":
             case "Adjacent Normal":
-                return NORMAL;
+                return TumorNormalType.NORMAL.getValue();
 
             case "Unknown Tumor":
             case "Primary":
             case "Metastasis":
             case "Adjacent Tissue":
             case "Local Recurrence":
-                if ("Normal".equals(tumorType)) {
+                if ("Normal".equalsIgnoreCase(tumorType)) {
                     throw new IllegalArgumentException(String.format("Tumor Type (%s) Inconsistent With Sample Class (%s) for SampleID: %s.", tumorType, sampleClass, sampleId));
                 } else {
-                    return TUMOR;
+                    return TumorNormalType.TUMOR.getValue();
                 }
 
             case "Other":
                 // Normal, Other, blank or null
-                if (tumorType == null || tumorType.trim().isEmpty() || "Other".equals(tumorType) || "Normal".equals(tumorType)) {
-                    return NORMAL;
+                if (tumorType == null || tumorType.trim().isEmpty() || "Other".equalsIgnoreCase(tumorType) || "Normal".equalsIgnoreCase(tumorType)) {
+                    return TumorNormalType.NORMAL.getValue();
                 } else {
-                    return TUMOR;
+                    return TumorNormalType.TUMOR.getValue();
                 }
 
             default:
-                throw new IllegalArgumentException(String.format("Unknown Sample Class Value (%s) for SampleID: %s", sampleClass, sampleId));
+                return TumorNormalType.NORMAL.getValue();
         }
     }
 }

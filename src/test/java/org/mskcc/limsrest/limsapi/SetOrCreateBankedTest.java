@@ -60,13 +60,13 @@ public class SetOrCreateBankedTest {
         setOrCreateBanked.setTumorOrNormal("Primary", "Normal", sampleId);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void setTumorOrNormalErrorUnknownSampleClass() {
-        setOrCreateBanked.setTumorOrNormal("unknown-sample-class", "Normal", sampleId);
+        assertEquals("Normal", setOrCreateBanked.setTumorOrNormal("", "Normal", sampleId));
     }
 
     @Test
-    public void whenSampleClassIsOtherTumorTypeIsTumor_thenTumor() {
+    public void whenSampleClassIsOtherTumorTypeIsTumor_thenNormal() {
         String tumorOrNormal = setOrCreateBanked.setTumorOrNormal("Other", "Tumor", sampleId);
         assertEquals("Tumor", tumorOrNormal);
     }
