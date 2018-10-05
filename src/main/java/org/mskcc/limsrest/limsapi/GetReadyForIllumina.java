@@ -9,104 +9,90 @@ import org.mskcc.limsrest.limsapi.search.NearestAncestorSearcher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.rmi.RemoteException;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * A queued task that takes shows all samples that need planned for illumina runs 
+ * A queued task that takes shows all samples that need planned for Illumina runs
  * 
  * @author Aaron Gabow
- * 
  */
 @Service
-public class GetReadyForIllumina extends LimsTask 
-{
-   private Log log = LogFactory.getLog(GetReadyForIllumina.class);
-   private HashMap<String, List<String>> request2OutstandingSamples; 
+public class GetReadyForIllumina extends LimsTask {
+    private Log log = LogFactory.getLog(GetReadyForIllumina.class);
 
-  public void init(){
+    private HashMap<String, List<String>> request2OutstandingSamples;
+
+    public void init(){
     request2OutstandingSamples  = new HashMap<>();
   }
 
- //execute the velox call
-@PreAuthorize("hasRole('READ')")
-@Override
- public Object execute(VeloxConnection conn) {
-    List<RunSummary> results = new LinkedList<>();
-    try {
-        List<DataRecord> samplesToPool = dataRecordManager.queryDataRecords("Sample", "ExemplarSampleStatus = 'Ready for - Pooling of Sample Libraries for Sequencing'", user);
-        for(DataRecord sample : samplesToPool){
-            String sampleId = sample.getStringVal("SampleId", user);
-            if(sampleId.startsWith("Pool-")){
-                Deque<DataRecord> queue = new LinkedList<>();
-                Set<DataRecord> visited = new HashSet<>();
-                double poolConcentration = 0.0;
-                try{
-                    poolConcentration = sample.getDoubleVal("Concentration", user);
-                } catch (NullPointerException npe){}
-                double poolVolume = 0.0;
-                try{
-                    poolVolume = sample.getDoubleVal("Volume", user);
-                }catch (NullPointerException npe){}
-                String status = sample.getStringVal("ExemplarSampleStatus", user);
-                queue.add(sample);
-                while(!queue.isEmpty()){
-                    DataRecord current = queue.removeFirst();
-                    String currentSampleId = current.getStringVal("SampleId", user);
-                    if(currentSampleId.startsWith("Pool-")){
-                        List<DataRecord> parents = current.getParentsOfType("Sample", user);
-                        for(DataRecord parent : parents) {
-                            if (!visited.contains(parent)){
-                                queue.addLast(parent);
-                            }
-                        }
-                    } else{
-                        RunSummary runSummary = annotateUnpooledSample(current);
-                        runSummary.setPool(sampleId);
-                        runSummary.setConcentration(poolConcentration);
-                        runSummary.setVolume(Double.toString(poolVolume));
-                        runSummary.setStatus(status);
-                        results.add(runSummary);
+    @PreAuthorize("hasRole('READ')")
+    @Override
+    public Object execute(VeloxConnection conn) {
+        List<RunSummary> results = new LinkedList<>();
+        try {
+            List<DataRecord> samplesToPool = dataRecordManager.queryDataRecords("Sample", "ExemplarSampleStatus = 'Ready for - Pooling of Sample Libraries for Sequencing'", user);
+            for (DataRecord sample : samplesToPool) {
+                String sampleId = sample.getStringVal("SampleId", user);
+                if (sampleId.startsWith("Pool-")) {
+                    Deque<DataRecord> queue = new LinkedList<>();
+                    Set<DataRecord> visited = new HashSet<>();
+                    double poolConcentration = 0.0;
+                    try {
+                        poolConcentration = sample.getDoubleVal("Concentration", user);
+                    } catch (NullPointerException npe) {
                     }
-                    visited.add(current);
-                }
+                    double poolVolume = 0.0;
+                    try {
+                        poolVolume = sample.getDoubleVal("Volume", user);
+                    } catch (NullPointerException npe) {
+                    }
+                    String status = sample.getStringVal("ExemplarSampleStatus", user);
+                    queue.add(sample);
+                    while (!queue.isEmpty()) {
+                        DataRecord current = queue.removeFirst();
+                        String currentSampleId = current.getStringVal("SampleId", user);
+                        if (currentSampleId.startsWith("Pool-")) {
+                            List<DataRecord> parents = current.getParentsOfType("Sample", user);
+                            for (DataRecord parent : parents) {
+                                if (!visited.contains(parent)) {
+                                    queue.addLast(parent);
+                                }
+                            }
+                        } else {
+                            RunSummary runSummary = annotateUnpooledSample(current);
+                            runSummary.setPool(sampleId);
+                            runSummary.setConcentration(poolConcentration);
+                            runSummary.setVolume(Double.toString(poolVolume));
+                            runSummary.setStatus(status);
+                            results.add(runSummary);
+                        }
+                        visited.add(current);
+                    }
 
-            } else{
-                results.add(annotateUnpooledSample(sample));
+                } else {
+                    results.add(annotateUnpooledSample(sample));
+                }
             }
+
+        } catch (Throwable e) {
+            log.error("plan runs", e);
         }
 
-    } catch (Throwable e) {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        e.printStackTrace(pw);
-        log.info(e.getMessage());
-        log.info(sw.toString());
+        return results;
 
-        //rs = RequestSummary.errorMessage(e.getMessage());
     }
 
-    return results;
-
-}
-
-private Long getCreateDate(DataRecord record){
-    try{
-        return record.getDateVal("DateCreated", user);
-    } catch (NotFound | RemoteException e){
-        log.info("Failed to find a date created for record: " + record.toString());
+    private Long getCreateDate(DataRecord record) {
+        try {
+            return record.getDateVal("DateCreated", user);
+        } catch (NotFound | RemoteException e) {
+            log.info("Failed to find a date created for record: " + record.toString());
+        }
+        return 0L;
     }
-    return  0L;
-}
 
     public RunSummary annotateUnpooledSample(DataRecord sample) {
         RunSummary summary = new RunSummary("DEFAULT", "DEFAULT");
@@ -120,10 +106,16 @@ private Long getCreateDate(DataRecord record){
             summary.setTumor((String) baseFields.getOrDefault("TumorOrNormal", ""));
             summary.setWellPos(baseFields.getOrDefault("ColPosition", "") + (String) baseFields.getOrDefault("RowPosition", ""));
             summary.setConcentrationUnits((String) baseFields.getOrDefault("ConcentrationUnits", ""));
-            summary.setAltConcentration((Double) baseFields.getOrDefault("Concentration", Double.valueOf(0.0)));
-            summary.setVolume(Double.toString((Double) baseFields.getOrDefault("Volume", Double.valueOf(0.0))));
-            summary.setPlateId((String) baseFields.getOrDefault("RelatedRecord23", ""));
+            Double concentration = (Double) baseFields.get("Concentration");
+            if (concentration != null)
+                summary.setAltConcentration(concentration);
+            Double volume = (Double) baseFields.get("Volume");
+            if (volume == null)
+                summary.setVolume("null");
+            else
+                summary.setVolume(volume.toString());
 
+            summary.setPlateId((String) baseFields.getOrDefault("RelatedRecord23", ""));
 
             List<DataRecord> ancestorSamples = sample.getAncestorsOfType("Sample", user);
             ancestorSamples.add(0, sample);
@@ -148,7 +140,7 @@ private Long getCreateDate(DataRecord record){
             summary.setBatch((String) planFields.getOrDefault("WeekPlan", ""));
             summary.setRunType((String) reqFields.getOrDefault("SequencingRunType", ""));
             Object reads = reqFields.getOrDefault("RequestedReads", "");
-            if(reads instanceof String){
+            if (reads instanceof String){
                 summary.setReadNum((String) reads);
             } else if (reads instanceof Double){
                 summary.setReadNum(((Double) reads).toString());
@@ -156,11 +148,7 @@ private Long getCreateDate(DataRecord record){
                 summary.setReadNum("");
             }
         } catch (Exception e) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            log.info(e.getMessage());
-            log.info(sw.toString());
+            log.error("Annotate", e);
         }
         return summary;
      }
