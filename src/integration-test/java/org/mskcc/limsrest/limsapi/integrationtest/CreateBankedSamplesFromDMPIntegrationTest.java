@@ -19,9 +19,6 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = App.class)
 @WebAppConfiguration
-@TestPropertySource(properties = {
-        "dmpRestUrl=http://plvpathhydra1.mskcc.org:8001/",
-})
 public class CreateBankedSamplesFromDMPIntegrationTest {
     @Autowired
     private WebApplicationContext wac;
