@@ -92,6 +92,7 @@ public class App extends SpringBootServletInitializer {
         return new ConnectionQueue(host, port, user, pword, guid);
     }
 
+
     @Bean
     @Scope("request")
     public ListStudies listStudies() {
@@ -161,6 +162,14 @@ public class App extends SpringBootServletInitializer {
     public GetPickListValues getPickListValues() {
         return new GetPickListValues(connectionQueue(), getPickList());
     }
+
+    @Bean
+    @Scope("request")
+    public GetDeliveryEmailDetails getDeliveryEmailDetails() { return new GetDeliveryEmailDetails();}
+
+    @Bean
+    @Scope("request")
+    public GetDeliveryEmail getDeliveryEmail() { return new GetDeliveryEmail(connectionQueue(), getDeliveryEmailDetails()); }
 
     @Bean
     public GetBarcodeInfo getBarcodeInfo() {
