@@ -19,9 +19,11 @@ import org.mskcc.limsrest.limsapi.assignedprocess.config.AssignedProcessConfigFa
 import org.mskcc.limsrest.limsapi.assignedprocess.resequencepool.InitialPoolRetriever;
 import org.mskcc.util.VeloxConstants;
 
+import java.io.FileReader;
 import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -33,7 +35,7 @@ public class QcStatusAwareProcessAssignerTest {
     private final static String CHILD_IGO_ID = "02756_B_1_666";
     private final static String CMO_SAMPLE_ID = "C-666666-Y6-d";
     private final static String CHILD_CMO_SAMPLE_ID = "C-666666-Y61-d";
-    private static String connectionFile = "src/integration-test/resources/Connection-test.txt";
+    private static final String connectionFile = "/lims-tango-dev.properties";
     private static DataRecordManager dataRecordManager;
     private static User user;
     private static VeloxConnection veloxConnection;
@@ -48,7 +50,15 @@ public class QcStatusAwareProcessAssignerTest {
 
     @Before
     public void init() throws Exception {
-        veloxConnection = new VeloxConnection(connectionFile);
+        Properties properties = new Properties();
+        properties.load(new FileReader(QcStatusAwareProcessAssignerTest.class.getResource(connectionFile).getPath()));
+        veloxConnection = new VeloxConnection(
+                (String) properties.get("lims.host"),
+                Integer.parseInt((String) properties.get("lims.port")),
+                (String) properties.get("lims.guid"),
+                (String) properties.get("lims.username"),
+                (String) properties.get("lims.password")
+        );
         veloxConnection.open();
         dataRecordManager = veloxConnection.getDataRecordManager();
         user = veloxConnection.getUser();

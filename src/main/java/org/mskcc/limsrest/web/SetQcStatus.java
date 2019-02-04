@@ -26,11 +26,16 @@ public class SetQcStatus {
     }
 
     @RequestMapping("/setQcStatus")
-    public String getContent(@RequestParam(value="record", required=false) String recordId, @RequestParam(value="status") String status,
-                             @RequestParam(value="project", required=false) String request, @RequestParam(value="sample", required=false) String sample,
-                             @RequestParam(value="run", required=false) String run, @RequestParam(value="qcType", defaultValue="Seq") String qcType,
-                             @RequestParam(value="analyst", required=false) String analyst, @RequestParam(value="note", required=false) String note,
-                             @RequestParam(value="fastqPath", required=false) String fastqPath, @RequestParam(value="user", defaultValue="") String user){
+    public String getContent(@RequestParam(value = "record", required = false) String recordId,
+                             @RequestParam(value = "status") String status,
+                             @RequestParam(value = "project", required = false) String request,
+                             @RequestParam(value = "sample", required = false) String sample,
+                             @RequestParam(value = "run", required = false) String run,
+                             @RequestParam(value = "qcType", defaultValue = "Seq") String qcType,
+                             @RequestParam(value = "analyst", required = false) String analyst,
+                             @RequestParam(value = "note", required = false) String note,
+                             @RequestParam(value = "fastqPath", required = false) String fastqPath,
+                             @RequestParam(value = "user", defaultValue = "") String user) {
        log.info("Starting to seq Qc status to " + status + "for service" + user);
        if(!Whitelists.requestMatches(request)){
             return "FAILURE: The project is not using a valid format. " + Whitelists.requestFormatText();

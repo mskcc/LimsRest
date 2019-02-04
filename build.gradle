@@ -1,5 +1,5 @@
 group 'org.mskcc.limsrest'
-version '1.14.8-SNAPSHOT'
+version '1.15.0-SNAPSHOT'
 
 buildscript {
     repositories {
@@ -8,7 +8,6 @@ buildscript {
     }
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:1.2.5.RELEASE")
-        classpath("net.saliman:gradle-cobertura-plugin:2.5.4")
     }
 }
 
@@ -19,7 +18,6 @@ apply plugin: 'maven'
 apply plugin: 'spring-boot'
 apply plugin: 'war'
 apply plugin: 'jacoco'
-apply plugin: 'net.saliman.cobertura'
 
 jacoco {
     toolVersion = "0.8.2"
@@ -90,7 +88,6 @@ dependencies {
     compile 'com.velox.internalproducts:sapiogeneric:15.0.0-LIMS10.6.1'
     compile 'com.velox.internalproducts:sapioutils:15.0.0-LIMS10.6.1'
     compile 'com.velox.internalproducts:sapio-commons:15.0.0-LIMS10.6.1'
-
 
     compile fileTree (dir: 'libs', include: '*.jar')
 

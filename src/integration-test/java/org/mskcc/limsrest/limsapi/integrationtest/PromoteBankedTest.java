@@ -6,6 +6,7 @@ import com.velox.api.datarecord.*;
 import com.velox.api.user.User;
 import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.sapioutils.client.standalone.VeloxConnectionException;
 import com.velox.sapioutils.client.standalone.VeloxStandaloneManagerContext;
 import com.velox.sapioutils.shared.managers.DataRecordUtilManager;
 import org.apache.commons.logging.Log;
@@ -53,8 +54,8 @@ import static org.mskcc.domain.sample.SpecimenType.SALIVA;
 public class PromoteBankedTest {
     private static final Log LOG = LogFactory.getLog(PromoteBankedTest.class);
 
-    private static final String connectionPromoteBanked = "/Connection-promote-banked.txt";
-    private static final String connectionTest = "/Connection-test.txt";
+    private static final String connectionTest = "/lims-tango-dev.properties";
+    private static final String connectionPromoteBanked = "/lims-tango-test.properties";
 
     private static final String USER_SAMP_ID1 = "userSampId1";
     private static final String USER_SAMP_ID2 = "userSampId2";
@@ -85,6 +86,7 @@ public class PromoteBankedTest {
     private List<DataRecord> createdBankedRecords;
     private VeloxConnection connection;
     private DataRecordManager dataRecordManager;
+    private DataRecordUtilManager dataRecUtilManager;
     private User user;
     private DataMgmtServer dataMgmtServer;
     private DataRecordUtilManager drum;
@@ -92,38 +94,60 @@ public class PromoteBankedTest {
     private DataRecord projectRecord;
     private BankedSampleToSampleConverter bankedSampleToSampleConverter = new BankedSampleToSampleConverter();
     private int id = 0;
+    private static final String appPropertyFile = "/app.properties";
+    private Notificator slackNotificator;
 
     @Before
     public void setUp() throws Exception {
         try {
             promoteBanked = getPromoteBanked();
-            connection = new VeloxConnection(getResourceFile(connectionTest));
-            reopenConnection();
-            promoteBanked.setVeloxConnection(new VeloxConnection(getResourceFile(connectionPromoteBanked)));
+
+            connection = getVeloxConnection(connectionTest);
+            openConnection();
+
+            promoteBanked.setVeloxConnection(getVeloxConnection(connectionPromoteBanked));
+
+            try {
+                cleanupTestingRecords(projectRecord);
+            } catch (Exception e) {
+                LOG.error(e);
+            }
 
             addProjectWithRequests();
-
             createdBankedRecords = new ArrayList<>();
             dataRecordManager.storeAndCommit("Added records for promoted banked test", user);
+
+            Properties properties = new Properties();
+            properties.load(new FileReader(getResourceFile(appPropertyFile)));
+            slackNotificator = new SlackNotificator(properties.getProperty("slack.webhookUrl"), properties.getProperty("slack.channel"), properties.getProperty("slack.user"), properties.getProperty("slack.icon"));
         } catch (Exception e) {
             LOG.error(e);
             throw new RuntimeException("unable to configure integration test", e);
         }
     }
 
+    private VeloxConnection getVeloxConnection(String connectionFile) throws Exception {
+        Properties properties = new Properties();
+        properties.load(new FileReader(getResourceFile(connectionFile)));
+        return new VeloxConnection(
+                (String) properties.get("lims.host"),
+                Integer.parseInt((String) properties.get("lims.port")),
+                (String) properties.get("lims.guid"),
+                (String) properties.get("lims.username"),
+                (String) properties.get("lims.password")
+        );
+    }
+
+
     @After
     public void tearDown() throws Exception {
+
         try {
-            reopenConnection();
-            deleteRecord(projectRecord);
-            deleteBankedSampleRecords();
-            dataRecordManager.storeAndCommit("Deleted records for promoted banked test", user);
+            cleanupTestingRecords(projectRecord);
         } catch (Exception e) {
-            LOG.error(String.format("Unable to clear after integration tests. You may need to manually delete " +
-                    "project", projectId), e);
+            LOG.error(e);
         } finally {
-            connection.close();
-            LOG.info("Closed LIMS connection");
+            closeConnection();
         }
     }
 
@@ -839,14 +863,8 @@ public class PromoteBankedTest {
         PatientSamplesRetriever patientSamplesRetriever = new PatientSamplesWithCmoInfoRetriever
                 (sampleToCorrectedCmoIdConv, sampleRecordToSampleConverter);
 
-        Properties properties = new Properties();
-        properties.load(new FileReader(getResourceFile("/slack.properties")));
-
-        Notificator notificator = new SlackNotificator(properties.getProperty("webhookUrl"), properties.getProperty
-                ("channel"), properties.getProperty("user"), properties.getProperty("icon"));
-
         return new SampleTypeCorrectedCmoSampleIdGenerator
-                (cmoSampleIdRetrieverFactory, patientSamplesRetriever, notificator);
+                (cmoSampleIdRetrieverFactory, patientSamplesRetriever, slackNotificator);
     }
 
     private PromoteBanked getPromoteBanked() throws Exception {
@@ -865,15 +883,15 @@ public class PromoteBankedTest {
 
         Map<String, Object> projectFields = new HashMap<>();
         projectFields.put("ProjectId", projectId);
-        projectRecord = drum.addDataRecord(VeloxConstants.PROJECT, projectFields);
+        projectRecord = dataRecUtilManager.addDataRecord(VeloxConstants.PROJECT, projectFields);
 
         Map<String, Object> request1Fields = new HashMap<>();
         request1Fields.put(VeloxConstants.REQUEST_ID, requestId1);
-        DataRecord requestRecord1 = drum.addDataRecord(VeloxConstants.REQUEST, request1Fields);
+        DataRecord requestRecord1 = dataRecUtilManager.addDataRecord(VeloxConstants.REQUEST, request1Fields);
 
         Map<String, Object> request2Fields = new HashMap<>();
         request2Fields.put(VeloxConstants.REQUEST_ID, requestId2);
-        DataRecord requestRecord2 = drum.addDataRecord(VeloxConstants.REQUEST, request2Fields);
+        DataRecord requestRecord2 = dataRecUtilManager.addDataRecord(VeloxConstants.REQUEST, request2Fields);
 
         projectRecord.addChild(requestRecord1, user);
         projectRecord.addChild(requestRecord2, user);
@@ -913,4 +931,63 @@ public class PromoteBankedTest {
             this.cmoId = cmoId;
         }
     }
+
+    private void openConnection() throws Exception {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            LOG.info("Run shutdown hook");
+            try {
+                closeConnection();
+            } catch (Exception e) {
+                LOG.error(e);
+            }
+        }));
+
+        if (!connection.isConnected()) {
+            connection.open();
+        }
+
+        dataRecordManager = connection.getDataRecordManager();
+        DataMgmtServer dataMgmtServer = connection.getDataMgmtServer();
+        user = connection.getUser();
+        dataRecUtilManager = new DataRecordUtilManager(new VeloxStandaloneManagerContext(user, dataMgmtServer));
+    }
+
+    private void closeConnection() throws VeloxConnectionException {
+        if (connection == null) return;
+        if (connection.isConnected()) {
+            connection.close();
+        }
+        LOG.info("LIMS connection closed");
+    }
+
+    private void cleanupTestingRecords(DataRecord records) throws IoError, RemoteException, NotFound, ServerException {
+        // delete project, samples and requests
+        LOG.info(String.format("Deleting project id %s", projectId));
+        List<DataRecord> projRecords = dataRecordManager.queryDataRecords(VeloxConstants.PROJECT, "ProjectId " +
+                "= '" + projectId + "'", user);
+        dataRecUtilManager.deleteRecords(projRecords, true);
+
+        // delete requests
+        LOG.info(String.format("Deleting request id %s, %s", requestId1, requestId2));
+        List<DataRecord> requestRecords = dataRecordManager.queryDataRecords(VeloxConstants.SAMPLE,
+                "RequestId = '" + requestId1 + "' OR RequestId = '"  + requestId2 + "'", user);
+
+        dataRecUtilManager.deleteRecords(requestRecords, true);
+
+        // delete samples
+        LOG.info(String.format("Deleting samples id %s, %s", requestId1, requestId2));
+        List<DataRecord> sampleRecords = dataRecordManager.queryDataRecords(VeloxConstants.SAMPLE,
+                "RequestId = '" + requestId1 + "' OR RequestId = '"  + requestId2 + "'", user);
+
+        dataRecUtilManager.deleteRecords(sampleRecords, true);
+
+        // delete banked sample record
+        LOG.info(String.format("Deleting banked sample id %s, %s, %s", requestId1, requestId2, "someReqId"));
+        List<DataRecord> bankedRecords = dataRecordManager.queryDataRecords(BankedSample.DATA_TYPE_NAME, "RequestId = '" + requestId1 + "' OR RequestId = '"  + requestId2 + "' OR RequestId = 'someReqId'", user);
+
+        dataRecUtilManager.deleteRecords(bankedRecords, true);
+
+        dataRecordManager.storeAndCommit("Deleted records for promoted banked test", user);
+    }
+
 }

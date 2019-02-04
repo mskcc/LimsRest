@@ -40,6 +40,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.security.SecurityAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.web.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
@@ -52,23 +53,23 @@ import org.springframework.web.filter.CommonsRequestLoggingFilter;
 
 @Configuration
 @EnableAutoConfiguration
-@PropertySource({"classpath:/connect.txt", "classpath:/slack.properties", "classpath:/app.properties"})
+@PropertySource({"classpath:/connect.txt", "classpath:/app.properties"})
 public class App extends SpringBootServletInitializer {
     private static final Logger LOGGER = Logger.getLogger(App.class);
 
     @Autowired
     private Environment env;
 
-    @Value("${webhookUrl}")
+    @Value("${slack.webhookUrl}")
     private String webhookUrl;
 
-    @Value("${channel}")
+    @Value("${slack.channel}")
     private String channel;
 
-    @Value("${user}")
+    @Value("${slack.user}")
     private String user;
 
-    @Value("${icon}")
+    @Value("${slack.icon}")
     private String icon;
 
     @Value("${dmpRestUrl}")
@@ -90,6 +91,7 @@ public class App extends SpringBootServletInitializer {
         String guid = env.getProperty("lims.guid");
         return new ConnectionQueue(host, port, user, pword, guid);
     }
+
 
     @Bean
     @Scope("request")
@@ -160,6 +162,14 @@ public class App extends SpringBootServletInitializer {
     public GetPickListValues getPickListValues() {
         return new GetPickListValues(connectionQueue(), getPickList());
     }
+
+    @Bean
+    @Scope("request")
+    public GetDeliveryEmailDetails getDeliveryEmailDetails() { return new GetDeliveryEmailDetails();}
+
+    @Bean
+    @Scope("request")
+    public GetDeliveryEmail getDeliveryEmail() { return new GetDeliveryEmail(connectionQueue(), getDeliveryEmailDetails()); }
 
     @Bean
     public GetBarcodeInfo getBarcodeInfo() {
@@ -662,15 +672,15 @@ public class App extends SpringBootServletInitializer {
     }
 
     @Bean
-    public SecurityConfiguration getSecurityConfiguration() {
-        return new SecurityConfiguration();
-    }
-
-    @Bean
     public Jackson2ObjectMapperBuilder objectMapperBuilder() {
         Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
         builder.featuresToEnable(SerializationFeature.WRITE_BIGDECIMAL_AS_PLAIN);
         return builder;
+    }
+
+    @Bean
+    public SecurityConfiguration securityConfiguration() {
+        return new SecurityConfiguration();
     }
 
     @Override
