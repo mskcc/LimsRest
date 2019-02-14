@@ -402,7 +402,7 @@ public class PromoteBanked extends LimsTask {
         }
     }
 
-    private void setSeqReqForWES(String requestedReads, Map<String, Object> seqRequirementMap) {
+    void setSeqReqForWES(String requestedReads, Map<String, Object> seqRequirementMap) {
         seqRequirementMap.put("SequencingRunType", "PE100");
         if (requestedReads != null) {
             Matcher depthMatch = Pattern.compile("([0-9]+)[xX]").matcher(requestedReads);
