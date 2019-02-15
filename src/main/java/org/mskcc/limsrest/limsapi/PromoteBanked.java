@@ -2,6 +2,7 @@ package org.mskcc.limsrest.limsapi;
 
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
 import com.velox.api.datarecord.*;
 import com.velox.api.util.ServerException;
@@ -54,6 +55,14 @@ public class PromoteBanked extends LimsTask {
     String igoUser;
     boolean dryrun = false;
     private Multimap<String, String> errors = HashMultimap.create();
+    private Map<Integer, Double> coverageToSeqReqWES = ImmutableMap.<Integer, Double>builder()
+            .put(30,20.0)
+            .put(70,45.0)
+            .put(100,60.0)
+            .put(150,95.0)
+            .put(200,120.0)
+            .put(250,160.0)
+            .build();
 
     public PromoteBanked(CorrectedCmoIdConverter<BankedSample> bankedSampleToCorrectedCmoSampleIdConverter,
                          CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator,
@@ -221,6 +230,7 @@ public class PromoteBanked extends LimsTask {
                 bankedSample.setDataField("Promoted", Boolean.TRUE, user);
                 bankedSample.setDataField("RequestId", requestId, user);
             }
+            log.info(igoUser + "  promoted the banked samples " + sb.toString());
             dataRecordManager.storeAndCommit(igoUser + "  promoted the banked samples " + sb.toString(), user);
         } catch (Exception e) {
             log.error(e);
@@ -383,8 +393,24 @@ public class PromoteBanked extends LimsTask {
                 String tumorOrNormal = (String) bankedFields.getOrDefault("TumorOrNormal", "");
                 setSeqReq(recipe, tumorOrNormal, seqRequirementMap);
             }
+
+            if ("WholeExomeSequencing".equalsIgnoreCase(recipe)) {
+                setSeqReqForWES(requestedReads, seqRequirementMap);
+            }
             promotedSampleRecord.addChild("SeqRequirement", seqRequirementMap, user);
         } catch (NullPointerException npe) {
+        }
+    }
+
+    void setSeqReqForWES(String requestedReads, Map<String, Object> seqRequirementMap) {
+        seqRequirementMap.put("SequencingRunType", "PE100");
+        if (requestedReads != null) {
+            Matcher depthMatch = Pattern.compile("([0-9]+)[xX]").matcher(requestedReads);
+            if (depthMatch.find()) {
+                int coverageTarget = Integer.valueOf(depthMatch.group(1));
+                seqRequirementMap.put("CoverageTarget", coverageTarget);
+                seqRequirementMap.put("RequestedReads", coverageToSeqReqWES.getOrDefault(coverageTarget, null));
+            }
         }
     }
 
@@ -436,7 +462,7 @@ public class PromoteBanked extends LimsTask {
         return bankedSampleToSampleConverter.convert(bankedSample, uuid, newIgoId, assignedRequestId);
     }
 
-    private Map<String, Object> getCmoFields(Map<String, Object> bankedFields, String correctedCmoSampleId, String
+    Map<String, Object> getCmoFields(Map<String, Object> bankedFields, String correctedCmoSampleId, String
             assignedRequestId, String igoId, String uuid) {
         Map<String, Object> cmoFields = new HashMap<>();
         cmoFields.put(CmoSampleInfo.ALT_ID, uuid);
@@ -478,7 +504,7 @@ public class PromoteBanked extends LimsTask {
         return cmoFields;
     }
 
-    private String getCorrectedCmoSampleId(BankedSample bankedSample, String requestId) {
+    String getCorrectedCmoSampleId(BankedSample bankedSample, String requestId) {
         try {
             validateBankedSample(bankedSample);
 
