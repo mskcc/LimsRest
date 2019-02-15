@@ -462,7 +462,7 @@ public class PromoteBanked extends LimsTask {
         return bankedSampleToSampleConverter.convert(bankedSample, uuid, newIgoId, assignedRequestId);
     }
 
-    private Map<String, Object> getCmoFields(Map<String, Object> bankedFields, String correctedCmoSampleId, String
+    Map<String, Object> getCmoFields(Map<String, Object> bankedFields, String correctedCmoSampleId, String
             assignedRequestId, String igoId, String uuid) {
         Map<String, Object> cmoFields = new HashMap<>();
         cmoFields.put(CmoSampleInfo.ALT_ID, uuid);
@@ -504,7 +504,7 @@ public class PromoteBanked extends LimsTask {
         return cmoFields;
     }
 
-    private String getCorrectedCmoSampleId(BankedSample bankedSample, String requestId) {
+    String getCorrectedCmoSampleId(BankedSample bankedSample, String requestId) {
         try {
             validateBankedSample(bankedSample);
 
