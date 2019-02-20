@@ -41,7 +41,14 @@ public class BankedSampleToSampleConverter {
         sample.setPlatform(bankedSample.getPlatform());
         sample.setPreservation(bankedSample.getPreservation());
 
-        sample.setReceivedQuantity(bankedSample.getVolume());
+        if (bankedSample.getFields().containsKey("Volume")) {
+            sample.setReceivedQuantity(bankedSample.getVolume());
+        } else if (bankedSample.getFields().containsKey("NumTubes")) {
+            sample.setReceivedQuantity(
+                    Double.valueOf(
+                            (String)bankedSample.getFields().get("NumTubes")));
+        }
+
         sample.setRecipe(bankedSample.getRecipe());
         sample.setRequestId(assignedRequestId);
         sample.setRowPosition(bankedSample.getRowPosition());
