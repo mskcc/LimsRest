@@ -11,6 +11,8 @@ import org.mskcc.limsrest.limsapi.cmoinfo.retriever.CmoSampleIdRetriever;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.CmoSampleIdRetrieverFactory;
 import org.mskcc.util.notificator.Notificator;
 import org.mskcc.util.notificator.SlackNotificator;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 
 import java.util.List;
 
@@ -20,10 +22,13 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@PropertySource("classpath:application-test.properties")
 public class SampleTypeCorrectedCmoSampleIdGeneratorTest {
     private CmoSampleIdRetrieverFactory factory = mock(CmoSampleIdRetrieverFactory.class);
     private PatientSamplesRetriever retriever = mock(PatientSamplesRetriever.class);
-    private String webhook = "https://hooks.slack.com/services/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";
+
+    @Value("${slack.webhookUrl}")
+    private String webhook;
     private String channel = "cmo-id-autogen";
     private String user = "ja";
     private String icon = ":kingjulien:";
@@ -60,7 +65,7 @@ public class SampleTypeCorrectedCmoSampleIdGeneratorTest {
         //when
         String id = sampleTypeCorrectedCmoSampleIdGenerator.generate(correctedCmoSampleView, "id", mock
                 (DataRecordManager
-                .class), mock(User.class));
+                        .class), mock(User.class));
 
         //then
         assertThat(id, is(currentId));

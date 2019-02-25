@@ -313,6 +313,11 @@ public class SetOrCreateBanked extends LimsTask {
             if (vol > 0.0) {
                 banked.setDataField("Volume", vol, user);
             }
+
+            if (!"NULL".equals(numTubes)) {
+                bankedFields.put("NumTubes", numTubes);
+            }
+
             if (concentration > 0.0) {
                 banked.setDataField("Concentration", concentration, user);
             }
