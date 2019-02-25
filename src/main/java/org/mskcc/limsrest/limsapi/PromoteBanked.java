@@ -25,10 +25,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
-
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -56,12 +52,12 @@ public class PromoteBanked extends LimsTask {
     boolean dryrun = false;
     private Multimap<String, String> errors = HashMultimap.create();
     private Map<Integer, Double> coverageToSeqReqWES = ImmutableMap.<Integer, Double>builder()
-            .put(30,20.0)
-            .put(70,45.0)
-            .put(100,60.0)
-            .put(150,95.0)
-            .put(200,120.0)
-            .put(250,160.0)
+            .put(30, 20.0)
+            .put(70, 45.0)
+            .put(100, 60.0)
+            .put(150, 95.0)
+            .put(200, 120.0)
+            .put(250, 160.0)
             .build();
 
     public PromoteBanked(CorrectedCmoIdConverter<BankedSample> bankedSampleToCorrectedCmoSampleIdConverter,
@@ -309,8 +305,7 @@ public class PromoteBanked extends LimsTask {
         } catch (Exception e) {
             throw new LimsException("UUID generation failed for sample due to " + e.getMessage());
         }
-        //add a sample to requestList.get(0) with a new sample
-        //copy fields
+        //add a sample to requestList.get(0) with a new sample copy fields
         String newIgoId = requestId + "_" + Integer.toString(maxExistentId + offset);
         try {
             DataRecord promotedSampleRecord = req.addChild("Sample", user);
@@ -450,11 +445,9 @@ public class PromoteBanked extends LimsTask {
 
     private void validateBankedSample(BankedSample bankedSample) {
         CommonUtils.requireNonNullNorEmpty(bankedSample.getCMOPatientId(), String.format("Cmo Patient id is empty for" +
-                " banked " +
-                "sample: %s", bankedSample.getId()));
+                " banked sample: %s", bankedSample.getId()));
         CommonUtils.requireNonNullNorEmpty(bankedSample.getSampleType(), String.format("Sample Type is empty for " +
-                "banked sample: " +
-                "%s", bankedSample.getId()));
+                "banked sample: %s", bankedSample.getId()));
     }
 
     private Sample getPromotedSample(BankedSample bankedSample, String uuid, String newIgoId, String
