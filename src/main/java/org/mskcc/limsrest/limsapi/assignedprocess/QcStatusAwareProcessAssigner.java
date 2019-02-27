@@ -101,7 +101,7 @@ public class QcStatusAwareProcessAssigner {
         if (batches.size() == 0) {
             log.warn(String.format("There is no parent batch for sample %s to remove from", igoId));
         } else {
-            DataRecord batch = batches.get(batches.size() - 1);
+            DataRecord batch = batches.get(0);
             String batchName = batch.getStringVal(DT_Batch.BATCH_NAME, user);
             String recordName = batch.getStringVal(DT_Batch.DATA_RECORD_NAME, user);
 
