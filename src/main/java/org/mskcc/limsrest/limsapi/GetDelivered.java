@@ -128,23 +128,22 @@ public class GetDelivered extends LimsTask
                     } catch(NullPointerException npe){}
 
                 }
-
             }
             
             List<List<DataRecord>> sampleQcs = dataRecordManager.getDescendantsOfType(childrenOfRequest, "SeqAnalysisSampleQC", user);
             List<List<Map<String, Object>>> allCorrectedFields = dataRecordManager.getFieldsForChildrenOfType(childrenOfRequest, "SampleCMOInfoRecords", user);
             List<AuditLogEntry> reqHistory = auditlog.getAuditLogHistory(request, false, user);
-            for(AuditLogEntry logline : reqHistory){
-                if(logline.dataFieldName.equals("RecentDeliveryDate")){
+            for (AuditLogEntry logline : reqHistory){
+                if (logline.dataFieldName.equals("RecentDeliveryDate")){
                     rs.addDeliveryDate(logline.timestamp);
                 }
             }
 
-            for(int j = 0; j < childrenOfRequest.size(); j++){
+            for (int j = 0; j < childrenOfRequest.size(); j++){
                 DataRecord sample = childrenOfRequest.get(j);
                 Map<String, Object> sampleFields = sample.getFields(user);
                 Map<String, Object> correctedFields = null;
-                if(allCorrectedFields != null && allCorrectedFields.size() > 0 && allCorrectedFields.get(j).size() > 0 ){
+                if (allCorrectedFields != null && allCorrectedFields.size() > 0 && allCorrectedFields.get(j).size() > 0 ){
                   correctedFields = allCorrectedFields.get(j).get(0);
                 } else{
                     correctedFields = new HashMap<>();
@@ -161,7 +160,7 @@ public class GetDelivered extends LimsTask
                 ss.addBaseId((String)sampleFields.get("SampleId"));
                 ss.addCmoId((String)sampleFields.get("OtherSampleId"));
                 try{ ss.setSpecies((String)sampleFields.get("Species")); } catch(NullPointerException npe){}
-                try{  ss.addExpName((String)sampleFields.get("UserSampleID" )); } catch(NullPointerException npe){}  
+                try{ ss.addExpName((String)sampleFields.get("UserSampleID" )); } catch(NullPointerException npe){}
                 try{ ss.setRecipe((String)sampleFields.get("Recipe")); } catch(NullPointerException npe){} 
                 ss.setCorrectedCmoId((String)correctedFields.get("CorrectedCMOID"));
                
@@ -173,8 +172,8 @@ public class GetDelivered extends LimsTask
 
                     Map<String, Object> qcFields = qc.getFields(user);
                     String qcRequestId = "";
-                    try{ qcRequestId = (String)qcFields.get("Request");} catch(NullPointerException npe){}
-                    if(sampleRequestId.equals(qcRequestId) || qcRequestId == null || qcRequestId.equals("")){
+                    try { qcRequestId = (String)qcFields.get("Request");} catch(NullPointerException npe){}
+                    if (sampleRequestId.equals(qcRequestId) || qcRequestId == null || qcRequestId.equals("")){
                         BasicQc qcSummary = new BasicQc();
                         try { qcSummary.setRun((String)qcFields.get("SequencerRunFolder")); } catch(NullPointerException npe){}
                         try { qcSummary.setSampleName((String)qcFields.get("OtherSampleId")); } catch(NullPointerException npe){}
@@ -209,8 +208,6 @@ public class GetDelivered extends LimsTask
       RequestSummary errorRs = new RequestSummary();
       delivered.add(errorRs);
   }
-
   return delivered; 
  }
-
 }
