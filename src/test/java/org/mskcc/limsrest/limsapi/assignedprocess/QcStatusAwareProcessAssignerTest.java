@@ -76,7 +76,7 @@ public class QcStatusAwareProcessAssignerTest {
     }
 
     @Test
-    public void whenAssignAndMultipleBatches_shouldAddAssignProcessRecordWithChildSampleAndRemoveFromLastBatch() throws
+    public void whenAssignAndMultipleBatches_shouldAddAssignProcessRecordWithChildSampleAndRemoveFromBatch() throws
             Exception {
         //given
         DataRecord batchDrMock1 = mock(DataRecord.class);
@@ -92,6 +92,8 @@ public class QcStatusAwareProcessAssignerTest {
         //then
         verify(drmMock, times(1)).addDataRecords(DT_AssignedProcess.DATA_TYPE, Arrays.asList(assProcMap), userMock);
         verify(sample, times(1)).setDataField(DT_Sample.EXEMPLAR_SAMPLE_STATUS, processToAssign.getStatus(), userMock);
+        verify(batchDrMock1, times(1)).removeChild(sample, null, userMock);
+        verify(batchDrMock2, times(1)).removeChild(sample, null, userMock);
         verify(batchDrMock3, times(1)).removeChild(sample, null, userMock);
     }
 }

@@ -73,11 +73,14 @@ public class QcStatusAwareProcessAssignerTest {
         sample.setDataField(DT_Sample.REQUEST_RECORD_ID_LIST, REQUEST_ID, user);
         sample.setDataField(DT_Sample.SAMPLE_ID, IGO_ID, user);
         sample.setDataField(DT_Sample.OTHER_SAMPLE_ID, CMO_SAMPLE_ID, user);
+        sample.setDataField(DT_Sample.EXEMPLAR_SAMPLE_TYPE, "DNA Library", user);
 
         childSample = sample.addChild(VeloxConstants.SAMPLE, user);
         childSample.setDataField(DT_Sample.REQUEST_RECORD_ID_LIST, REQUEST_ID, user);
         childSample.setDataField(DT_Sample.SAMPLE_ID, CHILD_IGO_ID, user);
         childSample.setDataField(DT_Sample.OTHER_SAMPLE_ID, CHILD_CMO_SAMPLE_ID, user);
+        childSample.setDataField(DT_Sample.EXEMPLAR_SAMPLE_TYPE, "DNA Library", user);
+
         seqQc = sample.addChild("SeqAnalysisSampleQC", user);
 
         dataRecordManager.storeAndCommit("Initiating records for QcStatus assign integration test", null, user);
