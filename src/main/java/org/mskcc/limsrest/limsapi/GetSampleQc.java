@@ -4,19 +4,16 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,6 +47,7 @@ public class GetSampleQc extends LimsTask {
 
                 String project = r.getStringVal("RequestId", user);
                 RequestSummary rs = new RequestSummary(project);
+                HashSet<String> runSet = new HashSet<>();
                 annotateRequestSummary(rs, r); // fill in all data at request level except sample number
                 rs.setSampleNumber((new Short(r.getShortVal("SampleNumber", user))).intValue());
 
@@ -182,11 +180,21 @@ public class GetSampleQc extends LimsTask {
                             ss.setYield(0);
                         }
                     }
+                    runSet.add(qcSummary.getRun());
                     ss.setQc(qcSummary);
                     rs.addSample(ss);
                 }
+
+                try {
+                    addPooledNormals(rs, runSet);
+                } catch (Exception e) {
+                    log.error("Failed to add QC stats for pooled normals." + e.getMessage());
+                    e.printStackTrace();
+                }
+
                 rss.add(rs);
             }
+
         } catch (Throwable e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
@@ -198,5 +206,46 @@ public class GetSampleQc extends LimsTask {
         }
 
         return rss;
+    }
+
+    protected void addPooledNormals(RequestSummary rs, HashSet<String> runSet) {
+        log.info("Querying for pooled normals for runs: " + String.join(",", runSet));
+
+        for (String run : runSet) {
+            String url = "http://delphi.mskcc.org:8080/ngs-stats/picardstats-controls/run/" + run;
+            System.out.println("Calling: " + url);
+            RestTemplate restTemplate = new RestTemplate();
+            ResponseEntity<List<QCSiteStats>> statsResponse =
+                    restTemplate.exchange(url,
+                            HttpMethod.GET, null, new ParameterizedTypeReference<List<QCSiteStats>>() {
+                            });
+            List<QCSiteStats> stats = statsResponse.getBody();
+            if (stats == null) {
+                log.info("No pooled normals found for run: " + run);
+                return;
+            }
+
+            log.info("Returned: " + stats);
+
+            for (QCSiteStats s: stats) {
+                SampleSummary ss = new SampleSummary();
+                ss.addConcentration(1.0);
+                ss.addConcentrationUnits("ng/uL");
+                ss.addBaseId("0");
+                ss.addVolume(1.0);
+                ss.setSpecies(s.getReferenceGenome());
+                ss.setCoverageTarget(0);
+                ss.setRequestedReadNumber(0);
+                ss.addCmoId("PooledNormal");
+                ss.setTumorOrNormal("Control");
+                ss.setInitialPool("Pooled Normal");
+                ss.setRecordId(-1);
+                ss.addRequest("Pooled Normal");
+
+                ss.setQc(s.toSampleSummary());
+
+                rs.addSample(ss);
+            }
+        }
     }
 }
