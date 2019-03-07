@@ -187,7 +187,7 @@ public class PromoteBankedTest {
         //given
         DataRecord banked1 = addPromoteBanked(cmoPatientId1, CELLLINE, DNA, requestId1, USER_SAMP_ID1, OTHER_SAMPLE_ID1,
                 SampleType.DNA, patientId);
-        DataRecord banked2 = addPromoteBanked(cmoPatientId1, CELLLINE, RNA, requestId1, USER_SAMP_ID2, OTHER_SAMPLE_ID2,
+        DataRecord banked2 = addPromoteBanked(cmoPatientId1, CELLLINE, DNA, requestId1, USER_SAMP_ID2, OTHER_SAMPLE_ID2,
                 SampleType.DNA, patientId);
         DataRecord banked3 = addPromoteBanked(cmoPatientId1, CELLLINE, DNA, requestId1, USER_SAMP_ID3, OTHER_SAMPLE_ID3,
                 SampleType.DNA, patientId);
