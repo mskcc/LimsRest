@@ -1,10 +1,6 @@
 package org.mskcc.limsrest.limsapi;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.mskcc.domain.sample.Sample;
-import org.springframework.web.bind.annotation.ResponseBody;
-
-import java.nio.file.attribute.BasicFileAttributes;
 
 /**
  * Columns from multiple Picard files displayed together on the QC site.
@@ -15,9 +11,11 @@ public class QCSiteStats {
     public String run;
     public String request;
     public String sample;
+    public String referenceGenome;
 
     // ALIGNMENT SUMMARY METRICS
     public double PCT_ADAPTER;
+    public long unpairedReads; // derived field from summary metrics
 
     // Duplication Metrics
     public long READ_PAIRS_EXAMINED;
@@ -47,27 +45,42 @@ public class QCSiteStats {
     // Convert to type returned to QCSite
     public SampleQcSummary toSampleSummary() {
         SampleQcSummary qc = new SampleQcSummary();
+        qc.setStartingAmount(100);
+        qc.setRecordId(2);
         qc.setRun(run);
         qc.setSampleName(sample);
 
         qc.setPercentAdapters(PCT_ADAPTER);
+        qc.setUnpairedReadsExamined(unpairedReads);
 
         qc.setReadsExamined(READ_PAIRS_EXAMINED);
         qc.setUnmapped(UNMAPPED_READS);
-        qc.setPercentDuplication(PERCENT_DUPLICATION);
+        if (PERCENT_DUPLICATION != null)
+            qc.setPercentDuplication(PERCENT_DUPLICATION);
 
-        qc.setPercentTarget10x(PCT_10X);
-        qc.setPercentTarget30x(PCT_30X);
-        qc.setPercentTarget100x(PCT_100X);
+        if (PCT_10X != null)
+            qc.setPercentTarget10x(PCT_10X);
+        if (PCT_30X != null)
+            qc.setPercentTarget30x(PCT_30X);
+        if (PCT_100X != null)
+            qc.setPercentTarget100x(PCT_100X);
 
-        qc.setPercentUtrBases(PCT_UTR_BASES);
-        qc.setPercentIntronicBases(PCT_INTRONIC_BASES);
-        qc.setPercentIntergenicBases(PCT_INTERGENIC_BASES);
+        if (PCT_UTR_BASES != null)
+            qc.setPercentUtrBases(PCT_UTR_BASES);
+        if (PCT_INTRONIC_BASES != null)
+            qc.setPercentIntronicBases(PCT_INTRONIC_BASES);
+        if (PCT_INTERGENIC_BASES != null)
+            qc.setPercentIntergenicBases(PCT_INTERGENIC_BASES);
 
         qc.setMeanTargetCoverage(MEAN_TARGET_COVERAGE);
         qc.setZeroCoveragePercent(ZERO_CVG_TARGETS_PCT);
         qc.setPercentOffBait(PCT_OFF_BAIT);
 
+        qc.setQcStatus("Passed");
+        qc.setReviewed(true);
+        qc.setTotalReads(1L);
+        qc.setQcUnits("ng/uL");
+        qc.setQcControl(1.0);
         return qc;
     }
 
@@ -97,7 +110,9 @@ public class QCSiteStats {
                 "run='" + run + '\'' +
                 ", request='" + request + '\'' +
                 ", sample='" + sample + '\'' +
+                ", referenceGenome='" + referenceGenome + '\'' +
                 ", PCT_ADAPTER=" + PCT_ADAPTER +
+                ", unpairedReads=" + unpairedReads +
                 ", READ_PAIRS_EXAMINED=" + READ_PAIRS_EXAMINED +
                 ", UNMAPPED_READS=" + UNMAPPED_READS +
                 ", PERCENT_DUPLICATION=" + PERCENT_DUPLICATION +
@@ -112,6 +127,22 @@ public class QCSiteStats {
                 ", ZERO_CVG_TARGETS_PCT=" + ZERO_CVG_TARGETS_PCT +
                 ", PCT_OFF_BAIT=" + PCT_OFF_BAIT +
                 '}';
+    }
+
+    public String getReferenceGenome() {
+        return referenceGenome;
+    }
+
+    public void setReferenceGenome(String referenceGenome) {
+        this.referenceGenome = referenceGenome;
+    }
+
+    public long getUnpairedReads() {
+        return unpairedReads;
+    }
+
+    public void setUnpairedReads(long unpairedReads) {
+        this.unpairedReads = unpairedReads;
     }
 
     public String getRun() {
