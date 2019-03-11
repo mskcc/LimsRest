@@ -4,6 +4,7 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,9 @@ import java.util.stream.Stream;
 public class GetSampleQc extends LimsTask {
     private Log log = LogFactory.getLog(GetSampleQc.class);
     protected String[] projectList;
+
+    @Value("${delphiRestUrl}")
+    private String delphiRestUrl;
 
     public void init(String[] project) {
         this.projectList = project;
@@ -212,8 +216,8 @@ public class GetSampleQc extends LimsTask {
         log.info("Querying for pooled normals for runs: " + String.join(",", runSet));
 
         for (String run : runSet) {
-            String url = "http://delphi.mskcc.org:8080/ngs-stats/picardstats-controls/run/" + run;
-            System.out.println("Calling: " + url);
+            // TODO planned refactor of this endpoint code along with LimsHelperScripts.CreateSampleQc
+            String url = delphiRestUrl + "ngs-stats/picardstats-controls/run/" + run;
             RestTemplate restTemplate = new RestTemplate();
             ResponseEntity<List<QCSiteStats>> statsResponse =
                     restTemplate.exchange(url,
