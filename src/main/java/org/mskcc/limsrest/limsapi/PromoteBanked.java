@@ -26,9 +26,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -56,12 +53,12 @@ public class PromoteBanked extends LimsTask {
     boolean dryrun = false;
     private Multimap<String, String> errors = HashMultimap.create();
     private Map<Integer, Double> coverageToSeqReqWES = ImmutableMap.<Integer, Double>builder()
-            .put(30,20.0)
-            .put(70,45.0)
-            .put(100,60.0)
-            .put(150,95.0)
-            .put(200,120.0)
-            .put(250,160.0)
+            .put(30, 20.0)
+            .put(70, 45.0)
+            .put(100, 60.0)
+            .put(150, 95.0)
+            .put(200, 120.0)
+            .put(250, 160.0)
             .build();
 
     public PromoteBanked(CorrectedCmoIdConverter<BankedSample> bankedSampleToCorrectedCmoSampleIdConverter,
@@ -72,7 +69,42 @@ public class PromoteBanked extends LimsTask {
         this.bankedSampleToSampleConverter = bankedSampleToSampleConverter;
     }
 
-    public void init(String[] bankedIds, String projectId, String requestId, String serviceId, String igoUser, String dryrun) {
+    /*
+     * Automated addition of read length, minimum number of requested reads, and coverage to seqrequirement table
+     * on promote for IMPACT & HemePACT
+     * <BR>
+     * Requested during LIMS meeting 2018-8-28
+     */
+    public static void setSeqReq(String recipe, String tumorOrNormal, Map<String, Object> seqRequirementMap) {
+        if (!"Tumor".equals(tumorOrNormal) && !"Normal".equals(tumorOrNormal))
+            return;
+
+        String seqRunType = "PE100";
+        seqRequirementMap.put("SequencingRunType", seqRunType);
+
+        int coverageTarget = 500;
+        boolean normal = "Normal".equals(tumorOrNormal);
+        if (normal)
+            coverageTarget = 250;
+        seqRequirementMap.put("CoverageTarget", coverageTarget);
+
+        double requestedReads;
+        if (recipe.contains("Heme")) {
+            if (normal)
+                requestedReads = 10.0;
+            else
+                requestedReads = 20.0;
+        } else { //'M-IMPACT_v1', 'IMPACT468'
+            if (normal)
+                requestedReads = 7.0;
+            else
+                requestedReads = 14.0;
+        }
+        seqRequirementMap.put("RequestedReads", requestedReads);
+    }
+
+    public void init(String[] bankedIds, String projectId, String requestId, String serviceId, String igoUser, String
+            dryrun) {
         this.bankedIds = bankedIds;
         this.projectId = projectId;
         this.requestId = requestId;
@@ -412,40 +444,6 @@ public class PromoteBanked extends LimsTask {
                 seqRequirementMap.put("RequestedReads", coverageToSeqReqWES.getOrDefault(coverageTarget, null));
             }
         }
-    }
-
-    /*
-     * Automated addition of read length, minimum number of requested reads, and coverage to seqrequirement table
-     * on promote for IMPACT & HemePACT
-     * <BR>
-     * Requested during LIMS meeting 2018-8-28
-     */
-    public static void setSeqReq(String recipe, String tumorOrNormal, Map<String, Object> seqRequirementMap) {
-        if (!"Tumor".equals(tumorOrNormal) && !"Normal".equals(tumorOrNormal))
-            return;
-
-        String seqRunType = "PE100";
-        seqRequirementMap.put("SequencingRunType", seqRunType);
-
-        int coverageTarget = 500;
-        boolean normal = "Normal".equals(tumorOrNormal);
-        if (normal)
-            coverageTarget = 250;
-        seqRequirementMap.put("CoverageTarget", coverageTarget);
-
-        double requestedReads;
-        if (recipe.contains("Heme")) {
-            if (normal)
-                requestedReads = 10.0;
-            else
-                requestedReads = 20.0;
-        } else { //'M-IMPACT_v1', 'IMPACT468'
-            if (normal)
-                requestedReads = 7.0;
-            else
-                requestedReads = 14.0;
-        }
-        seqRequirementMap.put("RequestedReads", requestedReads);
     }
 
     private void validateBankedSample(BankedSample bankedSample) {

@@ -9,6 +9,8 @@ import org.mskcc.limsrest.limsapi.LimsException;
 import org.mskcc.limsrest.limsapi.PatientSamplesWithCmoInfoRetriever;
 import org.mskcc.limsrest.util.Utils;
 
+import java.util.function.Function;
+
 public class SampleToCorrectedCmoIdConverter implements CorrectedCmoIdConverter<Sample> {
     private final static Log LOGGER = LogFactory.getLog(PatientSamplesWithCmoInfoRetriever.class);
 
@@ -17,6 +19,7 @@ public class SampleToCorrectedCmoIdConverter implements CorrectedCmoIdConverter<
         LOGGER.debug(String.format("Converting sample %s to Corrected Cmo Sample View", sample));
 
         try {
+            validate(sample);
             CorrectedCmoSampleView correctedCmoSampleView = new CorrectedCmoSampleView(sample.getIgoId());
             correctedCmoSampleView.setCorrectedCmoId(sample.getCorrectedCmoSampleId());
             correctedCmoSampleView.setSampleType(SampleType.fromString(sample.getExemplarSampleType()));
@@ -49,8 +52,33 @@ public class SampleToCorrectedCmoIdConverter implements CorrectedCmoIdConverter<
 
             return correctedCmoSampleView;
         } catch (Exception e) {
-            throw new RuntimeException(String.format("Error while retrieving information for sample: %s. Couse: %s",
-                    sample.getIgoId(), e.getMessage()));
+            throw new RuntimeException(String.format("Error for sample %s: %s",
+                    sample.getIgoId(), e.getMessage()), e);
         }
+    }
+
+    private void validate(Sample sample) {
+        StringBuilder error = new StringBuilder();
+
+        error = appendToError(sample, s -> (SampleType) SampleType.fromString(sample.getExemplarSampleType()), error);
+        error = appendToError(sample, s -> (Recipe) Recipe.getRecipeByValue(sample.get(Sample.RECIPE)), error);
+        error = appendToError(sample, s -> (SampleClass) SampleClass.fromValue(sample.getCorrectedSampleClass()),
+                error);
+        error = appendToError(sample, s -> (SampleOrigin) SampleOrigin.fromValue(sample.getCorrectedCmoSampleOrigin()
+        ), error);
+        error = appendToError(sample, s -> (SpecimenType) SpecimenType.fromValue(sample.getCorrectedSpecimenType()),
+                error);
+
+        throw new RuntimeException(error.toString());
+    }
+
+    private StringBuilder appendToError(Sample sample, Function<Sample, Object> function, StringBuilder error) {
+        try {
+            function.apply(sample);
+        } catch (Exception e) {
+            error.append(e.getMessage()).append(", ");
+        }
+
+        return error;
     }
 }
