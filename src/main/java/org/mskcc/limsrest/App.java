@@ -40,7 +40,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.security.SecurityAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.web.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
@@ -698,5 +697,17 @@ public class App extends SpringBootServletInitializer {
         filter.setAfterMessagePrefix("REQUEST DATA : ");
 
         return filter;
+    }
+
+    @Bean
+    @Scope("request")
+    public AddInteropData addInteropData() {
+        return new AddInteropData(connectionQueue(), storeInteropData());
+    }
+
+    @Bean
+    @Scope("request")
+    public SetOrCreateInteropData storeInteropData() {
+        return new SetOrCreateInteropData();
     }
 }
