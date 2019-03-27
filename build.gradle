@@ -1,5 +1,5 @@
 group 'org.mskcc.limsrest'
-version '1.16.2-SNAPSHOT'
+version '1.16.4-SNAPSHOT'
 
 buildscript {
     repositories {
