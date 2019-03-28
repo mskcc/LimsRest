@@ -60,16 +60,10 @@ public class SampleToCorrectedCmoIdConverter implements CorrectedCmoIdConverter<
     private void validate(Sample sample) {
         StringBuilder error = new StringBuilder();
 
-        error = appendToError(sample, s -> (SampleType) SampleType.fromString(sample.getExemplarSampleType()), error);
-        error = appendToError(sample, s -> (Recipe) Recipe.getRecipeByValue(sample.get(Sample.RECIPE)), error);
-        error = appendToError(sample, s -> (SampleClass) SampleClass.fromValue(sample.getCorrectedSampleClass()),
-                error);
-        error = appendToError(sample, s -> (SampleOrigin) SampleOrigin.fromValue(sample.getCorrectedCmoSampleOrigin()
-        ), error);
-        error = appendToError(sample, s -> (SpecimenType) SpecimenType.fromValue(sample.getCorrectedSpecimenType()),
-                error);
+        error = appendToError(sample, s -> SampleType.fromString(sample.getExemplarSampleType()), error);
 
-        throw new RuntimeException(error.toString());
+        if (error.length() > 0)
+            throw new RuntimeException(error.toString());
     }
 
     private StringBuilder appendToError(Sample sample, Function<Sample, Object> function, StringBuilder error) {

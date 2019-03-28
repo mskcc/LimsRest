@@ -64,7 +64,6 @@ public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSamp
 
             List<CorrectedCmoSampleView> filteredViews = getFilteredCmoViews(correctedCmoSampleView, cmoSampleViews);
 
-            validate(filteredViews);
             String cmoSampleId = cmoSampleIdRetriever.retrieve(correctedCmoSampleView, filteredViews, requestId);
 
             if (shouldOverrideCmoId(correctedCmoSampleView, cmoSampleId))
@@ -151,9 +150,5 @@ public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSamp
             LOGGER.warn(String.format("Sending notification about failure to autogenerate corrected cmo id failed for" +
                     " sample: %s", correctedCmoSampleView.getId()));
         }
-    }
-
-    private void validate(List<CorrectedCmoSampleView> views) {
-
     }
 }

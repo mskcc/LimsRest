@@ -78,6 +78,7 @@ public class PromoteBankedTest {
     private static final String requestId1 = "PromoteBankedTest_A";
     private static final String normalizedRequestId1 = "PromoteBankedTestA";
     private static final String requestId2 = "PromoteBankedTest_B";
+    private static final String appPropertyFile = "/app.properties";
     private static PromoteBanked promoteBanked;
     private final String cmoPatientId1 = "C-promoteBankedTestPatient1";
     private final String cmoPatientId2 = "C-promoteBankedTestPatient2";
@@ -94,7 +95,6 @@ public class PromoteBankedTest {
     private DataRecord projectRecord;
     private BankedSampleToSampleConverter bankedSampleToSampleConverter = new BankedSampleToSampleConverter();
     private int id = 0;
-    private static final String appPropertyFile = "/app.properties";
     private Notificator slackNotificator;
 
     @Before
@@ -559,6 +559,7 @@ public class PromoteBankedTest {
         initPromoteBanked(bankedToPromote2, requestId2, serviceId, projectId);
         promoteBanked.call();
 
+
         //then
         List<BankedWithCorrectedCmoId> req1CorrectedCmoIds = Arrays.asList(
                 new BankedWithCorrectedCmoId(bankedToPromote1.get(0), String.format("%s-%s", SAMPLE_ID1,
@@ -922,16 +923,6 @@ public class PromoteBankedTest {
         }
     }
 
-    class BankedWithCorrectedCmoId {
-        private final DataRecord bankedDataRecord;
-        private final String cmoId;
-
-        BankedWithCorrectedCmoId(DataRecord bankedDataRecord, String cmoId) {
-            this.bankedDataRecord = bankedDataRecord;
-            this.cmoId = cmoId;
-        }
-    }
-
     private void openConnection() throws Exception {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOG.info("Run shutdown hook");
@@ -988,6 +979,16 @@ public class PromoteBankedTest {
         dataRecUtilManager.deleteRecords(bankedRecords, true);
 
         dataRecordManager.storeAndCommit("Deleted records for promoted banked test", user);
+    }
+
+    class BankedWithCorrectedCmoId {
+        private final DataRecord bankedDataRecord;
+        private final String cmoId;
+
+        BankedWithCorrectedCmoId(DataRecord bankedDataRecord, String cmoId) {
+            this.bankedDataRecord = bankedDataRecord;
+            this.cmoId = cmoId;
+        }
     }
 
 }
