@@ -2,6 +2,7 @@ package org.mskcc.limsrest;
 
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.log4j.Logger;
+import org.mskcc.domain.Recipe;
 import org.mskcc.domain.sample.BankedSample;
 import org.mskcc.domain.sample.Sample;
 import org.mskcc.limsrest.connection.ConnectionQueue;
@@ -31,6 +32,7 @@ import org.mskcc.limsrest.limsapi.retriever.VeloxLimsDataRetriever;
 import org.mskcc.limsrest.limsapi.store.RecordSaver;
 import org.mskcc.limsrest.limsapi.store.VeloxRecordSaver;
 import org.mskcc.limsrest.web.*;
+import org.mskcc.util.email.*;
 import org.mskcc.util.notificator.Notificator;
 import org.mskcc.util.notificator.SlackNotificator;
 import org.mskcc.util.tumortype.OncotreeTumorTypeRetriever;
@@ -49,6 +51,10 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.core.env.Environment;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Configuration
 @EnableAutoConfiguration
@@ -76,6 +82,18 @@ public class App extends SpringBootServletInitializer {
 
     @Value("${oncotreeRestUrl}")
     private String oncotreeRestUrl;
+
+    @Value("#{'${enum.notification.recipients}'.split(',')}")
+    private List<String> enumNotificationRecipients;
+
+    @Value("${enum.notification.from}")
+    private String enumNotificationFrom;
+
+    @Value("${enum.notification.host}")
+    private String enumNotificationHost;
+
+    @Value("${recipe.path}")
+    private String recipePath;
 
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
@@ -153,7 +171,18 @@ public class App extends SpringBootServletInitializer {
     @Bean
     @Scope("request")
     public GetPickList getPickList() {
-        return new GetPickList();
+        return new GetPickList(limsPickListRetriever(), emailNotificator(), getCurrentRecipes());
+    }
+
+    private List<String> getCurrentRecipes() {
+        return Arrays.stream(Recipe.values())
+                .map(v -> v.getValue())
+                .collect(Collectors.toList());
+    }
+
+    @Bean
+    public LimsPickListRetriever limsPickListRetriever() {
+        return new LimsPickListRetriever();
     }
 
     @Bean
@@ -164,11 +193,15 @@ public class App extends SpringBootServletInitializer {
 
     @Bean
     @Scope("request")
-    public GetDeliveryEmailDetails getDeliveryEmailDetails() { return new GetDeliveryEmailDetails();}
+    public GetDeliveryEmailDetails getDeliveryEmailDetails() {
+        return new GetDeliveryEmailDetails();
+    }
 
     @Bean
     @Scope("request")
-    public GetDeliveryEmail getDeliveryEmail() { return new GetDeliveryEmail(connectionQueue(), getDeliveryEmailDetails()); }
+    public GetDeliveryEmail getDeliveryEmail() {
+        return new GetDeliveryEmail(connectionQueue(), getDeliveryEmailDetails());
+    }
 
     @Bean
     public GetBarcodeInfo getBarcodeInfo() {
@@ -710,4 +743,40 @@ public class App extends SpringBootServletInitializer {
     public SetOrCreateInteropData storeInteropData() {
         return new SetOrCreateInteropData();
     }
+
+    @Bean
+    public EmailConfiguration emailConfiguration() {
+        return new EmailConfiguration(enumNotificationRecipients, enumNotificationFrom, enumNotificationHost);
+    }
+
+    @Bean
+    public EmailToMimeMessageConverter emailToMimeMessageConverter() {
+        return new EmailToMimeMessageConverter();
+    }
+
+    @Bean
+    public EmailSender emailSender() {
+        return new JavaxEmailSender(emailToMimeMessageConverter());
+    }
+
+    @Bean
+    public EmailNotificator emailNotificator() {
+        return new EmailNotificator(emailSender(), emailConfiguration()) {
+            @Override
+            protected String getFooter() {
+                return String.format("Plase add those values in appropriate enum in common-domain: %s", recipePath);
+            }
+
+            @Override
+            protected String getTitle(String pickListName) {
+                return "New values in pick list: " + pickListName;
+            }
+
+            @Override
+            public String getSubject(String pickListName) {
+                return "New values in pick list: " + pickListName;
+            }
+        };
+    }
+
 }
