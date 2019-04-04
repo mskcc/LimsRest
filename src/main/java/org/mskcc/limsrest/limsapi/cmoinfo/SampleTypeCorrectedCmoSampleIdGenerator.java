@@ -63,6 +63,7 @@ public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSamp
                     "generation: %s", generatedSamples.size(), patientId, generatedSamples.values()));
 
             List<CorrectedCmoSampleView> filteredViews = getFilteredCmoViews(correctedCmoSampleView, cmoSampleViews);
+
             String cmoSampleId = cmoSampleIdRetriever.retrieve(correctedCmoSampleView, filteredViews, requestId);
 
             if (shouldOverrideCmoId(correctedCmoSampleView, cmoSampleId))
