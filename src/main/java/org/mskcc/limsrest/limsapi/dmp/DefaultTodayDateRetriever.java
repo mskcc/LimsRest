@@ -1,14 +1,15 @@
 package org.mskcc.limsrest.limsapi.dmp;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
+import org.apache.juli.logging.Log;
+import org.apache.juli.logging.LogFactory;
 import org.mskcc.limsrest.staticstrings.Constants;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 
 public class DefaultTodayDateRetriever implements DateRetriever {
-    private static final Logger LOGGER = Logger.getLogger(DefaultTodayDateRetriever.class);
+    private static final Log LOGGER = LogFactory.getLog(DefaultTodayDateRetriever.class);
 
     @Override
     public LocalDate retrieve(String dateString) {

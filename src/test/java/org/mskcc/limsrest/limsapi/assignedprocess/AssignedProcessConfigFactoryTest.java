@@ -28,9 +28,11 @@ public class AssignedProcessConfigFactoryTest {
         assertAssignedProcessConfig(QcStatus.RESEQUENCE_POOL.getValue(), ResequencePoolAssignedProcessConfig.class);
     }
 
-    private void assertAssignedProcessConfig(String qcStatus, Class<? extends AssignedProcessConfig> configClass) throws Exception {
+    private void assertAssignedProcessConfig(String qcStatus, Class<? extends AssignedProcessConfig> configClass)
+            throws Exception {
         when(qcMock.getParentsOfType(any(), any())).thenReturn(Arrays.asList(mock(DataRecord.class)));
-        AssignedProcessConfig processAssigner = assignedProcessConfigFactory.getProcessAssignerConfig(qcStatus, mock(DataRecordManager.class), qcMock, mock(User.class));
+        AssignedProcessConfig processAssigner = assignedProcessConfigFactory.getProcessAssignerConfig(qcStatus, mock
+                (DataRecordManager.class), qcMock, mock(User.class));
         assertThat(processAssigner.getClass(), IsCompatibleType.typeCompatibleWith(configClass));
     }
 }

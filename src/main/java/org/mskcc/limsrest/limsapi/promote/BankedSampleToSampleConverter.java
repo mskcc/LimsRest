@@ -1,11 +1,12 @@
 package org.mskcc.limsrest.limsapi.promote;
 
-import org.apache.log4j.Logger;
+import org.apache.juli.logging.Log;
+import org.apache.juli.logging.LogFactory;
 import org.mskcc.domain.sample.BankedSample;
 import org.mskcc.domain.sample.Sample;
 
 public class BankedSampleToSampleConverter {
-    private static final Logger LOGGER = Logger.getLogger(BankedSampleToSampleConverter.class);
+    private static final Log LOGGER = LogFactory.getLog(BankedSampleToSampleConverter.class);
 
     public Sample convert(BankedSample bankedSample, String uuid, String newIgoId, String
             assignedRequestId) {
