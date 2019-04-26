@@ -5,6 +5,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mskcc.domain.Recipe;
 import org.mskcc.domain.RequestSpecies;
 import org.mskcc.domain.sample.BankedSample;
 import org.mskcc.domain.sample.CmoSampleInfo;
@@ -12,12 +13,13 @@ import org.mskcc.limsrest.limsapi.cmoinfo.CorrectedCmoSampleIdGenerator;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverter;
 import org.mskcc.limsrest.limsapi.promote.BankedSampleToSampleConverter;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.mskcc.domain.Recipe.*;
 
 public class PromoteBankedTest {
 
@@ -27,7 +29,23 @@ public class PromoteBankedTest {
     @Before
     public void setup() {
         correctedCmoSampleIdGenerator = Mockito.mock(CorrectedCmoSampleIdGenerator.class);
-        promoteBanked = new PromoteBanked(Mockito.mock(CorrectedCmoIdConverter.class), correctedCmoSampleIdGenerator, Mockito.mock(BankedSampleToSampleConverter.class));
+
+        List<String> humanRecipes = Arrays.asList(
+                IMPACT_341.getValue(),
+                IMPACT_410.getValue(),
+                IMPACT_410.getValue(),
+                IMPACT_410_PLUS.getValue(),
+                IMPACT_468.getValue(),
+                HEME_PACT_V_3.getValue(),
+                HEME_PACT_V_4.getValue(),
+                MSK_ACCESS_V1.getValue()
+        );
+
+        promoteBanked = new PromoteBanked(
+                Mockito.mock(CorrectedCmoIdConverter.class),
+                correctedCmoSampleIdGenerator,
+                Mockito.mock(BankedSampleToSampleConverter.class),
+                humanRecipes);
     }
 
     @Test
@@ -86,7 +104,7 @@ public class PromoteBankedTest {
     }
 
     @Test
-    public void setSeqRequirementWES_whenRequestedReadsIsEmpty () {
+    public void setSeqRequirementWES_whenRequestedReadsIsEmpty() {
         Map<String, Object> seqRequirementMap = new HashMap<>();
         promoteBanked.setSeqReqForWES("", seqRequirementMap);
         Assertions.assertThat(seqRequirementMap).hasSize(1);
@@ -108,18 +126,24 @@ public class PromoteBankedTest {
 
     @Test
     public void getCorrectedCmoSampleId_whenSpeciesIsNotHuman() {
+        //given
         Map<String, Object> fields = ImmutableMap.<String, Object>builder()
                 .put("CMOPatientId", "pid343")
                 .put("SampleType", "DNA")
                 .put("Species", "Mouse")
                 .build();
         BankedSample bankedSample = new BankedSample("123", fields);
+
+        //when
         String id = promoteBanked.getCorrectedCmoSampleId(bankedSample, "123_S");
+
+        //then
         Assertions.assertThat(id).isEmpty();
     }
 
     @Test
     public void getCorrectedCmoSampleId_whenSpeciesIsHuman() {
+        //given
         Map<String, Object> fields = ImmutableMap.<String, Object>builder()
                 .put("CMOPatientId", "pid343")
                 .put("SampleType", "DNA")
@@ -128,10 +152,56 @@ public class PromoteBankedTest {
                 .put("OtherSampleId", "O34234")
                 .build();
         String mockCorrectedId = "C-AAAAA1-V001-d";
-        Mockito.when(correctedCmoSampleIdGenerator.generate(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(mockCorrectedId);
+        Mockito.when(correctedCmoSampleIdGenerator.generate(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any
+                ())).thenReturn(mockCorrectedId);
         BankedSample bankedSample = new BankedSample("123", fields);
+
+        //when
         String id = promoteBanked.getCorrectedCmoSampleId(bankedSample, "123_S");
+
+        //then
         Assertions.assertThat(id).isEqualTo(mockCorrectedId);
+    }
+
+    @Test
+    public void whenSpeciesIsHumanOrRecipeIsTreatedAsHuman_shouldGenerateCmoSampleId() throws Exception {
+        String mockCorrectedId = "C-AAAAA1-V001-d";
+
+        Mockito.when(correctedCmoSampleIdGenerator.generate(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any
+                ())).thenReturn(mockCorrectedId);
+
+        assertCmoSampleIdGenerated("Mouse", IMPACT_341.getValue(), mockCorrectedId);
+        assertCmoSampleIdGenerated("Mouse", HEME_PACT_V_3.getValue(), mockCorrectedId);
+        assertCmoSampleIdGenerated("Human", HEME_PACT_V_3.getValue(), mockCorrectedId);
+        assertCmoSampleIdGenerated("Human", MSK_ACCESS_V1.getValue(), mockCorrectedId);
+        assertCmoSampleIdGenerated("", MSK_ACCESS_V1.getValue(), mockCorrectedId);
+    }
+
+    @Test
+    public void whenRecipeIsNotTreatedAsHumanOrEmpty_shouldNotGenerateCmoSampleId() throws Exception {
+        assertCmoSampleIdGenerated("Mouse", RNA_SEQ.getValue(), "");
+        assertCmoSampleIdGenerated(RequestSpecies.BACTERIA.getValue(), Recipe.SMARTER_AMP_SEQ.getValue(), "");
+        assertCmoSampleIdGenerated("", "", "");
+    }
+
+    private void assertCmoSampleIdGenerated(String species, String recipe, String expectedId) {
+        //given
+        Map<String, Object> fields = ImmutableMap.<String, Object>builder()
+                .put("CMOPatientId", "pid343")
+                .put("SampleType", "DNA")
+                .put("Species", species)
+                .put("Recipe", recipe)
+                .put("UserSampleID", "U2343")
+                .put("OtherSampleId", "O34234")
+                .build();
+
+        BankedSample bankedSample = new BankedSample("123", fields);
+
+        //when
+        String id = promoteBanked.getCorrectedCmoSampleId(bankedSample, "123_S");
+
+        //then
+        Assertions.assertThat(id).isEqualTo(expectedId);
     }
 
     @Test
@@ -158,10 +228,12 @@ public class PromoteBankedTest {
                 .put(BankedSample.SAMPLE_ORIGIN, "")
                 .build();
 
-        Map<String, Object> cmoFields = promoteBanked.getCmoFields(bankedFields, "C-AAAAA1-V001-d", "123_S", "igo-2", "UIFDF");
+        Map<String, Object> cmoFields = promoteBanked.getCmoFields(bankedFields, "C-AAAAA1-V001-d", "123_S", "igo-2",
+                "UIFDF");
         Assertions.assertThat(cmoFields).containsKeys(
                 CmoSampleInfo.ALT_ID, CmoSampleInfo.CLINICAL_INFO, CmoSampleInfo.CMO_PATIENT_ID,
-                CmoSampleInfo.CMOSAMPLE_CLASS, CmoSampleInfo.COLLECTION_YEAR, CmoSampleInfo.CORRECTED_INVEST_PATIENT_ID, CmoSampleInfo.DMPLIBRARY_INPUT, CmoSampleInfo.DMPLIBRARY_OUTPUT,
+                CmoSampleInfo.CMOSAMPLE_CLASS, CmoSampleInfo.COLLECTION_YEAR, CmoSampleInfo
+                        .CORRECTED_INVEST_PATIENT_ID, CmoSampleInfo.DMPLIBRARY_INPUT, CmoSampleInfo.DMPLIBRARY_OUTPUT,
                 CmoSampleInfo.ESTIMATED_PURITY, CmoSampleInfo.GENDER, CmoSampleInfo.GENETIC_ALTERATIONS,
                 CmoSampleInfo.NORMALIZED_PATIENT_ID, CmoSampleInfo.OTHER_SAMPLE_ID, CmoSampleInfo.PATIENT_ID,
                 CmoSampleInfo.PRESERVATION, CmoSampleInfo.REQUEST_ID, CmoSampleInfo.SAMPLE_ID,

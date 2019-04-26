@@ -44,12 +44,13 @@ import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mskcc.domain.Recipe.*;
 import static org.mskcc.domain.sample.NucleicAcid.DNA;
 import static org.mskcc.domain.sample.NucleicAcid.RNA;
 import static org.mskcc.domain.sample.SampleClass.*;
 import static org.mskcc.domain.sample.SampleOrigin.*;
-import static org.mskcc.domain.sample.SpecimenType.*;
 import static org.mskcc.domain.sample.SpecimenType.SALIVA;
+import static org.mskcc.domain.sample.SpecimenType.*;
 
 public class PromoteBankedTest {
     private static final Log LOG = LogFactory.getLog(PromoteBankedTest.class);
@@ -96,6 +97,17 @@ public class PromoteBankedTest {
     private BankedSampleToSampleConverter bankedSampleToSampleConverter = new BankedSampleToSampleConverter();
     private int id = 0;
     private Notificator slackNotificator;
+
+    List<String> humanRecipes = Arrays.asList(
+            IMPACT_341.getValue(),
+            IMPACT_410.getValue(),
+            IMPACT_410.getValue(),
+            IMPACT_410_PLUS.getValue(),
+            IMPACT_468.getValue(),
+            HEME_PACT_V_3.getValue(),
+            HEME_PACT_V_4.getValue(),
+            MSK_ACCESS_V1.getValue()
+    );
 
     @Before
     public void setUp() throws Exception {
@@ -872,7 +884,7 @@ public class PromoteBankedTest {
         BankedSampleToCorrectedCmoSampleIdConverter bankedSampleToCorrectedCmoSampleIdConverter = new
                 BankedSampleToCorrectedCmoSampleIdConverter();
         return new PromoteBanked(bankedSampleToCorrectedCmoSampleIdConverter,
-                getCorrectedCmoSampleIdGenerator(), bankedSampleToSampleConverter);
+                getCorrectedCmoSampleIdGenerator(), bankedSampleToSampleConverter, humanRecipes);
     }
 
     private String getResourceFile(String connectionFile) throws Exception {
