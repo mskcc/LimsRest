@@ -10,13 +10,9 @@ import com.velox.sloan.cmo.staticstrings.datatypes.DT_AssignedProcess;
 import com.velox.sloan.cmo.staticstrings.datatypes.DT_Sample;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
-import org.mskcc.domain.QcStatus;
-import org.mskcc.limsrest.limsapi.assignedprocess.AssignedProcessCreator;
 import org.mskcc.limsrest.limsapi.assignedprocess.QcParentSampleRetriever;
 import org.mskcc.limsrest.limsapi.assignedprocess.QcStatusAwareProcessAssigner;
-import org.mskcc.limsrest.limsapi.assignedprocess.config.AssignedProcessConfigFactory;
-import org.mskcc.limsrest.limsapi.assignedprocess.resequencepool.InitialPoolRetriever;
+import org.mskcc.limsrest.limsapi.assignedprocess.InitialPoolRetriever;
 import org.mskcc.util.VeloxConstants;
 
 import java.io.FileReader;
@@ -39,8 +35,6 @@ public class QcStatusAwareProcessAssignerTest {
     private static DataRecordManager dataRecordManager;
     private static User user;
     private static VeloxConnection veloxConnection;
-    private final AssignedProcessConfigFactory configFactory = new AssignedProcessConfigFactory();
-    private final AssignedProcessCreator processCreator = new AssignedProcessCreator();
     private final InitialPoolRetriever initialPoolRetriever = new InitialPoolRetriever();
     private final QcParentSampleRetriever qcParentSampleRetriever = new QcParentSampleRetriever();
     private QcStatusAwareProcessAssigner qcStatusAwareProcessAssigner;
@@ -62,7 +56,7 @@ public class QcStatusAwareProcessAssignerTest {
         veloxConnection.open();
         dataRecordManager = veloxConnection.getDataRecordManager();
         user = veloxConnection.getUser();
-        qcStatusAwareProcessAssigner = new QcStatusAwareProcessAssigner(configFactory, processCreator);
+        qcStatusAwareProcessAssigner = new QcStatusAwareProcessAssigner();
 
         List<DataRecord> requests = dataRecordManager.queryDataRecords("Request", "RequestId = '" + REQUEST_ID + "'",
                 user);
@@ -95,34 +89,6 @@ public class QcStatusAwareProcessAssignerTest {
         } finally {
             veloxConnection.close();
         }
-    }
-
-    @Test
-    public void whenStatusIsChangedToRepoolSample_shouldCreateAssignedProcessForParentSampleAssignItAsChildAndChandeSampleStatus() throws Exception {
-        assertAssignedProcess(QcStatus.REPOOL_SAMPLE.getValue(), seqQc, sample);
-    }
-
-    @Test
-    public void whenStatusIsChangedToResequencePool_shouldCreateAssignedProcessForPoolAssignItAsChildAndChangeSampleStatus() throws Exception {
-        assertAssignedProcess(QcStatus.RESEQUENCE_POOL.getValue(), seqQc, childSample);
-    }
-
-    private void assertAssignedProcess(String qcStatus, DataRecord seqQc, DataRecord sample) throws Exception {
-        //given
-        List<DataRecord> assignedProcessesBefore = getAssignedProcesses(sample);
-
-        //when
-        qcStatusAwareProcessAssigner.assign(dataRecordManager, user, seqQc, qcStatus);
-
-        //then
-        List<DataRecord> assignedProcessesAfter = getAssignedProcesses(sample);
-        assignedProcessesAfter.removeAll(assignedProcessesBefore);
-        assertOneAssignedProcessWasAdded(assignedProcessesAfter);
-
-        DataRecord assignedProcess = assignedProcessesAfter.get(0);
-        assertAssignedProcessProperties(sample, assignedProcess);
-        assertAssignedProcessChildSample(sample, assignedProcess);
-        assertSampleState(sample);
     }
 
     private DataRecord getPool(DataRecord seqQc) throws Exception {

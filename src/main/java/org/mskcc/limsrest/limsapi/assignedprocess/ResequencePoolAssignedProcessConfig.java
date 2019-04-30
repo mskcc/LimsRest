@@ -1,10 +1,7 @@
-package org.mskcc.limsrest.limsapi.assignedprocess.resequencepool;
+package org.mskcc.limsrest.limsapi.assignedprocess;
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.user.User;
-import org.mskcc.domain.AssignedProcess;
-import org.mskcc.limsrest.limsapi.assignedprocess.config.AssignedProcessConfig;
-import org.mskcc.limsrest.limsapi.assignedprocess.resequencepool.InitialPoolRetriever;
 
 public class ResequencePoolAssignedProcessConfig implements AssignedProcessConfig {
     private final DataRecord qc;
@@ -12,7 +9,7 @@ public class ResequencePoolAssignedProcessConfig implements AssignedProcessConfi
     private final InitialPoolRetriever initialPoolRetriever = new InitialPoolRetriever();
     private DataRecord sample;
 
-    public ResequencePoolAssignedProcessConfig(DataRecord qc, User user) throws Exception {
+    public ResequencePoolAssignedProcessConfig(DataRecord qc, User user) {
         this.qc = qc;
         this.user = user;
     }
@@ -32,5 +29,4 @@ public class ResequencePoolAssignedProcessConfig implements AssignedProcessConfi
     public AssignedProcess getProcessToAssign() {
         return AssignedProcess.PRE_SEQUENCING_POOLING_OF_LIBRARIES;
     }
-
 }
