@@ -1,6 +1,10 @@
 package org.mskcc.limsrest.limsapi;
 
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.InvalidValue;
+import com.velox.api.datarecord.IoError;
+import com.velox.api.datarecord.NotFound;
+import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -10,6 +14,7 @@ import org.mskcc.limsrest.limsapi.assignedprocess.QcStatusAwareProcessAssigner;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import java.rmi.RemoteException;
 import java.util.List;
 
 /**
@@ -19,7 +24,7 @@ import java.util.List;
  */
 @Service
 public class ToggleSampleQcStatus extends LimsTask {
-    private Log log = LogFactory.getLog(ToggleSampleQcStatus.class);
+    private static Log log = LogFactory.getLog(ToggleSampleQcStatus.class);
 
     boolean isSeqAnalysisSampleqc = true; // which LIMS table to update
 
@@ -66,14 +71,7 @@ public class ToggleSampleQcStatus extends LimsTask {
                 }
 
                 QcStatus qcStatus = QcStatus.fromString(status);
-                if (qcStatus == qcStatus.IGO_COMPLETE) {
-                    log.info("Setting QC sample to IGO-Complete");
-                    seqQc.setDataField("PassedQc", Boolean.TRUE, user);
-                    seqQc.setDataField("SeqQCStatus", QcStatus.PASSED.getText(), user);
-                } else {
-                    seqQc.setDataField("SeqQCStatus", status, user);
-                    seqQc.setDataField("PassedQc", Boolean.FALSE, user);
-                }
+                setSeqAnalysisSampleQcStatus(seqQc, qcStatus, status, user);
 
                 if (qcStatus == QcStatus.RESEQUENCE_POOL || qcStatus == QcStatus.REPOOL_SAMPLE)
                     qcStatusAwareProcessAssigner.assign(dataRecordManager, user, seqQc, qcStatus);
@@ -143,5 +141,17 @@ public class ToggleSampleQcStatus extends LimsTask {
         }
 
         return status;
+    }
+
+    static void setSeqAnalysisSampleQcStatus(DataRecord seqQc, QcStatus qcStatus, String status, User user)
+            throws IoError, InvalidValue, NotFound, RemoteException {
+        if (qcStatus == qcStatus.IGO_COMPLETE) {
+            log.info("Setting QC sample to IGO-Complete");
+            seqQc.setDataField("PassedQc", Boolean.TRUE, user);
+            seqQc.setDataField("SeqQCStatus", QcStatus.PASSED.getText(), user);
+        } else {
+            seqQc.setDataField("SeqQCStatus", status, user);
+            seqQc.setDataField("PassedQc", Boolean.FALSE, user);
+        }
     }
 }
