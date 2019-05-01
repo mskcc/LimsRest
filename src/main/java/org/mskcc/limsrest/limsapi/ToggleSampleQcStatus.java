@@ -24,7 +24,7 @@ import java.util.List;
  */
 @Service
 public class ToggleSampleQcStatus extends LimsTask {
-    private static Log log = LogFactory.getLog(ToggleSampleQcStatus.class);
+    private Log log = LogFactory.getLog(ToggleSampleQcStatus.class);
 
     boolean isSeqAnalysisSampleqc = true; // which LIMS table to update
 
@@ -61,13 +61,14 @@ public class ToggleSampleQcStatus extends LimsTask {
         // designed to update either SeqAnalysisSampleQC or PostSeqAnalysisQC LIMS status tables
         try {
             if (isSeqAnalysisSampleqc) {
+                log.info("SeqAnalysisSampleQC updating to " + status + " for record:" + recordId);
                 DataRecord seqQc = dataRecordManager.querySystemForRecord(recordId, "SeqAnalysisSampleQC", user);
 
-                String currentStatus = (String) seqQc.getDataField("SeqQCStatus", user);
+                String currentStatusLIMS = (String) seqQc.getDataField("SeqQCStatus", user);
                 // Failed status is terminal on Qc site and can't be changed.
-                if (QcStatus.FAILED.getText().equals(currentStatus)) {
+                if (QcStatus.FAILED.getText().equals(currentStatusLIMS)) {
                     log.info("QC status already failed and can't be updated from there via REST interface.");
-                    return "Sample status already failed, can only be updated in the LIMS.";
+                    return QcStatus.FAILED;
                 }
 
                 QcStatus qcStatus = QcStatus.fromString(status);
@@ -75,9 +76,9 @@ public class ToggleSampleQcStatus extends LimsTask {
 
                 if (qcStatus == QcStatus.RESEQUENCE_POOL || qcStatus == QcStatus.REPOOL_SAMPLE)
                     qcStatusAwareProcessAssigner.assign(dataRecordManager, user, seqQc, qcStatus);
-                log.info("SeqAnalysisSampleQC updating to " + status + " for record:" + recordId);
+
                 dataRecordManager.storeAndCommit("SeqAnalysisSampleQC updated to " + status, user);
-                log.info("SeqAnalysisSampleQC updated to " + status);
+                log.info("SeqAnalysisSampleQC updated to:" + status + " from:" + currentStatusLIMS);
             } else {
                 List<DataRecord> request = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
                 if (request.size() != 1) {
@@ -143,10 +144,9 @@ public class ToggleSampleQcStatus extends LimsTask {
         return status;
     }
 
-    static void setSeqAnalysisSampleQcStatus(DataRecord seqQc, QcStatus qcStatus, String status, User user)
+    protected static void setSeqAnalysisSampleQcStatus(DataRecord seqQc, QcStatus qcStatus, String status, User user)
             throws IoError, InvalidValue, NotFound, RemoteException {
         if (qcStatus == qcStatus.IGO_COMPLETE) {
-            log.info("Setting QC sample to IGO-Complete");
             seqQc.setDataField("PassedQc", Boolean.TRUE, user);
             seqQc.setDataField("SeqQCStatus", QcStatus.PASSED.getText(), user);
         } else {
