@@ -1,7 +1,8 @@
 package org.mskcc.limsrest;
 
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.apache.log4j.Logger;
+import org.apache.juli.logging.Log;
+import org.apache.juli.logging.LogFactory;
 import org.mskcc.domain.sample.BankedSample;
 import org.mskcc.domain.sample.Sample;
 import org.mskcc.limsrest.connection.ConnectionQueue;
@@ -56,7 +57,7 @@ import java.util.List;
 @EnableAutoConfiguration
 @PropertySource({"classpath:/connect.txt", "classpath:/app.properties"})
 public class App extends SpringBootServletInitializer {
-    private static final Logger LOGGER = Logger.getLogger(App.class);
+    private static final Log LOGGER = LogFactory.getLog(App.class);
 
     @Autowired
     private Environment env;

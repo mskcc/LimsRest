@@ -287,8 +287,8 @@ public class DMPSampleToCMOBankedSampleConverterTest {
 
         TumorType tumorType = new TumorType();
         tumorType.setCode(TUMOR_CODE);
-        tumorType.setTissueType(TISSUE_TYPE);
-        tumorType.setTumorType(TUMOR_TYPE);
+        tumorType.setTissue(TISSUE_TYPE);
+        tumorType.setName(TUMOR_TYPE);
         tumorTypes.add(tumorType);
 
         return tumorTypes;
