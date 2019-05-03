@@ -12,8 +12,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -55,17 +53,16 @@ public class GetSampleQc extends LimsTask {
                 annotateRequestSummary(rs, r); // fill in all data at request level except sample number
                 rs.setSampleNumber((new Short(r.getShortVal("SampleNumber", user))).intValue());
 
-                List<DataRecord> qcs;
-                qcs = this.dataRecordManager.queryDataRecords("SeqAnalysisSampleQC", "Request = '" + project + "'", this.user);
-                if (qcs.size() == 0){
-                    qcs = r.getDescendantsOfType("SeqAnalysisSampleQC", this.user);
+                List<DataRecord> qcRecords;
+                qcRecords = this.dataRecordManager.queryDataRecords("SeqAnalysisSampleQC", "Request = '" + project + "'", this.user);
+                if (qcRecords.size() == 0){
+                    qcRecords = r.getDescendantsOfType("SeqAnalysisSampleQC", this.user);
                 }
-                for (DataRecord qc : qcs) {
-                    log.info("QCING ");
+                for (DataRecord qc : qcRecords) {
+                    log.info("Getting QC Site records for sample.");
                     SampleSummary ss = new SampleSummary();
-                    SampleQcSummary qcSummary = new SampleQcSummary();
-                    DataRecord parentSample = (DataRecord)qc.getParentsOfType("Sample", this.user).get(0);
-                    annotateQcSummary(qcSummary, qc);
+                    DataRecord parentSample = qc.getParentsOfType("Sample", this.user).get(0);
+                    SampleQcSummary qcSummary = annotateQcSummary(qc);
                     if (parentSample != null) {
                         annotateSampleSummary(ss, parentSample);
                         try {
@@ -192,19 +189,13 @@ public class GetSampleQc extends LimsTask {
                 try {
                     addPooledNormals(rs, runSet);
                 } catch (Exception e) {
-                    log.error("Failed to add QC stats for pooled normals." + e.getMessage());
-                    e.printStackTrace();
+                    log.error("Failed to add QC stats for pooled normals." + e.getMessage(), e);
                 }
 
                 rss.add(rs);
             }
-
         } catch (Throwable e) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            log.info(e.getMessage());
-            log.info(sw.toString());
+            log.info(e.getMessage(), e);
             RequestSummary rs = RequestSummary.errorMessage(e.getMessage());
             rss.add(rs);
         }

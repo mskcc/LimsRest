@@ -12,6 +12,7 @@ import com.velox.sapioutils.client.standalone.VeloxStandalone;
 import com.velox.sapioutils.client.standalone.VeloxStandaloneManagerContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.limsapi.assignedprocess.QcStatus;
 import org.mskcc.limsrest.staticstrings.Messages;
 
 import java.io.PrintWriter;
@@ -71,9 +72,22 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
         return rs;
     }
 
-    public void annotateQcSummary(SampleQcSummary qcSummary, DataRecord qc) {
+    public SampleQcSummary annotateQcSummary(DataRecord qc) {
+
+        SampleQcSummary qcSummary = new SampleQcSummary();
         try {
             Map<String, Object> qcFields = qc.getFields(user);
+
+            String qcStatus = (String) qcFields.get("SeqQCStatus");
+            log.info("Building QC record with status: " + qcStatus);
+            //qcFields.forEach((key, value) -> System.out.println(key + ":" + value));
+
+            Boolean passedQc = (Boolean) qcFields.getOrDefault("PassedQc", Boolean.FALSE);
+            if (passedQc && "Passed".equals(qcStatus))
+                qcSummary.setQcStatus(QcStatus.IGO_COMPLETE.getText());
+            else
+                qcSummary.setQcStatus(qcStatus);
+
             runAndCatchNpe(() -> qcSummary.setRecordId((Long) qcFields.get("RecordId")));
             runAndCatchNpe(() -> qcSummary.setSampleName((String) qcFields.get("OtherSampleId")));
             runAndCatchNpe(() -> qcSummary.setBaitSet((String) qcFields.get("BaitSet")));
@@ -93,7 +107,6 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
             runAndCatchNpe(() -> qcSummary.setZeroCoveragePercent((Double) qcFields.get("ZeroCoveragePercent")));
             runAndCatchNpe(() -> qcSummary.setRun((String) qcFields.get("SequencerRunFolder")));
             runAndCatchNpe(() -> qcSummary.setReviewed((Boolean) qcFields.get("Reviewed")));
-            runAndCatchNpe(() -> qcSummary.setQcStatus((String) qcFields.get("SeqQCStatus")));
             runAndCatchNpe(() -> qcSummary.setPercentRibosomalBases((Double) qcFields.get("PercentRibosomalBases")));
             runAndCatchNpe(() -> qcSummary.setPercentCodingBases((Double) qcFields.get("PercentCodingBases")));
             runAndCatchNpe(() -> qcSummary.setPercentUtrBases((Double) qcFields.get("PercentUtrBases")));
@@ -101,13 +114,10 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
             runAndCatchNpe(() -> qcSummary.setPercentIntergenicBases((Double) qcFields.get("PercentIntergenicBases")));
             runAndCatchNpe(() -> qcSummary.setPercentMrnaBases((Double) qcFields.get("PercentMrnaBases")));
         } catch (Throwable e) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            log.info(e.getMessage());
-            log.info(sw.toString());
+            log.info(e.getMessage(), e);
             qcSummary.setSampleName(Messages.ERROR_IN + " Annotation:" + e.getMessage());
         }
+        return qcSummary;
     }
 
     public void annotateRequestSummary(RequestSummary rs, DataRecord request) {

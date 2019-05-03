@@ -7,9 +7,6 @@ import com.velox.sloan.cmo.staticstrings.datatypes.DT_Batch;
 import com.velox.sloan.cmo.staticstrings.datatypes.DT_Sample;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.domain.AssignedProcess;
-import org.mskcc.limsrest.limsapi.assignedprocess.config.AssignedProcessConfig;
-import org.mskcc.limsrest.limsapi.assignedprocess.config.AssignedProcessConfigFactory;
 
 import java.rmi.RemoteException;
 import java.util.Collections;
@@ -19,20 +16,24 @@ import java.util.Map;
 public class QcStatusAwareProcessAssigner {
     private final static Log log = LogFactory.getLog(QcStatusAwareProcessAssigner.class);
 
-    private AssignedProcessConfigFactory assignedProcessConfigFactory;
-    private AssignedProcessCreator assignedProcessCreator;
-
-    public QcStatusAwareProcessAssigner(AssignedProcessConfigFactory assignedProcessConfigFactory,
-                                        AssignedProcessCreator assignedProcessCreator) {
-        this.assignedProcessConfigFactory = assignedProcessConfigFactory;
-        this.assignedProcessCreator = assignedProcessCreator;
+    public QcStatusAwareProcessAssigner() {
     }
 
-    public void assign(DataRecordManager dataRecordManager, User user, DataRecord seqQc, String status) {
+    public static AssignedProcessConfig getProcessAssignerConfig(QcStatus qcStatus, DataRecord qc, User user) throws Exception {
+        switch (qcStatus) {
+            case RESEQUENCE_POOL:
+                return new ResequencePoolAssignedProcessConfig(qc, user);
+            case REPOOL_SAMPLE:
+                return new RepoolSampleAssignedAssignedProcessConfig(qc, user);
+            default:
+                throw new RuntimeException(String.format("Not supported qc status: %s", qcStatus));
+        }
+    }
+
+    public void assign(DataRecordManager dataRecordManager, User user, DataRecord seqQc, QcStatus status) {
         DataRecord sample = null;
         try {
-            AssignedProcessConfig assignedProcessConfig = assignedProcessConfigFactory.getProcessAssignerConfig
-                    (status, dataRecordManager, seqQc, user);
+            AssignedProcessConfig assignedProcessConfig = getProcessAssignerConfig(status, seqQc, user);
 
             sample = assignedProcessConfig.getSample();
             DataRecord assignedProcess = addAssignedProcess(dataRecordManager, user, assignedProcessConfig);
@@ -51,7 +52,7 @@ public class QcStatusAwareProcessAssigner {
         if (sample != null) {
             try {
                 sampleId = sample.getStringVal(DT_Sample.SAMPLE_ID, user);
-            } catch (Exception ommited) {
+            } catch (Exception omitted) {
             }
         }
         return sampleId;
@@ -73,7 +74,7 @@ public class QcStatusAwareProcessAssigner {
         AssignedProcess assignedProcess = assignedProcessConfig.getProcessToAssign();
 
         DataRecord sample = assignedProcessConfig.getSample();
-        Map<String, Object> assignedProcessMap = assignedProcessCreator.create(sample, assignedProcess, user);
+        Map<String, Object> assignedProcessMap = AssignedProcessCreator.create(sample, assignedProcess, user);
 
         log.info(String.format("Assigning process: %s to sample: %s (%s)", assignedProcess.getName(),
                 assignedProcessMap.get(DT_AssignedProcess.SAMPLE_ID), assignedProcessMap.get(DT_AssignedProcess
@@ -110,8 +111,7 @@ public class QcStatusAwareProcessAssigner {
         }
     }
 
-    private void validateAssignedProcessAdded(Map<String, Object> assignedProcessMap, List<DataRecord>
-            assignedProcesses) {
+    private void validateAssignedProcessAdded(Map<String, Object> assignedProcessMap, List<DataRecord> assignedProcesses) {
         if (assignedProcesses.size() == 0)
             throw new RuntimeException(String.format("Unable to assign process to sample: %s (%s)",
                     assignedProcessMap.get(DT_AssignedProcess.SAMPLE_ID), assignedProcessMap.get(DT_AssignedProcess

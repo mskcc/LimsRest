@@ -9,7 +9,6 @@ import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.*;
 import org.mskcc.limsrest.limsapi.assignedprocess.AssignedProcessCreator;
 import org.mskcc.limsrest.limsapi.assignedprocess.QcStatusAwareProcessAssigner;
-import org.mskcc.limsrest.limsapi.assignedprocess.config.AssignedProcessConfigFactory;
 import org.mskcc.limsrest.limsapi.cmoinfo.CorrectedCmoSampleIdGenerator;
 import org.mskcc.limsrest.limsapi.cmoinfo.SampleTypeCorrectedCmoSampleIdGenerator;
 import org.mskcc.limsrest.limsapi.cmoinfo.cellline.CellLineCmoSampleIdFormatter;
@@ -657,18 +656,6 @@ public class App extends SpringBootServletInitializer {
     @Scope("request")
     public DeleteBankedSample deleteBankedSample() {
         return new DeleteBankedSample(connectionQueue(), deleteBanked());
-    }
-
-    @Bean
-    @Scope("request")
-    public QcStatusAwareProcessAssigner qcStatusAwareProcessAssigner() {
-        return new QcStatusAwareProcessAssigner(processAssignerFactory(), assignedProcessCreator());
-    }
-
-    @Bean
-    @Scope("request")
-    public AssignedProcessConfigFactory processAssignerFactory() {
-        return new AssignedProcessConfigFactory();
     }
 
     @Bean
