@@ -1,7 +1,8 @@
 package org.mskcc.limsrest.limsapi.dmp;
 
 import com.velox.sapioutils.client.standalone.VeloxConnection;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.BankedSample;
 import org.mskcc.limsrest.limsapi.LimsTask;
 import org.mskcc.limsrest.limsapi.converter.ExternalToBankedSampleConverter;
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class GenerateBankedSamplesFromDMP extends LimsTask {
-    private static final Logger LOGGER = Logger.getLogger(GenerateBankedSamplesFromDMP.class);
+    private static final Log LOGGER = LogFactory.getLog(GenerateBankedSamplesFromDMP.class);
 
     private static final String TRACKING_ID_REGEX = "[a-zA-Z0-9_-]+";
     private final ExternalToBankedSampleConverter externalToBankedSampleConverter;

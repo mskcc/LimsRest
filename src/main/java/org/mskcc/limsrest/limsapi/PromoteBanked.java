@@ -12,6 +12,7 @@ import com.velox.sloan.cmo.utilities.UuidGenerator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.domain.Recipe;
 import org.mskcc.domain.sample.*;
 import org.mskcc.limsrest.limsapi.cmoinfo.CorrectedCmoSampleIdGenerator;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverter;
@@ -61,12 +62,16 @@ public class PromoteBanked extends LimsTask {
             .put(250, 160.0)
             .build();
 
+    private final List<String> humanRecipes;
+
     public PromoteBanked(CorrectedCmoIdConverter<BankedSample> bankedSampleToCorrectedCmoSampleIdConverter,
                          CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator,
-                         BankedSampleToSampleConverter bankedSampleToSampleConverter) {
+                         BankedSampleToSampleConverter bankedSampleToSampleConverter,
+                         List<String> humanRecipes) {
         this.bankedSampleToCorrectedCmoSampleIdConverter = bankedSampleToCorrectedCmoSampleIdConverter;
         this.correctedCmoSampleIdGenerator = correctedCmoSampleIdGenerator;
         this.bankedSampleToSampleConverter = bankedSampleToSampleConverter;
+        this.humanRecipes = humanRecipes;
     }
 
     /*
@@ -506,7 +511,7 @@ public class PromoteBanked extends LimsTask {
         try {
             validateBankedSample(bankedSample);
 
-            if (!isHumanSample(bankedSample)) {
+            if (!shouldGenerateCmoId(bankedSample)) {
                 log.info(String.format("Non-Human sample: %s with species: %s won't have cmo sample id generated.",
                         bankedSample.getUserSampleID(), bankedSample.getSpecies()));
                 return "";
@@ -530,8 +535,12 @@ public class PromoteBanked extends LimsTask {
         }
     }
 
+    private boolean shouldGenerateCmoId(BankedSample bankedSample) {
+        return isHumanSample(bankedSample) || humanRecipes.contains(bankedSample.getRecipe());
+    }
+
     private boolean isHumanSample(BankedSample bankedSample) {
-        return humanSamplePredicate.test(bankedSample);
+        return !StringUtils.isEmpty(bankedSample.getSpecies()) && humanSamplePredicate.test(bankedSample);
     }
 
     private CorrectedCmoSampleView createFrom(BankedSample bankedSample) throws

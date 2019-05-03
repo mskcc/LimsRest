@@ -1,7 +1,8 @@
 package org.mskcc.limsrest;
 
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.apache.log4j.Logger;
+import org.apache.juli.logging.Log;
+import org.apache.juli.logging.LogFactory;
 import org.mskcc.domain.sample.BankedSample;
 import org.mskcc.domain.sample.Sample;
 import org.mskcc.limsrest.connection.ConnectionQueue;
@@ -49,11 +50,13 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
 
+import java.util.List;
+
 @Configuration
 @EnableAutoConfiguration
 @PropertySource({"classpath:/connect.txt", "classpath:/app.properties"})
 public class App extends SpringBootServletInitializer {
-    private static final Logger LOGGER = Logger.getLogger(App.class);
+    private static final Log LOGGER = LogFactory.getLog(App.class);
 
     @Autowired
     private Environment env;
@@ -75,6 +78,9 @@ public class App extends SpringBootServletInitializer {
 
     @Value("${oncotreeRestUrl}")
     private String oncotreeRestUrl;
+
+    @Value("#{'${human.recipes}'.split(',')}")
+    private List<String> humanRecipes;
 
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
@@ -275,7 +281,8 @@ public class App extends SpringBootServletInitializer {
         return new PromoteBanked(
                 bankedSampleToCorrectedCmoSampleIdConverter(),
                 sampleTypeCorrectedCmoSampleIdGenerator(),
-                bankedSampleToSampleConverter()
+                bankedSampleToSampleConverter(),
+                humanRecipes
         );
     }
 
