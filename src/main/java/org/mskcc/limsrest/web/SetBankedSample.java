@@ -83,8 +83,6 @@ public class SetBankedSample {
         }
 
         Double ep = null;
-        Double rr = null;
-
         if (estimatedPurity != null) {
             try {
                 ep = new Double(estimatedPurity);
@@ -145,7 +143,7 @@ public class SetBankedSample {
                 Long.parseLong(transactionId));
 
         Future<Object> result = connQueue.submitTask(task);
-        String returnCode = "";
+        String returnCode;
 
         try {
             returnCode = (String) result.get();
