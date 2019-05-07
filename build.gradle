@@ -81,7 +81,7 @@ dependencies {
     compile ('javax.servlet:jstl:1.2')
     compile("com.fasterxml.jackson.core:jackson-databind")
     compile (group: 'com.google.guava', name: 'guava', version: '18.+')
-    compile 'org.mskcc.common:common-domain:2.12.0'
+    compile 'org.mskcc.common:common-domain:2.13.0-SNAPSHOT'
     compile 'com.velox.internalproducts:veloxapi:10.6.1-b777'
     compile 'com.velox.sloan.cmo:sloancmo:2.21.1-LIMS10.6.1_b84'
 
