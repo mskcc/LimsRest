@@ -5,11 +5,11 @@ import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.mskcc.domain.RequestSpecies;
 import org.mskcc.domain.sample.BankedSample;
-import org.mskcc.domain.sample.TumorType;
 import org.mskcc.limsrest.limsapi.converter.ExternalToBankedSampleConverter;
 import org.mskcc.limsrest.limsapi.dmp.CMOSampleRequestDetailsResponse;
 import org.mskcc.limsrest.limsapi.dmp.DMPSample;
-import org.mskcc.util.tumortype.TumorTypeRetriever;
+import org.mskcc.limsrest.limsapi.dmp.TumorType;
+import org.mskcc.limsrest.limsapi.dmp.TumorTypeRetriever;
 
 import java.util.HashMap;
 import java.util.Map;
