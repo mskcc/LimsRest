@@ -24,6 +24,7 @@ import org.mskcc.limsrest.limsapi.converter.ExternalToBankedSampleConverter;
 import org.mskcc.limsrest.limsapi.converter.SampleRecordToSampleConverter;
 import org.mskcc.limsrest.limsapi.dmp.*;
 import org.mskcc.limsrest.limsapi.dmp.converter.DMPSampleToCMOBankedSampleConverter;
+import org.mskcc.limsrest.limsapi.interops.GetInterOpsDataTask;
 import org.mskcc.limsrest.limsapi.dmp.TumorTypeRetriever;
 import org.mskcc.limsrest.limsapi.promote.BankedSampleToSampleConverter;
 import org.mskcc.limsrest.limsapi.retriever.LimsDataRetriever;
@@ -382,6 +383,18 @@ public class App extends SpringBootServletInitializer {
     @Scope("request")
     public PromoteBankedSample promoteBankedSample() {
         return new PromoteBankedSample(connectionQueue(), promoteBanked());
+    }
+
+    @Bean
+    @Scope("request")
+    public GetInterOpsData getInterOpsData() {
+        return new GetInterOpsData(connectionQueue(), getInterOpsDataTask());
+    }
+
+    @Bean
+    @Scope("request")
+    public GetInterOpsDataTask getInterOpsDataTask() {
+        return new GetInterOpsDataTask();
     }
 
     @Bean
