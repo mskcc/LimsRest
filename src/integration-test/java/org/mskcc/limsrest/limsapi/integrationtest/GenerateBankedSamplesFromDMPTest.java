@@ -12,10 +12,10 @@ import org.mskcc.limsrest.limsapi.converter.ExternalToBankedSampleConverter;
 import org.mskcc.limsrest.limsapi.dmp.DMPSample;
 import org.mskcc.limsrest.limsapi.dmp.DMPSamplesRetriever;
 import org.mskcc.limsrest.limsapi.dmp.GenerateBankedSamplesFromDMP;
+import org.mskcc.limsrest.limsapi.dmp.TumorTypeRetriever;
 import org.mskcc.limsrest.limsapi.dmp.converter.DMPSampleToCMOBankedSampleConverter;
 import org.mskcc.limsrest.limsapi.retriever.LimsDataRetriever;
 import org.mskcc.limsrest.limsapi.store.VeloxRecordSaver;
-import org.mskcc.util.tumortype.TumorTypeRetriever;
 
 import java.time.LocalDate;
 import java.util.*;

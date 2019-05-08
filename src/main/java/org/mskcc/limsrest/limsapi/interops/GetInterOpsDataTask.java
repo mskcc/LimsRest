@@ -5,8 +5,6 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.limsapi.LimsTask;
-import org.mskcc.limsrest.limsapi.PromoteBanked;
-import org.mskcc.util.VeloxConstants;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -27,7 +25,7 @@ public class GetInterOpsDataTask extends LimsTask {
     public Object execute(VeloxConnection conn) {
         List<Map<String, Object>> interOps = new ArrayList<>();
         try {
-            List<DataRecord> interOpsRecords = dataRecordManager.queryDataRecords(VeloxConstants.INTER_OPS_DATUM,
+            List<DataRecord> interOpsRecords = dataRecordManager.queryDataRecords("Interopsdatum",
                     "i_Run = '" + runId + "'", user);
 
             for (DataRecord interOpsRecord : interOpsRecords) {
