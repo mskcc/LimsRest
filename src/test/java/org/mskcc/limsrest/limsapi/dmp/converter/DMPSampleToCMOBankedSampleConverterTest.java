@@ -6,8 +6,9 @@ import org.mskcc.domain.sample.*;
 import org.mskcc.limsrest.limsapi.converter.ExternalToBankedSampleConverter;
 import org.mskcc.limsrest.limsapi.dmp.CMOSampleRequestDetailsResponse;
 import org.mskcc.limsrest.limsapi.dmp.DMPSample;
+import org.mskcc.limsrest.limsapi.dmp.TumorType;
+import org.mskcc.limsrest.limsapi.dmp.TumorTypeRetriever;
 import org.mskcc.util.Constants;
-import org.mskcc.util.tumortype.TumorTypeRetriever;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +29,7 @@ public class DMPSampleToCMOBankedSampleConverterTest {
     private long transactionId = 1234565436;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         when(tumorTypeRetriever.retrieve()).thenReturn(getTumorTypes());
         externalToBankedSampleConverter = new DMPSampleToCMOBankedSampleConverter(tumorTypeRetriever);
     }
@@ -287,11 +288,11 @@ public class DMPSampleToCMOBankedSampleConverterTest {
 
         TumorType tumorType = new TumorType();
         tumorType.setCode(TUMOR_CODE);
-        tumorType.setTissueType(TISSUE_TYPE);
-        tumorType.setTumorType(TUMOR_TYPE);
+        tumorType.setTissue(TISSUE_TYPE);
+        tumorType.setName(TUMOR_TYPE);
+        //tumorType.setTumorType(TUMOR_TYPE);
         tumorTypes.add(tumorType);
 
         return tumorTypes;
     }
-
 }

@@ -1,14 +1,15 @@
 package org.mskcc.limsrest.limsapi.dmp.converter;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
+import org.apache.juli.logging.Log;
+import org.apache.juli.logging.LogFactory;
 import org.mskcc.domain.RequestSpecies;
 import org.mskcc.domain.sample.BankedSample;
-import org.mskcc.domain.sample.TumorType;
 import org.mskcc.limsrest.limsapi.converter.ExternalToBankedSampleConverter;
 import org.mskcc.limsrest.limsapi.dmp.CMOSampleRequestDetailsResponse;
 import org.mskcc.limsrest.limsapi.dmp.DMPSample;
-import org.mskcc.util.tumortype.TumorTypeRetriever;
+import org.mskcc.limsrest.limsapi.dmp.TumorType;
+import org.mskcc.limsrest.limsapi.dmp.TumorTypeRetriever;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,10 +18,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DMPSampleToCMOBankedSampleConverter implements ExternalToBankedSampleConverter<DMPSample> {
+    private static final Log LOGGER = LogFactory.getLog(DMPSampleToCMOBankedSampleConverter.class);
+
     public static final String BARCODE_ID_REGEX = "([A-Za-z]+)(0*)([0-9]+)";
     public static final String PATIENT_ID_REGEX = "(P-[0-9]{7})-.*";
     public static final int ROW_INDEX_OFFSET = 100;
-    private static final Logger LOGGER = Logger.getLogger(DMPSampleToCMOBankedSampleConverter.class);
     private static final String WELL_POSITION_REGEX = "([a-zA-Z])([0-9]+)";
     private Map<String, String> tumorTypeToCode;
 
@@ -32,7 +34,7 @@ public class DMPSampleToCMOBankedSampleConverter implements ExternalToBankedSamp
         Map<String, String> tumorTypeToCode = new HashMap<>();
         try {
             for (TumorType tumorType : tumorTypeRetriever.retrieve()) {
-                tumorTypeToCode.put(String.format("%s:%s", tumorType.getTissueType(), tumorType.getTumorType()),
+                tumorTypeToCode.put(String.format("%s:%s", tumorType.getTissue(), tumorType.getName()),
                         tumorType.getCode());
             }
 

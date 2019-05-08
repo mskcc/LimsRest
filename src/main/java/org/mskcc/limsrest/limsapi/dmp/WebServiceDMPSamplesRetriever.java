@@ -1,6 +1,7 @@
 package org.mskcc.limsrest.limsapi.dmp;
 
-import org.apache.log4j.Logger;
+import org.apache.juli.logging.Log;
+import org.apache.juli.logging.LogFactory;
 import org.mskcc.limsrest.staticstrings.Constants;
 import org.springframework.web.client.RestTemplate;
 
@@ -9,7 +10,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class WebServiceDMPSamplesRetriever implements DMPSamplesRetriever {
-    private static final Logger LOGGER = Logger.getLogger(WebServiceDMPSamplesRetriever.class);
+    private static final Log LOGGER = LogFactory.getLog(WebServiceDMPSamplesRetriever.class);
 
     private final String restServiceUrl;
 

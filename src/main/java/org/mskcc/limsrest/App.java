@@ -1,14 +1,13 @@
 package org.mskcc.limsrest;
 
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.apache.log4j.Logger;
+import org.apache.juli.logging.Log;
+import org.apache.juli.logging.LogFactory;
 import org.mskcc.domain.sample.BankedSample;
 import org.mskcc.domain.sample.Sample;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.*;
 import org.mskcc.limsrest.limsapi.assignedprocess.AssignedProcessCreator;
-import org.mskcc.limsrest.limsapi.assignedprocess.QcStatusAwareProcessAssigner;
-import org.mskcc.limsrest.limsapi.assignedprocess.config.AssignedProcessConfigFactory;
 import org.mskcc.limsrest.limsapi.cmoinfo.CorrectedCmoSampleIdGenerator;
 import org.mskcc.limsrest.limsapi.cmoinfo.SampleTypeCorrectedCmoSampleIdGenerator;
 import org.mskcc.limsrest.limsapi.cmoinfo.cellline.CellLineCmoSampleIdFormatter;
@@ -26,6 +25,7 @@ import org.mskcc.limsrest.limsapi.converter.SampleRecordToSampleConverter;
 import org.mskcc.limsrest.limsapi.dmp.*;
 import org.mskcc.limsrest.limsapi.dmp.converter.DMPSampleToCMOBankedSampleConverter;
 import org.mskcc.limsrest.limsapi.interops.GetInterOpsDataTask;
+import org.mskcc.limsrest.limsapi.dmp.TumorTypeRetriever;
 import org.mskcc.limsrest.limsapi.promote.BankedSampleToSampleConverter;
 import org.mskcc.limsrest.limsapi.retriever.LimsDataRetriever;
 import org.mskcc.limsrest.limsapi.retriever.VeloxLimsDataRetriever;
@@ -34,8 +34,6 @@ import org.mskcc.limsrest.limsapi.store.VeloxRecordSaver;
 import org.mskcc.limsrest.web.*;
 import org.mskcc.util.notificator.Notificator;
 import org.mskcc.util.notificator.SlackNotificator;
-import org.mskcc.util.tumortype.OncotreeTumorTypeRetriever;
-import org.mskcc.util.tumortype.TumorTypeRetriever;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,11 +49,13 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
 
+import java.util.List;
+
 @Configuration
 @EnableAutoConfiguration
 @PropertySource({"classpath:/connect.txt", "classpath:/app.properties"})
 public class App extends SpringBootServletInitializer {
-    private static final Logger LOGGER = Logger.getLogger(App.class);
+    private static final Log LOGGER = LogFactory.getLog(App.class);
 
     @Autowired
     private Environment env;
@@ -77,6 +77,9 @@ public class App extends SpringBootServletInitializer {
 
     @Value("${oncotreeRestUrl}")
     private String oncotreeRestUrl;
+
+    @Value("#{'${human.recipes}'.split(',')}")
+    private List<String> humanRecipes;
 
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
@@ -277,7 +280,8 @@ public class App extends SpringBootServletInitializer {
         return new PromoteBanked(
                 bankedSampleToCorrectedCmoSampleIdConverter(),
                 sampleTypeCorrectedCmoSampleIdGenerator(),
-                bankedSampleToSampleConverter()
+                bankedSampleToSampleConverter(),
+                humanRecipes
         );
     }
 
@@ -663,18 +667,6 @@ public class App extends SpringBootServletInitializer {
     @Scope("request")
     public DeleteBankedSample deleteBankedSample() {
         return new DeleteBankedSample(connectionQueue(), deleteBanked());
-    }
-
-    @Bean
-    @Scope("request")
-    public QcStatusAwareProcessAssigner qcStatusAwareProcessAssigner() {
-        return new QcStatusAwareProcessAssigner(processAssignerFactory(), assignedProcessCreator());
-    }
-
-    @Bean
-    @Scope("request")
-    public AssignedProcessConfigFactory processAssignerFactory() {
-        return new AssignedProcessConfigFactory();
     }
 
     @Bean
