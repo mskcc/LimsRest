@@ -22,8 +22,7 @@ import java.util.Map;
  * 
  */
 @Service
-public class GetHiseq  extends LimsTask 
-{
+public class GetHiseq  extends LimsTask {
    private Log log = LogFactory.getLog(GetHiseq.class);
   protected String run; 
   protected String[] projects;
@@ -39,7 +38,6 @@ public class GetHiseq  extends LimsTask
   }
 
 
- //execute the velox call
 @PreAuthorize("hasRole('READ')")
 @Override
  public Object execute(VeloxConnection conn){
@@ -284,5 +282,4 @@ public class GetHiseq  extends LimsTask
 
   return runResults; 
  }
-
 }
