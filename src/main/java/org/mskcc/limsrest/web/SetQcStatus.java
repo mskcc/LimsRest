@@ -8,17 +8,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.concurrent.Future;
 
 
 @RestController
 public class SetQcStatus {
-
+    private Log log = LogFactory.getLog(SetQcStatus.class);
     private final ConnectionQueue connQueue; 
     private final ToggleSampleQcStatus task;
-    private Log log = LogFactory.getLog(SetQcStatus.class);
    
     public SetQcStatus( ConnectionQueue connQueue, ToggleSampleQcStatus toggle){
         this.connQueue = connQueue;

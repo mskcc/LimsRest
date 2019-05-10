@@ -1,23 +1,18 @@
 package org.mskcc.limsrest.web;
 
-import java.util.concurrent.Future;
-import java.util.LinkedList;
-import java.io.FileWriter;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
-import org.springframework.stereotype.Service;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.limsapi.GetBillingReport;
+import org.mskcc.limsrest.limsapi.RunSummary;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import org.mskcc.limsrest.limsapi.*;
-import org.mskcc.limsrest.connection.*;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.LinkedList;
+import java.util.concurrent.Future;
 
 
 @RestController
@@ -51,6 +46,4 @@ public class BillingReport {
        }
        return runSums;
    }
-
 }
-
