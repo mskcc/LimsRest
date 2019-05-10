@@ -9,41 +9,36 @@ import java.util.List;
 
 /**
  * Find all samples associated with a project/request 
- *     */
+ */
 public class GetProjectDetails extends LimsTask {
-  private Log log = LogFactory.getLog(GetProjectDetails.class);
+    private Log log = LogFactory.getLog(GetProjectDetails.class);
+    protected String project;
 
-  protected String project;
+    public void init(String project) {
+        this.project = project;
+    }
 
+    @Override
+    public Object execute(VeloxConnection conn) {
+        ProjectSummary ps = new ProjectSummary();
+        RequestDetailed rd = new RequestDetailed(project);
 
-  public void init(String project){
-    this.project = project;
-  }
-
- //execute the velox call
- @Override
- public Object execute(VeloxConnection conn){
-// private void runProgram(User apiUser, DataRecordManager dataRecordManager) {
-   ProjectSummary ps = new ProjectSummary();
-   RequestDetailed rd = new RequestDetailed(project);
-
-   try {
-     List<DataRecord> limsRequestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + project  +"'", user);
-     for(DataRecord r: limsRequestList){
-        annotateRequestDetailed(rd, r);
-        List<DataRecord> parents = r.getParentsOfType("Project", user);
-        if(parents.size() > 0){
-           annotateProjectSummary(ps, parents.get(0)) ;
+        try {
+            List<DataRecord> limsRequestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + project + "'", user);
+            for (DataRecord r : limsRequestList) {
+                annotateRequestDetailed(rd, r);
+                List<DataRecord> parents = r.getParentsOfType("Project", user);
+                if (parents.size() > 0) {
+                    annotateProjectSummary(ps, parents.get(0));
+                }
+                ps.addRequest(rd);
+            }
+        } catch (Throwable e) {
+            log.info(e.getMessage());
+            rd = RequestDetailed.errorMessage(e.getMessage());
+            ps.addRequest(rd);
         }
-        ps.addRequest(rd);
-     }
-        
-   } catch (Throwable e) {
-       log.info(e.getMessage());
-        rd = RequestDetailed.errorMessage(e.getMessage());
-        ps.addRequest(rd);
-   }
- 
-    return ps;
-  }
+
+        return ps;
+    }
 }
