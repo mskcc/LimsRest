@@ -55,7 +55,6 @@ import java.util.List;
 @EnableAutoConfiguration
 @PropertySource({"classpath:/connect.txt", "classpath:/app.properties"})
 public class App extends SpringBootServletInitializer {
-    private static final Log LOGGER = LogFactory.getLog(App.class);
 
     @Autowired
     private Environment env;
@@ -95,6 +94,16 @@ public class App extends SpringBootServletInitializer {
         return new ConnectionQueue(host, port, user, pword, guid);
     }
 
+    @Bean
+    @Scope("request")
+    public GetIGOCompleteQCTask getIGOCompleteQCTask() {
+        return new GetIGOCompleteQCTask();
+    }
+    @Bean
+    @Scope("request")
+    public GetIGOCompleteQC IGOCompleteQC() {
+        return new GetIGOCompleteQC(connectionQueue(), getIGOCompleteQCTask());
+    }
 
     @Bean
     @Scope("request")

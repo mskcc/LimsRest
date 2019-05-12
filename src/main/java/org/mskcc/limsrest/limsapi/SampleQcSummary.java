@@ -3,6 +3,11 @@ package org.mskcc.limsrest.limsapi;
 import com.fasterxml.jackson.annotation.*;
 
 public class SampleQcSummary {
+    private String sampleName; // OtherSampleId
+    private String run;
+    private String qcStatus;
+    private Long createDate;
+
     private String baitSet;
     private String qcUnits;
     private String quantUnits;
@@ -30,11 +35,8 @@ public class SampleQcSummary {
     private long recordId;
     private double zeroCoveragePercent;
     private Long totalReads;
-    private String run;
-    private String sampleName;
     private boolean reviewed;
-    private String qcStatus;
-    private Long createDate;
+
 
     public SampleQcSummary() {
         sampleName = "ERROR";
