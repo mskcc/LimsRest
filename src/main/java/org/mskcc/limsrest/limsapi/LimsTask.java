@@ -83,6 +83,8 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
             //qcFields.forEach((key, value) -> System.out.println(key + ":" + value));
 
             Boolean passedQc = (Boolean) qcFields.getOrDefault("PassedQc", Boolean.FALSE);
+            if (passedQc == null)
+                passedQc = Boolean.FALSE;
             if (passedQc && "Passed".equals(qcStatus))
                 qcSummary.setQcStatus(QcStatus.IGO_COMPLETE.getText());
             else
