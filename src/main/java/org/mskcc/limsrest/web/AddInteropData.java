@@ -77,7 +77,7 @@ public class AddInteropData {
     private Map<String, Object> singleLaneSummary(String run, JsonNode node) {
         Map<String, Object> fields = new HashMap<>();
         fields.put("i_Run", run);
-        // fields.put("i_Runwithnumberprefixremoved", runname);
+        fields.put("i_Runwithnumberprefixremoved", node.get("runname").textValue());
         fields.put("i_Read", node.get("read").intValue());
         fields.put("i_Lane", node.get("lane").intValue());
         fields.put("i_Density", node.get("density").doubleValue());
@@ -91,7 +91,7 @@ public class AddInteropData {
         fields.put("i_Aligned_stddev", node.get("aligned_stddev").doubleValue());
         fields.put("i_ErrorRate", node.get("errorrate").doubleValue());
         fields.put("i_Errorrate_stddev", node.get("errorrate_stddev").doubleValue());
+        fields.put("i_Percent_Occupied", node.get("percent_occupied").doubleValue());
         return fields;
     }
-
 }
