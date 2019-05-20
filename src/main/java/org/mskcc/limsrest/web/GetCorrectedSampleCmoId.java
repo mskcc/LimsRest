@@ -104,8 +104,7 @@ public class GetCorrectedSampleCmoId {
             correctedCmoSampleView.setNucleidAcid(NucleicAcid.fromValue(nucleidAcid));
             correctedCmoSampleView.setCounter(counter);
 
-            log.info(String.format("Starting to generate sample cmo id for cmo sample view: %s",
-                    correctedCmoSampleView));
+            log.info(String.format("Starting to generate sample cmo id for cmo sample: %s", correctedCmoSampleView));
 
             log.info("Creating Generate sample cmo id task");
             task.init(correctedCmoSampleView);
@@ -219,8 +218,7 @@ public class GetCorrectedSampleCmoId {
         try {
             validate(correctedCmoSampleViews);
             for (CorrectedCmoSampleView correctedCmoSampleView : correctedCmoSampleViews) {
-                log.info(String.format("Starting to generate sample cmo id for sample: %s", correctedCmoSampleViews
-                        .toString()));
+                log.info(String.format("Starting to generate sample cmo id for sample: %s", correctedCmoSampleViews.toString()));
 
                 log.info("Creating Generate sample cmo id task");
                 task.init(correctedCmoSampleView);
@@ -234,8 +232,7 @@ public class GetCorrectedSampleCmoId {
                 cmoSampleIds.put(correctedCmoSampleView.getId(), correctedSampleCmoId);
             }
         } catch (Exception e) {
-            log.error(String.format("Error while generating CMO Sample Id for cmo sample view: %s",
-                    correctedCmoSampleViews.toString()), e);
+            log.error(String.format("CMO Sample Id error: %s", correctedCmoSampleViews.toString()), e);
 
             MultiValueMap<String, String> headers = new HttpHeaders();
             headers.add("ERRORS", e.getLocalizedMessage());
@@ -263,8 +260,8 @@ public class GetCorrectedSampleCmoId {
                         sampleToErrors.put(sampleId, "Patient id is empty");
                     if (view.getSpecimenType() == null)
                         sampleToErrors.put(sampleId, "Specimen type is empty");
-                    if (view.getNucleidAcid() == null)
-                        sampleToErrors.put(sampleId, "Nucleid acid is empty");
+                    // skipping nucleic acid validation since it is not always required
+                    // see Confluence "CMO Patient ID and Sample ID generation"
                 }
             }
         }
