@@ -26,7 +26,7 @@ public class GetInterOpsDataTask extends LimsTask {
         List<Map<String, Object>> interOps = new ArrayList<>();
         try {
             List<DataRecord> interOpsRecords = dataRecordManager.queryDataRecords("Interopsdatum",
-                    "i_Run = '" + runId + "'", user);
+                    "i_Runwithnumberprefixremoved = '" + runId + "'", user);
 
             for (DataRecord interOpsRecord : interOpsRecords) {
                 Map<String, Object> fields = interOpsRecord.getFields(user);
@@ -35,7 +35,6 @@ public class GetInterOpsDataTask extends LimsTask {
         } catch (Exception e) {
             log.error(String.format("Error while retrieving InterOpsDatum for run id: %s", runId), e);
         }
-
         return interOps;
     }
 }
