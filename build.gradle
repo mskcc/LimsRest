@@ -108,7 +108,7 @@ task wrapper(type: Wrapper) {
 bootRun {
     if (System.getProperty('DEBUG', 'false') == 'true')
         jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5006'
-    systemProperty 'server.port', '5002'
+    systemProperty 'server.port', '5007'
 }
 
 tasks.withType(Test) {
