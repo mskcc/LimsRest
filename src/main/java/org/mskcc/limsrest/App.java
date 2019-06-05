@@ -5,6 +5,7 @@ import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.mskcc.domain.sample.BankedSample;
 import org.mskcc.domain.sample.Sample;
+import org.mskcc.limsrest.config.AppConfig;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.*;
 import org.mskcc.limsrest.limsapi.assignedprocess.AssignedProcessCreator;
@@ -41,10 +42,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.web.SpringBootServletInitializer;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.*;
 import org.springframework.core.env.Environment;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
@@ -54,6 +52,7 @@ import java.util.List;
 @Configuration
 @EnableAutoConfiguration
 @PropertySource({"classpath:/connect.txt", "classpath:/app.properties"})
+@Import(AppConfig.class)
 public class App extends SpringBootServletInitializer {
 
     @Autowired
