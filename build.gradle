@@ -95,7 +95,9 @@ dependencies {
     testCompile ('io.rest-assured:rest-assured:3.0.1')
     testCompile ("junit:junit")
     testCompile ("org.mockito:mockito-core:1.10.19")
-    testCompile (group: 'org.springframework', name: 'spring-test', version: '4.1.7.RELEASE')
+    compile (group: 'org.springframework', name: 'spring-test', version: '4.1.7.RELEASE')
+    compile('org.springframework.boot:spring-boot-starter-test')
+    compile('org.junit.jupiter:junit-jupiter:5.4.0')
     compile 'org.assertj:assertj-core:3.9.0'
 }
 
@@ -106,7 +108,7 @@ task wrapper(type: Wrapper) {
 bootRun {
     if (System.getProperty('DEBUG', 'false') == 'true')
         jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5006'
-    systemProperty 'server.port', '5007'
+    systemProperty 'server.port', '5002'
 }
 
 tasks.withType(Test) {
