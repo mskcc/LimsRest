@@ -44,12 +44,13 @@ import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mskcc.domain.Recipe.*;
 import static org.mskcc.domain.sample.NucleicAcid.DNA;
 import static org.mskcc.domain.sample.NucleicAcid.RNA;
 import static org.mskcc.domain.sample.SampleClass.*;
 import static org.mskcc.domain.sample.SampleOrigin.*;
-import static org.mskcc.domain.sample.SpecimenType.*;
 import static org.mskcc.domain.sample.SpecimenType.SALIVA;
+import static org.mskcc.domain.sample.SpecimenType.*;
 
 public class PromoteBankedTest {
     private static final Log LOG = LogFactory.getLog(PromoteBankedTest.class);
@@ -78,6 +79,7 @@ public class PromoteBankedTest {
     private static final String requestId1 = "PromoteBankedTest_A";
     private static final String normalizedRequestId1 = "PromoteBankedTestA";
     private static final String requestId2 = "PromoteBankedTest_B";
+    private static final String appPropertyFile = "/app.properties";
     private static PromoteBanked promoteBanked;
     private final String cmoPatientId1 = "C-promoteBankedTestPatient1";
     private final String cmoPatientId2 = "C-promoteBankedTestPatient2";
@@ -94,8 +96,18 @@ public class PromoteBankedTest {
     private DataRecord projectRecord;
     private BankedSampleToSampleConverter bankedSampleToSampleConverter = new BankedSampleToSampleConverter();
     private int id = 0;
-    private static final String appPropertyFile = "/app.properties";
     private Notificator slackNotificator;
+
+    List<String> humanRecipes = Arrays.asList(
+            IMPACT_341.getValue(),
+            IMPACT_410.getValue(),
+            IMPACT_410.getValue(),
+            IMPACT_410_PLUS.getValue(),
+            IMPACT_468.getValue(),
+            HEME_PACT_V_3.getValue(),
+            HEME_PACT_V_4.getValue(),
+            MSK_ACCESS_V1.getValue()
+    );
 
     @Before
     public void setUp() throws Exception {
@@ -559,6 +571,7 @@ public class PromoteBankedTest {
         initPromoteBanked(bankedToPromote2, requestId2, serviceId, projectId);
         promoteBanked.call();
 
+
         //then
         List<BankedWithCorrectedCmoId> req1CorrectedCmoIds = Arrays.asList(
                 new BankedWithCorrectedCmoId(bankedToPromote1.get(0), String.format("%s-%s", SAMPLE_ID1,
@@ -871,7 +884,7 @@ public class PromoteBankedTest {
         BankedSampleToCorrectedCmoSampleIdConverter bankedSampleToCorrectedCmoSampleIdConverter = new
                 BankedSampleToCorrectedCmoSampleIdConverter();
         return new PromoteBanked(bankedSampleToCorrectedCmoSampleIdConverter,
-                getCorrectedCmoSampleIdGenerator(), bankedSampleToSampleConverter);
+                getCorrectedCmoSampleIdGenerator(), bankedSampleToSampleConverter, humanRecipes);
     }
 
     private String getResourceFile(String connectionFile) throws Exception {
@@ -919,16 +932,6 @@ public class PromoteBankedTest {
         for (DataRecord createdBankedRecord : createdBankedRecords) {
             dataRecordManager.deleteDataRecords(Arrays.asList(createdBankedRecord), null, true, user);
             LOG.info(String.format("Deleted banked sample record: %s", createdBankedRecord.getRecordId()));
-        }
-    }
-
-    class BankedWithCorrectedCmoId {
-        private final DataRecord bankedDataRecord;
-        private final String cmoId;
-
-        BankedWithCorrectedCmoId(DataRecord bankedDataRecord, String cmoId) {
-            this.bankedDataRecord = bankedDataRecord;
-            this.cmoId = cmoId;
         }
     }
 
@@ -988,6 +991,16 @@ public class PromoteBankedTest {
         dataRecUtilManager.deleteRecords(bankedRecords, true);
 
         dataRecordManager.storeAndCommit("Deleted records for promoted banked test", user);
+    }
+
+    class BankedWithCorrectedCmoId {
+        private final DataRecord bankedDataRecord;
+        private final String cmoId;
+
+        BankedWithCorrectedCmoId(DataRecord bankedDataRecord, String cmoId) {
+            this.bankedDataRecord = bankedDataRecord;
+            this.cmoId = cmoId;
+        }
     }
 
 }

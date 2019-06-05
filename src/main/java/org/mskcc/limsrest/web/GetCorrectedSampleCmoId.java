@@ -1,5 +1,7 @@
 package org.mskcc.limsrest.web;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -14,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -101,8 +104,7 @@ public class GetCorrectedSampleCmoId {
             correctedCmoSampleView.setNucleidAcid(NucleicAcid.fromValue(nucleidAcid));
             correctedCmoSampleView.setCounter(counter);
 
-            log.info(String.format("Starting to generate sample cmo id for cmo sample view: %s",
-                    correctedCmoSampleView));
+            log.info(String.format("Starting to generate sample cmo id for cmo sample: %s", correctedCmoSampleView));
 
             log.info("Creating Generate sample cmo id task");
             task.init(correctedCmoSampleView);
@@ -214,9 +216,9 @@ public class GetCorrectedSampleCmoId {
 
         Map<String, String> cmoSampleIds = new HashMap<>();
         try {
+            validate(correctedCmoSampleViews);
             for (CorrectedCmoSampleView correctedCmoSampleView : correctedCmoSampleViews) {
-                log.info(String.format("Starting to generate sample cmo id for sample: %s", correctedCmoSampleViews
-                        .toString()));
+                log.info(String.format("Starting to generate sample cmo id for sample: %s", correctedCmoSampleViews.toString()));
 
                 log.info("Creating Generate sample cmo id task");
                 task.init(correctedCmoSampleView);
@@ -230,17 +232,51 @@ public class GetCorrectedSampleCmoId {
                 cmoSampleIds.put(correctedCmoSampleView.getId(), correctedSampleCmoId);
             }
         } catch (Exception e) {
-            log.error(String.format("Error while generating CMO Sample Id for cmo sample view: %s",
-                    correctedCmoSampleViews.toString()), e);
+            log.error(String.format("CMO Sample Id error: %s", correctedCmoSampleViews.toString()), e);
 
             MultiValueMap<String, String> headers = new HttpHeaders();
-            headers.add("ERRORS", String.format("Error while generating CMO Sample Id for sample: %s. Cause: " +
-                    "%s", correctedCmoSampleViews, ExceptionUtils.getRootCauseMessage(e)));
+            headers.add("ERRORS", e.getLocalizedMessage());
 
             return new ResponseEntity<>(headers, HttpStatus.OK);
         }
 
         return ResponseEntity.ok(cmoSampleIds);
+    }
+
+    private void validate(CorrectedCmoSampleView[] correctedCmoSampleViews) {
+        StringBuilder error = new StringBuilder();
+        Multimap<String, String> sampleToErrors = HashMultimap.create();
+
+        for (CorrectedCmoSampleView view : correctedCmoSampleViews) {
+            String sampleId = view.getSampleId();
+            if (sampleId.isEmpty())
+                error.append("Sample id is empty").append(System.lineSeparator());
+            else {
+                if (view.getSpecimenType() == SpecimenType.CELLLINE) {
+                    if (view.getRequestId().isEmpty())
+                        sampleToErrors.put(sampleId, "Request id is empty");
+                } else {
+                    if (view.getPatientId().isEmpty())
+                        sampleToErrors.put(sampleId, "Patient id is empty");
+                    if (view.getSpecimenType() == null)
+                        sampleToErrors.put(sampleId, "Specimen type is empty");
+                    // skipping nucleic acid validation since it is not always required
+                    // see Confluence "CMO Patient ID and Sample ID generation"
+                }
+            }
+        }
+
+        for (Map.Entry<String, Collection<String>> entry : sampleToErrors.asMap().entrySet()) {
+            if (entry.getValue().size() > 0) {
+                error.append(entry.getKey() + ":").append(System.lineSeparator());
+                for (String e : entry.getValue()) {
+                    error.append("" + e).append(", ");
+                }
+            }
+        }
+
+        if (error.length() > 0)
+            throw new RuntimeException(error.toString());
     }
 
     private class IncorrectSampleIgoIdFormatException extends RuntimeException {

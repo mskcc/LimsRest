@@ -43,8 +43,17 @@ public class PatientSamplesWithCmoInfoRetriever implements PatientSamplesRetriev
 
         try {
             List<CorrectedCmoSampleView> cmoSampleViews = new ArrayList<>();
-            for (DataRecord sampleRecord : getSampleRecords(patientId, dataRecordManager, user))
-                cmoSampleViews.add(getCorrectedCmoSampleView(sampleRecord, user));
+            StringBuilder error = new StringBuilder();
+            for (DataRecord sampleRecord : getSampleRecords(patientId, dataRecordManager, user)) {
+                try {
+                    cmoSampleViews.add(getCorrectedCmoSampleView(sampleRecord, user));
+                } catch (Exception e) {
+                    error.append(e.getMessage()).append(", ");
+                }
+            }
+
+            if (error.length() > 0)
+                throw new RuntimeException(error.toString());
 
             LOGGER.info(String.format("Found %d samples for patient %s: %s", cmoSampleViews.size(), patientId,
                     cmoSampleViews));
@@ -86,7 +95,7 @@ public class PatientSamplesWithCmoInfoRetriever implements PatientSamplesRetriev
             Sample sample = sampleRecordToSampleConverter.convert(sampleRecord, user);
             return sampleToCorrectedCmoIdConverter.convert(sample);
         } catch (Exception e) {
-            throw new LimsException(String.format("Sample with id: %s error: %s", sampleId, e.getMessage()), e);
+            throw new LimsException(e.getMessage(), e);
         }
     }
 }

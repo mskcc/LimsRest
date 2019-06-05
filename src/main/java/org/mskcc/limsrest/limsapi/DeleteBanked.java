@@ -24,8 +24,7 @@ import java.util.List;
  * 
  */
 @Service
-public class DeleteBanked  extends LimsTask 
-{
+public class DeleteBanked  extends LimsTask {
    String serviceId;
    String userId;
    
@@ -112,7 +111,6 @@ public class DeleteBanked  extends LimsTask
   }
   else{  
     return Messages.FAILURE_IN + " Delete";
-
   }
   }
 }

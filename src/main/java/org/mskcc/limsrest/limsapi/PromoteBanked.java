@@ -12,6 +12,7 @@ import com.velox.sloan.cmo.utilities.UuidGenerator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.domain.Recipe;
 import org.mskcc.domain.sample.*;
 import org.mskcc.limsrest.limsapi.cmoinfo.CorrectedCmoSampleIdGenerator;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverter;
@@ -26,9 +27,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -56,23 +54,62 @@ public class PromoteBanked extends LimsTask {
     boolean dryrun = false;
     private Multimap<String, String> errors = HashMultimap.create();
     private Map<Integer, Double> coverageToSeqReqWES = ImmutableMap.<Integer, Double>builder()
-            .put(30,20.0)
-            .put(70,45.0)
-            .put(100,60.0)
-            .put(150,95.0)
-            .put(200,120.0)
-            .put(250,160.0)
+            .put(30, 20.0)
+            .put(70, 45.0)
+            .put(100, 60.0)
+            .put(150, 95.0)
+            .put(200, 120.0)
+            .put(250, 160.0)
             .build();
+
+    private final List<String> humanRecipes;
 
     public PromoteBanked(CorrectedCmoIdConverter<BankedSample> bankedSampleToCorrectedCmoSampleIdConverter,
                          CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator,
-                         BankedSampleToSampleConverter bankedSampleToSampleConverter) {
+                         BankedSampleToSampleConverter bankedSampleToSampleConverter,
+                         List<String> humanRecipes) {
         this.bankedSampleToCorrectedCmoSampleIdConverter = bankedSampleToCorrectedCmoSampleIdConverter;
         this.correctedCmoSampleIdGenerator = correctedCmoSampleIdGenerator;
         this.bankedSampleToSampleConverter = bankedSampleToSampleConverter;
+        this.humanRecipes = humanRecipes;
     }
 
-    public void init(String[] bankedIds, String projectId, String requestId, String serviceId, String igoUser, String dryrun) {
+    /*
+     * Automated addition of read length, minimum number of requested reads, and coverage to seqrequirement table
+     * on promote for IMPACT & HemePACT
+     * <BR>
+     * Requested during LIMS meeting 2018-8-28
+     */
+    public static void setSeqReq(String recipe, String tumorOrNormal, Map<String, Object> seqRequirementMap) {
+        if (!"Tumor".equals(tumorOrNormal) && !"Normal".equals(tumorOrNormal))
+            return;
+
+        String seqRunType = "PE100";
+        seqRequirementMap.put("SequencingRunType", seqRunType);
+
+        int coverageTarget = 500;
+        boolean normal = "Normal".equals(tumorOrNormal);
+        if (normal)
+            coverageTarget = 250;
+        seqRequirementMap.put("CoverageTarget", coverageTarget);
+
+        double requestedReads;
+        if (recipe.contains("Heme")) {
+            if (normal)
+                requestedReads = 10.0;
+            else
+                requestedReads = 20.0;
+        } else { //'M-IMPACT_v1', 'IMPACT468'
+            if (normal)
+                requestedReads = 7.0;
+            else
+                requestedReads = 14.0;
+        }
+        seqRequirementMap.put("RequestedReads", requestedReads);
+    }
+
+    public void init(String[] bankedIds, String projectId, String requestId, String serviceId, String igoUser, String
+            dryrun) {
         this.bankedIds = bankedIds;
         this.projectId = projectId;
         this.requestId = requestId;
@@ -414,40 +451,6 @@ public class PromoteBanked extends LimsTask {
         }
     }
 
-    /*
-     * Automated addition of read length, minimum number of requested reads, and coverage to seqrequirement table
-     * on promote for IMPACT & HemePACT
-     * <BR>
-     * Requested during LIMS meeting 2018-8-28
-     */
-    public static void setSeqReq(String recipe, String tumorOrNormal, Map<String, Object> seqRequirementMap) {
-        if (!"Tumor".equals(tumorOrNormal) && !"Normal".equals(tumorOrNormal))
-            return;
-
-        String seqRunType = "PE100";
-        seqRequirementMap.put("SequencingRunType", seqRunType);
-
-        int coverageTarget = 500;
-        boolean normal = "Normal".equals(tumorOrNormal);
-        if (normal)
-            coverageTarget = 250;
-        seqRequirementMap.put("CoverageTarget", coverageTarget);
-
-        double requestedReads;
-        if (recipe.contains("Heme")) {
-            if (normal)
-                requestedReads = 10.0;
-            else
-                requestedReads = 20.0;
-        } else { //'M-IMPACT_v1', 'IMPACT468'
-            if (normal)
-                requestedReads = 7.0;
-            else
-                requestedReads = 14.0;
-        }
-        seqRequirementMap.put("RequestedReads", requestedReads);
-    }
-
     private void validateBankedSample(BankedSample bankedSample) {
         CommonUtils.requireNonNullNorEmpty(bankedSample.getCMOPatientId(), String.format("Cmo Patient id is empty for" +
                 " banked " +
@@ -508,7 +511,7 @@ public class PromoteBanked extends LimsTask {
         try {
             validateBankedSample(bankedSample);
 
-            if (!isHumanSample(bankedSample)) {
+            if (!shouldGenerateCmoId(bankedSample)) {
                 log.info(String.format("Non-Human sample: %s with species: %s won't have cmo sample id generated.",
                         bankedSample.getUserSampleID(), bankedSample.getSpecies()));
                 return "";
@@ -532,8 +535,12 @@ public class PromoteBanked extends LimsTask {
         }
     }
 
+    private boolean shouldGenerateCmoId(BankedSample bankedSample) {
+        return isHumanSample(bankedSample) || humanRecipes.contains(bankedSample.getRecipe());
+    }
+
     private boolean isHumanSample(BankedSample bankedSample) {
-        return humanSamplePredicate.test(bankedSample);
+        return !StringUtils.isEmpty(bankedSample.getSpecies()) && humanSamplePredicate.test(bankedSample);
     }
 
     private CorrectedCmoSampleView createFrom(BankedSample bankedSample) throws

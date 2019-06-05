@@ -8,17 +8,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.concurrent.Future;
 
 
 @RestController
 public class SetQcStatus {
-
+    private Log log = LogFactory.getLog(SetQcStatus.class);
     private final ConnectionQueue connQueue; 
     private final ToggleSampleQcStatus task;
-    private Log log = LogFactory.getLog(SetQcStatus.class);
    
     public SetQcStatus( ConnectionQueue connQueue, ToggleSampleQcStatus toggle){
         this.connQueue = connQueue;
@@ -36,7 +33,8 @@ public class SetQcStatus {
                              @RequestParam(value = "note", required = false) String note,
                              @RequestParam(value = "fastqPath", required = false) String fastqPath,
                              @RequestParam(value = "user", defaultValue = "") String user) {
-        log.info("Starting to seq Qc status to " + status + "for service" + user);
+        // often called by QC site with just 2 args - recordId & status
+        log.info("Starting to seq Qc status to:" + status + " for service" + user);
         if (!Whitelists.requestMatches(request)) {
             return "FAILURE: The project is not using a valid format. " + Whitelists.requestFormatText();
         }
@@ -54,25 +52,19 @@ public class SetQcStatus {
         } else if (qcType.equals("Post") && (request == null || sample == null || run == null)) {
             return "ERROR: Post-Sequencing Qc is identified with a triplet: request, sample, run";
         }
-        long record = 0;
+
         if (recordId != null) {
-            record = Long.parseLong(recordId);
-        }
-        if (record <= 0) {
+            long record = Long.parseLong(recordId);
+            task.init(record, status, request, sample, run, qcType, analyst, note, fastqPath);
+            Future<Object> result = connQueue.submitTask(task);
+            try {
+                return "NewStatus:" + result.get();
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+                return "ERROR IN SETTING REQUEST STATUS: " + e.getMessage();
+            }
+        } else {
             return "Invalid Record ID";
         }
-
-        task.init(record, status, request, sample, run, qcType, analyst, note, fastqPath);
-        Future<Object> result = connQueue.submitTask(task);
-        String returnCode = "";
-        try {
-            returnCode = "NewStatus:" + (String) result.get();
-        } catch (Exception e) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            returnCode = "ERROR IN SETTING REQUEST STATUS: " + e.getMessage() + " TRACE: " + sw.toString();
-        }
-        return returnCode;
     }
 }

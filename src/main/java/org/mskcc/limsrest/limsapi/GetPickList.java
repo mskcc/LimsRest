@@ -1,4 +1,3 @@
-
 package org.mskcc.limsrest.limsapi;
 
 
@@ -16,34 +15,31 @@ import java.util.List;
  * @author Aaron Gabow
  * 
  */
-public class GetPickList  extends LimsTask 
-{
-  private String picklist;
-  
+public class GetPickList extends LimsTask {
+    private String picklist;
 
-  public void init(String picklist){
-    this.picklist = picklist;
-  }
-
- //execute the velox call
- @Override
- public Object execute(VeloxConnection conn){
-// private void runProgram(User apiUser, DataRecordManager dataRecordManager) {
-  List<String> values = new LinkedList<String>();
-  try { 
-    PickListManager picklister = dataMgmtServer.getPickListManager(user);
-    PickListConfig pickConfig = picklister.getPickListConfig(picklist);
-    if(pickConfig != null){
-        values = pickConfig.getEntryList();
+    public void init(String picklist) {
+        this.picklist = picklist;
     }
-  }catch(Throwable e){}  
- 
-  if(!values.equals("Exemplar Sample Type")){
-    return values;
-  } else{
-    String[] blacklist = {"cDNA", "cDNA Library", "Plasma"};
-    values.removeAll(Arrays.asList(blacklist));
-    return values;
-  }
- }
+
+    @Override
+    public Object execute(VeloxConnection conn) {
+        List<String> values = new LinkedList<String>();
+        try {
+            PickListManager picklister = dataMgmtServer.getPickListManager(user);
+            PickListConfig pickConfig = picklister.getPickListConfig(picklist);
+            if (pickConfig != null) {
+                values = pickConfig.getEntryList();
+            }
+        } catch (Throwable e) {
+        }
+
+        if (!values.equals("Exemplar Sample Type")) {
+            return values;
+        } else {
+            String[] blacklist = {"cDNA", "cDNA Library", "Plasma"};
+            values.removeAll(Arrays.asList(blacklist));
+            return values;
+        }
+    }
 }

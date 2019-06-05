@@ -5,14 +5,13 @@ import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
 import com.velox.sloan.cmo.staticstrings.datatypes.DT_AssignedProcess;
 import com.velox.sloan.cmo.staticstrings.datatypes.DT_Sample;
-import org.mskcc.domain.AssignedProcess;
 
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
 
 public class AssignedProcessCreator {
-    public Map<String, Object> create(DataRecord sample, AssignedProcess assignedProcess, User user) throws Exception {
+    public static Map<String, Object> create(DataRecord sample, AssignedProcess assignedProcess, User user) throws Exception {
         Map<String, Object> assignedProcessMap = new HashMap<>();
 
         String igoSampleId = sample.getStringVal(DT_Sample.SAMPLE_ID, user);
@@ -29,7 +28,7 @@ public class AssignedProcessCreator {
         return assignedProcessMap;
     }
 
-    private void assignRequestRecordId(Map<String, Object> assignedProcessMap, DataRecord sample, User user) throws
+    private static void assignRequestRecordId(Map<String, Object> assignedProcessMap, DataRecord sample, User user) throws
             NotFound, RemoteException {
         String reqRecordIdsString = sample.getStringVal(DT_Sample.REQUEST_RECORD_ID_LIST, user);
         String[] reqRecordIds = reqRecordIdsString.split(",");
