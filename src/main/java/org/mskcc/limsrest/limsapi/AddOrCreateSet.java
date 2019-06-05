@@ -4,6 +4,7 @@ package org.mskcc.limsrest.limsapi;
 import com.velox.api.datarecord.*;
 import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.util.VeloxConstants;
@@ -126,7 +127,6 @@ public class AddOrCreateSet extends LimsTask {
 
             Set<String> nameSet = new HashSet<>();
             addSampleIdsToNameSet(parent, nameSet);
-            addExternalSpecimens(sampleSet, nameSet);
             addPairings(tumorPairing, normalPairing, parent, nameSet);
             addCategories(categoryKeys, categoryVals, parent, nameSet);
 
@@ -138,16 +138,17 @@ public class AddOrCreateSet extends LimsTask {
                 return Long.toString(parent.getRecordId());
             }
 
+            addExternalSpecimens(sampleSet, nameSet);
             if (requestIds != null) allRequests.addAll(addOffRequestId(errorList));
 
             if (igoIds != null && igoIds.length > 0) allSamples.addAll(addOffIgoIds(errorList));
 
             if (errorList.length() > 0) throw new LimsException(errorList.toString());
 
-            log.info(String.format("Adding requests %s to sample set %s", requestIds, setName));
+            log.info(String.format("Adding requests %s to sample set %s", StringUtils.join(requestIds, ","), setName));
             sampleSet.addChildren(allRequests, user);
 
-            log.info(String.format("Adding samples %s to sample set %s", igoIds, setName));
+            log.info(String.format("Adding samples %s to sample set %s", StringUtils.join(igoIds, ","), setName));
             sampleSet.addChildren(allSamples, user);
 
             if (baitSet != null) sampleSet.setDataField("BaitSet", baitSet, user);
