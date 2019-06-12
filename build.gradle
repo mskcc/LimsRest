@@ -79,7 +79,7 @@ dependencies {
     compile ("org.springframework.boot:spring-boot-starter-web")
     compile ("org.springframework.boot:spring-boot-starter-security")
     compile ('javax.servlet:jstl:1.2')
-    compile("com.fasterxml.jackson.core:jackson-databind")
+    compile ('com.fasterxml.jackson.core:jackson-databind')
     compile (group: 'com.google.guava', name: 'guava', version: '18.+')
     compile 'org.mskcc.common:common-domain:2.13.0-SNAPSHOT'
     compile 'com.velox.internalproducts:veloxapi:10.6.1-b777'

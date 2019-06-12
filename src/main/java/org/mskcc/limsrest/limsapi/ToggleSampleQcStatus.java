@@ -149,6 +149,7 @@ public class ToggleSampleQcStatus extends LimsTask {
         if (qcStatus == qcStatus.IGO_COMPLETE) {
             seqQc.setDataField("PassedQc", Boolean.TRUE, user);
             seqQc.setDataField("SeqQCStatus", QcStatus.PASSED.getText(), user);
+            seqQc.setDataField("DateIgoComplete", System.currentTimeMillis(), user);
         } else {
             seqQc.setDataField("SeqQCStatus", status, user);
             seqQc.setDataField("PassedQc", Boolean.FALSE, user);
