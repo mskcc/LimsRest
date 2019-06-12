@@ -94,12 +94,19 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
             runAndCatchNpe(() -> qcSummary.setSampleName((String) qcFields.get("OtherSampleId")));
             runAndCatchNpe(() -> qcSummary.setBaitSet((String) qcFields.get("BaitSet")));
             runAndCatchNpe(() -> qcSummary.setMskq((Double) qcFields.get("Mskq")));
-            runAndCatchNpe(() -> qcSummary.setMeanTargetCoverage((Double) qcFields.get("MeanCoverage")));
+            runAndCatchNpe(() -> qcSummary.setMeanTargetCoverage((Double) qcFields.get("MeanCoverage"))); // TODO review
+            runAndCatchNpe(() -> qcSummary.setMEAN_COVERAGE((Double) qcFields.get("MeanCoverage")));
             runAndCatchNpe(() -> qcSummary.setPercentAdapters((Double) qcFields.get("PercentAdapters")));
             runAndCatchNpe(() -> qcSummary.setPercentDuplication((Double) qcFields.get("PercentDuplication")));
             runAndCatchNpe(() -> qcSummary.setPercentOffBait((Double) qcFields.get("PercentOffBait")));
+            runAndCatchNpe(() -> qcSummary.setPCT_EXC_MAPQ((Double) qcFields.get("PercentExcMapQ")));
+            runAndCatchNpe(() -> qcSummary.setPCT_EXC_DUPE((Double) qcFields.get("PercentExcDupe")));
+            runAndCatchNpe(() -> qcSummary.setPCT_EXC_BASEQ((Double) qcFields.get("PercentExcBaseQ")));
+            runAndCatchNpe(() -> qcSummary.setPCT_EXC_TOTAL((Double) qcFields.get("PercentExcTotal")));
             runAndCatchNpe(() -> qcSummary.setPercentTarget10x((Double) qcFields.get("PercentTarget10X")));
             runAndCatchNpe(() -> qcSummary.setPercentTarget30x((Double) qcFields.get("PercentTarget30X")));
+            runAndCatchNpe(() -> qcSummary.setPercentTarget40x((Double) qcFields.get("PercentTarget40X")));
+            runAndCatchNpe(() -> qcSummary.setPercentTarget80x((Double) qcFields.get("PercentTarget80X")));
             runAndCatchNpe(() -> qcSummary.setPercentTarget100x((Double) qcFields.get("PercentTarget100X")));
             runAndCatchNpe(() -> qcSummary.setReadsDuped((Long) qcFields.get("ReadPairDupes")));
             runAndCatchNpe(() -> qcSummary.setReadsExamined((Long) qcFields.get("ReadsExamined")));

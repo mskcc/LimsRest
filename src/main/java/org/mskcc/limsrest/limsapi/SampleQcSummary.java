@@ -12,12 +12,19 @@ public class SampleQcSummary {
     private String qcUnits;
     private String quantUnits;
     private double mskq;
+    private double MEAN_COVERAGE;
+    private double PCT_EXC_MAPQ;
+    private double PCT_EXC_DUPE;
+    private double PCT_EXC_BASEQ;
+    private double PCT_EXC_TOTAL;
     private double meanTargetCoverage;
     private double percentAdapters;
     private double percentDuplication;
     private double percentOffBait;
     private double percentTarget10x;
     private double percentTarget30x;
+    private double percentTarget40x;
+    private double percentTarget80x;
     private double percentTarget100x;
     private double percentRibosomalBases;
     private double percentUtrBases;
@@ -41,6 +48,26 @@ public class SampleQcSummary {
     public SampleQcSummary() {
         sampleName = "ERROR";
     }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public double getMEAN_COVERAGE() { return MEAN_COVERAGE; }
+    public void setMEAN_COVERAGE(double MEAN_COVERAGE) { this.MEAN_COVERAGE = MEAN_COVERAGE; }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public double getPCT_EXC_MAPQ() { return PCT_EXC_MAPQ; }
+    public void setPCT_EXC_MAPQ(double PCT_EXC_MAPQ) { this.PCT_EXC_MAPQ = PCT_EXC_MAPQ; }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public double getPCT_EXC_DUPE() { return PCT_EXC_DUPE; }
+    public void setPCT_EXC_DUPE(double PCT_EXC_DUPE) { this.PCT_EXC_DUPE = PCT_EXC_DUPE; }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public double getPCT_EXC_BASEQ() { return PCT_EXC_BASEQ; }
+    public void setPCT_EXC_BASEQ(double PCT_EXC_BASEQ) { this.PCT_EXC_BASEQ = PCT_EXC_BASEQ; }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public double getPCT_EXC_TOTAL() { return PCT_EXC_TOTAL; }
+    public void setPCT_EXC_TOTAL(double PCT_EXC_TOTAL) { this.PCT_EXC_TOTAL = PCT_EXC_TOTAL; }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getBaitSet() {
@@ -127,25 +154,26 @@ public class SampleQcSummary {
     public double getPercentTarget10x() {
         return this.percentTarget10x;
     }
-
     public void setPercentTarget10x(double per10x) {
         this.percentTarget10x = per10x;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public double getPercentTarget30x() {
-        return this.percentTarget30x;
-    }
+    public double getPercentTarget30x() { return this.percentTarget30x; }
+    public void setPercentTarget30x(double per30x) { this.percentTarget30x = per30x; }
 
-    public void setPercentTarget30x(double per30x) {
-        this.percentTarget30x = per30x;
-    }
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public double getPercentTarget40x() { return this.percentTarget40x; }
+    public void setPercentTarget40x(double per40x) { this.percentTarget40x = per40x; }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public double getPercentTarget80x() { return this.percentTarget80x; }
+    public void setPercentTarget80x(double per80x) { this.percentTarget80x = per80x; }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public double getPercentTarget100x() {
         return this.percentTarget100x;
     }
-
     public void setPercentTarget100x(double per100x) {
         this.percentTarget100x = per100x;
     }

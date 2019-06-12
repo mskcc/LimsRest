@@ -3,7 +3,6 @@ package org.mskcc.limsrest.web;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
-import org.mskcc.limsrest.limsapi.PromoteBanked;
 import org.mskcc.limsrest.limsapi.interops.GetInterOpsDataTask;
 import org.mskcc.util.Constants;
 import org.springframework.http.HttpStatus;
@@ -35,6 +34,7 @@ public class GetInterOpsData {
     public ResponseEntity<List<Map<String, String>>> getInterOps(@RequestParam(value = "runId") String runId) {
         List<Map<String, String>> interOps = new ArrayList<>();
 
+        log.info("Starting get /getInterOpsData " + runId);
         try {
             task.init(runId);
             Future<Object> result = connQueue.submitTask(task);

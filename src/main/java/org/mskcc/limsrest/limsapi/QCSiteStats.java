@@ -24,8 +24,14 @@ public class QCSiteStats {
 
     // WGS
     public Double MEAN_COVERAGE;
+    public Double PCT_EXC_MAPQ;
+    public Double PCT_EXC_DUPE;
+    public Double PCT_EXC_BASEQ;
+    public Double PCT_EXC_TOTAL;
     public Double PCT_10X;
     public Double PCT_30X;
+    public Double PCT_40X;
+    public Double PCT_80X;
     public Double PCT_100X;
 
     // RNASEQ
@@ -58,10 +64,24 @@ public class QCSiteStats {
         if (PERCENT_DUPLICATION != null)
             qc.setPercentDuplication(PERCENT_DUPLICATION);
 
+        if (MEAN_COVERAGE != null)
+            qc.setMEAN_COVERAGE(MEAN_COVERAGE);
+        if (PCT_EXC_MAPQ != null)
+            qc.setPCT_EXC_MAPQ(PCT_EXC_MAPQ);
+        if (PCT_EXC_DUPE != null)
+            qc.setPCT_EXC_DUPE(PCT_EXC_DUPE);
+        if (PCT_EXC_BASEQ != null)
+            qc.setPCT_EXC_BASEQ(PCT_EXC_BASEQ);
+        if (PCT_EXC_TOTAL != null)
+            qc.setPCT_EXC_TOTAL(PCT_EXC_TOTAL);
         if (PCT_10X != null)
             qc.setPercentTarget10x(PCT_10X);
         if (PCT_30X != null)
             qc.setPercentTarget30x(PCT_30X);
+        if (PCT_40X != null)
+            qc.setPercentTarget40x(PCT_40X);
+        if (PCT_80X != null)
+            qc.setPercentTarget80x(PCT_80X);
         if (PCT_100X != null)
             qc.setPercentTarget100x(PCT_100X);
 
@@ -117,8 +137,14 @@ public class QCSiteStats {
                 ", UNMAPPED_READS=" + UNMAPPED_READS +
                 ", PERCENT_DUPLICATION=" + PERCENT_DUPLICATION +
                 ", MEAN_COVERAGE=" + MEAN_COVERAGE +
+                ", PCT_EXC_MAPQ=" + PCT_EXC_MAPQ +
+                ", PCT_EXC_DUPE=" + PCT_EXC_DUPE +
+                ", PCT_EXC_BASEQ=" + PCT_EXC_BASEQ +
+                ", PCT_EXC_TOTAL=" + PCT_EXC_TOTAL +
                 ", PCT_10X=" + PCT_10X +
                 ", PCT_30X=" + PCT_30X +
+                ", PCT_40X=" + PCT_40X +
+                ", PCT_80X=" + PCT_80X +
                 ", PCT_100X=" + PCT_100X +
                 ", PCT_UTR_BASES=" + PCT_UTR_BASES +
                 ", PCT_INTRONIC_BASES=" + PCT_INTRONIC_BASES +
