@@ -94,7 +94,7 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
             runAndCatchNpe(() -> qcSummary.setSampleName((String) qcFields.get("OtherSampleId")));
             runAndCatchNpe(() -> qcSummary.setBaitSet((String) qcFields.get("BaitSet")));
             runAndCatchNpe(() -> qcSummary.setMskq((Double) qcFields.get("Mskq")));
-            runAndCatchNpe(() -> qcSummary.setMeanTargetCoverage((Double) qcFields.get("MeanCoverage"))); // TODO review
+            runAndCatchNpe(() -> qcSummary.setMeanTargetCoverage((Double) qcFields.get("MeanTargetCoverage")));
             runAndCatchNpe(() -> qcSummary.setMEAN_COVERAGE((Double) qcFields.get("MeanCoverage")));
             runAndCatchNpe(() -> qcSummary.setPercentAdapters((Double) qcFields.get("PercentAdapters")));
             runAndCatchNpe(() -> qcSummary.setPercentDuplication((Double) qcFields.get("PercentDuplication")));
