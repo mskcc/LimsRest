@@ -25,13 +25,19 @@ public class GetInterOpsDataTask extends LimsTask {
     public Object execute(VeloxConnection conn) {
         List<Map<String, Object>> interOps = new ArrayList<>();
         try {
-            List<DataRecord> interOpsRecords = dataRecordManager.queryDataRecords("Interopsdatum",
-                    "i_Runwithnumberprefixremoved = '" + runId + "'", user);
+            List<DataRecord> interOpsRecords = dataRecordManager.queryDataRecords("InterOpsDatum","i_Runwithnumberprefixremoved LIKE'%" + runId + "%'" , user);
 
-            for (DataRecord interOpsRecord : interOpsRecords) {
-                Map<String, Object> fields = interOpsRecord.getFields(user);
+            /*
+            This end point receives Flowcell ID. It will return all the values under column 'i_Runwithnumberprefixremoved'
+            which contain the Flowcell ID received. We cannot do LIKE query operations through LIMS API, therefore we will have to
+            loop through all the records in the target DataType 'InterOpsDatum' to find records containing 'Flowcell ID'.
+             */
+
+            for (DataRecord  record: interOpsRecords) {
+                Map<String, Object> fields = record.getFields(user);
                 interOps.add(fields);
             }
+
         } catch (Exception e) {
             log.error(String.format("Error while retrieving InterOpsDatum for run id: %s", runId), e);
         }
