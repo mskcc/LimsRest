@@ -37,8 +37,6 @@ public class GetReadyForIllumina extends LimsTask {
             for (DataRecord sample : samplesToPool) {
                 String sampleId = sample.getStringVal("SampleId", user);
                 if (sampleId.startsWith("Pool-")) {
-                    Deque<DataRecord> queue = new LinkedList<>();
-                    Set<DataRecord> visited = new HashSet<>();
                     double poolConcentration = 0.0;
                     try {
                         poolConcentration = sample.getDoubleVal("Concentration", user);
@@ -50,7 +48,11 @@ public class GetReadyForIllumina extends LimsTask {
                     } catch (NullPointerException npe) {
                     }
                     String status = sample.getStringVal("ExemplarSampleStatus", user);
+
+                    Set<DataRecord> visited = new HashSet<>();
+                    Deque<DataRecord> queue = new LinkedList<>();
                     queue.add(sample);
+                    // for every pool get parents of type sample that don't start with "Pool-"
                     while (!queue.isEmpty()) {
                         DataRecord current = queue.removeFirst();
                         String currentSampleId = current.getStringVal("SampleId", user);
@@ -76,13 +78,11 @@ public class GetReadyForIllumina extends LimsTask {
                     results.add(annotateUnpooledSample(sample));
                 }
             }
-
         } catch (Throwable e) {
             log.error("plan runs", e);
         }
 
         return results;
-
     }
 
     private Long getCreateDate(DataRecord record) {
@@ -119,8 +119,7 @@ public class GetReadyForIllumina extends LimsTask {
 
             List<DataRecord> ancestorSamples = sample.getAncestorsOfType("Sample", user);
             ancestorSamples.add(0, sample);
-            List<Long> ancestorSamplesCreateDate = new LinkedList<>();
-            ancestorSamplesCreateDate = ancestorSamples.stream().
+            List<Long> ancestorSamplesCreateDate = ancestorSamples.stream().
                     map(this::getCreateDate).
                     collect(Collectors.toList());
             List<List<Map<String, Object>>> ancestorBarcodes = dataRecordManager.getFieldsForChildrenOfType(ancestorSamples,"IndexBarcode", user);
