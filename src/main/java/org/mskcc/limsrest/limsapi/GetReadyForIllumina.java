@@ -1,20 +1,22 @@
 package org.mskcc.limsrest.limsapi;
 
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.InvalidValue;
+import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.limsapi.search.NearestAncestorSearcher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.rmi.RemoteException;
+import java.rmi.ServerException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
- * A queued task that takes shows all samples that need planned for Illumina runs
+ * A queued task that takes shows all samples that need planned for Illumina runs. This endpoint will return the sample level information for individual Library samples and pooled Library samples.
+ * The information is important for Pool planning for sequencing and making important pooling decisions.
  * 
  * @author Aaron Gabow
  */
@@ -34,122 +36,272 @@ public class GetReadyForIllumina extends LimsTask {
         List<RunSummary> results = new LinkedList<>();
         try {
             List<DataRecord> samplesToPool = dataRecordManager.queryDataRecords("Sample", "ExemplarSampleStatus = 'Ready for - Pooling of Sample Libraries for Sequencing'", user);
-            for (DataRecord sample : samplesToPool) {
-                String sampleId = sample.getStringVal("SampleId", user);
-                if (sampleId.startsWith("Pool-")) {
-                    Deque<DataRecord> queue = new LinkedList<>();
-                    Set<DataRecord> visited = new HashSet<>();
-                    double poolConcentration = 0.0;
-                    try {
-                        poolConcentration = sample.getDoubleVal("Concentration", user);
-                    } catch (NullPointerException npe) {
-                    }
-                    double poolVolume = 0.0;
-                    try {
-                        poolVolume = sample.getDoubleVal("Volume", user);
-                    } catch (NullPointerException npe) {
-                    }
-                    String status = sample.getStringVal("ExemplarSampleStatus", user);
-                    queue.add(sample);
-                    while (!queue.isEmpty()) {
-                        DataRecord current = queue.removeFirst();
-                        String currentSampleId = current.getStringVal("SampleId", user);
-                        if (currentSampleId.startsWith("Pool-")) {
-                            List<DataRecord> parents = current.getParentsOfType("Sample", user);
-                            for (DataRecord parent : parents) {
-                                if (!visited.contains(parent)) {
-                                    queue.addLast(parent);
-                                }
-                            }
-                        } else {
-                            RunSummary runSummary = annotateUnpooledSample(current);
-                            runSummary.setPool(sampleId);
-                            runSummary.setConcentration(poolConcentration);
-                            runSummary.setVolume(Double.toString(poolVolume));
-                            runSummary.setStatus(status);
-                            results.add(runSummary);
+            if (samplesToPool.size()>0){
+                for (DataRecord sample: samplesToPool){
+                    String sampleId = sample.getStringVal("SampleId", user);
+                    if (sampleId.toLowerCase().startsWith("pool-")){
+                        List<DataRecord> parentLibrarySamplesForPool = getNearestParentLibrarySamplesForPool(sample); // if sample is pool then get all the Library samples in the pool which live as parents of the pool.
+                        for(DataRecord librarySample : parentLibrarySamplesForPool){
+                            RunSummary summary = new RunSummary("DEFAULT", "DEFAULT");
+                            summary.setPool(sampleId);
+                            summary.setConcentration(sample.getDoubleVal("Concentration", user));
+                            summary.setStatus(sample.getStringVal("ExemplarSampleStatus", user));
+                            results.add(createRunSummaryForSampleInPool(librarySample, summary));
                         }
-                        visited.add(current);
+                    }else{
+                        RunSummary summary = new RunSummary("DEFAULT", "DEFAULT"); // if sample is not pool, then it is Library sample and work with it.
+                        results.add(createRunSummaryForNonPooledSamples(sample,summary));
                     }
-
-                } else {
-                    results.add(annotateUnpooledSample(sample));
                 }
-            }
-
-        } catch (Throwable e) {
-            log.error("plan runs", e);
-        }
-
-        return results;
-
-    }
-
-    private Long getCreateDate(DataRecord record) {
-        try {
-            return record.getDateVal("DateCreated", user);
-        } catch (NotFound | RemoteException e) {
-            log.info("Failed to find a date created for record: " + record.toString());
-        }
-        return 0L;
-    }
-
-    public RunSummary annotateUnpooledSample(DataRecord sample) {
-        RunSummary summary = new RunSummary("DEFAULT", "DEFAULT");
-        try {
-            Map<String, Object> baseFields = sample.getFields(user);
-            summary = new RunSummary("", (String) baseFields.get("SampleId"));
-            summary.setOtherSampleId((String) baseFields.getOrDefault("OtherSampleId", ""));
-            summary.setRequestId((String) baseFields.getOrDefault("RequestId", ""));
-            summary.setTubeBarcode((String) baseFields.getOrDefault("MicronicTubeBarcode", ""));
-            summary.setStatus((String) baseFields.getOrDefault("ExemplarSampleStatus", ""));
-            summary.setTumor((String) baseFields.getOrDefault("TumorOrNormal", ""));
-            summary.setWellPos(baseFields.getOrDefault("ColPosition", "") + (String) baseFields.getOrDefault("RowPosition", ""));
-            summary.setConcentrationUnits((String) baseFields.getOrDefault("ConcentrationUnits", ""));
-            Double concentration = (Double) baseFields.get("Concentration");
-            if (concentration != null)
-                summary.setAltConcentration(concentration);
-            Double volume = (Double) baseFields.get("Volume");
-            if (volume == null)
-                summary.setVolume("null");
-            else
-                summary.setVolume(volume.toString());
-
-            summary.setPlateId((String) baseFields.getOrDefault("RelatedRecord23", ""));
-
-            List<DataRecord> ancestorSamples = sample.getAncestorsOfType("Sample", user);
-            ancestorSamples.add(0, sample);
-            List<Long> ancestorSamplesCreateDate = new LinkedList<>();
-            ancestorSamplesCreateDate = ancestorSamples.stream().
-                    map(this::getCreateDate).
-                    collect(Collectors.toList());
-            List<List<Map<String, Object>>> ancestorBarcodes = dataRecordManager.getFieldsForChildrenOfType(ancestorSamples,"IndexBarcode", user);
-            List<List<Map<String, Object>>> ancestorPlanningProtocols = dataRecordManager.getFieldsForChildrenOfType(ancestorSamples,"BatchPlanningProtocol", user);
-            List<List<Map<String, Object>>> ancestorSeqRequirements = dataRecordManager.getFieldsForChildrenOfType(ancestorSamples,"SeqRequirement", user);
-
-            Map<String, Map<String, Object>> nearestAncestorFields =
-                    NearestAncestorSearcher.findMostRecentAncestorFields(ancestorSamplesCreateDate,
-                            ancestorBarcodes, ancestorPlanningProtocols, ancestorSeqRequirements);
-            Map<String, Object> barcodeFields = nearestAncestorFields.get("BarcodeFields");
-            Map<String, Object> planFields = nearestAncestorFields.get("PlanFields");
-            Map<String, Object> reqFields = nearestAncestorFields.get("ReqFields");
-
-            summary.setBarcodeId((String) barcodeFields.getOrDefault("IndexId", ""));
-            summary.setBarcodeSeq((String) barcodeFields.getOrDefault("IndexTag", ""));
-            summary.setSequencer((String) planFields.getOrDefault("RunPlan", ""));
-            summary.setBatch((String) planFields.getOrDefault("WeekPlan", ""));
-            summary.setRunType((String) reqFields.getOrDefault("SequencingRunType", ""));
-            Object reads = reqFields.getOrDefault("RequestedReads", "");
-            if (reads instanceof String){
-                summary.setReadNum((String) reads);
-            } else if (reads instanceof Double){
-                summary.setReadNum(((Double) reads).toString());
-            } else{
-                summary.setReadNum("");
             }
         } catch (Exception e) {
             log.error("Annotate", e);
         }
-        return summary;
+        return results;
      }
+
+    /**
+     * If the sample is pool, get all the samples of type Library that are present in the pool.
+     * @param pooledSample
+     * @return List of Library samples in the pooled sample.
+     * @throws IoError
+     * @throws RemoteException
+     * @throws NotFound
+     */
+    private List<DataRecord> getNearestParentLibrarySamplesForPool(DataRecord pooledSample) throws IoError, RemoteException, NotFound {
+        List<DataRecord> parentLibrarySamplesForPool = new ArrayList<>();
+        Stack<DataRecord> sampleTrackingStack = new Stack<>();
+        sampleTrackingStack.add(pooledSample);
+        while(!sampleTrackingStack.isEmpty()){
+            List<DataRecord> parentSamples = sampleTrackingStack.pop().getParentsOfType("Sample", user);
+            if (!parentSamples.isEmpty()){
+                for (DataRecord sample : parentSamples){
+                    if (sample.getStringVal("SampleId", user).toLowerCase().startsWith("pool-")){
+                        sampleTrackingStack.push(sample);
+                    }
+                    else{
+                        parentLibrarySamplesForPool.add(sample);
+                    }
+                }
+            }
+        }
+        return parentLibrarySamplesForPool;
+    }
+
+    /**
+     * This method is designed to find and return the Sample in hierarchy with a desired child DataType
+     *
+     * @param sample
+     * @param childDataType
+     * @return Sample DataRecord
+     * @throws IoError
+     * @throws RemoteException
+     */
+    private DataRecord getParentSampleWithDesiredChildTypeRecord(DataRecord sample, String childDataType) throws IoError, RemoteException, NotFound {
+        if (sample.getChildrenOfType(childDataType, user).length>0){
+            return sample;
+        }
+        DataRecord record = null;
+        Stack<DataRecord> sampleTrackingPile = new Stack<>();
+        sampleTrackingPile.push(sample);
+        do {
+            DataRecord startSample = sampleTrackingPile.pop();
+            List<DataRecord> parentRecords = startSample.getParentsOfType("Sample", user);
+            if (!parentRecords.isEmpty() && parentRecords.get(0).getChildrenOfType(childDataType, user).length>0) {
+                record = parentRecords.get(0);
+            }
+            if (!parentRecords.isEmpty() && record == null) {
+                sampleTrackingPile.push(parentRecords.get(0));
+            }
+        } while (!sampleTrackingPile.empty());
+        return record;
+    }
+
+    /**
+     * This method returns the comma separated value of indexId and IndexBarcode for the sample.
+     *
+     * @param sample
+     * @return String IndexId value for Sample if found, else returns "" with a warning.
+     * @throws NotFound
+     * @throws RemoteException
+     * @throws IoError
+     */
+    private String getSampleLibraryIndexIdAndBarcode(DataRecord sample) throws NotFound, RemoteException, IoError {
+        String indexIdAndBarcode = null;
+        DataRecord parentSample = getParentSampleWithDesiredChildTypeRecord(sample, "IndexBarcode");
+        if (parentSample != null && parentSample.getChildrenOfType("IndexBarcode", user)[0].getValue("IndexId", user) != null) {
+            DataRecord recordWithIndexBarcodeInfo = parentSample.getChildrenOfType("IndexBarcode", user)[0];
+            String indexId = recordWithIndexBarcodeInfo.getStringVal("IndexId", user);
+            String indexBarcode = recordWithIndexBarcodeInfo.getStringVal("IndexTag", user);
+            indexIdAndBarcode = indexId + "," + indexBarcode;
+        }
+        if (indexIdAndBarcode != null) {
+            return indexIdAndBarcode;
+        } else {
+            log.info(String.format("IndexId not found for sample '%s'.\nPlease double check.", sample.getStringVal("SampleId", user)));
+            return "";
+        }
+    }
+
+    /**
+     * This method returns the Requested Reads value for sample.
+     *
+     * @param sample
+     * @return Double value RequestedReads value from SeqRequirement/SeqRequirementPooled record if found, else returns 0.0 with a warning.
+     * @throws IoError
+     * @throws RemoteException
+     * @throws NotFound
+     * @throws ServerException
+     * @throws InvalidValue
+     */
+
+    private Double getRequestedReadsForSample(DataRecord sample) throws IoError, RemoteException, NotFound, ServerException, InvalidValue {
+        DataRecord sampleWithSeqRequirementAsChild = getParentSampleWithDesiredChildTypeRecord(sample, "SeqRequirement");
+        if (sampleWithSeqRequirementAsChild !=null && sampleWithSeqRequirementAsChild.getChildrenOfType("SeqRequirement", user)[0].getValue("RequestedReads", user) != null) {
+            DataRecord seqRequirements = sampleWithSeqRequirementAsChild.getChildrenOfType("SeqRequirement", user)[0];
+            return seqRequirements.getDoubleVal("RequestedReads", user);
+        } else {
+            log.error(String.format("Invalid Sequencing Requirements '%s' for sample '%s'.\nPlease double check.", null, sample.getStringVal("SampleId", user)));
+            return 0.0;
+        }
+    }
+
+    /**
+     * This method returns the Sequencer name that the sample is planned to run on. This is a value which is not populated anymore, but the method is included to match the
+     * legacy code and front end design.
+     * @param sample
+     * @return Sequencing Run Type value
+     * @throws IoError
+     * @throws RemoteException
+     * @throws NotFound
+     */
+
+    private String getPlannedSequencerForSample(DataRecord sample) throws IoError, RemoteException, NotFound {
+        DataRecord sampleWithBatchPlanningAsChild = getParentSampleWithDesiredChildTypeRecord(sample, "BatchPlanningProtocol");
+        if (sampleWithBatchPlanningAsChild !=null && sampleWithBatchPlanningAsChild.getChildrenOfType("BatchPlanningProtocol",user)[0].getValue("SequencingRunType", user) != null){
+            DataRecord batchPlanningRecord = sampleWithBatchPlanningAsChild.getChildrenOfType("BatchPlanningProtocol", user)[0]; //continue here
+            return batchPlanningRecord.getStringVal("SequencingRunType", user);
+        } else {
+            log.error(String.format("Invalid Sequencing Run Type '%s' for sample '%s'.\nPlease double check.", "null", sample.getStringVal("SampleId", user)));
+            return "";
+        }
+    }
+
+
+    /**
+     * This method returns the Week Number that the sample is planned to run on. This is a value which is not populated anymore, but the method is included to match the
+     * legacy code and front end design.
+     * @param sample
+     * @return Week Number Value
+     * @throws IoError
+     * @throws RemoteException
+     * @throws NotFound
+     */
+    private String getPlannedWeekSample(DataRecord sample) throws IoError, RemoteException, NotFound {
+        DataRecord sampleWithBatchPlanningAsChild = getParentSampleWithDesiredChildTypeRecord(sample, "BatchPlanningProtocol");
+        if (sampleWithBatchPlanningAsChild != null && sampleWithBatchPlanningAsChild.getChildrenOfType("BatchPlanningProtocol", user)[0].getValue("WeekPlan", user) !=null){
+            DataRecord batchPlanningRecord = sampleWithBatchPlanningAsChild.getChildrenOfType("BatchPlanningProtocol", user)[0]; //continue here
+            return  batchPlanningRecord.getStringVal("WeekPlan", user);
+        } else {
+            log.error(String.format("No 'PlannedWeek' info found for sample '%s'.\nPlease double check.", sample.getStringVal("SampleId", user)));
+            return "";
+        }
+    }
+
+
+    /**
+     * This method returns the SequencingRunType value for the sample.
+     * @param sample
+     * @return Sequencing Run Type value
+     * @throws IoError
+     * @throws RemoteException
+     * @throws NotFound
+     */
+    private String getSequencingRunTypeForSample(DataRecord sample) throws IoError, RemoteException, NotFound {
+        DataRecord sampleWithSeqRequirementAsChild = getParentSampleWithDesiredChildTypeRecord(sample, "SeqRequirement");
+        if (sampleWithSeqRequirementAsChild != null && sampleWithSeqRequirementAsChild.getChildrenOfType("SeqRequirement", user)[0].getValue("SequencingRunType", user) != null){
+            DataRecord sequencingRunTypeRecord = sampleWithSeqRequirementAsChild.getChildrenOfType("SeqRequirement", user)[0]; //continue here
+            return sequencingRunTypeRecord.getStringVal("SequencingRunType", user);
+        } else {
+            log.error(String.format("Invalid Sequencing RunType '%s' for sample '%s'.\nPlease double check.", null, sample.getStringVal("SampleId", user)));
+            return "";
+        }
+    }
+
+    /**
+     * This method will create the Summary Object for the sample which is added to the results list and passed to the user.
+     * @param unpooledSample
+     * @param summary
+     * @return Run Summary for sample.
+     * @throws NotFound
+     * @throws RemoteException
+     * @throws IoError
+     * @throws InvalidValue
+     */
+    private RunSummary createRunSummaryForNonPooledSamples(DataRecord unpooledSample, RunSummary summary) throws NotFound, RemoteException, IoError, InvalidValue {
+        Map<String, Object> sampleFieldValues = unpooledSample.getFields(user);
+        summary.setSampleId((String) sampleFieldValues.get("SampleId"));
+        summary.setOtherSampleId((String) sampleFieldValues.getOrDefault("OtherSampleId", ""));
+        summary.setRequestId((String) sampleFieldValues.getOrDefault("RequestId", ""));
+        summary.setTubeBarcode((String) sampleFieldValues.getOrDefault("MicronicTubeBarcode", ""));
+        summary.setStatus((String) sampleFieldValues.getOrDefault("ExemplarSampleStatus", ""));
+        summary.setTumor((String) sampleFieldValues.getOrDefault("TumorOrNormal", ""));
+        summary.setWellPos(sampleFieldValues.getOrDefault("ColPosition", "") + (String) sampleFieldValues.getOrDefault("RowPosition", ""));
+        summary.setConcentrationUnits((String) sampleFieldValues.getOrDefault("ConcentrationUnits", ""));
+        Double concentration = (Double) sampleFieldValues.get("Concentration");
+        if (concentration != null)
+            summary.setAltConcentration(concentration);
+        Double volume = (Double) sampleFieldValues.get("Volume");
+        if (volume == null)
+            summary.setVolume("null");
+        else
+            summary.setVolume(volume.toString());
+        summary.setPlateId((String) sampleFieldValues.getOrDefault("RelatedRecord23", ""));
+        String indexAndBarcode = getSampleLibraryIndexIdAndBarcode(unpooledSample);
+        if (indexAndBarcode !=null && indexAndBarcode.split(",").length==2)
+            summary.setBarcodeId(indexAndBarcode.split(",")[0]);
+            summary.setBarcodeSeq(indexAndBarcode.split(",")[1]);
+        summary.setReadNum(getRequestedReadsForSample(unpooledSample).toString());
+        String plannedSequencer = getPlannedSequencerForSample(unpooledSample);
+        if (plannedSequencer != null)
+            summary.setSequencer(plannedSequencer);
+        String batchWeek = getPlannedWeekSample(unpooledSample);
+        if (batchWeek != null)
+            summary.setBatch(batchWeek);
+        summary.setRunType(getSequencingRunTypeForSample(unpooledSample));
+        return summary;
+    }
+
+    private RunSummary createRunSummaryForSampleInPool(DataRecord sampleInPool, RunSummary summary) throws RemoteException, NotFound, IoError, InvalidValue {
+        Map<String, Object> sampleFieldValues = sampleInPool.getFields(user);
+        summary.setSampleId((String) sampleFieldValues.get("SampleId"));
+        summary.setOtherSampleId((String) sampleFieldValues.getOrDefault("OtherSampleId", ""));
+        summary.setRequestId((String) sampleFieldValues.getOrDefault("RequestId", ""));
+        summary.setTubeBarcode((String) sampleFieldValues.getOrDefault("MicronicTubeBarcode", ""));
+        summary.setTumor((String) sampleFieldValues.getOrDefault("TumorOrNormal", ""));
+        summary.setWellPos(sampleFieldValues.getOrDefault("ColPosition", "") + (String) sampleFieldValues.getOrDefault("RowPosition", ""));
+        summary.setConcentrationUnits((String) sampleFieldValues.getOrDefault("ConcentrationUnits", ""));
+        Double concentration = (Double) sampleFieldValues.get("Concentration");
+        if (concentration != null)
+            summary.setAltConcentration(concentration);
+        Double volume = (Double) sampleFieldValues.get("Volume");
+        if (volume == null)
+            summary.setVolume("null");
+        else
+            summary.setVolume(volume.toString());
+        summary.setPlateId((String) sampleFieldValues.getOrDefault("RelatedRecord23", ""));
+        String indexAndBarcode = getSampleLibraryIndexIdAndBarcode(sampleInPool);
+        if (indexAndBarcode !=null && indexAndBarcode.split(",").length==2)
+            summary.setBarcodeId(indexAndBarcode.split(",")[0]);
+        summary.setBarcodeSeq(indexAndBarcode.split(",")[1]);
+        summary.setReadNum(getRequestedReadsForSample(sampleInPool).toString());
+        String plannedSequencer = getPlannedSequencerForSample(sampleInPool);
+        if (plannedSequencer != null)
+            summary.setSequencer(plannedSequencer);
+        String batchWeek = getPlannedWeekSample(sampleInPool);
+        if (batchWeek != null)
+            summary.setBatch(batchWeek);
+        summary.setRunType(getSequencingRunTypeForSample(sampleInPool));
+        return summary;
+    }
 }

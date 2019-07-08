@@ -74,255 +74,256 @@ public class RunSummary{
     }
   }
 
-  public void setBarcodeId(String bcid){
+    public void setSampleId(String sampleId) {this.sampleId = sampleId;}
+    public void setBarcodeId(String bcid){
     this.barcodeId = bcid;
-  }
-  public void setBarcodeSeq(String bcSeq){
+    }
+    public void setBarcodeSeq(String bcSeq){
     this.barcodeSeq = bcSeq;
-  }
-  
-  public void setBatch(String batch){
+    }
+
+    public void setBatch(String batch){
     this.batch = batch;
-  } 
+    }
 
-  public void setLabHead(String labHead){
+    public void setLabHead(String labHead){
     this.labHead = labHead;
-  }
-  public void setInvestigator(String investigator){
+    }
+    public void setInvestigator(String investigator){
     this.investigator = investigator;
-  }
-  public void setRecipe(String recipe){
+    }
+    public void setRecipe(String recipe){
     this.recipe = recipe;
-  }
-  public void setRequestId(String requestId){
+    }
+    public void setRequestId(String requestId){
     this.requestId = requestId;
-  }
-  public void setReadNum(String readNum){
+    }
+    public void setReadNum(String readNum){
     this.readNum = readNum;
-  }
-  public void setRunType(String runType){
+    }
+    public void setRunType(String runType){
     this.runType = runType;
-  }
-  public void setOtherSampleId(String otherSampleId){
+    }
+    public void setOtherSampleId(String otherSampleId){
     this.otherSampleId = otherSampleId;
-  }
-   public void setSequencer(String seq){
+    }
+    public void setSequencer(String seq){
       this.sequencer = seq;
-   }
+    }
 
 
-   public void setSpecies(String species){
+    public void setSpecies(String species){
         this.species = species;
-   }
+    }
 
-   public void setStatus(String status){
+    public void setStatus(String status){
        this.status = status;
-   }
-   public void setNumberRequestSamples(Short num){
+    }
+    public void setNumberRequestSamples(Short num){
       this.numberRequestSamples = num;
-   }
+    }
 
-   public void setNumberRequestedReads(int numberReqReads){
+    public void setNumberRequestedReads(int numberReqReads){
     this.numberRequestedReads = numberReqReads;
-  }
+    }
 
-  public void setStartDate(long creationInEpochMilli){
+    public void setStartDate(long creationInEpochMilli){
     this.startDate = creationInEpochMilli;
-  }
+    }
 
-  public void setReceivedDate(long creationInEpochMilli){
+    public void setReceivedDate(long creationInEpochMilli){
     this.receivedDate = creationInEpochMilli;
-  }
+    }
 
-   public void addLane(long lane){
+    public void addLane(long lane){
      this.lanes.add(lane);
-  }
+    }
 
-  public void setPlateId(String plate){
+    public void setPlateId(String plate){
      this.plateId = plate;
-  }   
+    }
 
-  public void setPool(String pool){
+    public void setPool(String pool){
     this.pool = pool;
-  }
+    }
 
-  public void setConcentration(double concentration){
+    public void setConcentration(double concentration){
      this.concentration = concentration;
-  }
+    }
 
 
-  public void setAltConcentration(double concentration){
+    public void setAltConcentration(double concentration){
      this.altConcentration = concentration;
-  }
- 
-  public void setConcentrationUnits(String units){
+    }
+
+    public void setConcentrationUnits(String units){
      this.concentrationUnits = units;
-  }
+    }
 
-  public void setTumor(String status){
+    public void setTumor(String status){
     this.tumorStatus = status;
-  }
+    }
 
-  public void setTubeBarcode(String tubeBarcode){
+    public void setTubeBarcode(String tubeBarcode){
     this.tubeBarcode = tubeBarcode;
-  }
+    }
 
-  public void setVolume(String volume){
+    public void setVolume(String volume){
     this.volume = volume;
-  }
- 
-  public void setWellPos(String wellPos){
-   this.wellPos = wellPos;
-  }
+    }
 
-  public void setFastqOnly(Boolean fastq){
+    public void setWellPos(String wellPos){
+    this.wellPos = wellPos;
+    }
+
+    public void setFastqOnly(Boolean fastq){
      this.fastqOnly = fastq;
-  }
+    }
 
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getAwaitingSamples(){
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getAwaitingSamples(){
     return awaitingSamples;
-  }
+    }
 
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getRunId(){
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getRunId(){
     return runId;
-  }
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getSampleId(){
+    }
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getSampleId(){
     return sampleId;
-  }
-  
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getStatus(){
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getStatus(){
      return status;
-  }
+    }
 
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getOtherSampleId(){
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getOtherSampleId(){
     return otherSampleId;
-  }
+    }
 
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getBarcodeId(){
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getBarcodeId(){
     return barcodeId;
-  }
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getBarcodeSeq(){
+    }
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getBarcodeSeq(){
     return barcodeSeq;
-  }
+    }
 
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getBatch(){
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getBatch(){
     return batch;
-  }
+    }
 
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getLabHead(){
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getLabHead(){
     return labHead;
-  }
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getInvestigator(){
+    }
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getInvestigator(){
     return investigator;
-  }
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getRecipe(){
+    }
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getRecipe(){
     return recipe;
-  }     
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getRequestId(){
+    }
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getRequestId(){
     return requestId;
-  }
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getReadNum(){
+    }
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getReadNum(){
     return readNum;
-  }
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getRunType(){
+    }
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getRunType(){
     return runType;
-  }
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-   public String getSpecies(){
+    }
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getSpecies(){
         return species;
-   }    
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-   public int getNumberRequestedReads(){
+    }
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public int getNumberRequestedReads(){
     return numberRequestedReads;
-  }
-   
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public long getStartDate(){
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public long getStartDate(){
      return startDate;
-  }
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public long getReceivedDate(){
+    }
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public long getReceivedDate(){
      return receivedDate;
-  }
+    }
 
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getPlateId(){
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getPlateId(){
     return plateId;
-  }
+    }
 
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getPool(){
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getPool(){
     return pool;
-  }
+    }
 
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getSequencer(){
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getSequencer(){
      return sequencer;
-  }
+    }
 
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getTumor(){
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getTumor(){
     return tumorStatus;
-  }
+    }
 
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getTubeBarcode(){
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getTubeBarcode(){
      return tubeBarcode;
-  }
+    }
 
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getVolume(){
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getVolume(){
      return volume;
-  }
+    }
 
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getWellPos(){
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getWellPos(){
      return wellPos;
-  }
+    }
 
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public Boolean getFastqOnly(){
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public Boolean getFastqOnly(){
     return fastqOnly;
-  }
+    }
 
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public Short getNumberRequestSamples(){
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public Short getNumberRequestSamples(){
     return numberRequestSamples;
-  }
+    }
 
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public double getConcentration(){
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public double getConcentration(){
     return concentration;
-  }
+    }
 
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public double getAltConcentration(){
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public double getAltConcentration(){
     return altConcentration;
-  }
+    }
 
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getConcentrationUnits(){
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getConcentrationUnits(){
     return concentrationUnits;
-  }
-  public LinkedList<Long> getLanes(){
+    }
+    public LinkedList<Long> getLanes(){
          return lanes;
-   }
-  public static RunSummary errorMessage(String e, String trace){
-    RunSummary rs = new RunSummary("ERROR: " + e, trace);
+    }
+    public static RunSummary errorMessage(String e, String trace){
+        RunSummary rs = new RunSummary("ERROR: " + e, trace);
     return rs;
-  }
+    }
 }
