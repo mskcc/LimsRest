@@ -93,6 +93,15 @@ public class App extends SpringBootServletInitializer {
 
     @Bean
     @Scope("request")
+    public GetSamplesInRequestTask GetSamplesInRequestTask() {
+        return new GetSamplesInRequestTask();
+    }
+    @Bean
+    @Scope("request")
+    public GetSamplesInRequest SamplesInRequest() { return new GetSamplesInRequest(connectionQueue(), GetSamplesInRequestTask()); }
+
+    @Bean
+    @Scope("request")
     public GetIGOCompleteQCTask getIGOCompleteQCTask() {
         return new GetIGOCompleteQCTask();
     }
