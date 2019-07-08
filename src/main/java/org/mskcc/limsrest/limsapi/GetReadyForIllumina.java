@@ -127,17 +127,13 @@ public class GetReadyForIllumina extends LimsTask {
      * @throws IoError
      */
     private String getSampleLibraryIndexIdAndBarcode(DataRecord sample) throws NotFound, RemoteException, IoError {
-        String indexIdAndBarcode = null;
         DataRecord parentSample = getParentSampleWithDesiredChildTypeRecord(sample, "IndexBarcode");
         if (parentSample != null && parentSample.getChildrenOfType("IndexBarcode", user)[0].getValue("IndexId", user) != null) {
             DataRecord recordWithIndexBarcodeInfo = parentSample.getChildrenOfType("IndexBarcode", user)[0];
             String indexId = recordWithIndexBarcodeInfo.getStringVal("IndexId", user);
             String indexBarcode = recordWithIndexBarcodeInfo.getStringVal("IndexTag", user);
-            indexIdAndBarcode = indexId + "," + indexBarcode;
-        }
-        if (indexIdAndBarcode != null) {
-            return indexIdAndBarcode;
-        } else {
+            return indexId + "," + indexBarcode;
+        }else {
             log.info(String.format("IndexId not found for sample '%s'.\nPlease double check.", sample.getStringVal("SampleId", user)));
             return "";
         }
