@@ -17,8 +17,7 @@ import java.util.*;
 /**
  * A queued task that takes shows all samples that need planned for Illumina runs. This endpoint will return the sample level information for individual Library samples and pooled Library samples.
  * The information is important for Pool planning for sequencing and making important pooling decisions.
- * 
- * @author Aaron Gabow
+ *
  */
 @Service
 public class GetReadyForIllumina extends LimsTask {
