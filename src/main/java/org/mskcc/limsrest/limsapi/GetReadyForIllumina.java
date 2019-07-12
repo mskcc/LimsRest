@@ -227,12 +227,15 @@ public class GetReadyForIllumina extends LimsTask {
         }
     }
 
-    private String getRecipeForSample(DataRecord sample){
-        if
+    private String getRecipeForSample(DataRecord sample) throws NotFound, RemoteException {
+        if (sample.getValue("Recipe", user) !=null){
+            return sample.getValue("Recipe",user).toString();
+        }
+        return "";
     }
 
     /**
-     * This method will create the Summary Object for the sample which is added to the results list and passed to the user.
+     * This method will create the Summary Object for the sample not part of a pool.
      * @param unpooledSample
      * @param summary
      * @return Run Summary for sample.
@@ -259,6 +262,7 @@ public class GetReadyForIllumina extends LimsTask {
             summary.setVolume("null");
         else
             summary.setVolume(volume.toString());
+        summary.setRecipe(getRecipeForSample(unpooledSample));
         summary.setPlateId((String) sampleFieldValues.getOrDefault("RelatedRecord23", ""));
         String indexAndBarcode = getSampleLibraryIndexIdAndBarcode(unpooledSample);
         if (indexAndBarcode !=null && indexAndBarcode.split(",").length==2)
@@ -275,6 +279,17 @@ public class GetReadyForIllumina extends LimsTask {
         return summary;
     }
 
+    /**
+     * This method adds sample level metadata to summary for samples that are part of the pool. This method expects a summary that has some pool level
+     * information added to it.
+     * @param sampleInPool
+     * @param summary
+     * @return Run Summary for sample in pool.
+     * @throws RemoteException
+     * @throws NotFound
+     * @throws IoError
+     * @throws InvalidValue
+     */
     private RunSummary createRunSummaryForSampleInPool(DataRecord sampleInPool, RunSummary summary) throws RemoteException, NotFound, IoError, InvalidValue {
         Map<String, Object> sampleFieldValues = sampleInPool.getFields(user);
         summary.setSampleId((String) sampleFieldValues.get("SampleId"));
@@ -284,6 +299,7 @@ public class GetReadyForIllumina extends LimsTask {
         summary.setTumor((String) sampleFieldValues.getOrDefault("TumorOrNormal", ""));
         summary.setWellPos(sampleFieldValues.getOrDefault("ColPosition", "") + (String) sampleFieldValues.getOrDefault("RowPosition", ""));
         summary.setConcentrationUnits((String) sampleFieldValues.getOrDefault("ConcentrationUnits", ""));
+        summary.setRecipe(getRecipeForSample(sampleInPool));
         Double concentration = (Double) sampleFieldValues.get("Concentration");
         if (concentration != null)
             summary.setAltConcentration(concentration);
