@@ -23,9 +23,7 @@ import java.util.*;
 @Service
 public class GetReadyForIllumina extends LimsTask {
     private Log log = LogFactory.getLog(GetReadyForIllumina.class);
-
     private HashMap<String, List<String>> request2OutstandingSamples;
-
     public void init(){
     request2OutstandingSamples  = new HashMap<>();
   }
@@ -43,10 +41,15 @@ public class GetReadyForIllumina extends LimsTask {
                         List<DataRecord> parentLibrarySamplesForPool = getNearestParentLibrarySamplesForPool(sample); // if sample is pool then get all the Library samples in the pool which live as parents of the pool.
                         for(DataRecord librarySample : parentLibrarySamplesForPool){
                             RunSummary summary = new RunSummary("DEFAULT", "DEFAULT");
-                            summary.setPool(sampleId);
-                            summary.setConcentration(sample.getDoubleVal("Concentration", user));
-                            summary.setStatus(sample.getStringVal("ExemplarSampleStatus", user));
-                            results.add(createRunSummaryForSampleInPool(librarySample, summary));
+                            //set some of the pool level fields on the summary object like pool
+                            summary.setPool(sampleId); //preset poolID
+                            summary.setConcentration(sample.getDoubleVal("Concentration", user)); //preset Pool Concentration
+                            summary.setStatus(sample.getStringVal("ExemplarSampleStatus", user)); //preset Pool Status
+                            if (sample.getValue("Volume", user) == null) //preset pool volume in this if else block
+                                summary.setVolume("null");
+                            else
+                                summary.setVolume(sample.getValue("Volume", user).toString());
+                            results.add(createRunSummaryForSampleInPool(librarySample, summary)); //pass the summary Object with preset pool level information "createRunSummaryForSampleInPool" method to add sample level information
                         }
                     }else{
                         RunSummary summary = new RunSummary("DEFAULT", "DEFAULT"); // if sample is not pool, then it is Library sample and work with it.
@@ -224,6 +227,10 @@ public class GetReadyForIllumina extends LimsTask {
         }
     }
 
+    private String getRecipeForSample(DataRecord sample){
+        if
+    }
+
     /**
      * This method will create the Summary Object for the sample which is added to the results list and passed to the user.
      * @param unpooledSample
@@ -280,11 +287,6 @@ public class GetReadyForIllumina extends LimsTask {
         Double concentration = (Double) sampleFieldValues.get("Concentration");
         if (concentration != null)
             summary.setAltConcentration(concentration);
-        Double volume = (Double) sampleFieldValues.get("Volume");
-        if (volume == null)
-            summary.setVolume("null");
-        else
-            summary.setVolume(volume.toString());
         summary.setPlateId((String) sampleFieldValues.getOrDefault("RelatedRecord23", ""));
         String indexAndBarcode = getSampleLibraryIndexIdAndBarcode(sampleInPool);
         if (indexAndBarcode !=null && indexAndBarcode.split(",").length==2)
