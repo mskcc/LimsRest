@@ -24,8 +24,8 @@ public class GetReadyForIllumina extends LimsTask {
     private Log log = LogFactory.getLog(GetReadyForIllumina.class);
     private HashMap<String, List<String>> request2OutstandingSamples;
     public void init(){
-    request2OutstandingSamples  = new HashMap<>();
-  }
+        request2OutstandingSamples  = new HashMap<>();
+    }
 
     @PreAuthorize("hasRole('READ')")
     @Override
@@ -60,7 +60,7 @@ public class GetReadyForIllumina extends LimsTask {
             log.error("Annotate", e);
         }
         return results;
-     }
+    }
 
     /**
      * If the sample is pool, get all the samples of type Library that are present in the pool.
@@ -230,64 +230,6 @@ public class GetReadyForIllumina extends LimsTask {
         if (sample.getValue("Recipe", user) !=null){
             return sample.getValue("Recipe",user).toString();
         }
-      return "";
-    }
-
-    public RunSummary annotateUnpooledSample(DataRecord sample) {
-        RunSummary summary = new RunSummary("DEFAULT", "DEFAULT");
-        try {
-            Map<String, Object> baseFields = sample.getFields(user);
-            summary = new RunSummary("", (String) baseFields.get("SampleId"));
-            summary.setOtherSampleId((String) baseFields.getOrDefault("OtherSampleId", ""));
-            summary.setRequestId((String) baseFields.getOrDefault("RequestId", ""));
-            summary.setTubeBarcode((String) baseFields.getOrDefault("MicronicTubeBarcode", ""));
-            summary.setStatus((String) baseFields.getOrDefault("ExemplarSampleStatus", ""));
-            summary.setTumor((String) baseFields.getOrDefault("TumorOrNormal", ""));
-            summary.setWellPos(baseFields.getOrDefault("ColPosition", "") + (String) baseFields.getOrDefault("RowPosition", ""));
-            summary.setConcentrationUnits((String) baseFields.getOrDefault("ConcentrationUnits", ""));
-            Double concentration = (Double) baseFields.get("Concentration");
-            if (concentration != null)
-                summary.setAltConcentration(concentration);
-            Double volume = (Double) baseFields.get("Volume");
-            if (volume == null)
-                summary.setVolume("null");
-            else
-                summary.setVolume(volume.toString());
-
-            summary.setPlateId((String) baseFields.getOrDefault("RelatedRecord23", ""));
-
-            List<DataRecord> ancestorSamples = sample.getAncestorsOfType("Sample", user);
-            ancestorSamples.add(0, sample);
-            List<Long> ancestorSamplesCreateDate = ancestorSamples.stream().
-                    map(this::getCreateDate).
-                    collect(Collectors.toList());
-            List<List<Map<String, Object>>> ancestorBarcodes = dataRecordManager.getFieldsForChildrenOfType(ancestorSamples,"IndexBarcode", user);
-            List<List<Map<String, Object>>> ancestorPlanningProtocols = dataRecordManager.getFieldsForChildrenOfType(ancestorSamples,"BatchPlanningProtocol", user);
-            List<List<Map<String, Object>>> ancestorSeqRequirements = dataRecordManager.getFieldsForChildrenOfType(ancestorSamples,"SeqRequirement", user);
-
-            Map<String, Map<String, Object>> nearestAncestorFields =
-                    NearestAncestorSearcher.findMostRecentAncestorFields(ancestorSamplesCreateDate,
-                            ancestorBarcodes, ancestorPlanningProtocols, ancestorSeqRequirements);
-            Map<String, Object> barcodeFields = nearestAncestorFields.get("BarcodeFields");
-            Map<String, Object> planFields = nearestAncestorFields.get("PlanFields");
-            Map<String, Object> reqFields = nearestAncestorFields.get("ReqFields");
-
-            summary.setBarcodeId((String) barcodeFields.getOrDefault("IndexId", ""));
-            summary.setBarcodeSeq((String) barcodeFields.getOrDefault("IndexTag", ""));
-            summary.setSequencer((String) planFields.getOrDefault("RunPlan", ""));
-            summary.setBatch((String) planFields.getOrDefault("WeekPlan", ""));
-            summary.setRunType((String) reqFields.getOrDefault("SequencingRunType", ""));
-            Object reads = reqFields.getOrDefault("RequestedReads", "");
-            if (reads instanceof String){
-                summary.setReadNum((String) reads);
-            } else if (reads instanceof Double){
-                summary.setReadNum(((Double) reads).toString());
-            } else{
-                summary.setReadNum("");
-            }
-        } catch (Exception e) {
-            log.error("Annotate", e);
-        }
         return "";
     }
 
@@ -324,7 +266,7 @@ public class GetReadyForIllumina extends LimsTask {
         String indexAndBarcode = getSampleLibraryIndexIdAndBarcode(unpooledSample);
         if (indexAndBarcode !=null && indexAndBarcode.split(",").length==2)
             summary.setBarcodeId(indexAndBarcode.split(",")[0]);
-            summary.setBarcodeSeq(indexAndBarcode.split(",")[1]);
+        summary.setBarcodeSeq(indexAndBarcode.split(",")[1]);
         summary.setReadNum(getRequestedReadsForSample(unpooledSample).toString());
         String plannedSequencer = getPlannedSequencerForSample(unpooledSample);
         if (plannedSequencer != null)
