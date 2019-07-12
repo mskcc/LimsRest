@@ -25,7 +25,7 @@ public class GetSamplesInRequest {
     }
 
     @RequestMapping("/getSamplesInRequest")
-    public GetSamplesInRequestTask.RequestSampleList getContent(@RequestParam(value = "request") String requestId) {
+    public GetSamplesInRequestTask.RequestSampleList getContent(@RequestParam(value = "request") String requestId, @RequestParam(value="tumorOnly", defaultValue="True") Boolean tumorOnly) {
         log.info("Starting /getSamplesInRequest for requestId:" + requestId);
 
         if (!Whitelists.requestMatches(requestId)) {
@@ -33,7 +33,7 @@ public class GetSamplesInRequest {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "FAILURE: requestId is not using a valid format.");
         }
 
-        task.init(requestId);
+        task.init(requestId, tumorOnly);
         Future<Object> result = connQueue.submitTask(task);
         GetSamplesInRequestTask.RequestSampleList sl;
         try {

@@ -17,9 +17,11 @@ public class GetSamplesInRequestTask extends LimsTask {
     private Log log = LogFactory.getLog(GetSamplesInRequestTask.class);
 
     protected String requestId;
+    protected boolean tumorOnly;
 
-    public void init(String requestId) {
+    public void init(String requestId, boolean tumorOnly) {
         this.requestId = requestId;
+        this.tumorOnly = tumorOnly;
     }
 
     @Override
@@ -44,13 +46,19 @@ public class GetSamplesInRequestTask extends LimsTask {
                 String igoId = sample.getStringVal("SampleId", user);
                 String othersampleId = sample.getStringVal("OtherSampleId", user);
                 boolean igoComplete = samplesIGOComplete.contains(othersampleId);
+                boolean tumor = "Tumor".equals(sample.getStringVal("TumorOrNormal", user));
 
-                RequestSample rs = new RequestSample(othersampleId, igoId, igoComplete);
-                sampleList.add(rs);
+                if (tumorOnly && tumor) {
+                    RequestSample rs = new RequestSample(othersampleId, igoId, igoComplete);
+                    sampleList.add(rs);
+                } else if (!tumorOnly){
+                    RequestSample rs = new RequestSample(othersampleId, igoId, igoComplete);
+                    sampleList.add(rs);
+                }
             }
 
             RequestSampleList rsl = new RequestSampleList(requestId, sampleList);
-
+            log.info("Result size: " + sampleList.size() + " tumors only:" + tumorOnly);
             return rsl;
         } catch (Throwable e) {
             log.error(e.getMessage(), e);

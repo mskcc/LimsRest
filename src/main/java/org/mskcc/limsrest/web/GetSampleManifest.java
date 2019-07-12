@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -26,10 +27,10 @@ public class GetSampleManifest {
     }
 
     @RequestMapping("/getSampleManifest")
-    public List<SampleManifest> getContent(@RequestParam(value = "request") String requestId) {
-        log.info("Starting to build sample manifest for request:" + requestId);
+    public List<SampleManifest> getContent(@RequestParam(value="igoSampleId") String[] igoIds) {
+        log.info("Starting to build sample manifest for samples:" + Arrays.toString(igoIds));
         // TODO whiteList
-        task.init(requestId);
+        task.init(igoIds);
 
         Future<Object> result = connQueue.submitTask(task);
         try {
@@ -38,7 +39,7 @@ public class GetSampleManifest {
             log.info("Returning n rows: " + l.size());
             return l;
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, requestId + " Not Found", e);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, igoIds + " Not Found", e);
         }
     }
 }

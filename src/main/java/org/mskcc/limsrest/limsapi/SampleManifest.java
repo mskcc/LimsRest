@@ -1,7 +1,7 @@
 package org.mskcc.limsrest.limsapi;
 
 public class SampleManifest {
-    private String CMO_SAMPLE_ID;
+    private String IGO_ID;
     private String CMO_PATIENT_ID;
     private String INVESTIGATOR_SAMPLE_ID;
     private String INVESTIGATOR_PATIENT_ID;
@@ -32,12 +32,12 @@ public class SampleManifest {
 
     public SampleManifest() {}
 
-    public String getCMO_SAMPLE_ID() {
-        return CMO_SAMPLE_ID;
+    public String getIGO_ID() {
+        return IGO_ID;
     }
 
-    public void setCMO_SAMPLE_ID(String CMO_SAMPLE_ID) {
-        this.CMO_SAMPLE_ID = CMO_SAMPLE_ID;
+    public void setIGO_ID(String IGO_ID) {
+        this.IGO_ID = IGO_ID;
     }
 
     public String getCMO_PATIENT_ID() {

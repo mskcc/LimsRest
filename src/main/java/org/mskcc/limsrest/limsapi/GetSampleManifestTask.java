@@ -14,31 +14,26 @@ import java.util.List;
 public class GetSampleManifestTask extends LimsTask {
     private Log log = LogFactory.getLog(GetSampleManifestTask.class);
 
-    protected String requestId;
+    protected String [] igoIds;
 
-    public void init(String requestId) {
-        this.requestId = requestId;
+    public void init(String [] igoIds) {
+        this.igoIds = igoIds;
     }
 
     @Override
     public Object execute(VeloxConnection conn) {
         try {
-            log.info("Querying LIMS for request: " + requestId);
-            List<DataRecord> request = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
-            if (request.size() != 1) {
-                log.error("Invalid request Id");
-                return "Invalid Request Id";
-            }
             List<SampleManifest> smList = new ArrayList<>();
-            DataRecord[] childSamples = request.get(0).getChildrenOfType("Sample", user);
-            for (int i = 0; i < childSamples.length; i++) {
-                DataRecord[] cmoInfoArray = childSamples[i].getChildrenOfType("SampleCMOInfoRecords", user);
-                DataRecord cmoInfo = cmoInfoArray[0];
+
+            for (String igoId : igoIds) {
+                List<DataRecord> samples = dataRecordManager.queryDataRecords("samplecmoinforecords", "SampleId = '" + igoId +  "'", user);
+
+                DataRecord cmoInfo = samples.get(0);
                 SampleManifest s = new SampleManifest();
 
-                String correctedcmoId = cmoInfo.getStringVal("correctedcmoId", user);
+                String correctedcmoId = cmoInfo.getStringVal("correctedcmoId", user); // TODO
                 String sampleId = cmoInfo.getStringVal("sampleId", user);
-                s.setCMO_SAMPLE_ID(correctedcmoId + "_IGO_" + sampleId);
+                s.setIGO_ID(sampleId);
 
                 s.setCMO_PATIENT_ID(cmoInfo.getStringVal("cmoPatientId", user));
 
@@ -53,10 +48,8 @@ public class GetSampleManifestTask extends LimsTask {
                 s.setSPECIMEN_PRESERVATION_TYPE(cmoInfo.getStringVal("preservation", user));
                 s.setSPECIMEN_COLLECTION_YEAR(cmoInfo.getStringVal("collectionYear", user));
                 s.setSEX(cmoInfo.getStringVal("gender", user));
-
-                smList.add(s);
             }
-            log.info("Returning");
+
             return smList;
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
