@@ -2,19 +2,15 @@ package org.mskcc.limsrest.limsapi;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-public class BarcodeSummary extends RestDescriptor {
+public class BarcodeSummary {
     private String name;
-    private String id;
-    private String tag;
+    private String barcodId; // Typo
+    private String barcodeTag;
 
-    public BarcodeSummary(String name, long count) {
+    public BarcodeSummary(String name, String id, String barcodeTag) {
         this.name = name;
-    }
-
-    public BarcodeSummary(String name, String id, String tag) {
-        this.name = name;
-        this.id = id;
-        this.tag = tag;
+        this.barcodId = id;
+        this.barcodeTag = barcodeTag;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -24,11 +20,11 @@ public class BarcodeSummary extends RestDescriptor {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getBarcodId() {
-        return id;
+        return barcodId;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getBarcodeTag() {
-        return tag;
+        return barcodeTag;
     }
 }
