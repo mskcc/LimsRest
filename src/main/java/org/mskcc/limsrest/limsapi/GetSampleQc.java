@@ -187,7 +187,8 @@ public class GetSampleQc extends LimsTask {
                 }
 
                 try {
-                    addPooledNormals(rs, runSet);
+                    // skip no longer relevant // TODO fully remove dead code
+                    // addPooledNormals(rs, runSet);
                 } catch (Exception e) {
                     log.error("Failed to add QC stats for pooled normals." + e.getMessage(), e);
                 }
