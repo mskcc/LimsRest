@@ -4,18 +4,16 @@ public class SampleManifest {
     private String IGO_ID;
     private String CMO_PATIENT_ID;
     private String INVESTIGATOR_SAMPLE_ID;
-    private String INVESTIGATOR_PATIENT_ID;
     private String ONCOTREE_CODE;
     private String SAMPLE_CLASS;
     private String TISSUE_SITE;
     private String SAMPLE_TYPE;
-    private String SPECIMEN_PRESERVATION_TYPE;
+    private String SPECIMEN_PRESERVATION;
     private String SPECIMEN_COLLECTION_YEAR;
-    private String SEX;
+    private String GENDER;
 
     private String BARCODE_ID;
-    private String BARCODE_INDEX_1;
-    private String BARCODE_INDEX_2;
+    private String BARCODE_INDEX;
     private String LIBRARY_INPUT_NG; // [ng]
     private String LIBRARY_YIELD_NG;
     private String CAPTURE_INPUT_NG;
@@ -56,14 +54,6 @@ public class SampleManifest {
         this.INVESTIGATOR_SAMPLE_ID = INVESTIGATOR_SAMPLE_ID;
     }
 
-    public String getINVESTIGATOR_PATIENT_ID() {
-        return INVESTIGATOR_PATIENT_ID;
-    }
-
-    public void setINVESTIGATOR_PATIENT_ID(String INVESTIGATOR_PATIENT_ID) {
-        this.INVESTIGATOR_PATIENT_ID = INVESTIGATOR_PATIENT_ID;
-    }
-
     public String getONCOTREE_CODE() {
         return ONCOTREE_CODE;
     }
@@ -96,12 +86,12 @@ public class SampleManifest {
         this.SAMPLE_TYPE = SAMPLE_TYPE;
     }
 
-    public String getSPECIMEN_PRESERVATION_TYPE() {
-        return SPECIMEN_PRESERVATION_TYPE;
+    public String getSPECIMEN_PRESERVATION() {
+        return SPECIMEN_PRESERVATION;
     }
 
-    public void setSPECIMEN_PRESERVATION_TYPE(String SPECIMEN_PRESERVATION_TYPE) {
-        this.SPECIMEN_PRESERVATION_TYPE = SPECIMEN_PRESERVATION_TYPE;
+    public void setSPECIMEN_PRESERVATION(String SPECIMEN_PRESERVATION) {
+        this.SPECIMEN_PRESERVATION = SPECIMEN_PRESERVATION;
     }
 
     public String getSPECIMEN_COLLECTION_YEAR() {
@@ -112,13 +102,9 @@ public class SampleManifest {
         this.SPECIMEN_COLLECTION_YEAR = SPECIMEN_COLLECTION_YEAR;
     }
 
-    public String getSEX() {
-        return SEX;
-    }
+    public String getGENDER() { return GENDER; }
 
-    public void setSEX(String SEX) {
-        this.SEX = SEX;
-    }
+    public void setGENDER(String GENDER) { this.GENDER = GENDER; }
 
     public String getBARCODE_ID() {
         return BARCODE_ID;
@@ -128,20 +114,12 @@ public class SampleManifest {
         this.BARCODE_ID = BARCODE_ID;
     }
 
-    public String getBARCODE_INDEX_1() {
-        return BARCODE_INDEX_1;
+    public String getBARCODE_INDEX() {
+        return BARCODE_INDEX;
     }
 
-    public void setBARCODE_INDEX_1(String BARCODE_INDEX_1) {
-        this.BARCODE_INDEX_1 = BARCODE_INDEX_1;
-    }
-
-    public String getBARCODE_INDEX_2() {
-        return BARCODE_INDEX_2;
-    }
-
-    public void setBARCODE_INDEX_2(String BARCODE_INDEX_2) {
-        this.BARCODE_INDEX_2 = BARCODE_INDEX_2;
+    public void setBARCODE_INDEX(String BARCODE_INDEX) {
+        this.BARCODE_INDEX = BARCODE_INDEX;
     }
 
     public String getLIBRARY_INPUT_NG() {
