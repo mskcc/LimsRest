@@ -26,10 +26,13 @@ public class GetSampleManifestTask extends LimsTask {
             List<SampleManifest> smList = new ArrayList<>();
 
             for (String igoId : igoIds) {
-                List<DataRecord> samples = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "SampleId = '" + igoId +  "'", user);
+                // TODO check sample exists
+                List<DataRecord> sampleCMOInfoRecords = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "SampleId = '" + igoId +  "'", user);
 
-                DataRecord cmoInfo = samples.get(0);
+                // TODO 06302_R_1 no sampleCMOInfoRecord
+                DataRecord cmoInfo = sampleCMOInfoRecords.get(0);
                 String sampleId = cmoInfo.getStringVal("SampleId", user);
+                String altId = cmoInfo.getStringVal("AltId", user);
                 SampleManifest s = new SampleManifest();
                 s.setIGO_ID(igoId);
 
@@ -45,6 +48,7 @@ public class GetSampleManifestTask extends LimsTask {
                 s.setSPECIMEN_PRESERVATION(cmoInfo.getStringVal("Preservation", user));
                 s.setSPECIMEN_COLLECTION_YEAR(cmoInfo.getStringVal("CollectionYear", user));
                 s.setGENDER(cmoInfo.getStringVal("Gender", user));
+                // NimbleGenHybProtocol2 - capture input
 
                 List<DataRecord> indexBarcodes = dataRecordManager.queryDataRecords("IndexBarcode", "SampleId = '" + igoId + "'", user);
                 if (indexBarcodes != null && indexBarcodes.size() > 0) {
@@ -54,6 +58,20 @@ public class GetSampleManifestTask extends LimsTask {
                     s.setBARCODE_INDEX(bc.getStringVal("IndexTag", user));
                     if (indexBarcodes.size() > 1)
                         System.err.println("ERROR, need LIST.");
+                }
+
+                // TODO
+                String dmpLibraryInput = cmoInfo.getStringVal("DMPLibraryInput", user); // often null
+                String dmpLibraryOutput = cmoInfo.getStringVal("DMPLibraryOutput", user); // LIBRARY_YIELD
+                s.setLIBRARY_INPUT_NG(dmpLibraryInput);
+                s.setLIBRARY_YIELD_NG(dmpLibraryOutput);
+
+                List<DataRecord> samples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + igoId + "'", user);
+                DataRecord sample = samples.get(0);
+                List<DataRecord> reqLanes = sample.getDescendantsOfType("FlowCellLane", user);
+                for (DataRecord flowCellLane : reqLanes) {
+                    long laneNum = flowCellLane.getLongVal("LaneNum", user);
+                    s.setLANE_NUMBER(new Long(laneNum).toString());
                 }
                 smList.add(s);
             }

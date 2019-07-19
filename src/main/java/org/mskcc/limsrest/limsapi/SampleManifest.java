@@ -24,8 +24,7 @@ public class SampleManifest {
     private String STATUS;
     private String INCLUDE_RUN_ID;
     private String EXCLUDE_RUN_ID;
-    // todo LANE_NUMBER;
-    private String STUDY_ID;
+    private String LANE_NUMBER;
 
 
     public SampleManifest() {}
@@ -202,11 +201,7 @@ public class SampleManifest {
         this.EXCLUDE_RUN_ID = EXCLUDE_RUN_ID;
     }
 
-    public String getSTUDY_ID() {
-        return STUDY_ID;
-    }
+    public String getLANE_NUMBER() { return LANE_NUMBER; }
 
-    public void setSTUDY_ID(String STUDY_ID) {
-        this.STUDY_ID = STUDY_ID;
-    }
+    public void setLANE_NUMBER(String LANE_NUMBER) { this.LANE_NUMBER = LANE_NUMBER; }
 }
