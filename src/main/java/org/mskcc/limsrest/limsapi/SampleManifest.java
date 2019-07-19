@@ -1,207 +1,190 @@
 package org.mskcc.limsrest.limsapi;
 
 public class SampleManifest {
-    private String IGO_ID;
-    private String CMO_PATIENT_ID;
-    private String INVESTIGATOR_SAMPLE_ID;
-    private String ONCOTREE_CODE;
-    private String SAMPLE_CLASS;
-    private String TISSUE_SITE;
-    private String SAMPLE_TYPE;
-    private String SPECIMEN_PRESERVATION;
-    private String SPECIMEN_COLLECTION_YEAR;
-    private String GENDER;
+    private String igoId;
+    private String cmoPatientId;
+    private String investigatorSampleId;
+    private String oncotreeCode;
+    private String sampleClass;
+    private String tissueSite;
+    private String sampleType;
+    private String preservation;
+    private String collectionYear;
+    private String gender;
 
-    private String BARCODE_ID;
-    private String BARCODE_INDEX;
-    private String LIBRARY_INPUT_NG; // [ng]
-    private String LIBRARY_YIELD_NG;
-    private String CAPTURE_INPUT_NG;
-    private String CAPTURE_NAME;
-    private String CAPTURE_CONCENTRATION_NM;
-    private String CAPTURE_BAIT_SET;
-    private String SPIKE_IN_GENES;
-    private String STATUS;
-    private String INCLUDE_RUN_ID;
-    private String EXCLUDE_RUN_ID;
-    private String LANE_NUMBER;
+    private String baitSet;
+    private String barcodeId;
+    private String barcodeIndex;
+
+    private String libraryInputNg; // [ng]
+    private String libraryYieldNg;
+    private String captureInputNg;
+    private String captureName;
+    private String captureConcentrationNm;
+
+    private String runId;
+    private String laneNumber;
 
 
     public SampleManifest() {}
 
-    public String getIGO_ID() {
-        return IGO_ID;
+    public String getIgoId() {
+        return igoId;
     }
 
-    public void setIGO_ID(String IGO_ID) {
-        this.IGO_ID = IGO_ID;
+    public void setIgoId(String igoId) {
+        this.igoId = igoId;
     }
 
-    public String getCMO_PATIENT_ID() {
-        return CMO_PATIENT_ID;
+    public String getCmoPatientId() {
+        return cmoPatientId;
     }
 
-    public void setCMO_PATIENT_ID(String CMO_PATIENT_ID) {
-        this.CMO_PATIENT_ID = CMO_PATIENT_ID;
+    public void setCmoPatientId(String cmoPatientId) {
+        this.cmoPatientId = cmoPatientId;
     }
 
-    public String getINVESTIGATOR_SAMPLE_ID() {
-        return INVESTIGATOR_SAMPLE_ID;
+    public String getInvestigatorSampleId() {
+        return investigatorSampleId;
     }
 
-    public void setINVESTIGATOR_SAMPLE_ID(String INVESTIGATOR_SAMPLE_ID) {
-        this.INVESTIGATOR_SAMPLE_ID = INVESTIGATOR_SAMPLE_ID;
+    public void setInvestigatorSampleId(String investigatorSampleId) {
+        this.investigatorSampleId = investigatorSampleId;
     }
 
-    public String getONCOTREE_CODE() {
-        return ONCOTREE_CODE;
+    public String getOncotreeCode() {
+        return oncotreeCode;
     }
 
-    public void setONCOTREE_CODE(String ONCOTREE_CODE) {
-        this.ONCOTREE_CODE = ONCOTREE_CODE;
+    public void setOncotreeCode(String oncotreeCode) {
+        this.oncotreeCode = oncotreeCode;
     }
 
-    public String getSAMPLE_CLASS() {
-        return SAMPLE_CLASS;
+    public String getSampleClass() {
+        return sampleClass;
     }
 
-    public void setSAMPLE_CLASS(String SAMPLE_CLASS) {
-        this.SAMPLE_CLASS = SAMPLE_CLASS;
+    public void setSampleClass(String sampleClass) {
+        this.sampleClass = sampleClass;
     }
 
-    public String getTISSUE_SITE() {
-        return TISSUE_SITE;
+    public String getTissueSite() {
+        return tissueSite;
     }
 
-    public void setTISSUE_SITE(String TISSUE_SITE) {
-        this.TISSUE_SITE = TISSUE_SITE;
+    public void setTissueSite(String tissueSite) {
+        this.tissueSite = tissueSite;
     }
 
-    public String getSAMPLE_TYPE() {
-        return SAMPLE_TYPE;
+    public String getSampleType() {
+        return sampleType;
     }
 
-    public void setSAMPLE_TYPE(String SAMPLE_TYPE) {
-        this.SAMPLE_TYPE = SAMPLE_TYPE;
+    public void setSampleType(String sampleType) {
+        this.sampleType = sampleType;
     }
 
-    public String getSPECIMEN_PRESERVATION() {
-        return SPECIMEN_PRESERVATION;
+    public String getPreservation() {
+        return preservation;
     }
 
-    public void setSPECIMEN_PRESERVATION(String SPECIMEN_PRESERVATION) {
-        this.SPECIMEN_PRESERVATION = SPECIMEN_PRESERVATION;
+    public void setPreservation(String preservation) {
+        this.preservation = preservation;
     }
 
-    public String getSPECIMEN_COLLECTION_YEAR() {
-        return SPECIMEN_COLLECTION_YEAR;
+    public String getCollectionYear() {
+        return collectionYear;
     }
 
-    public void setSPECIMEN_COLLECTION_YEAR(String SPECIMEN_COLLECTION_YEAR) {
-        this.SPECIMEN_COLLECTION_YEAR = SPECIMEN_COLLECTION_YEAR;
+    public void setCollectionYear(String collectionYear) {
+        this.collectionYear = collectionYear;
     }
 
-    public String getGENDER() { return GENDER; }
-
-    public void setGENDER(String GENDER) { this.GENDER = GENDER; }
-
-    public String getBARCODE_ID() {
-        return BARCODE_ID;
+    public String getGender() {
+        return gender;
     }
 
-    public void setBARCODE_ID(String BARCODE_ID) {
-        this.BARCODE_ID = BARCODE_ID;
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 
-    public String getBARCODE_INDEX() {
-        return BARCODE_INDEX;
+    public String getBaitSet() {
+        return baitSet;
     }
 
-    public void setBARCODE_INDEX(String BARCODE_INDEX) {
-        this.BARCODE_INDEX = BARCODE_INDEX;
+    public void setBaitSet(String baitSet) {
+        this.baitSet = baitSet;
     }
 
-    public String getLIBRARY_INPUT_NG() {
-        return LIBRARY_INPUT_NG;
+    public String getBarcodeId() {
+        return barcodeId;
     }
 
-    public void setLIBRARY_INPUT_NG(String LIBRARY_INPUT_NG) {
-        this.LIBRARY_INPUT_NG = LIBRARY_INPUT_NG;
+    public void setBarcodeId(String barcodeId) {
+        this.barcodeId = barcodeId;
     }
 
-    public String getLIBRARY_YIELD_NG() {
-        return LIBRARY_YIELD_NG;
+    public String getBarcodeIndex() {
+        return barcodeIndex;
     }
 
-    public void setLIBRARY_YIELD_NG(String LIBRARY_YIELD_NG) {
-        this.LIBRARY_YIELD_NG = LIBRARY_YIELD_NG;
+    public void setBarcodeIndex(String barcodeIndex) {
+        this.barcodeIndex = barcodeIndex;
     }
 
-    public String getCAPTURE_INPUT_NG() {
-        return CAPTURE_INPUT_NG;
+    public String getLibraryInputNg() {
+        return libraryInputNg;
     }
 
-    public void setCAPTURE_INPUT_NG(String CAPTURE_INPUT_NG) {
-        this.CAPTURE_INPUT_NG = CAPTURE_INPUT_NG;
+    public void setLibraryInputNg(String libraryInputNg) {
+        this.libraryInputNg = libraryInputNg;
     }
 
-    public String getCAPTURE_NAME() {
-        return CAPTURE_NAME;
+    public String getLibraryYieldNg() {
+        return libraryYieldNg;
     }
 
-    public void setCAPTURE_NAME(String CAPTURE_NAME) {
-        this.CAPTURE_NAME = CAPTURE_NAME;
+    public void setLibraryYieldNg(String libraryYieldNg) {
+        this.libraryYieldNg = libraryYieldNg;
     }
 
-    public String getCAPTURE_CONCENTRATION_NM() {
-        return CAPTURE_CONCENTRATION_NM;
+    public String getCaptureInputNg() {
+        return captureInputNg;
     }
 
-    public void setCAPTURE_CONCENTRATION_NM(String CAPTURE_CONCENTRATION_NM) {
-        this.CAPTURE_CONCENTRATION_NM = CAPTURE_CONCENTRATION_NM;
+    public void setCaptureInputNg(String captureInputNg) {
+        this.captureInputNg = captureInputNg;
     }
 
-    public String getCAPTURE_BAIT_SET() {
-        return CAPTURE_BAIT_SET;
+    public String getCaptureName() {
+        return captureName;
     }
 
-    public void setCAPTURE_BAIT_SET(String CAPTURE_BAIT_SET) {
-        this.CAPTURE_BAIT_SET = CAPTURE_BAIT_SET;
+    public void setCaptureName(String captureName) {
+        this.captureName = captureName;
     }
 
-    public String getSPIKE_IN_GENES() {
-        return SPIKE_IN_GENES;
+    public String getCaptureConcentrationNm() {
+        return captureConcentrationNm;
     }
 
-    public void setSPIKE_IN_GENES(String SPIKE_IN_GENES) {
-        this.SPIKE_IN_GENES = SPIKE_IN_GENES;
+    public void setCaptureConcentrationNm(String captureConcentrationNm) {
+        this.captureConcentrationNm = captureConcentrationNm;
     }
 
-    public String getSTATUS() {
-        return STATUS;
+    public String getRunId() {
+        return runId;
     }
 
-    public void setSTATUS(String STATUS) {
-        this.STATUS = STATUS;
+    public void setRunId(String runId) {
+        this.runId = runId;
     }
 
-    public String getINCLUDE_RUN_ID() {
-        return INCLUDE_RUN_ID;
+    public String getLaneNumber() {
+        return laneNumber;
     }
 
-    public void setINCLUDE_RUN_ID(String INCLUDE_RUN_ID) {
-        this.INCLUDE_RUN_ID = INCLUDE_RUN_ID;
+    public void setLaneNumber(String laneNumber) {
+        this.laneNumber = laneNumber;
     }
-
-    public String getEXCLUDE_RUN_ID() {
-        return EXCLUDE_RUN_ID;
-    }
-
-    public void setEXCLUDE_RUN_ID(String EXCLUDE_RUN_ID) {
-        this.EXCLUDE_RUN_ID = EXCLUDE_RUN_ID;
-    }
-
-    public String getLANE_NUMBER() { return LANE_NUMBER; }
-
-    public void setLANE_NUMBER(String LANE_NUMBER) { this.LANE_NUMBER = LANE_NUMBER; }
 }

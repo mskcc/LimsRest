@@ -26,53 +26,81 @@ public class GetSampleManifestTask extends LimsTask {
             List<SampleManifest> smList = new ArrayList<>();
 
             for (String igoId : igoIds) {
+                log.info("Creating sample manifest for IGO ID:" + igoId);
                 // TODO check sample exists
                 List<DataRecord> sampleCMOInfoRecords = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "SampleId = '" + igoId +  "'", user);
 
-                // TODO 06302_R_1 no sampleCMOInfoRecord
-                DataRecord cmoInfo = sampleCMOInfoRecords.get(0);
+                List<DataRecord> samples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + igoId + "'", user);
+                DataRecord sample = samples.get(0);
+
+                // 06302_R_1 has no sampleCMOInfoRecord so use the same fields at the sample level
+                DataRecord cmoInfo;
+                if (sampleCMOInfoRecords.size() == 0) {
+                    cmoInfo = samples.get(0);
+                } else {
+                    cmoInfo = sampleCMOInfoRecords.get(0);
+                }
                 String sampleId = cmoInfo.getStringVal("SampleId", user);
                 String altId = cmoInfo.getStringVal("AltId", user);
                 SampleManifest s = new SampleManifest();
-                s.setIGO_ID(igoId);
+                s.setIgoId(igoId);
 
                 String cmoPatientId = cmoInfo.getStringVal("CmoPatientId", user);
-                s.setCMO_PATIENT_ID(cmoPatientId);
+                s.setCmoPatientId(cmoPatientId);
                 String userSampleId = cmoInfo.getStringVal("UserSampleID", user);
-                s.setINVESTIGATOR_SAMPLE_ID(userSampleId + "_IGO_" + sampleId);
+                s.setInvestigatorSampleId(userSampleId + "_IGO_" + sampleId);
+                s.setOncotreeCode(cmoInfo.getStringVal("TumorType", user));
+                s.setSampleClass(cmoInfo.getStringVal("TumorOrNormal", user));
+                s.setTissueSite(cmoInfo.getStringVal("TissueLocation", user));
+                s.setSampleType(cmoInfo.getStringVal("SampleOrigin", user));
+                s.setPreservation(cmoInfo.getStringVal("Preservation", user));
+                s.setCollectionYear(cmoInfo.getStringVal("CollectionYear", user));
+                s.setGender(cmoInfo.getStringVal("Gender", user));
 
-                s.setONCOTREE_CODE(cmoInfo.getStringVal("TumorType", user));
-                s.setSAMPLE_CLASS(cmoInfo.getStringVal("TumorOrNormal", user));
-                s.setTISSUE_SITE(cmoInfo.getStringVal("TissueLocation", user));
-                s.setSAMPLE_TYPE(cmoInfo.getStringVal("SampleOrigin", user));
-                s.setSPECIMEN_PRESERVATION(cmoInfo.getStringVal("Preservation", user));
-                s.setSPECIMEN_COLLECTION_YEAR(cmoInfo.getStringVal("CollectionYear", user));
-                s.setGENDER(cmoInfo.getStringVal("Gender", user));
-                // NimbleGenHybProtocol2 - capture input
+                // TODO often null here, query KAPALibPlateSetupProtocol1.TargetMassAliq1
+                String dmpLibraryInput = cmoInfo.getStringVal("DMPLibraryInput", user); // often null
+                String dmpLibraryOutput = cmoInfo.getStringVal("DMPLibraryOutput", user); // LIBRARY_YIELD
+                if (dmpLibraryInput != null) {
+                    s.setLibraryInputNg(dmpLibraryInput);
+                    s.setLibraryYieldNg(dmpLibraryOutput);
+                } else {
+                    long created = -1;
+                    double mass = 0.00000;
+                    DataRecord[] kProtocols = sample.getChildrenOfType("KAPALibPlateSetupProtocol1", this.user);
+                    for (DataRecord protocol : kProtocols){
+                        long protoCreate = protocol.getDateVal("DateCreated", this.user);
+                        if (protoCreate  > created){
+                            mass = protocol.getDoubleVal("TargetMassAliq1", this.user);
+                            s.setLibraryInputNg(Double.toString(mass));
+                            created = protoCreate;
+                        }
+                    }
+                }
 
                 List<DataRecord> indexBarcodes = dataRecordManager.queryDataRecords("IndexBarcode", "SampleId = '" + igoId + "'", user);
                 if (indexBarcodes != null && indexBarcodes.size() > 0) {
-                    // TODO convert to LIST, handle multiple barcodes
                     DataRecord bc = indexBarcodes.get(0);
-                    s.setBARCODE_ID(bc.getStringVal("IndexId", user));
-                    s.setBARCODE_INDEX(bc.getStringVal("IndexTag", user));
+                    s.setBarcodeId(bc.getStringVal("IndexId", user));
+                    s.setBarcodeIndex(bc.getStringVal("IndexTag", user));
                     if (indexBarcodes.size() > 1)
                         System.err.println("ERROR, need LIST.");
                 }
 
-                // TODO
-                String dmpLibraryInput = cmoInfo.getStringVal("DMPLibraryInput", user); // often null
-                String dmpLibraryOutput = cmoInfo.getStringVal("DMPLibraryOutput", user); // LIBRARY_YIELD
-                s.setLIBRARY_INPUT_NG(dmpLibraryInput);
-                s.setLIBRARY_YIELD_NG(dmpLibraryOutput);
 
-                List<DataRecord> samples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + igoId + "'", user);
-                DataRecord sample = samples.get(0);
+                List<DataRecord> nimbleGen = sample.getDescendantsOfType("NimbleGenHybProtocol", user);
+                log.info("Found nimbleGen records: " + nimbleGen.size());
+                for (DataRecord n : nimbleGen) {
+                    String baitSet = n.getStringVal("Recipe", user);
+                    System.out.println("B:" + baitSet);
+                    s.setBaitSet(baitSet);
+                }
+
                 List<DataRecord> reqLanes = sample.getDescendantsOfType("FlowCellLane", user);
                 for (DataRecord flowCellLane : reqLanes) {
-                    long laneNum = flowCellLane.getLongVal("LaneNum", user);
-                    s.setLANE_NUMBER(new Long(laneNum).toString());
+                    Long laneNum = flowCellLane.getLongVal("LaneNum", user);
+                    s.setLaneNumber(laneNum.toString());
                 }
+
                 smList.add(s);
             }
 
