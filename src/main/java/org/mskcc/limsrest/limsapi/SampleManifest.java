@@ -11,13 +11,13 @@ public class SampleManifest {
     private String preservation;
     private String collectionYear;
     private String gender;
-
-    private String baitSet;
+    private String recipe;
     private String barcodeId;
     private String barcodeIndex;
 
-    private String libraryInputNg; // [ng]
-    private String libraryYieldNg;
+    private Double libraryInputNg; // [ng]
+    private Double libraryConcentration; // ng/uL
+    private Double libraryYieldNg;
     private String captureInputNg;
     private String captureName;
     private String captureConcentrationNm;
@@ -27,6 +27,22 @@ public class SampleManifest {
 
 
     public SampleManifest() {}
+
+    public Double getLibraryConcentration() {
+        return libraryConcentration;
+    }
+
+    public void setLibraryConcentration(Double libraryConcentration) {
+        this.libraryConcentration = libraryConcentration;
+    }
+
+    public String getRecipe() {
+        return recipe;
+    }
+
+    public void setRecipe(String recipe) {
+        this.recipe = recipe;
+    }
 
     public String getIgoId() {
         return igoId;
@@ -108,14 +124,6 @@ public class SampleManifest {
         this.gender = gender;
     }
 
-    public String getBaitSet() {
-        return baitSet;
-    }
-
-    public void setBaitSet(String baitSet) {
-        this.baitSet = baitSet;
-    }
-
     public String getBarcodeId() {
         return barcodeId;
     }
@@ -132,19 +140,19 @@ public class SampleManifest {
         this.barcodeIndex = barcodeIndex;
     }
 
-    public String getLibraryInputNg() {
+    public Double getLibraryInputNg() {
         return libraryInputNg;
     }
 
-    public void setLibraryInputNg(String libraryInputNg) {
+    public void setLibraryInputNg(Double libraryInputNg) {
         this.libraryInputNg = libraryInputNg;
     }
 
-    public String getLibraryYieldNg() {
+    public Double getLibraryYieldNg() {
         return libraryYieldNg;
     }
 
-    public void setLibraryYieldNg(String libraryYieldNg) {
+    public void setLibraryYieldNg(Double libraryYieldNg) {
         this.libraryYieldNg = libraryYieldNg;
     }
 
