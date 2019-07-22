@@ -1,7 +1,11 @@
 package org.mskcc.limsrest.limsapi;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SampleManifest {
     private String igoId;
+
     private String cmoPatientId;
     private String investigatorSampleId;
     private String oncotreeCode;
@@ -11,22 +15,45 @@ public class SampleManifest {
     private String preservation;
     private String collectionYear;
     private String gender;
+
     private String recipe;
+
     private String barcodeId;
     private String barcodeIndex;
 
     private Double libraryInputNg; // [ng]
     private Double libraryConcentration; // ng/uL
     private Double libraryYieldNg;
+
     private String captureInputNg;
     private String captureName;
     private String captureConcentrationNm;
 
-    private String runId;
-    private String laneNumber;
+    public static class Run {
+        public Run(String runMode, String runId, String flowCellId, Integer flowCelllane) {
+            this.runMode = runMode;
+            this.runId = runId;
+            this.flowCellId = flowCellId;
+            this.flowCellLane = flowCelllane;
+        }
+        public String runMode;
+        public String runId;
+        public String flowCellId;
+        public Integer flowCellLane;
+    }
+
+    private List<Run> runs = new ArrayList<>();
 
 
     public SampleManifest() {}
+
+    public List<Run> getRuns() {
+        return runs;
+    }
+
+    public void setRuns(List<Run> runs) {
+        this.runs = runs;
+    }
 
     public Double getLibraryConcentration() {
         return libraryConcentration;
@@ -180,19 +207,4 @@ public class SampleManifest {
         this.captureConcentrationNm = captureConcentrationNm;
     }
 
-    public String getRunId() {
-        return runId;
-    }
-
-    public void setRunId(String runId) {
-        this.runId = runId;
-    }
-
-    public String getLaneNumber() {
-        return laneNumber;
-    }
-
-    public void setLaneNumber(String laneNumber) {
-        this.laneNumber = laneNumber;
-    }
 }

@@ -57,7 +57,7 @@ public class GetSampleManifestTask extends LimsTask {
                 s.setCollectionYear(cmoInfo.getStringVal("CollectionYear", user));
                 s.setGender(cmoInfo.getStringVal("Gender", user));
 
-                // TODO create lists of items when multiple values are possible i.e. run1, run2, etc.
+                // TODO create lists of items when multiple values are possible i.e. sample re-pooled
 
                 // library input & library yield
                 // if null in samplecmoinforecords then query KAPALibPlateSetupProtocol1.TargetMassAliq1
@@ -113,14 +113,30 @@ public class GetSampleManifestTask extends LimsTask {
                     }
                 }
 
-                // Lane Number
+                // run Mode, runId, flow Cell & Lane Number
                 List<DataRecord> reqLanes = sample.getDescendantsOfType("FlowCellLane", user);
                 for (DataRecord flowCellLane : reqLanes) {
                     Long laneNum = flowCellLane.getLongVal("LaneNum", user);
-                    s.setLaneNumber(laneNum.toString());
+                    log.info("Getting a flow cell lane");
+                    List<DataRecord> flowcell = flowCellLane.getParentsOfType("FlowCell", user);
+                    if (flowcell.size() > 0) {
+                        log.info("Getting a flow cell");
+                        List<DataRecord> possibleRun = flowcell.get(0).getParentsOfType("IlluminaSeqExperiment", user);
+                        if (possibleRun.size() > 0) {
+                            log.info("Getting a run");
+                            //SequencerRunFolder example /ifs/lola/150814_LOLA_1298_BC7259ACXX/
+                            DataRecord runDR = possibleRun.get(0);
+                            String runMode  = runDR.getStringVal("SequencingRunMode", user);
+                            String flowCellId = runDR.getStringVal("FlowcellId", user);
+                            String[] runFolderElements = runDR.getStringVal("SequencerRunFolder", user).split("_");
+                            String runId = runFolderElements[1] + "_" + runFolderElements[2];
+                            SampleManifest.Run r = new SampleManifest.Run(runMode, runId, flowCellId, laneNum.intValue());
+                            List<SampleManifest.Run> l = s.getRuns();
+                            l.add(r);
+                            s.setRuns(l);
+                        }
+                    }
                 }
-
-                // TODO RUN ID
 
                 smList.add(s);
             }
