@@ -17,9 +17,9 @@ import java.util.concurrent.Future;
 
 @RestController
 public class GetSampleManifest {
+    private Log log = LogFactory.getLog(GetSampleManifest.class);
     private final ConnectionQueue connQueue;
     private final GetSampleManifestTask task;
-    private Log log = LogFactory.getLog(GetSampleManifest.class);
 
     public GetSampleManifest(ConnectionQueue connQueue, GetSampleManifestTask task) {
         this.connQueue = connQueue;
@@ -32,14 +32,28 @@ public class GetSampleManifest {
         // TODO whiteList
         task.init(igoIds);
 
-        Future<Object> result = connQueue.submitTask(task);
+        Future<Object> r = connQueue.submitTask(task);
+
         try {
-            Object o = result.get();
-            List<SampleManifest> l = (List<SampleManifest>) o;
-            log.info("Returning n rows: " + l.size());
-            return l;
+            SampleManifestResult result = (SampleManifestResult) r.get();
+            if (result.error == null) {
+                log.info("Returning n rows: " + result.smList.size());
+                return result.smList;
+            } else {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, result.error);
+            }
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, igoIds + " Not Found", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+        }
+    }
+
+    public static class SampleManifestResult {
+        List<SampleManifest> smList;
+        String error = null;
+
+        public SampleManifestResult(List<SampleManifest> smList, String error) {
+            this.smList = smList;
+            this.error = error;
         }
     }
 }

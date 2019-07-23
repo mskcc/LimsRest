@@ -4,7 +4,10 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.web.GetSampleManifest;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,10 +30,12 @@ public class GetSampleManifestTask extends LimsTask {
 
             for (String igoId : igoIds) {
                 log.info("Creating sample manifest for IGO ID:" + igoId);
-                // TODO check sample exists
                 List<DataRecord> sampleCMOInfoRecords = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "SampleId = '" + igoId +  "'", user);
 
                 List<DataRecord> samples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + igoId + "'", user);
+                if (samples.size() == 0) { // return error
+                    return new GetSampleManifest.SampleManifestResult(null, "Sample not found: " + igoId);
+                }
                 DataRecord sample = samples.get(0);
 
                 // 06302_R_1 has no sampleCMOInfoRecord so use the same fields at the sample level
@@ -129,8 +134,12 @@ public class GetSampleManifestTask extends LimsTask {
                             String runMode  = runDR.getStringVal("SequencingRunMode", user);
                             String flowCellId = runDR.getStringVal("FlowcellId", user);
                             String[] runFolderElements = runDR.getStringVal("SequencerRunFolder", user).split("_");
+                            // TODO function to get date as String yyyy-MM-dd ?
                             String runId = runFolderElements[1] + "_" + runFolderElements[2];
-                            SampleManifest.Run r = new SampleManifest.Run(runMode, runId, flowCellId, laneNum.intValue());
+                            String illuminaDate = runFolderElements[0].substring(runFolderElements[0].length()-6); // yymmdd
+                            String dateCreated = "20" + illuminaDate.substring(0,2) + "-" + illuminaDate.substring(2,4) + "-" + illuminaDate.substring(4,6);
+
+                            SampleManifest.Run r = new SampleManifest.Run(runMode, runId, flowCellId, laneNum.intValue(), dateCreated);
                             List<SampleManifest.Run> l = s.getRuns();
                             l.add(r);
                             s.setRuns(l);
@@ -141,7 +150,7 @@ public class GetSampleManifestTask extends LimsTask {
                 smList.add(s);
             }
 
-            return smList;
+            return new GetSampleManifest.SampleManifestResult(smList, null);
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
             return null;

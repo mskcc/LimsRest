@@ -30,16 +30,18 @@ public class SampleManifest {
     private String captureConcentrationNm;
 
     public static class Run {
-        public Run(String runMode, String runId, String flowCellId, Integer flowCelllane) {
+        public Run(String runMode, String runId, String flowCellId, Integer flowCelllane, String runDate) {
             this.runMode = runMode;
             this.runId = runId;
             this.flowCellId = flowCellId;
             this.flowCellLane = flowCelllane;
+            this.runDate = runDate;
         }
         public String runMode;
         public String runId;
         public String flowCellId;
         public Integer flowCellLane;
+        public String runDate;
     }
 
     private List<Run> runs = new ArrayList<>();
@@ -206,5 +208,4 @@ public class SampleManifest {
     public void setCaptureConcentrationNm(String captureConcentrationNm) {
         this.captureConcentrationNm = captureConcentrationNm;
     }
-
 }
