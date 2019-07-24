@@ -18,60 +18,47 @@ public class SampleManifest {
 
     private String recipe;
 
-    private String barcodeId;
-    private String barcodeIndex;
+    private List<Library> libraries = new ArrayList<>();
 
-    private Double libraryInputNg; // [ng]
-    private Double libraryConcentration; // ng/uL
-    private Double libraryYieldNg;
+    public static class Library {
+        public String barcodeId;
+        public String barcodeIndex;
 
-    private String captureInputNg;
-    private String captureName;
-    private String captureConcentrationNm;
+        public String libaryIgoId;
+        public Double libraryVolume; // [uL]
+        public Double libraryConcentrationNgul; // ng/uL
+
+        public String captureInputNg;
+        public String captureName;
+        public String captureConcentrationNm;
+
+        public List<Run> runs = new ArrayList<>();
+
+        public Library(String libaryIgoId, Double libraryVolume, Double libraryConcentrationNgul) {
+            this.libaryIgoId = libaryIgoId;
+            this.libraryVolume = libraryVolume;
+            this.libraryConcentrationNgul = libraryConcentrationNgul;
+        }
+    }
 
     public static class Run {
-        public Run(String runMode, String runId, String flowCellId, Integer flowCelllane, String runDate) {
+        public Run(String runMode, String runId, String flowCellId, Integer flowCelllane, String readLength, String runDate) {
             this.runMode = runMode;
             this.runId = runId;
             this.flowCellId = flowCellId;
             this.flowCellLane = flowCelllane;
+            this.readLength = readLength;
             this.runDate = runDate;
         }
         public String runMode;
         public String runId;
         public String flowCellId;
         public Integer flowCellLane;
+        public String readLength;
         public String runDate;
     }
 
-    private List<Run> runs = new ArrayList<>();
-
-
     public SampleManifest() {}
-
-    public List<Run> getRuns() {
-        return runs;
-    }
-
-    public void setRuns(List<Run> runs) {
-        this.runs = runs;
-    }
-
-    public Double getLibraryConcentration() {
-        return libraryConcentration;
-    }
-
-    public void setLibraryConcentration(Double libraryConcentration) {
-        this.libraryConcentration = libraryConcentration;
-    }
-
-    public String getRecipe() {
-        return recipe;
-    }
-
-    public void setRecipe(String recipe) {
-        this.recipe = recipe;
-    }
 
     public String getIgoId() {
         return igoId;
@@ -153,59 +140,19 @@ public class SampleManifest {
         this.gender = gender;
     }
 
-    public String getBarcodeId() {
-        return barcodeId;
+    public String getRecipe() {
+        return recipe;
     }
 
-    public void setBarcodeId(String barcodeId) {
-        this.barcodeId = barcodeId;
+    public void setRecipe(String recipe) {
+        this.recipe = recipe;
     }
 
-    public String getBarcodeIndex() {
-        return barcodeIndex;
+    public List<Library> getLibraries() {
+        return libraries;
     }
 
-    public void setBarcodeIndex(String barcodeIndex) {
-        this.barcodeIndex = barcodeIndex;
-    }
-
-    public Double getLibraryInputNg() {
-        return libraryInputNg;
-    }
-
-    public void setLibraryInputNg(Double libraryInputNg) {
-        this.libraryInputNg = libraryInputNg;
-    }
-
-    public Double getLibraryYieldNg() {
-        return libraryYieldNg;
-    }
-
-    public void setLibraryYieldNg(Double libraryYieldNg) {
-        this.libraryYieldNg = libraryYieldNg;
-    }
-
-    public String getCaptureInputNg() {
-        return captureInputNg;
-    }
-
-    public void setCaptureInputNg(String captureInputNg) {
-        this.captureInputNg = captureInputNg;
-    }
-
-    public String getCaptureName() {
-        return captureName;
-    }
-
-    public void setCaptureName(String captureName) {
-        this.captureName = captureName;
-    }
-
-    public String getCaptureConcentrationNm() {
-        return captureConcentrationNm;
-    }
-
-    public void setCaptureConcentrationNm(String captureConcentrationNm) {
-        this.captureConcentrationNm = captureConcentrationNm;
+    public void setLibraries(List<Library> libraries) {
+        this.libraries = libraries;
     }
 }

@@ -46,7 +46,6 @@ public class GetSampleManifestTask extends LimsTask {
                     cmoInfo = sampleCMOInfoRecords.get(0);
                 }
                 String sampleId = cmoInfo.getStringVal("SampleId", user);
-                String altId = cmoInfo.getStringVal("AltId", user);
                 SampleManifest s = new SampleManifest();
                 s.setIgoId(igoId);
 
@@ -62,88 +61,73 @@ public class GetSampleManifestTask extends LimsTask {
                 s.setCollectionYear(cmoInfo.getStringVal("CollectionYear", user));
                 s.setGender(cmoInfo.getStringVal("Gender", user));
 
-                // TODO create lists of items when multiple values are possible i.e. sample re-pooled
+                // library concentration & volume
+                // often null in samplecmoinforecords then query KAPALibPlateSetupProtocol1.TargetMassAliq1
+                //String dmpLibraryInput = cmoInfo.getStringVal("DMPLibraryInput", user); // often null
+                //String dmpLibraryOutput = cmoInfo.getStringVal("DMPLibraryOutput", user); // LIBRARY_YIELD
+                List<DataRecord> aliquots = sample.getDescendantsOfType("Sample", user);
+                for (DataRecord aliquot : aliquots) {
+                    String sampleType = aliquot.getStringVal("ExemplarSampleType", user);
+                    if ("DNA Library".equals(sampleType)) {
+                        Double concentration = aliquot.getDoubleVal("Concentration", user);
+                        Double volume = aliquot.getDoubleVal("Volume", user);
+                        String libraryIgoId = aliquot.getStringVal("SampleId", user);
+                        SampleManifest.Library library = new SampleManifest.Library(libraryIgoId, volume, concentration);
 
-                // library input & library yield
-                // if null in samplecmoinforecords then query KAPALibPlateSetupProtocol1.TargetMassAliq1
-                String dmpLibraryInput = cmoInfo.getStringVal("DMPLibraryInput", user); // often null
-                String dmpLibraryOutput = cmoInfo.getStringVal("DMPLibraryOutput", user); // LIBRARY_YIELD
-                if (dmpLibraryInput != null) {
-                    s.setLibraryInputNg(Double.parseDouble(dmpLibraryInput));
-                    s.setLibraryYieldNg(Double.parseDouble(dmpLibraryOutput));
-                } else {
-                    long created = -1;
-                    double mass = 0.00000;
-                    DataRecord[] kProtocols = sample.getChildrenOfType("KAPALibPlateSetupProtocol1", this.user);
-                    for (DataRecord protocol : kProtocols){
-                        long protoCreate = protocol.getDateVal("DateCreated", this.user);
-                        if (protoCreate  > created){
-                            mass = protocol.getDoubleVal("TargetMassAliq1", this.user);
-                            s.setLibraryInputNg(mass);
-                            created = protoCreate;
+                        List<DataRecord> indexBarcodes = aliquot.getDescendantsOfType("IndexBarcode", user);
+                        if (indexBarcodes != null && indexBarcodes.size() > 0) {
+                            DataRecord bc = indexBarcodes.get(0);
+                            library.barcodeId = bc.getStringVal("IndexId", user);
+                            library.barcodeIndex = bc.getStringVal("IndexTag", user);
                         }
-                    }
-                    // TODO library yield & library concentration
-                    double concentration = 0.0;
-                    double elutionVolume = 0.0;
-                    Double libraryYield = concentration * elutionVolume;
-                    s.setLibraryYieldNg(libraryYield);
-                }
 
-                List<DataRecord> indexBarcodes = sample.getDescendantsOfType("IndexBarcode", user);
-                if (indexBarcodes != null && indexBarcodes.size() > 0) {
-                    DataRecord bc = indexBarcodes.get(0);
-                    s.setBarcodeId(bc.getStringVal("IndexId", user));
-                    s.setBarcodeIndex(bc.getStringVal("IndexTag", user));
-                    for (int i=1; i < indexBarcodes.size(); i++) {
-                        bc = indexBarcodes.get(i);
-                        s.setBarcodeId(s.getBarcodeId() + "," + bc.getStringVal("IndexId", user));
-                        s.setBarcodeIndex(s.getBarcodeIndex() + "," + bc.getStringVal("IndexTag", user));
-                    }
-                }
-
-                // recipe, capture input, capture name
-                List<DataRecord> nimbleGen = sample.getDescendantsOfType("NimbleGenHybProtocol", user);
-                log.info("Found nimbleGen records: " + nimbleGen.size());
-                for (DataRecord n : nimbleGen) {
-                    String poolName = n.getStringVal("Protocol2Sample", user);
-                    if (poolName !=null && poolName.contains("Tube")) { // avoid SourceMassToUse == null
-                        String recipe = n.getStringVal("Recipe", user);
-                        s.setRecipe(recipe);
-                        Double captureInput = n.getDoubleVal("SourceMassToUse", user);
-                        s.setCaptureInputNg(captureInput.toString());
-                        s.setCaptureName(poolName);
-                        Double volume = n.getDoubleVal("VolumeToUse", user);
-                        s.setCaptureConcentrationNm(volume.toString());
-                    }
-                }
-
-                // run Mode, runId, flow Cell & Lane Number
-                List<DataRecord> reqLanes = sample.getDescendantsOfType("FlowCellLane", user);
-                for (DataRecord flowCellLane : reqLanes) {
-                    Long laneNum = flowCellLane.getLongVal("LaneNum", user);
-                    log.info("Getting a flow cell lane");
-                    List<DataRecord> flowcell = flowCellLane.getParentsOfType("FlowCell", user);
-                    if (flowcell.size() > 0) {
-                        log.info("Getting a flow cell");
-                        List<DataRecord> possibleRun = flowcell.get(0).getParentsOfType("IlluminaSeqExperiment", user);
-                        if (possibleRun.size() > 0) {
-                            log.info("Getting a run");
-                            //SequencerRunFolder example /ifs/lola/150814_LOLA_1298_BC7259ACXX/
-                            DataRecord runDR = possibleRun.get(0);
-                            String runMode  = runDR.getStringVal("SequencingRunMode", user);
-                            String flowCellId = runDR.getStringVal("FlowcellId", user);
-                            String[] runFolderElements = runDR.getStringVal("SequencerRunFolder", user).split("_");
-                            // TODO function to get date as String yyyy-MM-dd ?
-                            String runId = runFolderElements[1] + "_" + runFolderElements[2];
-                            String illuminaDate = runFolderElements[0].substring(runFolderElements[0].length()-6); // yymmdd
-                            String dateCreated = "20" + illuminaDate.substring(0,2) + "-" + illuminaDate.substring(2,4) + "-" + illuminaDate.substring(4,6);
-
-                            SampleManifest.Run r = new SampleManifest.Run(runMode, runId, flowCellId, laneNum.intValue(), dateCreated);
-                            List<SampleManifest.Run> l = s.getRuns();
-                            l.add(r);
-                            s.setRuns(l);
+                        // recipe, capture input, capture name
+                        List<DataRecord> nimbleGen = sample.getDescendantsOfType("NimbleGenHybProtocol", user);
+                        log.info("Found nimbleGen records: " + nimbleGen.size());
+                        for (DataRecord n : nimbleGen) {
+                            String poolName = n.getStringVal("Protocol2Sample", user);
+                            if (poolName !=null && poolName.contains("Tube")) { // avoid SourceMassToUse == null
+                                String recipe = n.getStringVal("Recipe", user);
+                                s.setRecipe(recipe);
+                                Double captureInput = n.getDoubleVal("SourceMassToUse", user);
+                                library.captureInputNg = captureInput.toString();
+                                library.captureName = poolName;
+                                Double captureVolume = n.getDoubleVal("VolumeToUse", user);
+                                library.captureConcentrationNm = captureVolume.toString();
+                            }
                         }
+
+                        // run Mode, runId, flow Cell & Lane Number
+                        List<DataRecord> reqLanes = aliquot.getDescendantsOfType("FlowCellLane", user);
+                        for (DataRecord flowCellLane : reqLanes) {
+                            Long laneNum = flowCellLane.getLongVal("LaneNum", user);
+                            log.info("Getting a flow cell lane");
+                            List<DataRecord> flowcell = flowCellLane.getParentsOfType("FlowCell", user);
+                            if (flowcell.size() > 0) {
+                                log.info("Getting a flow cell");
+                                List<DataRecord> possibleRun = flowcell.get(0).getParentsOfType("IlluminaSeqExperiment", user);
+                                if (possibleRun.size() > 0) {
+                                    log.info("Getting a run");
+                                    //SequencerRunFolder example /ifs/lola/150814_LOLA_1298_BC7259ACXX/
+                                    DataRecord seqExperiment = possibleRun.get(0);
+                                    String runMode  = seqExperiment.getStringVal("SequencingRunMode", user);
+                                    String flowCellId = seqExperiment.getStringVal("FlowcellId", user);
+                                    String readLength = seqExperiment.getStringVal("ReadLength", user); // TODO blank in LIMS prior to April 2019
+
+                                    // TODO function to get date as String yyyy-MM-dd ?
+                                    String[] runFolderElements = seqExperiment.getStringVal("SequencerRunFolder", user).split("_");
+                                    String runId = runFolderElements[1] + "_" + runFolderElements[2];
+                                    String illuminaDate = runFolderElements[0].substring(runFolderElements[0].length()-6); // yymmdd
+                                    String dateCreated = "20" + illuminaDate.substring(0,2) + "-" + illuminaDate.substring(2,4) + "-" + illuminaDate.substring(4,6);
+
+                                    SampleManifest.Run r = new SampleManifest.Run(runMode, runId, flowCellId, laneNum.intValue(), readLength, dateCreated);
+                                    library.runs.add(r);
+                                }
+                            }
+                        }
+
+                        List<SampleManifest.Library> libraries = s.getLibraries();
+                        libraries.add(library);
                     }
                 }
 
