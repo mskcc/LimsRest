@@ -25,7 +25,7 @@ public class GetSamplesInRequest {
     }
 
     @RequestMapping("/getSamplesInRequest")
-    public GetSamplesInRequestTask.RequestSampleList getContent(@RequestParam(value = "request") String requestId, @RequestParam(value="tumorOnly", defaultValue="True") Boolean tumorOnly) {
+    public GetSamplesInRequestTask.RequestSampleList getContent(@RequestParam(value = "request") String requestId, @RequestParam(value="tumorOnly", defaultValue="False") Boolean tumorOnly) {
         log.info("Starting /getSamplesInRequest for requestId:" + requestId);
 
         if (!Whitelists.requestMatches(requestId)) {

@@ -6,8 +6,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.web.GetSampleManifest;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +23,7 @@ public class GetSampleManifestTask extends LimsTask {
 
     @Override
     public Object execute(VeloxConnection conn) {
+        long startTime = System.currentTimeMillis();
         try {
             List<SampleManifest> smList = new ArrayList<>();
 
@@ -32,6 +31,7 @@ public class GetSampleManifestTask extends LimsTask {
                 log.info("Creating sample manifest for IGO ID:" + igoId);
                 List<DataRecord> sampleCMOInfoRecords = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "SampleId = '" + igoId +  "'", user);
 
+                log.info("Searching Sample table for SampleId ='" + igoId + "'");
                 List<DataRecord> samples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + igoId + "'", user);
                 if (samples.size() == 0) { // return error
                     return new GetSampleManifest.SampleManifestResult(null, "Sample not found: " + igoId);
@@ -69,8 +69,14 @@ public class GetSampleManifestTask extends LimsTask {
                 for (DataRecord aliquot : aliquots) {
                     String sampleType = aliquot.getStringVal("ExemplarSampleType", user);
                     if ("DNA Library".equals(sampleType)) {
+                        String sampleStatus = aliquot.getStringVal("ExemplarSampleStatus", user);
+                        if (sampleStatus != null && sampleStatus.contains("Failed"))
+                            continue;
+                        DataRecord [] libPrepProtocols = aliquot.getChildrenOfType("DNALibraryPrepProtocol3", user);
+                        Double volume = null;
+                        if (libPrepProtocols.length == 1)
+                            volume = libPrepProtocols[0].getDoubleVal("ElutionVol", user);
                         Double concentration = aliquot.getDoubleVal("Concentration", user);
-                        Double volume = aliquot.getDoubleVal("Volume", user);
                         String libraryIgoId = aliquot.getStringVal("SampleId", user);
                         SampleManifest.Library library = new SampleManifest.Library(libraryIgoId, volume, concentration);
 
@@ -82,13 +88,14 @@ public class GetSampleManifestTask extends LimsTask {
                         }
 
                         // recipe, capture input, capture name
-                        List<DataRecord> nimbleGen = sample.getDescendantsOfType("NimbleGenHybProtocol", user);
+                        List<DataRecord> nimbleGen = aliquot.getDescendantsOfType("NimbleGenHybProtocol", user);
                         log.info("Found nimbleGen records: " + nimbleGen.size());
                         for (DataRecord n : nimbleGen) {
                             String poolName = n.getStringVal("Protocol2Sample", user);
-                            if (poolName !=null && poolName.contains("Tube")) { // avoid SourceMassToUse == null
-                                String recipe = n.getStringVal("Recipe", user);
-                                s.setRecipe(recipe);
+                            String recipe = n.getStringVal("Recipe", user);
+                            s.setRecipe(recipe);
+                            Object val = n.getValue("SourceMassToUse", user);
+                            if (val != null) {
                                 Double captureInput = n.getDoubleVal("SourceMassToUse", user);
                                 library.captureInputNg = captureInput.toString();
                                 library.captureName = poolName;
@@ -101,20 +108,20 @@ public class GetSampleManifestTask extends LimsTask {
                         List<DataRecord> reqLanes = aliquot.getDescendantsOfType("FlowCellLane", user);
                         for (DataRecord flowCellLane : reqLanes) {
                             Long laneNum = flowCellLane.getLongVal("LaneNum", user);
-                            log.info("Getting a flow cell lane");
+                            //log.info("Getting a flow cell lane");
                             List<DataRecord> flowcell = flowCellLane.getParentsOfType("FlowCell", user);
                             if (flowcell.size() > 0) {
-                                log.info("Getting a flow cell");
+                                //log.info("Getting a flow cell");
                                 List<DataRecord> possibleRun = flowcell.get(0).getParentsOfType("IlluminaSeqExperiment", user);
                                 if (possibleRun.size() > 0) {
-                                    log.info("Getting a run");
+                                    //log.info("Getting a run");
                                     //SequencerRunFolder example /ifs/lola/150814_LOLA_1298_BC7259ACXX/
                                     DataRecord seqExperiment = possibleRun.get(0);
                                     String runMode  = seqExperiment.getStringVal("SequencingRunMode", user);
                                     String flowCellId = seqExperiment.getStringVal("FlowcellId", user);
                                     String readLength = seqExperiment.getStringVal("ReadLength", user); // TODO blank in LIMS prior to April 2019
 
-                                    // TODO function to get date as String yyyy-MM-dd ?
+                                    // TODO function to convert Illumna yymmdd date as yyyy-MM-dd ?
                                     String[] runFolderElements = seqExperiment.getStringVal("SequencerRunFolder", user).split("_");
                                     String runId = runFolderElements[1] + "_" + runFolderElements[2];
                                     String illuminaDate = runFolderElements[0].substring(runFolderElements[0].length()-6); // yymmdd
@@ -125,15 +132,18 @@ public class GetSampleManifestTask extends LimsTask {
                                 }
                             }
                         }
+                        // TODO add fastq /ifs/archive path
 
-                        List<SampleManifest.Library> libraries = s.getLibraries();
-                        libraries.add(library);
+                        if (reqLanes.size() > 0) { // only report this libarary if it made it to a sequencer/run
+                            List<SampleManifest.Library> libraries = s.getLibraries();
+                            libraries.add(library);
+                        }
                     }
                 }
 
                 smList.add(s);
             }
-
+            log.info("Manifest generation time(ms):" + (System.currentTimeMillis()-startTime));
             return new GetSampleManifest.SampleManifestResult(smList, null);
         } catch (Throwable e) {
             log.error(e.getMessage(), e);

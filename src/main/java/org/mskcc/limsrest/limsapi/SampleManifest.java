@@ -28,9 +28,9 @@ public class SampleManifest {
         public Double libraryVolume; // [uL]
         public Double libraryConcentrationNgul; // ng/uL
 
+        public String captureConcentrationNm;
         public String captureInputNg;
         public String captureName;
-        public String captureConcentrationNm;
 
         public List<Run> runs = new ArrayList<>();
 

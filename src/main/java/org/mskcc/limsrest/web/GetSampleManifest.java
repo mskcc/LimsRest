@@ -11,8 +11,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 @RestController
@@ -27,9 +29,13 @@ public class GetSampleManifest {
     }
 
     @RequestMapping("/getSampleManifest")
-    public List<SampleManifest> getContent(@RequestParam(value="igoSampleId") String[] igoIds) {
-        log.info("Starting to build sample manifest for samples:" + Arrays.toString(igoIds));
-        // TODO whiteList
+    public List<SampleManifest> getContent(@RequestParam(value="igoSampleId") String[] igoIds, HttpServletRequest request) {
+        log.info("Sample Manifest client IP:" + request.getRemoteAddr());
+        log.info("Sample Manifest IGO IDs:" + Arrays.toString(igoIds));
+        if (igoIds.length > 10) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Maximum 10 samples per query, you sent:" + igoIds.length);
+        }
+        // TODO whiteList Whitelists.sampleMatches()
         task.init(igoIds);
 
         Future<Object> r = connQueue.submitTask(task);
@@ -40,9 +46,11 @@ public class GetSampleManifest {
                 log.info("Returning n rows: " + result.smList.size());
                 return result.smList;
             } else {
+                log.error("Sample Manifest generation failed with error: " + result.error);
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, result.error);
             }
-        } catch (Exception e) {
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Sample manifest exception.", e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
         }
     }
