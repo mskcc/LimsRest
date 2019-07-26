@@ -1,5 +1,6 @@
 group 'org.mskcc.limsrest'
-version '1.16.9-SNAPSHOT'
+version '1.16.10-SNAPSHOT'
+
 
 buildscript {
     repositories {
@@ -44,7 +45,7 @@ if (target== 'dev'){
 war{
     baseName = 'LimsRest##'
     if(target == 'test'){
-       baseName = 'TestRest##'
+        baseName = 'TestRest##'
     }
 }
 
@@ -77,8 +78,8 @@ dependencies {
     compile ("org.springframework.boot:spring-boot-starter-tomcat")
     compile ("org.springframework.boot:spring-boot-starter-web:2.1.6.RELEASE")
     compile ("org.springframework.boot:spring-boot-starter-security:2.1.6.RELEASE")
-    test(group: 'org.springframework', name: 'spring-test', version: '5.1.8.RELEASE')
-    test('org.springframework.boot:spring-boot-starter-test')
+    testCompile(group: 'org.springframework', name: 'spring-test', version: '5.1.6.RELEASE')
+    testCompile('org.springframework.boot:spring-boot-starter-test')
 
     compile ('javax.servlet:jstl:1.2')
     compile ('com.fasterxml.jackson.core:jackson-databind')
