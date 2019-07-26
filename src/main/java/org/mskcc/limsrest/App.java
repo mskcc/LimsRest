@@ -1,8 +1,6 @@
 package org.mskcc.limsrest;
 
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.apache.juli.logging.Log;
-import org.apache.juli.logging.LogFactory;
 import org.mskcc.domain.sample.BankedSample;
 import org.mskcc.domain.sample.Sample;
 import org.mskcc.limsrest.config.AppConfig;
@@ -95,6 +93,15 @@ public class App extends SpringBootServletInitializer {
 
     @Bean
     @Scope("request")
+    public GetSamplesInRequestTask GetSamplesInRequestTask() {
+        return new GetSamplesInRequestTask();
+    }
+    @Bean
+    @Scope("request")
+    public GetSamplesInRequest SamplesInRequest() { return new GetSamplesInRequest(connectionQueue(), GetSamplesInRequestTask()); }
+
+    @Bean
+    @Scope("request")
     public GetIGOCompleteQCTask getIGOCompleteQCTask() {
         return new GetIGOCompleteQCTask();
     }
@@ -103,6 +110,15 @@ public class App extends SpringBootServletInitializer {
     public GetIGOCompleteQC IGOCompleteQC() {
         return new GetIGOCompleteQC(connectionQueue(), getIGOCompleteQCTask());
     }
+
+    @Bean
+    @Scope("request")
+    public GetSampleManifestTask getSampleManifestTask() {
+        return new GetSampleManifestTask();
+    }
+    @Bean
+    @Scope("request")
+    public GetSampleManifest GetSampleManifest() { return new GetSampleManifest(connectionQueue(), getSampleManifestTask()); }
 
     @Bean
     @Scope("request")
