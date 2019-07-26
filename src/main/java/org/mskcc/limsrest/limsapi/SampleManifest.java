@@ -8,10 +8,10 @@ public class SampleManifest {
 
     private String cmoPatientId;
     private String investigatorSampleId;
-    private String oncotreeCode;
-    private String sampleClass;
-    private String tissueSite;
-    private String sampleType;
+    private String oncoTreeCode;
+    private String tumorOrNormal;
+    private String tissueLocation;
+    private String sampleOrigin;
     private String preservation;
     private String collectionYear;
     private String gender;
@@ -60,6 +60,15 @@ public class SampleManifest {
 
     public SampleManifest() {}
 
+
+    public String getTumorOrNormal() {
+        return tumorOrNormal;
+    }
+
+    public void setTumorOrNormal(String tumorOrNormal) {
+        this.tumorOrNormal = tumorOrNormal;
+    }
+
     public String getIgoId() {
         return igoId;
     }
@@ -84,36 +93,29 @@ public class SampleManifest {
         this.investigatorSampleId = investigatorSampleId;
     }
 
-    public String getOncotreeCode() {
-        return oncotreeCode;
+    public String getOncoTreeCode() {
+        return oncoTreeCode;
     }
 
-    public void setOncotreeCode(String oncotreeCode) {
-        this.oncotreeCode = oncotreeCode;
+    public void setOncoTreeCode(String oncoTreeCode) {
+        this.oncoTreeCode = oncoTreeCode;
     }
 
-    public String getSampleClass() {
-        return sampleClass;
+
+    public String getTissueLocation() {
+        return tissueLocation;
     }
 
-    public void setSampleClass(String sampleClass) {
-        this.sampleClass = sampleClass;
+    public void setTissueLocation(String tissueLocation) {
+        this.tissueLocation = tissueLocation;
     }
 
-    public String getTissueSite() {
-        return tissueSite;
+    public String getSampleOrigin() {
+        return sampleOrigin;
     }
 
-    public void setTissueSite(String tissueSite) {
-        this.tissueSite = tissueSite;
-    }
-
-    public String getSampleType() {
-        return sampleType;
-    }
-
-    public void setSampleType(String sampleType) {
-        this.sampleType = sampleType;
+    public void setSampleOrigin(String sampleOrigin) {
+        this.sampleOrigin = sampleOrigin;
     }
 
     public String getPreservation() {

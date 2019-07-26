@@ -45,18 +45,17 @@ public class GetSampleManifestTask extends LimsTask {
                 } else {
                     cmoInfo = sampleCMOInfoRecords.get(0);
                 }
-                String sampleId = cmoInfo.getStringVal("SampleId", user);
+
                 SampleManifest s = new SampleManifest();
                 s.setIgoId(igoId);
-
-                String cmoPatientId = cmoInfo.getStringVal("CmoPatientId", user);
-                s.setCmoPatientId(cmoPatientId);
-                String userSampleId = cmoInfo.getStringVal("UserSampleID", user);
-                s.setInvestigatorSampleId(userSampleId + "_IGO_" + sampleId);
-                s.setOncotreeCode(cmoInfo.getStringVal("TumorType", user));
-                s.setSampleClass(cmoInfo.getStringVal("TumorOrNormal", user));
-                s.setTissueSite(cmoInfo.getStringVal("TissueLocation", user));
-                s.setSampleType(cmoInfo.getStringVal("SampleOrigin", user));
+                s.setCmoPatientId(cmoInfo.getStringVal("CmoPatientId", user));
+                s.setInvestigatorSampleId(cmoInfo.getStringVal("UserSampleID", user));
+                String tumorOrNormal = cmoInfo.getStringVal("TumorOrNormal", user);
+                s.setTumorOrNormal(tumorOrNormal);
+                if ("Tumor".equals(tumorOrNormal))
+                    s.setOncoTreeCode(cmoInfo.getStringVal("TumorType", user));
+                s.setTissueLocation(cmoInfo.getStringVal("TissueLocation", user));
+                s.setSampleOrigin(cmoInfo.getStringVal("SampleOrigin", user)); // formerly reported as Sample Type
                 s.setPreservation(cmoInfo.getStringVal("Preservation", user));
                 s.setCollectionYear(cmoInfo.getStringVal("CollectionYear", user));
                 s.setGender(cmoInfo.getStringVal("Gender", user));
@@ -91,16 +90,18 @@ public class GetSampleManifestTask extends LimsTask {
                         List<DataRecord> nimbleGen = aliquot.getDescendantsOfType("NimbleGenHybProtocol", user);
                         log.info("Found nimbleGen records: " + nimbleGen.size());
                         for (DataRecord n : nimbleGen) {
-                            String poolName = n.getStringVal("Protocol2Sample", user);
-                            String recipe = n.getStringVal("Recipe", user);
-                            s.setRecipe(recipe);
-                            Object val = n.getValue("SourceMassToUse", user);
-                            if (val != null) {
-                                Double captureInput = n.getDoubleVal("SourceMassToUse", user);
-                                library.captureInputNg = captureInput.toString();
-                                library.captureName = poolName;
-                                Double captureVolume = n.getDoubleVal("VolumeToUse", user);
-                                library.captureConcentrationNm = captureVolume.toString();
+                            if (n.getBooleanVal("Valid", user)) {
+                                String poolName = n.getStringVal("Protocol2Sample", user);
+                                String recipe = n.getStringVal("Recipe", user);
+                                s.setRecipe(recipe);
+                                Object val = n.getValue("SourceMassToUse", user);
+                                if (val != null) {
+                                    Double captureInput = n.getDoubleVal("SourceMassToUse", user);
+                                    library.captureInputNg = captureInput.toString();
+                                    library.captureName = poolName;
+                                    Double captureVolume = n.getDoubleVal("VolumeToUse", user);
+                                    library.captureConcentrationNm = captureVolume.toString();
+                                }
                             }
                         }
 

@@ -112,14 +112,14 @@ public class GetSamplesInRequestTask extends LimsTask {
     }
 
     public static class RequestSample {
-        private String sampleName;
+        private String investigatorSampleId;
         private String igoSampleId;
         private boolean IGOComplete;
 
         public RequestSample() {}
 
-        public RequestSample(String sampleName, String igoSampleId, boolean IGOComplete) {
-            this.sampleName = sampleName;
+        public RequestSample(String investigatorSampleId, String igoSampleId, boolean IGOComplete) {
+            this.investigatorSampleId = investigatorSampleId;
             this.igoSampleId = igoSampleId;
             this.IGOComplete = IGOComplete;
         }
@@ -127,18 +127,18 @@ public class GetSamplesInRequestTask extends LimsTask {
         @Override
         public String toString() {
             return "RequestSample{" +
-                    "sampleName='" + sampleName + '\'' +
+                    "investigatorSampleId='" + investigatorSampleId + '\'' +
                     ", igoSampleId='" + igoSampleId + '\'' +
                     ", IGOComplete=" + IGOComplete +
                     '}';
         }
 
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
-        public String getSampleName() {
-            return sampleName;
+        public String getInvestigatorSampleId() {
+            return investigatorSampleId;
         }
-        public void setSampleName(String sampleName) {
-            this.sampleName = sampleName;
+        public void setInvestigatorSampleId(String sampleName) {
+            this.investigatorSampleId = investigatorSampleId;
         }
 
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
