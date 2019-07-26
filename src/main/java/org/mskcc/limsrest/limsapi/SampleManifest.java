@@ -16,7 +16,7 @@ public class SampleManifest {
     private String collectionYear;
     private String gender;
 
-    private String recipe;
+    private String baitSet;
 
     private List<Library> libraries = new ArrayList<>();
 
@@ -142,12 +142,12 @@ public class SampleManifest {
         this.gender = gender;
     }
 
-    public String getRecipe() {
-        return recipe;
+    public String getBaitSet() {
+        return baitSet;
     }
 
-    public void setRecipe(String recipe) {
-        this.recipe = recipe;
+    public void setBaitSet(String baitSet) {
+        this.baitSet = baitSet;
     }
 
     public List<Library> getLibraries() {

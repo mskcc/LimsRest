@@ -92,8 +92,8 @@ public class GetSampleManifestTask extends LimsTask {
                         for (DataRecord n : nimbleGen) {
                             if (n.getBooleanVal("Valid", user)) {
                                 String poolName = n.getStringVal("Protocol2Sample", user);
-                                String recipe = n.getStringVal("Recipe", user);
-                                s.setRecipe(recipe);
+                                String baitSet = n.getStringVal("Recipe", user); // LIMS display name "bait set"
+                                s.setBaitSet(baitSet);
                                 Object val = n.getValue("SourceMassToUse", user);
                                 if (val != null) {
                                     Double captureInput = n.getDoubleVal("SourceMassToUse", user);
@@ -135,7 +135,7 @@ public class GetSampleManifestTask extends LimsTask {
                         }
                         // TODO add fastq /ifs/archive path
 
-                        if (reqLanes.size() > 0) { // only report this libarary if it made it to a sequencer/run
+                        if (reqLanes.size() > 0) { // only report this library if it made it to a sequencer/run
                             List<SampleManifest.Library> libraries = s.getLibraries();
                             libraries.add(library);
                         }
