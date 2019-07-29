@@ -1,2 +1,2 @@
 # PiExemplarRest
-the internal restful service used by platform informatics
+The restful service used by IGO and IGO customers.
