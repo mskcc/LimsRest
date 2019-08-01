@@ -19,12 +19,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 
-@RestController
+@RestController @Deprecated // no longer used/moved to pipeline-kickoff?
 public class GetPairingInfo {
 
     private final ConnectionQueue connQueue; 
     private final GetSetOrReqPairs task;
-    private Log log = LogFactory.getLog(GetPairingInfo.class);
+    private final Log log = LogFactory.getLog(GetPairingInfo.class);
 
     public GetPairingInfo( ConnectionQueue connQueue, GetSetOrReqPairs getPairs){
         this.connQueue = connQueue;

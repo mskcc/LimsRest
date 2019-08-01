@@ -14,19 +14,17 @@ import java.util.concurrent.Future;
 
 @RestController
 public class GetProjectDetailed {
-
+    private final Log log = LogFactory.getLog(GetProjectDetailed.class);
     private final ConnectionQueue connQueue; 
-    private final GetProjectDetails task;
-    private Log log = LogFactory.getLog(GetProjectDetailed.class);
+    private final GetProjectDetails task = new GetProjectDetails();
    
-    public GetProjectDetailed( ConnectionQueue connQueue, GetProjectDetails project){
+    public GetProjectDetailed(ConnectionQueue connQueue){
         this.connQueue = connQueue;
-        this.task = project;
     }
 
     @RequestMapping("/getProjectDetailed")
     public ProjectSummary getContent(@RequestParam(value="project") String project) {
-       if(!Whitelists.requestMatches(project)){
+       if (!Whitelists.requestMatches(project)){
               ProjectSummary eSum = new ProjectSummary();
               eSum.setRestStatus( "FAILURE: project is not using a valid format");
                 return eSum;

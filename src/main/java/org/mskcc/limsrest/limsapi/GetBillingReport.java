@@ -16,9 +16,8 @@ import java.util.List;
  * A queued task that takes a request id and returns the billing report info 
  * 
  * @author Aaron Gabow, Zheng Zeng
- *
  */
-@Service
+@Service @Deprecated // code started but not completed or used?
 public class GetBillingReport extends LimsTask {
     private Log log = LogFactory.getLog(GetBillingReport.class);
 

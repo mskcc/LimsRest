@@ -1,6 +1,5 @@
 package org.mskcc.limsrest.limsapi;
 
-
 import com.velox.api.servermanager.PickListConfig;
 import com.velox.api.servermanager.PickListManager;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
@@ -13,7 +12,6 @@ import java.util.List;
  * A queued task that takes a pick list name and returns the possible values 
  * 
  * @author Aaron Gabow
- * 
  */
 public class GetPickList extends LimsTask {
     private String picklist;

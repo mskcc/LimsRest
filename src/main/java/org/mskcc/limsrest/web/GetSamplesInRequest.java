@@ -14,17 +14,16 @@ import java.util.concurrent.Future;
 
 @RestController
 public class GetSamplesInRequest {
-    private Log log = LogFactory.getLog(GetSamplesInRequest.class);
+    private final Log log = LogFactory.getLog(GetSamplesInRequest.class);
 
     private final ConnectionQueue connQueue;
-    private final GetSamplesInRequestTask task;
+    private final GetSamplesInRequestTask task = new GetSamplesInRequestTask();
 
-    public GetSamplesInRequest(ConnectionQueue connQueue, GetSamplesInRequestTask task) {
+    public GetSamplesInRequest(ConnectionQueue connQueue) {
         this.connQueue = connQueue;
-        this.task = task;
     }
 
-    @RequestMapping("/getSamplesInRequest")
+    @RequestMapping("/api/getSamplesInRequest")
     public GetSamplesInRequestTask.RequestSampleList getContent(@RequestParam(value = "request") String requestId, @RequestParam(value="tumorOnly", defaultValue="False") Boolean tumorOnly) {
         log.info("Starting /getSamplesInRequest for requestId:" + requestId);
 

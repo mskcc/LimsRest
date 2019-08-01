@@ -4,6 +4,7 @@ import java.util.concurrent.Future;
 import java.util.List;
 import java.util.LinkedList;
 
+import org.mskcc.limsrest.App;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,32 +17,31 @@ import org.apache.commons.logging.LogFactory;
 
 @RestController
 public class GetPickListValues {
+    private final Log log = LogFactory.getLog(GetPickListValues.class);
+    private final ConnectionQueue connQueue;
 
-    private final ConnectionQueue connQueue; 
-    private final GetPickList task;
-    private Log log = LogFactory.getLog(GetPickListValues.class);
+    private final GetPickList task = new GetPickList();
 
-    public GetPickListValues( ConnectionQueue connQueue, GetPickList picklist){
-        this.connQueue = connQueue;
-        this.task = picklist;
+    public GetPickListValues(){
+        this.connQueue = App.connQueue;
     }
 
     @RequestMapping("/getPickListValues")
-    public List<String> getContent(@RequestParam(value="list", defaultValue="Countries") String list) {
-       List<String> values = new LinkedList<>();
-       if(!Whitelists.textMatches(list)){
-          log.info( "FAILURE: list is not using a valid format");
-           values.add("FAILURE: list is not using a valid format");
-           return values;
-       } 
-       task.init(list);
-       log.info("Starting picklist query for " + list);
-       Future<Object> result = connQueue.submitTask(task);
-       try{
-         values = (List<String>)result.get();
-       } catch(Exception e){
-         values.add("ERROR: " + e.getMessage());
-       }
-       return values;
+    public List<String> getContent(@RequestParam(value = "list", defaultValue = "Countries") String list) {
+        List<String> values = new LinkedList<>();
+        if (!Whitelists.textMatches(list)) {
+            log.info("FAILURE: list is not using a valid format");
+            values.add("FAILURE: list is not using a valid format");
+            return values;
+        }
+        task.init(list);
+        log.info("Starting /getPickListValues query for " + list);
+        Future<Object> result = connQueue.submitTask(task);
+        try {
+            values = (List<String>) result.get();
+        } catch (Exception e) {
+            values.add("ERROR: " + e.getMessage());
+        }
+        return values;
     }
 }

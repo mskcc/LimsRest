@@ -8,23 +8,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.concurrent.Future;
 
 
 @RestController
 public class AddSampleSet {
-
+    private Log log = LogFactory.getLog(AddSampleSet.class);
     private final ConnectionQueue connQueue;
     private final AddOrCreateSet task;
-    private Log log = LogFactory.getLog(AddSampleSet.class);
 
     public AddSampleSet(ConnectionQueue connQueue, AddOrCreateSet requestStatus) {
         this.connQueue = connQueue;
         this.task = requestStatus;
     }
-
 
     @RequestMapping("/addSampleSet")
     public String getContent(@RequestParam(value = "igoId", required = false) String[] igoId,
@@ -76,23 +72,15 @@ public class AddSampleSet {
             task.init(igoUser, name, mapName, request, igoId, pair, category, baitSet, primeRecipe, primeRequest,
                     externalSpecimen);
             Future<Object> result = connQueue.submitTask(task);
-            String returnCode;
             try {
-                returnCode = "Record Id:" + result.get();
-
+                return "Record Id:" + result.get();
             } catch (Exception e) {
-                StringWriter sw = new StringWriter();
-                PrintWriter pw = new PrintWriter(sw);
-                e.printStackTrace(pw);
-                returnCode = "ERROR IN ADDING TO SAMPLE SET: " + e.getMessage();
+                log.error(e.getMessage(), e);
+                return "ERROR IN ADDING TO SAMPLE SET: " + e.getMessage();
             }
-            return returnCode;
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-
             return e.getMessage();
         }
     }
-
 }
-

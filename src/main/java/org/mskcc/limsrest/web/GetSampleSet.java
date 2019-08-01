@@ -16,31 +16,31 @@ import java.util.concurrent.Future;
 @RestController
 public class GetSampleSet {
 
-    private final ConnectionQueue connQueue; 
+    private final ConnectionQueue connQueue;
     private final GetSet task;
     private Log log = LogFactory.getLog(GetSampleSet.class);
 
-    public GetSampleSet( ConnectionQueue connQueue, GetSet getSet){
+    public GetSampleSet(ConnectionQueue connQueue, GetSet getSet) {
         this.connQueue = connQueue;
         this.task = getSet;
     }
 
 
     @RequestMapping("/getSampleSet")
-        public List<String> getContent(@RequestParam(value="setName") String name, @RequestParam(value="user") String user) {
-            log.info("Starting to get sample set " + name + " for user " + user);
-            List<String> sets = new LinkedList<>();
-            if(!Whitelists.requestMatches(name)){
-                sets.add( "FAILURE: setName is not using a valid format");
-                return sets;
-            }
-            task.init(name);
-            Future<Object> result = connQueue.submitTask(task);
-            try{
-                sets = (List<String>)result.get();
-            } catch(Exception e){
-                sets.add(e.getMessage());
-            }
+    public List<String> getContent(@RequestParam(value = "setName") String name, @RequestParam(value = "user") String user) {
+        log.info("Starting to get sample set " + name + " for user " + user);
+        List<String> sets = new LinkedList<>();
+        if (!Whitelists.requestMatches(name)) {
+            sets.add("FAILURE: setName is not using a valid format");
             return sets;
         }
+        task.init(name);
+        Future<Object> result = connQueue.submitTask(task);
+        try {
+            sets = (List<String>) result.get();
+        } catch (Exception e) {
+            sets.add(e.getMessage());
+        }
+        return sets;
+    }
 }

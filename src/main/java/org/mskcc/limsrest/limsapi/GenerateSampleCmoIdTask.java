@@ -7,10 +7,11 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.domain.sample.Sample;
 import org.mskcc.limsrest.limsapi.cmoinfo.CorrectedCmoSampleIdGenerator;
+import org.mskcc.limsrest.limsapi.cmoinfo.SampleTypeCorrectedCmoSampleIdGenerator;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverter;
+import org.mskcc.limsrest.limsapi.cmoinfo.converter.SampleToCorrectedCmoIdConverter;
 import org.mskcc.limsrest.limsapi.converter.SampleRecordToSampleConverter;
 import org.mskcc.util.VeloxConstants;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
@@ -20,21 +21,14 @@ import java.util.List;
 public class GenerateSampleCmoIdTask extends LimsTask {
     private final static Log log = LogFactory.getLog(GenerateSampleCmoIdTask.class);
 
-    private final CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator;
-    private final CorrectedCmoIdConverter<Sample> sampleToCorrectedCmoIdConverter;
-    private final SampleRecordToSampleConverter sampleRecordToSampleConverter;
+    private final CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator = new SampleTypeCorrectedCmoSampleIdGenerator();
+    private final CorrectedCmoIdConverter<Sample> sampleToCorrectedCmoIdConverter = new SampleToCorrectedCmoIdConverter();
+    private final SampleRecordToSampleConverter sampleRecordToSampleConverter = new SampleRecordToSampleConverter();
 
     private String sampleIgoId;
     private CorrectedCmoSampleView correctedCmoSampleView;
 
-    @Autowired
-    public GenerateSampleCmoIdTask(CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator,
-                                   CorrectedCmoIdConverter<Sample> sampleToCorrectedCmoIdConverter,
-                                   SampleRecordToSampleConverter sampleRecordToSampleConverter) {
-        this.correctedCmoSampleIdGenerator = correctedCmoSampleIdGenerator;
-        this.sampleToCorrectedCmoIdConverter = sampleToCorrectedCmoIdConverter;
-        this.sampleRecordToSampleConverter = sampleRecordToSampleConverter;
-    }
+    public GenerateSampleCmoIdTask() { }
 
     public void init(String sampleIgoId) {
         this.sampleIgoId = sampleIgoId;

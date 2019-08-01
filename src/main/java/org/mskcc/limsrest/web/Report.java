@@ -21,7 +21,7 @@ public class Report {
     private final ConnectionQueue connQueue; 
     private final GetHiseq task;
     private final GetReadyForIllumina illuminaTask;
-    private Log log = LogFactory.getLog(Report.class);
+    private final Log log = LogFactory.getLog(Report.class);
    
     public Report( ConnectionQueue connQueue, GetHiseq getHiseq, GetReadyForIllumina illuminaTask){
         this.connQueue = connQueue;

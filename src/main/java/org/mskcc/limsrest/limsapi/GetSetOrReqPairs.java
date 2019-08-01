@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-@Service
+@Service @Deprecated
 public class GetSetOrReqPairs extends LimsTask
 {
   private Log log = LogFactory.getLog(GetSetOrReqPairs.class);

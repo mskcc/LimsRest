@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.dmp.DateRetriever;
+import org.mskcc.limsrest.limsapi.dmp.DefaultTodayDateRetriever;
 import org.mskcc.limsrest.limsapi.dmp.GenerateBankedSamplesFromDMP;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,20 +15,16 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 import java.util.concurrent.Future;
 
-@RestController
+//@RestController TODO
 public class CreateBankedSamplesFromDMP {
     private static final Log log = LogFactory.getLog(CreateBankedSamplesFromDMP.class);
 
     private final ConnectionQueue connQueue;
-    private final GenerateBankedSamplesFromDMP task;
-    private final DateRetriever dateRetriever;
+    private final GenerateBankedSamplesFromDMP task = new GenerateBankedSamplesFromDMP();
+    private final DateRetriever dateRetriever = new DefaultTodayDateRetriever();
 
-    public CreateBankedSamplesFromDMP(ConnectionQueue connQueue,
-                                      GenerateBankedSamplesFromDMP generateBankedSamplesFromDMP,
-                                      DateRetriever dateRetriever) {
+    public CreateBankedSamplesFromDMP(ConnectionQueue connQueue) {
         this.connQueue = connQueue;
-        this.task = generateBankedSamplesFromDMP;
-        this.dateRetriever = dateRetriever;
     }
 
     @RequestMapping("/createBankedSamplesFromDMP")
@@ -66,5 +63,4 @@ public class CreateBankedSamplesFromDMP {
 
         return localDate;
     }
-
 }

@@ -6,8 +6,11 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.BankedSample;
 import org.mskcc.limsrest.limsapi.LimsTask;
 import org.mskcc.limsrest.limsapi.converter.ExternalToBankedSampleConverter;
+import org.mskcc.limsrest.limsapi.dmp.converter.DMPSampleToCMOBankedSampleConverter;
 import org.mskcc.limsrest.limsapi.retriever.LimsDataRetriever;
+import org.mskcc.limsrest.limsapi.retriever.VeloxLimsDataRetriever;
 import org.mskcc.limsrest.limsapi.store.RecordSaver;
+import org.mskcc.limsrest.limsapi.store.VeloxRecordSaver;
 import org.mskcc.limsrest.staticstrings.Messages;
 
 import java.time.LocalDate;
@@ -20,20 +23,15 @@ public class GenerateBankedSamplesFromDMP extends LimsTask {
     private static final Log LOGGER = LogFactory.getLog(GenerateBankedSamplesFromDMP.class);
 
     private static final String TRACKING_ID_REGEX = "[a-zA-Z0-9_-]+";
-    private final ExternalToBankedSampleConverter externalToBankedSampleConverter;
-    private final DMPSamplesRetriever dmpSamplesRetriever;
-    private final RecordSaver recordSaver;
-    private final LimsDataRetriever limsDataRetriever;
+    private final ExternalToBankedSampleConverter externalToBankedSampleConverter =
+            new DMPSampleToCMOBankedSampleConverter(new OncotreeTumorTypeRetriever());
+    private final DMPSamplesRetriever dmpSamplesRetriever = new WebServiceDMPSamplesRetriever("http://plvpathhydra1.mskcc.org:8001/");
+    private final RecordSaver recordSaver = new VeloxRecordSaver();
+    private final LimsDataRetriever limsDataRetriever = new VeloxLimsDataRetriever();
+
     private LocalDate date;
 
-    public GenerateBankedSamplesFromDMP(ExternalToBankedSampleConverter externalToBankedSampleConverter,
-                                        DMPSamplesRetriever dmpSamplesRetriever,
-                                        RecordSaver recordSaver,
-                                        LimsDataRetriever limsDataRetriever) {
-        this.externalToBankedSampleConverter = externalToBankedSampleConverter;
-        this.dmpSamplesRetriever = dmpSamplesRetriever;
-        this.recordSaver = recordSaver;
-        this.limsDataRetriever = limsDataRetriever;
+    public GenerateBankedSamplesFromDMP() {
     }
 
     public void init(LocalDate date) {

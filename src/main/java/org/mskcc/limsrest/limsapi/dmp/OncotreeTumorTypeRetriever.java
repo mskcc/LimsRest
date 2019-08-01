@@ -8,11 +8,11 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 
 public class OncotreeTumorTypeRetriever implements TumorTypeRetriever {
-    private final String tumorTypeServiceUrl;
+    // TODO read from application.properties
+    private final String tumorTypeServiceUrl = "http://draco.mskcc.org:9666/tumor_types";
     private RestTemplate restTemplate = new RestTemplate();
 
-    public OncotreeTumorTypeRetriever(String tumorTypeServiceUrl) {
-        this.tumorTypeServiceUrl = tumorTypeServiceUrl;
+    public OncotreeTumorTypeRetriever() {
     }
 
     @Override

@@ -15,35 +15,34 @@ import java.util.LinkedList;
 import java.util.concurrent.Future;
 
 
-@RestController
+@RestController @Deprecated // code started but not completed or used?
 public class BillingReport {
 
-    private final ConnectionQueue connQueue; 
+    private final ConnectionQueue connQueue;
     private final GetBillingReport task;
     private Log log = LogFactory.getLog(BillingReport.class);
-   
-    public BillingReport( ConnectionQueue connQueue, GetBillingReport getBillingReport){
+
+    public BillingReport(ConnectionQueue connQueue, GetBillingReport getBillingReport) {
         this.connQueue = connQueue;
         this.task = getBillingReport;
     }
 
     @RequestMapping("/getBillingReport")
-    public LinkedList<RunSummary> getContent(@RequestParam(value="project", required=true) String proj) {
-
-       RunSummary rs = new RunSummary("BLANK_RUN", "BLANK_REQUEST");
-       LinkedList<RunSummary> runSums = new LinkedList<>();
-       log.info("Starting get billing report for project " + proj);
-       task.init(proj);
-       Future<Object> result = connQueue.submitTask(task);
-       try{
-         runSums = (LinkedList<RunSummary>)result.get();
-       } catch(Exception e){
-         StringWriter sw = new StringWriter();
-         PrintWriter pw = new PrintWriter(sw);
-         e.printStackTrace(pw);
-         rs.setInvestigator(e.getMessage() + " TRACE: " + sw.toString());
-         runSums.add(rs);
-       }
-       return runSums;
-   }
+    public LinkedList<RunSummary> getContent(@RequestParam(value = "project", required = true) String proj) {
+        RunSummary rs = new RunSummary("BLANK_RUN", "BLANK_REQUEST");
+        LinkedList<RunSummary> runSums = new LinkedList<>();
+        log.info("Starting get billing report for project " + proj);
+        task.init(proj);
+        Future<Object> result = connQueue.submitTask(task);
+        try {
+            runSums = (LinkedList<RunSummary>) result.get();
+        } catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            rs.setInvestigator(e.getMessage() + " TRACE: " + sw.toString());
+            runSums.add(rs);
+        }
+        return runSums;
+    }
 }

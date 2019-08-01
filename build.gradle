@@ -1,14 +1,13 @@
 group 'org.mskcc.limsrest'
 version '1.16.10-SNAPSHOT'
 
-
 buildscript {
     repositories {
         mavenCentral()
         mavenLocal()
     }
     dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.2.5.RELEASE")
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.1.6.RELEASE")
     }
 }
 
@@ -59,6 +58,7 @@ repositories {
     mavenLocal()
     maven { url "${nexusUrlReleases}" }
     maven { url "${nexusUrlSnapshots}" }
+    jcenter()
 }
 
 sourceCompatibility = 1.8
@@ -75,19 +75,23 @@ configurations {
 }
 
 dependencies {
-    compile ("org.springframework.boot:spring-boot-starter-tomcat")
-    compile ("org.springframework.boot:spring-boot-starter-web:2.1.6.RELEASE")
-    compile ("org.springframework.boot:spring-boot-starter-security:2.1.6.RELEASE")
+    compile 'org.mskcc.common:common-domain:2.13.0-SNAPSHOT'
+    
+    compile "io.springfox:springfox-swagger2:2.9.2"
+    compile "io.springfox:springfox-swagger-ui:2.9.2"
+    
+    compile "org.springframework.boot:spring-boot-starter-tomcat:2.1.6.RELEASE"
+    compile "org.springframework.boot:spring-boot-starter-web:2.1.6.RELEASE"
+    
     testCompile(group: 'org.springframework', name: 'spring-test', version: '5.1.6.RELEASE')
     testCompile('org.springframework.boot:spring-boot-starter-test')
 
     compile ('javax.servlet:jstl:1.2')
     compile ('com.fasterxml.jackson.core:jackson-databind')
     compile (group: 'com.google.guava', name: 'guava', version: '18.+')
-    compile 'org.mskcc.common:common-domain:2.13.0-SNAPSHOT'
+    
     compile 'com.velox.internalproducts:veloxapi:10.6.1-b777'
     compile 'com.velox.sloan.cmo:sloancmo:2.21.1-LIMS10.6.1_b84'
-
     compile 'com.velox.internalproducts:sapiogeneric:15.0.0-LIMS10.6.1'
     compile 'com.velox.internalproducts:sapioutils:15.0.0-LIMS10.6.1'
     compile 'com.velox.internalproducts:sapio-commons:15.0.0-LIMS10.6.1'

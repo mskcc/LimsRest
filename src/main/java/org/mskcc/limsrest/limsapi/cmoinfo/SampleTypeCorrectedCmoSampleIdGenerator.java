@@ -9,12 +9,22 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.limsrest.limsapi.PatientSamplesRetriever;
+import org.mskcc.limsrest.limsapi.PatientSamplesWithCmoInfoRetriever;
+import org.mskcc.limsrest.limsapi.cmoinfo.cellline.CellLineCmoSampleIdFormatter;
+import org.mskcc.limsrest.limsapi.cmoinfo.cellline.CellLineCmoSampleIdResolver;
+import org.mskcc.limsrest.limsapi.cmoinfo.converter.FormatAwareCorrectedCmoIdConverterFactory;
+import org.mskcc.limsrest.limsapi.cmoinfo.converter.SampleToCorrectedCmoIdConverter;
+import org.mskcc.limsrest.limsapi.cmoinfo.cspace.CspaceSampleTypeAbbreviationRetriever;
 import org.mskcc.limsrest.limsapi.cmoinfo.cspace.StringCmoIdToCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientAwareCmoSampleId;
+import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdFormatter;
+import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdResolver;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.CmoSampleIdRetriever;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.CmoSampleIdRetrieverFactory;
+import org.mskcc.limsrest.limsapi.cmoinfo.retriever.FormattedCmoSampleIdRetriever;
+import org.mskcc.limsrest.limsapi.cmoinfo.retriever.IncrementalSampleCounterRetriever;
+import org.mskcc.limsrest.limsapi.converter.SampleRecordToSampleConverter;
 import org.mskcc.util.CommonUtils;
-import org.mskcc.util.notificator.Notificator;
 
 import java.util.List;
 import java.util.Objects;
@@ -29,20 +39,18 @@ import static org.mskcc.domain.sample.SpecimenType.CELLLINE;
 public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSampleIdGenerator {
     private final static Log LOGGER = LogFactory.getLog(SampleTypeCorrectedCmoSampleIdGenerator.class);
 
-    private final CmoSampleIdRetrieverFactory cmoSampleIdRetrieverFactory;
+    private final CmoSampleIdRetrieverFactory cmoSampleIdRetrieverFactory =
+            new CmoSampleIdRetrieverFactory(
+                    new FormattedCmoSampleIdRetriever(new PatientCmoSampleIdResolver(new IncrementalSampleCounterRetriever(new FormatAwareCorrectedCmoIdConverterFactory(new CspaceSampleTypeAbbreviationRetriever())),
+                            new CspaceSampleTypeAbbreviationRetriever()), new PatientCmoSampleIdFormatter()),
+                    new FormattedCmoSampleIdRetriever(new CellLineCmoSampleIdResolver(), new CellLineCmoSampleIdFormatter()));
+    private final PatientSamplesRetriever patientSamplesRetriever = new PatientSamplesWithCmoInfoRetriever(new SampleToCorrectedCmoIdConverter(), new SampleRecordToSampleConverter());
     private final Multimap<String, CorrectedCmoSampleView> generatedSamples = HashMultimap.create();
-    private final PatientSamplesRetriever patientSamplesRetriever;
-    private final Notificator notificator;
 
-    public SampleTypeCorrectedCmoSampleIdGenerator(CmoSampleIdRetrieverFactory cmoSampleIdRetrieverFactory,
-                                                   PatientSamplesRetriever patientSamplesRetriever,
-                                                   Notificator notificator) {
-        this.cmoSampleIdRetrieverFactory = cmoSampleIdRetrieverFactory;
-        this.patientSamplesRetriever = patientSamplesRetriever;
-        this.notificator = notificator;
+    public SampleTypeCorrectedCmoSampleIdGenerator() {
     }
 
-    @Override
+    @Override // TODO review synchronized
     public synchronized String generate(CorrectedCmoSampleView correctedCmoSampleView, String requestId,
                                         DataRecordManager dataRecordManager, User user) {
         LOGGER.info(String.format("Generating cmo id for view: %s", correctedCmoSampleView));
@@ -145,7 +153,7 @@ public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSamp
                 correctedCmoSampleView.getSampleId(), correctedCmoSampleView.getId(), exception.getMessage());
 
         try {
-            notificator.notifyMessage(requestId, message);
+            //notificator.notifyMessage(requestId, message);
         } catch (Exception e) {
             LOGGER.warn(String.format("Sending notification about failure to autogenerate corrected cmo id failed for" +
                     " sample: %s", correctedCmoSampleView.getId()));

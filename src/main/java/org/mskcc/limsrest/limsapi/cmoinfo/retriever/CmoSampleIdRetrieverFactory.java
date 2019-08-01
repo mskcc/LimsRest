@@ -11,8 +11,8 @@ public class CmoSampleIdRetrieverFactory {
     private final CmoSampleIdRetriever patientCmoSampleIdRetriever;
     private final CmoSampleIdRetriever cellLineCmoSampleIdRetriever;
 
-    public CmoSampleIdRetrieverFactory(CmoSampleIdRetriever patientCmoSampleIdRetriever, CmoSampleIdRetriever
-            cellLineCmoSampleIdRetriever) {
+    public CmoSampleIdRetrieverFactory(CmoSampleIdRetriever patientCmoSampleIdRetriever,
+                                       CmoSampleIdRetriever cellLineCmoSampleIdRetriever) {
         this.patientCmoSampleIdRetriever = patientCmoSampleIdRetriever;
         this.cellLineCmoSampleIdRetriever = cellLineCmoSampleIdRetriever;
     }

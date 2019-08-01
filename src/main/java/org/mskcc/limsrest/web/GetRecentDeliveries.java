@@ -13,12 +13,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Future;
 
+/**
+ * Used by the QC site so they can view recently delivered projects in the QC meetings.
+ */
 @RestController
 public class GetRecentDeliveries {
 
     private final ConnectionQueue connQueue;
     private final GetDelivered task;
-    private Log log = LogFactory.getLog(GetRecentDeliveries.class);
+    private final Log log = LogFactory.getLog(GetRecentDeliveries.class);
 
     public GetRecentDeliveries(ConnectionQueue connQueue, GetDelivered task) {
         this.connQueue = connQueue;

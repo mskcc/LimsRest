@@ -19,16 +19,15 @@ import java.util.concurrent.Future;
 
 @RestController
 public class GetSampleManifest {
-    private Log log = LogFactory.getLog(GetSampleManifest.class);
+    private final Log log = LogFactory.getLog(GetSampleManifest.class);
     private final ConnectionQueue connQueue;
-    private final GetSampleManifestTask task;
+    private final GetSampleManifestTask task = new GetSampleManifestTask();
 
-    public GetSampleManifest(ConnectionQueue connQueue, GetSampleManifestTask task) {
+    public GetSampleManifest(ConnectionQueue connQueue) {
         this.connQueue = connQueue;
-        this.task = task;
     }
 
-    @RequestMapping("/getSampleManifest")
+    @RequestMapping("/api/getSampleManifest")
     public List<SampleManifest> getContent(@RequestParam(value="igoSampleId") String[] igoIds, HttpServletRequest request) {
         log.info("Sample Manifest client IP:" + request.getRemoteAddr());
         log.info("Sample Manifest IGO IDs:" + Arrays.toString(igoIds));

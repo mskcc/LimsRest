@@ -30,13 +30,13 @@ import static org.mskcc.util.CommonUtils.runAndCatchNpe;
  * @author Aaron Gabow
  */
 public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
+    private Log log = LogFactory.getLog(LimsTask.class);
+
     protected VeloxConnection velox_conn;
     protected User user;
     protected DataRecordManager dataRecordManager;
     protected DataMgmtServer dataMgmtServer;
     protected VeloxStandaloneManagerContext managerContext;
-
-    private Log log = LogFactory.getLog(LimsTask.class);
 
     public LimsTask() {
     }
@@ -49,6 +49,7 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
     @Override
     public Object call() throws Exception {
         Object result;
+        System.out.println("OPENING CONNECTION");
         velox_conn.open();
         try {
             if (velox_conn.isConnected()) {
@@ -57,7 +58,7 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
                 dataMgmtServer = velox_conn.getDataMgmtServer();
                 managerContext = new VeloxStandaloneManagerContext(user, dataMgmtServer);
             } else {
-                log.info("the lims task has a null connection");
+                log.error("the lims task has a null connection");
             }
             result = VeloxStandalone.run(velox_conn, this);
         } finally {

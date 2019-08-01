@@ -12,9 +12,10 @@ import com.velox.sloan.cmo.utilities.UuidGenerator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.domain.Recipe;
 import org.mskcc.domain.sample.*;
 import org.mskcc.limsrest.limsapi.cmoinfo.CorrectedCmoSampleIdGenerator;
+import org.mskcc.limsrest.limsapi.cmoinfo.SampleTypeCorrectedCmoSampleIdGenerator;
+import org.mskcc.limsrest.limsapi.cmoinfo.converter.BankedSampleToCorrectedCmoSampleIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverter;
 import org.mskcc.limsrest.limsapi.promote.BankedSampleToSampleConverter;
 import org.mskcc.limsrest.staticstrings.Constants;
@@ -42,10 +43,11 @@ import java.util.regex.Pattern;
 public class PromoteBanked extends LimsTask {
     private static final Log log = LogFactory.getLog(PromoteBanked.class);
 
-    private final CorrectedCmoIdConverter<BankedSample> bankedSampleToCorrectedCmoSampleIdConverter;
-    private final CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator;
+    private final CorrectedCmoIdConverter<BankedSample> bankedSampleToCorrectedCmoSampleIdConverter = new BankedSampleToCorrectedCmoSampleIdConverter();
+    private final CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator = new SampleTypeCorrectedCmoSampleIdGenerator();
     private final HumanSamplePredicate humanSamplePredicate = new HumanSamplePredicate();
-    private final BankedSampleToSampleConverter bankedSampleToSampleConverter;
+    private final BankedSampleToSampleConverter bankedSampleToSampleConverter = new BankedSampleToSampleConverter();
+
     String[] bankedIds;
     String requestId;
     String serviceId;
@@ -62,16 +64,9 @@ public class PromoteBanked extends LimsTask {
             .put(250, 160.0)
             .build();
 
-    private final List<String> humanRecipes;
+    private final List<String> humanRecipes = Arrays.asList("IMPACT341","IMPACT410","IMPACT410+","IMPACT468","HemePACT_v3","HemePACT_v4","MSK-ACCESS_v1");
 
-    public PromoteBanked(CorrectedCmoIdConverter<BankedSample> bankedSampleToCorrectedCmoSampleIdConverter,
-                         CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator,
-                         BankedSampleToSampleConverter bankedSampleToSampleConverter,
-                         List<String> humanRecipes) {
-        this.bankedSampleToCorrectedCmoSampleIdConverter = bankedSampleToCorrectedCmoSampleIdConverter;
-        this.correctedCmoSampleIdGenerator = correctedCmoSampleIdGenerator;
-        this.bankedSampleToSampleConverter = bankedSampleToSampleConverter;
-        this.humanRecipes = humanRecipes;
+    public PromoteBanked() {
     }
 
     /*

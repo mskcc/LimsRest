@@ -20,7 +20,7 @@ public class GetIntakeTerms {
 
     private final ConnectionQueue connQueue; 
     private final GetIntakeFormDescription task;
-    private Log log = LogFactory.getLog(GetIntakeTerms.class);
+    private final Log log = LogFactory.getLog(GetIntakeTerms.class);
 
     public GetIntakeTerms( ConnectionQueue connQueue, GetIntakeFormDescription intake){
         this.connQueue = connQueue;

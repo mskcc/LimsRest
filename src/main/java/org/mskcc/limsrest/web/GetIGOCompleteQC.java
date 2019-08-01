@@ -14,14 +14,13 @@ import java.util.concurrent.Future;
 
 @RestController
 public class GetIGOCompleteQC {
-    private Log log = LogFactory.getLog(GetIGOCompleteQC.class);
+    private final Log log = LogFactory.getLog(GetIGOCompleteQC.class);
 
     private final ConnectionQueue connQueue;
-    private final GetIGOCompleteQCTask task;
+    private final GetIGOCompleteQCTask task = new GetIGOCompleteQCTask();
 
-    public GetIGOCompleteQC(ConnectionQueue connQueue, GetIGOCompleteQCTask task) {
+    public GetIGOCompleteQC(ConnectionQueue connQueue) {
         this.connQueue = connQueue;
-        this.task = task;
     }
 
     @RequestMapping("/getIGOCompleteQC")
