@@ -45,6 +45,7 @@ public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSamp
                             new CspaceSampleTypeAbbreviationRetriever()), new PatientCmoSampleIdFormatter()),
                     new FormattedCmoSampleIdRetriever(new CellLineCmoSampleIdResolver(), new CellLineCmoSampleIdFormatter()));
     private final PatientSamplesRetriever patientSamplesRetriever = new PatientSamplesWithCmoInfoRetriever(new SampleToCorrectedCmoIdConverter(), new SampleRecordToSampleConverter());
+
     private final Multimap<String, CorrectedCmoSampleView> generatedSamples = HashMultimap.create();
 
     public SampleTypeCorrectedCmoSampleIdGenerator() {

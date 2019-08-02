@@ -5,7 +5,7 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.staticstrings.Messages;
-import org.springframework.security.access.prepost.PreAuthorize;
+//import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedList;
@@ -92,7 +92,7 @@ public class GetBanked extends LimsTask {
         return sqlWhere.toString();
     }
 
-    @PreAuthorize("hasRole('READ')")
+    //@PreAuthorize("hasRole('READ')")
     @Override
     public Object execute(VeloxConnection conn) {
         LinkedList<SampleSummary> sampleInfoList = new LinkedList();

@@ -4,7 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.AddChildSample;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,7 +24,7 @@ public class AddChildAliquotToSample {
         this.task = adder;
     }
 
-    @RequestMapping("/addChildAliquotToSample")
+    @GetMapping("/addChildAliquotToSample")
     public String getContent(@RequestParam(value = "sample") String sample,
                              @RequestParam(value = "status") String status,
                              @RequestParam(value = "additionalType", defaultValue = "NULL") String additionalType,

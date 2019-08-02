@@ -4,7 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.GetProcessNames;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,7 +24,7 @@ public class GetProcesses {
         this.task = processNamer;
     }
 
-    @RequestMapping("/getProcesses")
+    @GetMapping("/getProcesses")
     public List<String> getContent(@RequestParam(value = "user") String user) {
         log.info("Starting process name query for user " + user);
         Future<Object> result = connQueue.submitTask(task);

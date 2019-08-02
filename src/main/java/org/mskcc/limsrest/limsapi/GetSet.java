@@ -4,7 +4,7 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.security.access.prepost.PreAuthorize;
+//import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedList;
@@ -19,7 +19,7 @@ public class GetSet extends LimsTask {
         this.name = name;
     }
 
-    @PreAuthorize("hasRole('READ')")
+    //@PreAuthorize("hasRole('READ')")
     public Object execute(VeloxConnection conn) {
         LinkedList<String> sampleNames = new LinkedList<String>();
         try {

@@ -5,7 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.GetIGOCompleteQCTask;
 import org.mskcc.limsrest.limsapi.SampleQcSummary;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -23,7 +23,7 @@ public class GetIGOCompleteQC {
         this.connQueue = connQueue;
     }
 
-    @RequestMapping("/getIGOCompleteQC")
+    @GetMapping("/getIGOCompleteQC")
     public List<SampleQcSummary> getContent(@RequestParam(value = "sampleId") String sampleId) {
         log.info("Starting /getIGOCompleteQC for sample:" + sampleId);
 

@@ -41,11 +41,7 @@ public class PromoteBankedTest {
                 MSK_ACCESS_V1.getValue()
         );
 
-        promoteBanked = new PromoteBanked(
-                Mockito.mock(CorrectedCmoIdConverter.class),
-                correctedCmoSampleIdGenerator,
-                Mockito.mock(BankedSampleToSampleConverter.class),
-                humanRecipes);
+        promoteBanked = new PromoteBanked();
     }
 
     @Test

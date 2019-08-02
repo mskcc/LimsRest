@@ -6,7 +6,7 @@ import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.GetSampleManifestTask;
 import org.mskcc.limsrest.limsapi.SampleManifest;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -27,7 +27,7 @@ public class GetSampleManifest {
         this.connQueue = connQueue;
     }
 
-    @RequestMapping("/api/getSampleManifest")
+    @GetMapping("/api/getSampleManifest")
     public List<SampleManifest> getContent(@RequestParam(value="igoSampleId") String[] igoIds, HttpServletRequest request) {
         log.info("Sample Manifest client IP:" + request.getRemoteAddr());
         log.info("Sample Manifest IGO IDs:" + Arrays.toString(igoIds));

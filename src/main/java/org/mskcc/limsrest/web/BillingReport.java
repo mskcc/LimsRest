@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.GetBillingReport;
 import org.mskcc.limsrest.limsapi.RunSummary;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,7 +28,7 @@ public class BillingReport {
         this.task = getBillingReport;
     }
 
-    @RequestMapping("/getBillingReport")
+    @GetMapping("/getBillingReport")
     public LinkedList<RunSummary> getContent(@RequestParam(value = "project", required = true) String proj) {
         RunSummary rs = new RunSummary("BLANK_RUN", "BLANK_REQUEST");
         LinkedList<RunSummary> runSums = new LinkedList<>();

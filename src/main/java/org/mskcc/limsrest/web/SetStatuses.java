@@ -4,7 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.SetRequestStatus;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.PrintWriter;
@@ -16,7 +16,7 @@ import java.util.concurrent.Future;
 
 @RestController
 public class SetStatuses {
-    private Log log = LogFactory.getLog(SetStatuses.class);
+    private final Log log = LogFactory.getLog(SetStatuses.class);
     private final ConnectionQueue connQueue;
     private final SetRequestStatus task;
 
@@ -25,7 +25,7 @@ public class SetStatuses {
         this.task = requestStatus;
     }
 
-    @RequestMapping("/setRequestStatuses")
+    @GetMapping("/setRequestStatuses")
     public List<String> getContent() {
         log.info("Starting to set request statuses");
         Future<Object> result = connQueue.submitTask(task);

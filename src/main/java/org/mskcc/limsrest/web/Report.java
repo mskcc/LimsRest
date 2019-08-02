@@ -6,7 +6,7 @@ import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.GetHiseq;
 import org.mskcc.limsrest.limsapi.GetReadyForIllumina;
 import org.mskcc.limsrest.limsapi.RunSummary;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,7 +17,6 @@ import java.util.concurrent.Future;
 
 @RestController
 public class Report {
-
     private final ConnectionQueue connQueue; 
     private final GetHiseq task;
     private final GetReadyForIllumina illuminaTask;
@@ -29,9 +28,8 @@ public class Report {
         this.illuminaTask = illuminaTask;
     }
 
-    @RequestMapping("/getHiseq")
+    @GetMapping("/getHiseq")
     public LinkedList<RunSummary> getContent(@RequestParam(value="run", required=false) String run, @RequestParam(value="project", required=false) String[] projs) {
-
        RunSummary rs = new RunSummary("BLANK_RUN", "BLANK_REQUEST");
        LinkedList<RunSummary> runSums = new LinkedList<>();
        if(run != null){
@@ -71,7 +69,7 @@ public class Report {
        return runSums;
    }
 
-     @RequestMapping("/getHiseqList")
+   @GetMapping("/getHiseqList")
     public LinkedList<RunSummary> getContent() {
        log.info("Starting get Hiseq List");
        task.init("");
@@ -90,7 +88,7 @@ public class Report {
        return runSums;
    }
 
-   @RequestMapping("/planRuns")
+   @GetMapping("/planRuns")
    public LinkedList<RunSummary> getPlan(@RequestParam(value="user") String user){
            log.info("Starting plan Runs for user " + user);
        illuminaTask.init();
@@ -106,7 +104,6 @@ public class Report {
          rs.setInvestigator(e.getMessage() + " TRACE: " + sw.toString());
          runSums.add(rs);
        }
-       return runSums; 
-
+       return runSums;
    }
 }

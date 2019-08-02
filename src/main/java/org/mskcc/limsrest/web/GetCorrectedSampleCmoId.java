@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
 
-@RestController
+//@RestController TODO
 public class GetCorrectedSampleCmoId {
     private static final Log log = LogFactory.getLog(GetCorrectedSampleCmoId.class);
     private final static String DMP_SUFFIX = "Z";
@@ -39,7 +39,7 @@ public class GetCorrectedSampleCmoId {
      * @param sampleIgoId
      * @return CMO Sample Id
      */
-    @RequestMapping("/getSampleCmoId")
+    @GetMapping("/getSampleCmoId")
     public ResponseEntity<String> getSampleCmoIdByIgoId(@RequestParam(value = "sampleIgoId") String sampleIgoId) {
         try {
             validateSampleId(sampleIgoId);

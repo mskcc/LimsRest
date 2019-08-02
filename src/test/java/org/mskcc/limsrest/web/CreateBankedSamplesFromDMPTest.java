@@ -25,8 +25,7 @@ public class CreateBankedSamplesFromDMPTest {
 
     @Before
     public void setUp() throws Exception {
-        createBankedSamplesFromDMP = new CreateBankedSamplesFromDMP(connQueue, generateBankedSamplesFromDMP,
-                dateRetriever);
+        createBankedSamplesFromDMP = new CreateBankedSamplesFromDMP(connQueue);
     }
 
     @Test

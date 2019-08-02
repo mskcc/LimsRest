@@ -4,7 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.GetSet;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,8 +25,7 @@ public class GetSampleSet {
         this.task = getSet;
     }
 
-
-    @RequestMapping("/getSampleSet")
+    @GetMapping("/getSampleSet")
     public List<String> getContent(@RequestParam(value = "setName") String name, @RequestParam(value = "user") String user) {
         log.info("Starting to get sample set " + name + " for user " + user);
         List<String> sets = new LinkedList<>();

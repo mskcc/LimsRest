@@ -50,8 +50,7 @@ public class SampleTypeCorrectedCmoSampleViewGeneratorTest {
         CmoSampleIdRetriever cellLineRetriever = new FormattedCmoSampleIdRetriever(cellLineResolver, cellLineFormatter);
         retrieverFactory = new CmoSampleIdRetrieverFactory(patientRetriever, cellLineRetriever);
 
-        sampleTypeCorrectedCmoSampleIdGenerator = new SampleTypeCorrectedCmoSampleIdGenerator(retrieverFactory,
-                samplesRetriever, mock(Notificator.class));
+        sampleTypeCorrectedCmoSampleIdGenerator = new SampleTypeCorrectedCmoSampleIdGenerator();
     }
 
     @Test

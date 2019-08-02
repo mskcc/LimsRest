@@ -4,7 +4,7 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.security.access.prepost.PreAuthorize;
+//import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.io.PrintWriter;
@@ -27,7 +27,7 @@ public class GetBillingReport extends LimsTask {
         this.project = project;
     }
 
-    @PreAuthorize("hasRole('READ')")
+    //@PreAuthorize("hasRole('READ')")
     @Override
     public Object execute(VeloxConnection conn) {
 // RUN Name, Project#, sample, Barcode, Lane #, Lab Head, Investigator, Date (start run), Date (end run), Run type, read length, SampleRef, # reads request_sample, Status of project 

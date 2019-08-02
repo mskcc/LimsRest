@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 import java.util.concurrent.Future;
 
-//@RestController TODO
+@RestController
 public class CreateBankedSamplesFromDMP {
     private static final Log log = LogFactory.getLog(CreateBankedSamplesFromDMP.class);
 

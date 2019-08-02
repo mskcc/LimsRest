@@ -18,7 +18,7 @@ public class SetSampleName {
 
     private final ConnectionQueue connQueue; 
     private final RenameSample task;
-    private Log log = LogFactory.getLog(SetSampleName.class);
+    private final Log log = LogFactory.getLog(SetSampleName.class);
    
     public SetSampleName( ConnectionQueue connQueue, RenameSample renamer){
         this.connQueue = connQueue;

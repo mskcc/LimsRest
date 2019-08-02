@@ -5,7 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.GetSamplesInRequestTask;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -23,7 +23,7 @@ public class GetSamplesInRequest {
         this.connQueue = connQueue;
     }
 
-    @RequestMapping("/api/getSamplesInRequest")
+    @GetMapping("/api/getSamplesInRequest")
     public GetSamplesInRequestTask.RequestSampleList getContent(@RequestParam(value = "request") String requestId, @RequestParam(value="tumorOnly", defaultValue="False") Boolean tumorOnly) {
         log.info("Starting /getSamplesInRequest for requestId:" + requestId);
 

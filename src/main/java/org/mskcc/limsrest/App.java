@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.PropertySource;
@@ -21,15 +20,11 @@ import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 import javax.annotation.PostConstruct;
-import javax.servlet.*;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.List;
 
+@SpringBootApplication
 @EnableSwagger2
-@SpringBootApplication // replaces @Configuration @EnableAutoConfiguration & @ComponentScan
-@PropertySource({"classpath:/connect.txt", "classpath:/application.properties"})
+@PropertySource({"classpath:/connect.txt", "classpath:/app.properties"})
 public class App extends SpringBootServletInitializer {
 
     public static ConnectionQueue connQueue;
@@ -82,7 +77,7 @@ public class App extends SpringBootServletInitializer {
                 .apiInfo(apiInfo())
                 .select()
                 .apis(RequestHandlerSelectors.withClassAnnotation(RestController.class))
-                .paths(PathSelectors.ant("/api/*"))
+                .paths(PathSelectors.any())
                 .build();
     }
 
@@ -92,25 +87,5 @@ public class App extends SpringBootServletInitializer {
                 .description("IGO LIMS project, request and sample data & metadata.")
                 .contact(new Contact("The IGO Data Team", "https://igo.mskcc.org", "zzPDL_SKI_IGO_DATA@mskcc.org"))
                 .build();
-    }
-
-    @Bean
-    // redirect / to swagger-ui.html, other ways to to this too
-    public FilterRegistrationBean filterRegistrationBean(){
-        FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean();
-        Filter myFilter = new Filter(){
-            @Override
-            public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
-                HttpServletRequest request = (HttpServletRequest) servletRequest;
-                HttpServletResponse response = (HttpServletResponse) servletResponse;
-                if (request.getRequestURI().equals("") || request.getRequestURI().equals("/")){
-                    response.sendRedirect("/swagger-ui.html");
-                    return;
-                }
-                filterChain.doFilter(servletRequest, servletResponse);
-            }
-        };
-        filterRegistrationBean.setFilter(myFilter);
-        return filterRegistrationBean;
     }
 }

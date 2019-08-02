@@ -7,7 +7,7 @@ import com.velox.sapioutils.shared.managers.DataRecordUtilManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.staticstrings.Messages;
-import org.springframework.security.access.prepost.PreAuthorize;
+//import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.io.PrintWriter;
@@ -38,7 +38,7 @@ public class DeleteBanked  extends LimsTask {
    this.serviceId = serviceId;
  }
  //execute the velox call
-@PreAuthorize("hasRole('ADMIN')")
+//@PreAuthorize("hasRole('ADMIN')")
 @Override
  public Object execute(VeloxConnection conn){
   if(serviceId != null && userId != null){ 

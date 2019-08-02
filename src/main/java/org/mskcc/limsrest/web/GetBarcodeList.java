@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.BarcodeSummary;
 import org.mskcc.limsrest.limsapi.GetBarcodeInfo;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,7 +16,7 @@ import java.util.concurrent.Future;
 
 @RestController
 public class GetBarcodeList {
-    private Log log = LogFactory.getLog(GetBarcodeList.class);
+    private final Log log = LogFactory.getLog(GetBarcodeList.class);
     private final ConnectionQueue connQueue;
     private final GetBarcodeInfo task;
 
@@ -24,7 +25,7 @@ public class GetBarcodeList {
         this.task = barcodes;
     }
 
-    @RequestMapping("/getBarcodeList")
+    @GetMapping("/getBarcodeList")
     public List<BarcodeSummary> getContent(@RequestParam(value = "user", required=false) String user) {
         log.info("Starting get barcode list for user" + user);
         Future<Object> result = connQueue.submitTask(task);

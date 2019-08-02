@@ -5,7 +5,7 @@ package org.mskcc.limsrest.limsapi;
 import com.velox.api.datarecord.AlreadyExists;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
-import org.springframework.security.access.prepost.PreAuthorize;
+//import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.io.PrintWriter;
@@ -41,7 +41,7 @@ public class AddPoolToLane  extends LimsTask
     this.force = force;
   }
  //execute the velox call
-@PreAuthorize("hasRole('ADMIN')")
+//@PreAuthorize("hasRole('ADMIN')")
 @Override
  public Object execute(VeloxConnection conn){
   try { 

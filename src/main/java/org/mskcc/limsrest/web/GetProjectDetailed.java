@@ -5,12 +5,11 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.GetProjectDetails;
 import org.mskcc.limsrest.limsapi.ProjectSummary;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.concurrent.Future;
-
 
 @RestController
 public class GetProjectDetailed {
@@ -22,7 +21,7 @@ public class GetProjectDetailed {
         this.connQueue = connQueue;
     }
 
-    @RequestMapping("/getProjectDetailed")
+    @GetMapping("/getProjectDetailed")
     public ProjectSummary getContent(@RequestParam(value="project") String project) {
        if (!Whitelists.requestMatches(project)){
               ProjectSummary eSum = new ProjectSummary();

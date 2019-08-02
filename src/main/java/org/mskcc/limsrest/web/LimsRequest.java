@@ -37,7 +37,6 @@ public class LimsRequest {
         this.reader = reader;
     }
 
-
     @RequestMapping(value="/limsRequest",  method = RequestMethod.POST)
     public ResponseEntity<String> setContent(@RequestParam(value="request") String request, @RequestParam(value="igoUser") String igoUser, 
                            @RequestParam(value="user") String user, 

@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.GetDelivered;
 import org.mskcc.limsrest.limsapi.RequestSummary;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,17 +19,16 @@ import java.util.concurrent.Future;
  */
 @RestController
 public class GetRecentDeliveries {
-
+    private final Log log = LogFactory.getLog(GetRecentDeliveries.class);
     private final ConnectionQueue connQueue;
     private final GetDelivered task;
-    private final Log log = LogFactory.getLog(GetRecentDeliveries.class);
 
     public GetRecentDeliveries(ConnectionQueue connQueue, GetDelivered task) {
         this.connQueue = connQueue;
         this.task = task;
     }
 
-    @RequestMapping("/getRecentDeliveries")
+    @GetMapping("/getRecentDeliveries")
     public List<RequestSummary> getContent(@RequestParam(value = "time", defaultValue = "NULL") String time,
                                            @RequestParam(value = "units", defaultValue = "NULL") String units,
                                            @RequestParam(value = "investigator", defaultValue = "NULL") String investigator) {

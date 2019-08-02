@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+//import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -29,7 +29,7 @@ public class GetSampleQc extends LimsTask {
     }
 
     @Override
-    @PreAuthorize("hasRole('READ')")
+    //@PreAuthorize("hasRole('READ')")
     public Object execute(VeloxConnection conn) {
         List<RequestSummary> rss = new LinkedList<>();
         try {

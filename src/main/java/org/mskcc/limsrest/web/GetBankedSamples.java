@@ -9,7 +9,7 @@ import org.mskcc.limsrest.limsapi.SampleSummary;
 import org.mskcc.limsrest.staticstrings.Messages;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -44,7 +44,7 @@ public class GetBankedSamples {
         this.task = project;
     }
 
-    @RequestMapping("/getBankedSamples")
+    @GetMapping("/getBankedSamples")
     public ResponseEntity<List<SampleSummary>> getContent(@RequestParam(value = "project", required = false) String
                                                                   project,
                                                           @RequestParam(value = "userId", required = false) String[]

@@ -5,12 +5,10 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.GetProjectHistory;
 import org.mskcc.limsrest.limsapi.HistoricalEvent;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.Future;
@@ -30,7 +28,7 @@ public class GetTimelines {
         this.task = getHistory;
     }
 
-    @RequestMapping("/getTimeline")
+    @GetMapping("/getTimeline")
     public LinkedList<HistoricalEvent> getContent(@RequestParam(value = "project") String[] project) {
         LinkedList<HistoricalEvent> timeline = new LinkedList<>();
         for (int i = 0; i < project.length; i++) {

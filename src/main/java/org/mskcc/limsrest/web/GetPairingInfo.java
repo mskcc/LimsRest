@@ -8,6 +8,7 @@ import java.util.concurrent.Future;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,7 +32,7 @@ public class GetPairingInfo {
         this.task = getPairs;
     }
 
-    @RequestMapping("/getCategoryMapping")
+    @GetMapping("/getCategoryMapping")
        public List<HashMap<String, String>> getMappingContent(@RequestParam(value="project", required=false) String requestId, @RequestParam(value="setName", required=false) String set, @RequestParam(value="mapName", required = false) String mapName, @RequestParam(value="user") String user){
        List<HashMap<String, String>> typeToId = new LinkedList<>();
        if(!Whitelists.sampleMatches(set)){

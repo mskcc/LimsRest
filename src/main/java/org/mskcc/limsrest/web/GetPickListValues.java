@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.LinkedList;
 
 import org.mskcc.limsrest.App;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,7 +27,7 @@ public class GetPickListValues {
         this.connQueue = App.connQueue;
     }
 
-    @RequestMapping("/getPickListValues")
+    @GetMapping("/getPickListValues")
     public List<String> getContent(@RequestParam(value = "list", defaultValue = "Countries") String list) {
         List<String> values = new LinkedList<>();
         if (!Whitelists.textMatches(list)) {

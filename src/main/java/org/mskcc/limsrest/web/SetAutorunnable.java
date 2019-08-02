@@ -21,7 +21,7 @@ public class SetAutorunnable {
 
     private final ConnectionQueue connQueue; 
     private final ToggleAutorunnable task;
-    private Log log = LogFactory.getLog(SetAutorunnable.class);
+    private final Log log = LogFactory.getLog(SetAutorunnable.class);
 
     public SetAutorunnable( ConnectionQueue connQueue, ToggleAutorunnable toggle){
         this.connQueue = connQueue;

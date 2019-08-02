@@ -35,7 +35,7 @@ public class SampleTypeCorrectedCmoSampleIdGeneratorTest {
     private Notificator notificator = new SlackNotificator(webhook, channel, user, icon);
 
     private SampleTypeCorrectedCmoSampleIdGenerator sampleTypeCorrectedCmoSampleIdGenerator = new
-            SampleTypeCorrectedCmoSampleIdGenerator(factory, retriever, notificator);
+            SampleTypeCorrectedCmoSampleIdGenerator();
 
     @Ignore
     @Test

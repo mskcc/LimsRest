@@ -8,7 +8,7 @@ import org.mskcc.limsrest.limsapi.LimsException;
 import org.mskcc.limsrest.staticstrings.Messages;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,17 +19,16 @@ import java.util.concurrent.Future;
 
 @RestController
 public class DeleteBankedSample {
-
+    private final Log log = LogFactory.getLog(DeleteBankedSample.class);
     private final ConnectionQueue connQueue; 
     private final DeleteBanked task;
-    private Log log = LogFactory.getLog(DeleteBankedSample.class);
    
     public DeleteBankedSample( ConnectionQueue connQueue, DeleteBanked banked){
         this.connQueue = connQueue;
         this.task = banked;
     }
 
-    @RequestMapping("/deleteBankedSample")
+    @GetMapping("/deleteBankedSample")
     public ResponseEntity<String>  getContent(@RequestParam(value="userId") String userId, @RequestParam(value="serviceId") String serviceId, @RequestParam(value="user") String user) {
        log.info("Starting to delete banked sample " + userId + " from service request " + serviceId +  " by " + user  );
        if(!Whitelists.sampleMatches(userId))
@@ -37,7 +36,6 @@ public class DeleteBankedSample {
 
        if(!Whitelists.serviceMatches(serviceId))
          return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("serviceId is not using a valid igo ilabs request");
-
        
        log.info("Creating task");
        task.init(userId, serviceId); 
@@ -62,13 +60,12 @@ public class DeleteBankedSample {
        return ResponseEntity.ok(returnCode);
     }
 
-    @RequestMapping("/deleteBankedService")
+    @GetMapping("/deleteBankedService")
     public ResponseEntity<String>  getContent(@RequestParam(value="serviceId") String serviceId, @RequestParam(value="user") String user) {
        log.info("Starting to delete banked samples and request for the service " + serviceId +  " by " + user  );
 
        if(!Whitelists.serviceMatches(serviceId))
          return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("serviceId is not using a valid igo ilabs request");
-
 
        log.info("Creating task");
        task.init(serviceId);

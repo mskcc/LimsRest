@@ -1,45 +1,34 @@
 package org.mskcc.limsrest.web;
 
-import java.util.concurrent.Future;
-import java.util.List;
-import java.util.LinkedList;
-
-import org.springframework.stereotype.Service;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.limsapi.AddPoolToLane;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import org.mskcc.limsrest.limsapi.*;
-import org.mskcc.limsrest.connection.*;
-
-import java.io.StringWriter;
 import java.io.PrintWriter;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import java.io.StringWriter;
+import java.util.concurrent.Future;
 
 
 @RestController
-public class AddPoolToFlowcellLane{ 
-
-
+public class AddPoolToFlowcellLane{
+    private final Log log = LogFactory.getLog(AddPoolToFlowcellLane.class);
     private final ConnectionQueue connQueue; 
     private final AddPoolToLane task;
-    private Log log = LogFactory.getLog(AddPoolToFlowcellLane.class);
    
     public AddPoolToFlowcellLane( ConnectionQueue connQueue, AddPoolToLane adder){
         this.connQueue = connQueue;
         this.task = adder;
     }
 
-
-
     @RequestMapping("/addPoolToFlowcellLane")
     public String getContent(@RequestParam(value="sample") String sample, @RequestParam(value="removeSample", defaultValue="NULL") String removeSample,
                            @RequestParam(value="flowcell") String flowcell, @RequestParam(value="igoUser") String igoUser,
                             @RequestParam(value="lane") String lane, @RequestParam(value="force", defaultValue="NULL") String force){
-       log.info("Starting to add pool " + sample + " to flowcell lane " + lane  + "  by user " + igoUser);
+        log.info("Starting to add pool " + sample + " to flowcell lane " + lane  + "  by user " + igoUser);
         if(!Whitelists.sampleMatches(lane))
             return "FAILURE: lane is not using a valid format";
         if(!Whitelists.textMatches(flowcell))
@@ -68,6 +57,4 @@ public class AddPoolToFlowcellLane{
        }
        return returnCode;
     }
-
 }
-

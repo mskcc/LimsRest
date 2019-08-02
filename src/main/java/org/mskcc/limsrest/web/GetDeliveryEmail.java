@@ -5,7 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.DeliveryEmail;
 import org.mskcc.limsrest.limsapi.GetDeliveryEmailDetails;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,7 +22,7 @@ public class GetDeliveryEmail {
         this.task = getQc;
     }
 
-    @RequestMapping("/getDeliveryEmail")
+    @GetMapping("/getDeliveryEmail")
     public DeliveryEmail getContent(@RequestParam(value="request", required=true) String request) {
         log.info("Starting get /getDeliveryEmail for request: " + request);
 

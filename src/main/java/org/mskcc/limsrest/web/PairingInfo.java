@@ -21,7 +21,7 @@ public class PairingInfo {
 
     private final ConnectionQueue connQueue; 
     private final SetPairing task;
-    private Log log = LogFactory.getLog(PairingInfo.class);
+    private final Log log = LogFactory.getLog(PairingInfo.class);
    
     public PairingInfo( ConnectionQueue connQueue, SetPairing setter){
         this.connQueue = connQueue;

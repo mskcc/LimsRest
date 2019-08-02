@@ -13,7 +13,7 @@ import java.util.concurrent.Future;
 
 @RestController
 public class SetQcStatus {
-    private Log log = LogFactory.getLog(SetQcStatus.class);
+    private final Log log = LogFactory.getLog(SetQcStatus.class);
     private final ConnectionQueue connQueue; 
     private final ToggleSampleQcStatus task;
    
