@@ -127,6 +127,7 @@ public class AddOrCreateSet extends LimsTask {
 
             Set<String> nameSet = new HashSet<>();
             addSampleIdsToNameSet(parent, nameSet);
+            List<DataRecord> externalSamples = addExternalSpecimens(nameSet);
             addPairings(tumorPairing, normalPairing, parent, nameSet);
             addCategories(categoryKeys, categoryVals, parent, nameSet);
 
@@ -138,7 +139,6 @@ public class AddOrCreateSet extends LimsTask {
                 return Long.toString(parent.getRecordId());
             }
 
-            addExternalSpecimens(sampleSet, nameSet);
             if (requestIds != null) allRequests.addAll(addOffRequestId(errorList));
 
             if (igoIds != null && igoIds.length > 0) allSamples.addAll(addOffIgoIds(errorList));
@@ -150,6 +150,9 @@ public class AddOrCreateSet extends LimsTask {
 
             log.info(String.format("Adding samples %s to sample set %s", StringUtils.join(igoIds, ","), setName));
             sampleSet.addChildren(allSamples, user);
+
+            log.info(String.format("Adding external samples %s to sample set %s", StringUtils.join(externalSpecimens, ","), setName));
+            sampleSet.addChildren(externalSamples, user);
 
             if (baitSet != null) sampleSet.setDataField("BaitSet", baitSet, user);
             if (recipe != null) sampleSet.setDataField("Recipe", recipe, user);
@@ -209,8 +212,10 @@ public class AddOrCreateSet extends LimsTask {
         }
     }
 
-    private void addExternalSpecimens(DataRecord sampleSet, Set<String> nameSet) throws NotFound, IoError,
+    private List<DataRecord> addExternalSpecimens(Set<String> nameSet) throws NotFound, IoError,
             RemoteException, AlreadyExists, InvalidValue {
+        List<DataRecord> externalSamples = new ArrayList<>();
+
         if (externalSpecimens != null) {
             for (String externalSpecId : externalSpecimens) {
                 nameSet.add(externalSpecId);
@@ -218,23 +223,24 @@ public class AddOrCreateSet extends LimsTask {
                         .EXTERNAL_SPECIMEN, "ExternalId = '" + externalSpecId + "'", user);
 
                 if (extSpecRecords.size() == 0) {
-                    createNewExternalSpecimen(sampleSet, externalSpecId);
+                    DataRecord newExternalSpecimen = createNewExternalSpecimen(externalSpecId);
+                    externalSamples.add(newExternalSpecimen);
                 } else if (extSpecRecords.size() > 1) {
                     DataRecord recToBeUsed = extSpecRecords.get(0);
+                    externalSamples.add(recToBeUsed);
                     log.warn(String.format("External Specimen with id %s is ambiguous and matches multiple LIMS " +
                             "Data Records. First one will be used: %d", externalSpecId, recToBeUsed));
-
-                    sampleSet.addChild(recToBeUsed, user);
                 } else {
-                    log.info(String.format("External specimen %s already exists in LIMS. It will be added as a child " +
-                            "to sample set %s", externalSpecId, sampleSet.getRecordId()));
-                    sampleSet.addChild(extSpecRecords.get(0), user);
+                    log.info(String.format("External specimen %s already exists in LIMS.", externalSpecId));
+                    externalSamples.add(extSpecRecords.get(0));
                 }
             }
         }
+
+        return externalSamples;
     }
 
-    private void createNewExternalSpecimen(DataRecord sampleSet, String externalSpecId) throws IoError, NotFound,
+    private DataRecord createNewExternalSpecimen(String externalSpecId) throws IoError, NotFound,
             AlreadyExists, InvalidValue, RemoteException {
         log.info(String.format("External Specimen with id %s doesn't exist in LIMS. New record will " +
                 "be created.", externalSpecId));
@@ -243,7 +249,8 @@ public class AddOrCreateSet extends LimsTask {
                 .EXTERNAL_SPECIMEN, user);
         newExternalSpecimen.setDataField("ExternalId", externalSpecId, user);
         newExternalSpecimen.setDataField("DataRecordName", externalSpecId, user);
-        sampleSet.addChild(newExternalSpecimen, user);
+
+        return newExternalSpecimen;
     }
 
     private void addSampleIdsToNameSet(DataRecord parent, Set<String> nameSet) throws RemoteException, ServerException {
