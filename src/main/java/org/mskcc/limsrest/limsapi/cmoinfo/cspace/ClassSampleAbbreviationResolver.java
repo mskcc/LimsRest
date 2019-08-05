@@ -22,6 +22,7 @@ public class ClassSampleAbbreviationResolver implements SampleAbbreviationResolv
         sampleClassToAbbreviation.put(SampleClass.METASTASIS, "M");
         sampleClassToAbbreviation.put(SampleClass.NORMAL, "N");
         sampleClassToAbbreviation.put(SampleClass.PRIMARY, "P");
+        sampleClassToAbbreviation.put(SampleClass.TUMOR, "T");
         sampleClassToAbbreviation.put(SampleClass.UNKNOWN_TUMOR, "T");
     }
 
