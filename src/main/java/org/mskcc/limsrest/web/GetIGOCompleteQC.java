@@ -6,6 +6,7 @@ import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.GetIGOCompleteQCTask;
 import org.mskcc.limsrest.limsapi.SampleQcSummary;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -13,8 +14,9 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 @RestController
+@RequestMapping("/")
 public class GetIGOCompleteQC {
-    private final Log log = LogFactory.getLog(GetIGOCompleteQC.class);
+    private static Log log = LogFactory.getLog(GetIGOCompleteQC.class);
 
     private final ConnectionQueue connQueue;
     private final GetIGOCompleteQCTask task = new GetIGOCompleteQCTask();

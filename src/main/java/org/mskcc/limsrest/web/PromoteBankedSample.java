@@ -9,6 +9,7 @@ import org.mskcc.limsrest.limsapi.PromoteBanked;
 import org.mskcc.limsrest.staticstrings.Constants;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,10 +20,12 @@ import java.io.StringWriter;
 import java.util.concurrent.Future;
 
 @RestController
+@RequestMapping("/")
 public class PromoteBankedSample {
+    private final static Log log = LogFactory.getLog(PromoteBankedSample.class);
     private final ConnectionQueue connQueue;
     private final PromoteBanked task;
-    private Log log = LogFactory.getLog(PromoteBankedSample.class);
+
 
     public PromoteBankedSample(ConnectionQueue connQueue, PromoteBanked banked) {
         this.connQueue = connQueue;
@@ -30,7 +33,7 @@ public class PromoteBankedSample {
     }
 
     //@PreAuthorize("hasRole('ADMIN')")
-    @RequestMapping("/promoteBankedSample")
+    @GetMapping("/promoteBankedSample")
     public ResponseEntity<String> getContent(@RequestParam(value = "bankedId") String[] bankedId,
                                              @RequestParam(value = "user") String user,
                                              @RequestParam(value = "requestId", defaultValue = "NULL") String request,

@@ -6,6 +6,7 @@ import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.GetProjectHistory;
 import org.mskcc.limsrest.limsapi.HistoricalEvent;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,8 +18,9 @@ import java.util.concurrent.Future;
  * Used on the alba IGO tools website, called about once a month.
  */
 @RestController
+@RequestMapping("/")
 public class GetTimelines {
-    private final Log log = LogFactory.getLog(GetTimelines.class);
+    private static Log log = LogFactory.getLog(GetTimelines.class);
 
     private final ConnectionQueue connQueue;
     private final GetProjectHistory task;

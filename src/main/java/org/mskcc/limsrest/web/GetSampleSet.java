@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.GetSet;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -12,13 +13,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Future;
 
-
 @RestController
+@RequestMapping("/")
 public class GetSampleSet {
-
+    private static Log log = LogFactory.getLog(GetSampleSet.class);
     private final ConnectionQueue connQueue;
     private final GetSet task;
-    private Log log = LogFactory.getLog(GetSampleSet.class);
 
     public GetSampleSet(ConnectionQueue connQueue, GetSet getSet) {
         this.connQueue = connQueue;

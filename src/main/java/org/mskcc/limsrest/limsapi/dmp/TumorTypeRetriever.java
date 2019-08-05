@@ -1,7 +1,7 @@
 package org.mskcc.limsrest.limsapi.dmp;
 
-import java.util.List;
+import java.util.Set;
 
 public interface TumorTypeRetriever {
-    List<TumorType> retrieve();
+    Set<TumorType> retrieve();
 }

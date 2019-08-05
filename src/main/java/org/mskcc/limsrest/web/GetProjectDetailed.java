@@ -6,14 +6,16 @@ import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.GetProjectDetails;
 import org.mskcc.limsrest.limsapi.ProjectSummary;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.concurrent.Future;
 
 @RestController
+@RequestMapping("/")
 public class GetProjectDetailed {
-    private final Log log = LogFactory.getLog(GetProjectDetailed.class);
+    private static Log log = LogFactory.getLog(GetProjectDetailed.class);
     private final ConnectionQueue connQueue; 
     private final GetProjectDetails task = new GetProjectDetails();
    

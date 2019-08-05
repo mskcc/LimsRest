@@ -9,7 +9,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.util.VeloxConstants;
 //import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -23,7 +22,6 @@ import java.util.stream.Collectors;
  *
  * @author Aaron Gabow
  */
-@Service
 public class AddOrCreateSet extends LimsTask {
     private final static Log log = LogFactory.getLog(GenerateSampleCmoIdTask.class);
 
@@ -60,7 +58,6 @@ public class AddOrCreateSet extends LimsTask {
             this.categories = categories.clone();
     }
 
-    //execute the velox call
     //@PreAuthorize("hasRole('ADMIN')")
     @Override
     public Object execute(VeloxConnection conn) {
@@ -293,5 +290,4 @@ public class AddOrCreateSet extends LimsTask {
             errorList.append("FAILURE: There are more records matching those ids than is expected");
         }
     }
-
 }

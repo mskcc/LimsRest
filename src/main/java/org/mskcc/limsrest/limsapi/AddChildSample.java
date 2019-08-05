@@ -21,8 +21,7 @@ import java.util.regex.Pattern;
  * 
  */
 @Service
-public class AddChildSample  extends LimsTask 
-{
+public class AddChildSample  extends LimsTask {
   String sampleId; 
   String status;
   String igoUser; 
@@ -36,8 +35,7 @@ public class AddChildSample  extends LimsTask
     this.additionalType = additionalType;
     this.childId = childId;
   }
- //execute the velox call
-//@PreAuthorize("hasRole('ADMIN')")
+
 @Override
  public Object execute(VeloxConnection conn){
   String newId = "";
@@ -73,7 +71,7 @@ public class AddChildSample  extends LimsTask
          }
     }
     max += 1;
-    newId = sampleId + "_" + Integer.toString(max);
+    newId = sampleId + "_" + max;
     DataRecord child =  parentSample.addChild("Sample", user);
     if(!additionalType.equals("NULL")){
         child.addChild(additionalType, user);

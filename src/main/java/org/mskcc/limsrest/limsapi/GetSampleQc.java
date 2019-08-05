@@ -159,7 +159,7 @@ public class GetSampleQc extends LimsTask {
                                 ss.setRequestedReadNumber(0);
                             }
                             try {
-                                ss.setCoverageTarget((int)requirements[0].getIntegerVal("CoverageTarget", this.user));
+                                ss.setCoverageTarget(requirements[0].getIntegerVal("CoverageTarget", this.user));
                             } catch (NullPointerException npe){
                                 ss.setCoverageTarget(0);
                             }

@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.AddChildSample;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -13,7 +14,7 @@ import java.io.StringWriter;
 import java.util.concurrent.Future;
 
 
-@RestController
+@RestController @RequestMapping("/")
 public class AddChildAliquotToSample {
     private Log log = LogFactory.getLog(AddChildAliquotToSample.class);
     private final ConnectionQueue connQueue;
@@ -36,7 +37,7 @@ public class AddChildAliquotToSample {
         task.init(sample, status, additionalType, igoUser, childSample);
         Future<Object> result = connQueue.submitTask(task);
         try {
-            return "Record Id:" + (String) result.get();
+            return "Record Id:" + result.get();
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);

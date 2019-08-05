@@ -40,8 +40,7 @@ public class GenerateBankedSamplesFromDMPTest {
     @Before
     public void setUp() throws Exception {
         recordSaverSpy = new RecordSaverSpy();
-        generateBankedSamplesFromDMP = new GenerateBankedSamplesFromDMP(externalToBankedSampleConverter,
-                dmpSamplesRetriever, recordSaverSpy, limsDataRetriever);
+        generateBankedSamplesFromDMP = new GenerateBankedSamplesFromDMP();
     }
 
     @Test

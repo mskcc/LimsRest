@@ -24,12 +24,12 @@ import java.util.concurrent.Future;
 
 
 @RestController
+@RequestMapping("/")
 public class LimsRequest {
-
+    private static Log log = LogFactory.getLog(LimsRequest.class);
     private final ConnectionQueue connQueue; 
     private final SetRequest task;
-    private final GetRequest reader;    
-    private Log log = LogFactory.getLog(LimsRequest.class);
+    private final GetRequest reader;
    
     public LimsRequest( ConnectionQueue connQueue, SetRequest setter, GetRequest reader){
         this.connQueue = connQueue;
@@ -94,6 +94,6 @@ public class LimsRequest {
        } catch(Exception e){
             return new ResponseEntity(reqSummary, HttpStatus.BAD_REQUEST);
        }
-       return ResponseEntity.ok((List<RequestDetailed>)reqSummary);
+       return ResponseEntity.ok(reqSummary);
     }
 }

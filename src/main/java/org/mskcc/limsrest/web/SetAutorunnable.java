@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.ToggleAutorunnable;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,18 +18,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @RestController
+@RequestMapping("/")
 public class SetAutorunnable {
-
+    private final static Log log = LogFactory.getLog(SetAutorunnable.class);
     private final ConnectionQueue connQueue; 
     private final ToggleAutorunnable task;
-    private final Log log = LogFactory.getLog(SetAutorunnable.class);
 
     public SetAutorunnable( ConnectionQueue connQueue, ToggleAutorunnable toggle){
         this.connQueue = connQueue;
         this.task = toggle;
     }
 
-    @RequestMapping("/setAllAutorunnable")
+    @GetMapping("/setAllAutorunnable")
     public List<String> getContent() {
        task.init("ALL", "true", null, null);
        log.info("Setting all autorunnable");
@@ -45,7 +46,7 @@ public class SetAutorunnable {
        return values;
     }
 
-    @RequestMapping("/setAutorunnable")
+    @GetMapping("/setAutorunnable")
     public List<String> setAutorunnable(@RequestParam(value="request") String req, @RequestParam(value="status") String status, @RequestParam(value="comment", required=false) String comment, @RequestParam(value="igoUser", required=false) String igoUser){
      log.info("Setting autorunable for " + req + " to value " + status + " with comment " + comment);
      Pattern requestPattern = Pattern.compile("[0-9]{5,7}(_[A-Z]+)?");

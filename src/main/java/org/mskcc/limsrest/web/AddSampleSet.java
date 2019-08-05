@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.AddOrCreateSet;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,17 +13,17 @@ import java.util.concurrent.Future;
 
 
 @RestController
+@RequestMapping("/")
 public class AddSampleSet {
-    private Log log = LogFactory.getLog(AddSampleSet.class);
+    private final Log log = LogFactory.getLog(AddSampleSet.class);
     private final ConnectionQueue connQueue;
-    private final AddOrCreateSet task;
+    private final AddOrCreateSet task = new AddOrCreateSet();
 
-    public AddSampleSet(ConnectionQueue connQueue, AddOrCreateSet requestStatus) {
+    public AddSampleSet(ConnectionQueue connQueue) {
         this.connQueue = connQueue;
-        this.task = requestStatus;
     }
 
-    @RequestMapping("/addSampleSet")
+    @GetMapping("/addSampleSet")
     public String getContent(@RequestParam(value = "igoId", required = false) String[] igoId,
                              @RequestParam(value = "user") String user,
                              @RequestParam(value = "pair", required = false) String[] pair,

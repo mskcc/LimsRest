@@ -9,6 +9,7 @@ import org.mskcc.limsrest.staticstrings.Messages;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,6 +19,7 @@ import java.util.concurrent.Future;
 
 
 @RestController
+@RequestMapping("/")
 public class DeleteBankedSample {
     private final Log log = LogFactory.getLog(DeleteBankedSample.class);
     private final ConnectionQueue connQueue; 
@@ -46,8 +48,8 @@ public class DeleteBankedSample {
        try{
          log.info("Waiting for result");
          returnCode =  (String)result.get();
-         if(!returnCode.equals(Messages.SUCCESS)){;
-            throw new LimsException(returnCode);
+         if(!returnCode.equals(Messages.SUCCESS)){
+             throw new LimsException(returnCode);
         }
        } catch(Exception e){
           StringWriter sw = new StringWriter();
@@ -76,8 +78,8 @@ public class DeleteBankedSample {
        try{
          log.info("Waiting for result");
          returnCode =  (String)result.get();
-         if(!returnCode.equals(Messages.SUCCESS)){;
-            throw new LimsException(returnCode);
+         if(!returnCode.equals(Messages.SUCCESS)){
+             throw new LimsException(returnCode);
         }
        } catch(Exception e){
           StringWriter sw = new StringWriter();

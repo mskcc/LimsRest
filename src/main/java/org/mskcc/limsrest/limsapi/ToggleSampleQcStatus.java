@@ -146,7 +146,7 @@ public class ToggleSampleQcStatus extends LimsTask {
 
     protected static void setSeqAnalysisSampleQcStatus(DataRecord seqQc, QcStatus qcStatus, String status, User user)
             throws IoError, InvalidValue, NotFound, RemoteException {
-        if (qcStatus == qcStatus.IGO_COMPLETE) {
+        if (qcStatus == QcStatus.IGO_COMPLETE) {
             seqQc.setDataField("PassedQc", Boolean.TRUE, user);
             seqQc.setDataField("SeqQCStatus", QcStatus.PASSED.getText(), user);
             seqQc.setDataField("DateIgoComplete", System.currentTimeMillis(), user);

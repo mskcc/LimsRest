@@ -20,7 +20,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 
-@RestController @Deprecated // no longer used/moved to pipeline-kickoff?
+@RestController
+@RequestMapping("/") @Deprecated // no longer used/moved to pipeline-kickoff?
 public class GetPairingInfo {
 
     private final ConnectionQueue connQueue; 
@@ -65,7 +66,7 @@ public class GetPairingInfo {
         return typeToId;
        }
 
-    @RequestMapping("/getPairingInfo")
+    @GetMapping("/getPairingInfo")
         public List<HashMap<String, String>> getContent(@RequestParam(value="project", required=false) String requestId, @RequestParam(value="setName", required=false) String set,@RequestParam(value="user") String user) {
             List<HashMap<String, String>> typeToId = new LinkedList<>();
             if(!Whitelists.sampleMatches(set)){

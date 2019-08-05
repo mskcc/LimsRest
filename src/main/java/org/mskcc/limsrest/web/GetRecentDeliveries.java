@@ -18,8 +18,9 @@ import java.util.concurrent.Future;
  * Used by the QC site so they can view recently delivered projects in the QC meetings.
  */
 @RestController
+@RequestMapping("/")
 public class GetRecentDeliveries {
-    private final Log log = LogFactory.getLog(GetRecentDeliveries.class);
+    private final static Log log = LogFactory.getLog(GetRecentDeliveries.class);
     private final ConnectionQueue connQueue;
     private final GetDelivered task;
 

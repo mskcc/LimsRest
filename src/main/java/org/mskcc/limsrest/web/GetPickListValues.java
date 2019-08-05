@@ -17,8 +17,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 @RestController
+@RequestMapping("/")
 public class GetPickListValues {
-    private final Log log = LogFactory.getLog(GetPickListValues.class);
+    private static Log log = LogFactory.getLog(GetPickListValues.class);
     private final ConnectionQueue connQueue;
 
     private final GetPickList task = new GetPickList();

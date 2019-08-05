@@ -186,7 +186,7 @@ public class RenameSample extends LimsTask
                 d.setDataField("UserSampleID", newName, user);
           }
            
-        } catch(NullPointerException  npe){};
+        } catch(NullPointerException  npe){}
      }
 
      //need to fix any records that reference that aren't descendants that reference the sample id. We probably don't want to change pairing.
@@ -202,7 +202,7 @@ public class RenameSample extends LimsTask
   
   }
 
-  return "SUCCESS: Changed " + Integer.toString(changeCount) + " records."; 
+  return "SUCCESS: Changed " + changeCount + " records.";
  }
 
 }

@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.Arrays;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,11 +17,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 @RestController
+@RequestMapping("/")
 public class GetIntakeTerms {
-
+    private static Log log = LogFactory.getLog(GetIntakeTerms.class);
     private final ConnectionQueue connQueue; 
     private final GetIntakeFormDescription task;
-    private final Log log = LogFactory.getLog(GetIntakeTerms.class);
 
     public GetIntakeTerms( ConnectionQueue connQueue, GetIntakeFormDescription intake){
         this.connQueue = connQueue;

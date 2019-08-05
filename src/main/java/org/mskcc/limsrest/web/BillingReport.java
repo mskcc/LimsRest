@@ -16,7 +16,8 @@ import java.util.LinkedList;
 import java.util.concurrent.Future;
 
 
-@RestController @Deprecated // code started but not completed or used?
+@RestController
+@RequestMapping("/") @Deprecated // code started but not completed or used?
 public class BillingReport {
 
     private final ConnectionQueue connQueue;

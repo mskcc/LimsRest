@@ -21,9 +21,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
 
-//@RestController TODO
+@RestController
+@RequestMapping("/")
 public class GetCorrectedSampleCmoId {
-    private static final Log log = LogFactory.getLog(GetCorrectedSampleCmoId.class);
+    private static Log log = LogFactory.getLog(GetCorrectedSampleCmoId.class);
     private final static String DMP_SUFFIX = "Z";
     private final ConnectionQueue connQueue;
     private final GenerateSampleCmoIdTask task;

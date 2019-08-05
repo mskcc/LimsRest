@@ -15,8 +15,9 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 @RestController
+@RequestMapping("/")
 public class GetBarcodeList {
-    private final Log log = LogFactory.getLog(GetBarcodeList.class);
+    private static Log log = LogFactory.getLog(GetBarcodeList.class);
     private final ConnectionQueue connQueue;
     private final GetBarcodeInfo task;
 

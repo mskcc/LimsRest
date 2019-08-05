@@ -31,10 +31,7 @@ public class GetSamples extends LimsTask {
     public void init(final String[] projects, final String filter) {
         if (projects != null)
             this.projects = projects.clone();
-        this.filter = false;
-        if ("true".equals(filter)) {
-            this.filter = true;
-        }
+        this.filter = "true".equals(filter);
     }
 
     //@PreAuthorize("hasRole('READ')")
@@ -93,8 +90,8 @@ public class GetSamples extends LimsTask {
 
                     annotateSampleSummary(ss, sampleFields);
                     try {
-                        if (originalName2CorrectedName.containsKey((String) sampleFields.get("OtherSampleId"))) {
-                            ss.setCorrectedCmoId(originalName2CorrectedName.get((String) sampleFields.get("OtherSampleId")));
+                        if (originalName2CorrectedName.containsKey(sampleFields.get("OtherSampleId"))) {
+                            ss.setCorrectedCmoId(originalName2CorrectedName.get(sampleFields.get("OtherSampleId")));
                         } else {
                             ss.setCorrectedCmoId((String) sampleFields.get("OtherSampleId"));
                         }

@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.RenameSample;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,19 +15,19 @@ import java.util.concurrent.Future;
 
 
 @RestController
+@RequestMapping("/")
 public class SetSampleName {
-
+    private final static Log log = LogFactory.getLog(SetSampleName.class);
     private final ConnectionQueue connQueue; 
     private final RenameSample task;
-    private final Log log = LogFactory.getLog(SetSampleName.class);
    
     public SetSampleName( ConnectionQueue connQueue, RenameSample renamer){
         this.connQueue = connQueue;
         this.task = renamer;
     }
 
-//userId refers to the the Sample.UserId in the lims
-    @RequestMapping("/setSampleName")
+    //userId refers to the the Sample.UserId in the lims
+    @GetMapping("/setSampleName")
     public String getContent(@RequestParam(value="request") String request, @RequestParam(value="igoUser") String igoUser, 
                            @RequestParam(value="user") String user, 
                            @RequestParam(value="igoId", required=false) String igoId, @RequestParam(value="newUserId", required=false) String newUserId,
@@ -50,7 +51,7 @@ public class SetSampleName {
        Future<Object> result = connQueue.submitTask(task);
        String returnCode = "";
        try{
-         returnCode = "Sample Id:" + (String)result.get();
+         returnCode = "Sample Id:" + result.get();
        } catch(Exception e){
           StringWriter sw = new StringWriter();
           PrintWriter pw = new PrintWriter(sw);

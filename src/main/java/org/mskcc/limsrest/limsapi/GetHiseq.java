@@ -23,7 +23,7 @@ import java.util.Map;
  */
 @Service
 public class GetHiseq  extends LimsTask {
-   private Log log = LogFactory.getLog(GetHiseq.class);
+   private static Log log = LogFactory.getLog(GetHiseq.class);
   protected String run; 
   protected String[] projects;
 
@@ -139,7 +139,7 @@ public class GetHiseq  extends LimsTask {
              DataRecord[] barcode = current.getChildrenOfType("IndexBarcode", user);
              if(barcode.length > 0){
                 try{
-                  sampleId = (String)currentFields.get("OtherSampleId") + "_IGO_" +  currentFields.get("SampleId");
+                  sampleId = currentFields.get("OtherSampleId") + "_IGO_" +  currentFields.get("SampleId");
                   species = (String)currentFields.get("Species");
                   barcodeId = barcode[0].getStringVal("IndexId", user);
                   barcodeSeq = barcode[0].getStringVal("IndexTag", user);

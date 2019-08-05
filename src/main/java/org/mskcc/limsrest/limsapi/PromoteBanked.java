@@ -343,7 +343,7 @@ public class PromoteBanked extends LimsTask {
         }
         //add a sample to requestList.get(0) with a new sample
         //copy fields
-        String newIgoId = requestId + "_" + Integer.toString(maxExistentId + offset);
+        String newIgoId = requestId + "_" + (maxExistentId + offset);
         try {
             DataRecord promotedSampleRecord = req.addChild("Sample", user);
             String barcodeId = bankedSample.getBarcodeId();

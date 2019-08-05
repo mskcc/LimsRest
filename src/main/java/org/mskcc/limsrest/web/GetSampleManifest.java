@@ -7,6 +7,7 @@ import org.mskcc.limsrest.limsapi.GetSampleManifestTask;
 import org.mskcc.limsrest.limsapi.SampleManifest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -18,8 +19,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 @RestController
+@RequestMapping("/")
 public class GetSampleManifest {
-    private final Log log = LogFactory.getLog(GetSampleManifest.class);
+    private static Log log = LogFactory.getLog(GetSampleManifest.class);
     private final ConnectionQueue connQueue;
     private final GetSampleManifestTask task = new GetSampleManifestTask();
 

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.LinkedList;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,11 +17,12 @@ import org.apache.commons.logging.LogFactory;
 
 
 @RestController
+@RequestMapping("/")
 public class GetProject {
-
+    private static Log log = LogFactory.getLog(GetProject.class);
     private final ConnectionQueue connQueue; 
     private final GetSamples task;
-    private Log log = LogFactory.getLog(GetProject.class);
+
    
     public GetProject( ConnectionQueue connQueue, GetSamples getSamples){
         this.connQueue = connQueue;

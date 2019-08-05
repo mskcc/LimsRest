@@ -188,8 +188,8 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
 
             runAndCatchNpe(() -> requestDetailed.setDataDeliveryType((String) requestFields.get("DataDeliveryType")));
             runAndCatchNpe(() -> requestDetailed.setCmoContactName((String) requestFields.get("ContactName")));
-            runAndCatchNpe(() -> requestDetailed.setCmoPiName((String) requestFields.get("PIFirstName") + " " +
-                    (String) requestFields.get("PILastName")));
+            runAndCatchNpe(() -> requestDetailed.setCmoPiName(requestFields.get("PIFirstName") + " " +
+                    requestFields.get("PILastName")));
             runAndCatchNpe(() -> requestDetailed.setCmoPiEmail((String) requestFields.get("PIemail")));
             runAndCatchNpe(() -> requestDetailed.setCmoProjectId((String) requestFields.get("CMOProjectID")));
             runAndCatchNpe(() -> requestDetailed.setRequestId((String) requestFields.get("RequestId")));

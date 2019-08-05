@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.ToggleSampleQcStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,8 +13,9 @@ import java.util.concurrent.Future;
 
 
 @RestController
+@RequestMapping("/")
 public class SetQcStatus {
-    private final Log log = LogFactory.getLog(SetQcStatus.class);
+    private final static Log log = LogFactory.getLog(SetQcStatus.class);
     private final ConnectionQueue connQueue; 
     private final ToggleSampleQcStatus task;
    
@@ -22,7 +24,7 @@ public class SetQcStatus {
         this.task = toggle;
     }
 
-    @RequestMapping("/setQcStatus")
+    @GetMapping("/setQcStatus")
     public String getContent(@RequestParam(value = "record", required = false) String recordId,
                              @RequestParam(value = "status") String status,
                              @RequestParam(value = "project", required = false) String request,

@@ -175,7 +175,7 @@ public class GetDelivered extends LimsTask {
                         ss.addRequest(sampleRequestId);
                     } catch (NullPointerException npe) {
                     }
-                    log.info((String) sampleFields.get("SampleId"));
+                    log.info(sampleFields.get("SampleId"));
                     ss.addBaseId((String) sampleFields.get("SampleId"));
                     ss.addCmoId((String) sampleFields.get("OtherSampleId"));
                     try {

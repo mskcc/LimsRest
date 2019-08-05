@@ -6,14 +6,16 @@ import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.DeliveryEmail;
 import org.mskcc.limsrest.limsapi.GetDeliveryEmailDetails;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.concurrent.Future;
 
 @RestController
+@RequestMapping("/")
 public class GetDeliveryEmail {
-    private Log log = LogFactory.getLog(GetDeliveryEmail.class);
+    private static Log log = LogFactory.getLog(GetDeliveryEmail.class);
     private final ConnectionQueue connQueue;
     private final GetDeliveryEmailDetails task;
 

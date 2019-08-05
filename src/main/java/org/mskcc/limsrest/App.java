@@ -77,7 +77,7 @@ public class App extends SpringBootServletInitializer {
                 .apiInfo(apiInfo())
                 .select()
                 .apis(RequestHandlerSelectors.withClassAnnotation(RestController.class))
-                .paths(PathSelectors.any())
+                .paths(PathSelectors.ant("/api/**"))
                 .build();
     }
 

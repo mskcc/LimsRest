@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.GetProcessNames;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -13,11 +14,11 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 @RestController
+@RequestMapping("/")
 public class GetProcesses {
-
+    private static Log log = LogFactory.getLog(GetProcesses.class);
     private final ConnectionQueue connQueue;
     private final GetProcessNames task;
-    private Log log = LogFactory.getLog(GetProcesses.class);
 
     public GetProcesses(ConnectionQueue connQueue, GetProcessNames processNamer) {
         this.connQueue = connQueue;

@@ -22,7 +22,7 @@ import java.util.List;
  * 
  */
 @Service
-public class AddPoolToLane  extends LimsTask 
+public class AddPoolToLane  extends LimsTask
 {
   String flowcell; 
   String sampleId;
@@ -106,8 +106,8 @@ public class AddPoolToLane  extends LimsTask
           StringWriter sw = new StringWriter();
           PrintWriter pw = new PrintWriter(sw);
           e.printStackTrace(pw);
-           return "ERROR IN ADDING POOL TO LANE: " + e.getMessage() + "TRACE: " + sw.toString();   
-  
+           return "ERROR IN ADDING POOL TO LANE: " + e.getMessage() + "TRACE: " + sw.toString();
+
   }
 
   return "Pool "+ sampleId + " in lane " + laneId; 

@@ -17,11 +17,11 @@ import java.util.concurrent.Future;
 
 
 @RestController
+@RequestMapping("/")
 public class PairingInfo {
-
+    private static Log log = LogFactory.getLog(PairingInfo.class);
     private final ConnectionQueue connQueue; 
     private final SetPairing task;
-    private final Log log = LogFactory.getLog(PairingInfo.class);
    
     public PairingInfo( ConnectionQueue connQueue, SetPairing setter){
         this.connQueue = connQueue;

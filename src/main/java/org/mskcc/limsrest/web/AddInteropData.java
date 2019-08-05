@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.concurrent.Future;
 
 @RestController
+@RequestMapping("/")
 public class AddInteropData {
 
     private static final Log log = LogFactory.getLog(AddInteropData.class);
@@ -30,7 +31,7 @@ public class AddInteropData {
     public AddInteropData(ConnectionQueue connectionQueue, SetOrCreateInteropData setOrCreateInteropData) {
         this.connectionQueue = connectionQueue;
         this.setOrCreateInteropData = setOrCreateInteropData;
-        this.objectMapper = new ObjectMapper();
+        objectMapper = new ObjectMapper();
     }
 
     @RequestMapping(value = "/addInteropData", method = RequestMethod.POST)

@@ -15,10 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.concurrent.Future;
 
 @RestController
+@RequestMapping("/")
 public class SetBankedSample {
+    private static Log log = LogFactory.getLog(SetBankedSample.class);
     private final ConnectionQueue connQueue;
     private final SetOrCreateBanked task;
-    private Log log = LogFactory.getLog(SetBankedSample.class);
+
 
     public SetBankedSample(ConnectionQueue connQueue, SetOrCreateBanked banked) {
         this.connQueue = connQueue;

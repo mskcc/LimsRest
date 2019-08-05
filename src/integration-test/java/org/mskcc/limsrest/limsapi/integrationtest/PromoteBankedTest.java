@@ -876,15 +876,13 @@ public class PromoteBankedTest {
         PatientSamplesRetriever patientSamplesRetriever = new PatientSamplesWithCmoInfoRetriever
                 (sampleToCorrectedCmoIdConv, sampleRecordToSampleConverter);
 
-        return new SampleTypeCorrectedCmoSampleIdGenerator
-                (cmoSampleIdRetrieverFactory, patientSamplesRetriever, slackNotificator);
+        return new SampleTypeCorrectedCmoSampleIdGenerator();
     }
 
     private PromoteBanked getPromoteBanked() throws Exception {
         BankedSampleToCorrectedCmoSampleIdConverter bankedSampleToCorrectedCmoSampleIdConverter = new
                 BankedSampleToCorrectedCmoSampleIdConverter();
-        return new PromoteBanked(bankedSampleToCorrectedCmoSampleIdConverter,
-                getCorrectedCmoSampleIdGenerator(), bankedSampleToSampleConverter, humanRecipes);
+        return new PromoteBanked();
     }
 
     private String getResourceFile(String connectionFile) throws Exception {

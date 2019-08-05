@@ -16,9 +16,9 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 @RestController
+@RequestMapping("/")
 public class GetProjectQc {
-
-    private Log log = LogFactory.getLog(GetProjectQc.class);
+    private static Log log = LogFactory.getLog(GetProjectQc.class);
     private final ConnectionQueue connQueue;
     private final GetSampleQc task;
 

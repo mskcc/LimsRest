@@ -25,6 +25,7 @@ public class GenerateBankedSamplesFromDMP extends LimsTask {
     private static final String TRACKING_ID_REGEX = "[a-zA-Z0-9_-]+";
     private final ExternalToBankedSampleConverter externalToBankedSampleConverter =
             new DMPSampleToCMOBankedSampleConverter(new OncotreeTumorTypeRetriever());
+    //TODO set string normally
     private final DMPSamplesRetriever dmpSamplesRetriever = new WebServiceDMPSamplesRetriever("http://plvpathhydra1.mskcc.org:8001/");
     private final RecordSaver recordSaver = new VeloxRecordSaver();
     private final LimsDataRetriever limsDataRetriever = new VeloxLimsDataRetriever();
@@ -131,5 +132,4 @@ public class GenerateBankedSamplesFromDMP extends LimsTask {
     private BankedSample convertToBankedSample(DMPSample dmpSample, long transactionId) {
         return externalToBankedSampleConverter.convert(dmpSample, transactionId);
     }
-
 }

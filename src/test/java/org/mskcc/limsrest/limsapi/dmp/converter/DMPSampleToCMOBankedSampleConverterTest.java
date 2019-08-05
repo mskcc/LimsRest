@@ -11,7 +11,9 @@ import org.mskcc.limsrest.limsapi.dmp.TumorTypeRetriever;
 import org.mskcc.util.Constants;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNull;
@@ -283,14 +285,13 @@ public class DMPSampleToCMOBankedSampleConverterTest {
         assertThat(bankedSample.getSampleOrigin(), is(SampleOrigin.WHOLE_BLOOD.getValue()));
     }
 
-    private List<TumorType> getTumorTypes() {
-        List<TumorType> tumorTypes = new ArrayList<>();
+    private Set<TumorType> getTumorTypes() {
+        Set<TumorType> tumorTypes = new HashSet<>();
 
         TumorType tumorType = new TumorType();
         tumorType.setCode(TUMOR_CODE);
-        tumorType.setTissue(TISSUE_TYPE);
-        tumorType.setName(TUMOR_TYPE);
-        //tumorType.setTumorType(TUMOR_TYPE);
+        tumorType.setTissue_type(TISSUE_TYPE);
+        tumorType.setTumor_type(TUMOR_TYPE);
         tumorTypes.add(tumorType);
 
         return tumorTypes;

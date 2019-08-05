@@ -13,7 +13,7 @@ import java.util.List;
 
 @Service
 public class GetDeliveryEmailDetails extends LimsTask {
-    private Log log = LogFactory.getLog(GetDeliveryEmailDetails.class);
+    private static Log log = LogFactory.getLog(GetDeliveryEmailDetails.class);
     protected String requestID;
 
     public void init(String requestID) {

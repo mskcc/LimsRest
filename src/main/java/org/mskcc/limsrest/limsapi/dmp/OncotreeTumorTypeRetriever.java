@@ -1,12 +1,12 @@
 package org.mskcc.limsrest.limsapi.dmp;
 
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.List;
+import java.util.Set;
 
+/**
+ * Reads the list of Onco Tree tumor types.
+ */
 public class OncotreeTumorTypeRetriever implements TumorTypeRetriever {
     // TODO read from application.properties
     private final String tumorTypeServiceUrl = "http://draco.mskcc.org:9666/tumor_types";
@@ -16,11 +16,12 @@ public class OncotreeTumorTypeRetriever implements TumorTypeRetriever {
     }
 
     @Override
-    public List<TumorType> retrieve() {
-        ResponseEntity<List<TumorType>> responseEntity = restTemplate.exchange(tumorTypeServiceUrl, HttpMethod.GET,
-                null, new ParameterizedTypeReference<List<TumorType>>() {
-                });
+    public Set<TumorType> retrieve() {
+        OncoTreeTumorTypeSet response = restTemplate.getForObject(tumorTypeServiceUrl, OncoTreeTumorTypeSet.class);
+        return response.results;
+    }
 
-        return responseEntity.getBody();
+    static class OncoTreeTumorTypeSet {
+        public Set<TumorType> results;
     }
 }

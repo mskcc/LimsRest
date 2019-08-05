@@ -118,7 +118,7 @@ public class SampleSummary {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getConcentration() {
-        return Double.toString(concentration) + " " + concentrationUnits;
+        return concentration + " " + concentrationUnits;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

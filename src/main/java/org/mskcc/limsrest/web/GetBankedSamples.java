@@ -10,13 +10,13 @@ import org.mskcc.limsrest.staticstrings.Messages;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Future;
-
 
 /**
  One endpoint called by Rex.mskcc.org, all endpoints invoked by REX are:
@@ -33,11 +33,12 @@ import java.util.concurrent.Future;
   addSampleSet
  */
 @RestController
+@RequestMapping("/")
 public class GetBankedSamples {
-
+    private static Log log = LogFactory.getLog(GetBankedSamples.class);
     private final ConnectionQueue connQueue;
     private final GetBanked task;
-    private Log log = LogFactory.getLog(GetBankedSamples.class);
+
 
     public GetBankedSamples(ConnectionQueue connQueue, GetBanked project) {
         this.connQueue = connQueue;
@@ -103,6 +104,6 @@ public class GetBankedSamples {
             return new ResponseEntity(samples, HttpStatus.BAD_REQUEST);
 
         }
-        return ResponseEntity.ok((List<SampleSummary>) samples);
+        return ResponseEntity.ok(samples);
     }
 }

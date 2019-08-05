@@ -5,12 +5,14 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.FindBarcodeSequence;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.concurrent.Future;
 
 @RestController
+@RequestMapping("/")
 public class GetBarcodeSequence {
 
     private final ConnectionQueue connQueue;

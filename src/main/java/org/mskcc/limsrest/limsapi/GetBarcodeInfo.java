@@ -19,7 +19,7 @@ import java.util.List;
  */
 @Service
 public class GetBarcodeInfo extends LimsTask {
-    private Log log = LogFactory.getLog(GetBarcodeInfo.class);
+    private static Log log = LogFactory.getLog(GetBarcodeInfo.class);
 
     //@PreAuthorize("hasRole('READ')")
     @Override

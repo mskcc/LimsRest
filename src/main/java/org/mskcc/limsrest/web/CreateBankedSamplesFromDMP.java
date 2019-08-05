@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.util.concurrent.Future;
 
 @RestController
+@RequestMapping("/")
 public class CreateBankedSamplesFromDMP {
     private static final Log log = LogFactory.getLog(CreateBankedSamplesFromDMP.class);
 

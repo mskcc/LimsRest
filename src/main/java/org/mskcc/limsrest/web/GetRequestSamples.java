@@ -3,9 +3,10 @@ package org.mskcc.limsrest.web;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
-import org.mskcc.limsrest.limsapi.GetSamplesInRequestTask;
+import org.mskcc.limsrest.limsapi.GetRequestSamplesTask;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -13,19 +14,20 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.concurrent.Future;
 
 @RestController
-public class GetSamplesInRequest {
-    private final Log log = LogFactory.getLog(GetSamplesInRequest.class);
+@RequestMapping("/")
+public class GetRequestSamples {
+    private final static Log log = LogFactory.getLog(GetRequestSamples.class);
 
     private final ConnectionQueue connQueue;
-    private final GetSamplesInRequestTask task = new GetSamplesInRequestTask();
+    private final GetRequestSamplesTask task = new GetRequestSamplesTask();
 
-    public GetSamplesInRequest(ConnectionQueue connQueue) {
+    public GetRequestSamples(ConnectionQueue connQueue) {
         this.connQueue = connQueue;
     }
 
-    @GetMapping("/api/getSamplesInRequest")
-    public GetSamplesInRequestTask.RequestSampleList getContent(@RequestParam(value = "request") String requestId, @RequestParam(value="tumorOnly", defaultValue="False") Boolean tumorOnly) {
-        log.info("Starting /getSamplesInRequest for requestId:" + requestId);
+    @GetMapping("/api/getRequestSamples")
+    public GetRequestSamplesTask.RequestSampleList getContent(@RequestParam(value = "request") String requestId, @RequestParam(value="tumorOnly", defaultValue="False") Boolean tumorOnly) {
+        log.info("Starting /getRequestSamples for requestId:" + requestId);
 
         if (!Whitelists.requestMatches(requestId)) {
             log.error("FAILURE: requestId is not using a valid format.");
@@ -34,9 +36,9 @@ public class GetSamplesInRequest {
 
         task.init(requestId, tumorOnly);
         Future<Object> result = connQueue.submitTask(task);
-        GetSamplesInRequestTask.RequestSampleList sl;
+        GetRequestSamplesTask.RequestSampleList sl;
         try {
-            sl = (GetSamplesInRequestTask.RequestSampleList) result.get();
+            sl = (GetRequestSamplesTask.RequestSampleList) result.get();
         } catch (Exception e) {
             log.error(e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());

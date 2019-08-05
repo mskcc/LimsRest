@@ -73,7 +73,7 @@ public class GetPassingSamples extends LimsTask {
                     originalName2CorrectedName.put(cmoInfo.getStringVal("OtherSampleId", this.user), cmoInfo.getStringVal("CorrectedCMOID", this.user));
                 }
                 for (DataRecord qc : qcs) {
-                    DataRecord parentSample = (DataRecord) qc.getParentsOfType("Sample", this.user).get(0);
+                    DataRecord parentSample = qc.getParentsOfType("Sample", this.user).get(0);
                     Map<String, Object> parentFields = parentSample.getFields(this.user);
                     String parentId = (String) parentFields.get("OtherSampleId");
                     if (!id2samp.containsKey(parentId)) {
@@ -147,8 +147,8 @@ public class GetPassingSamples extends LimsTask {
                         } catch (NullPointerException npe) {
                         }
                         try {
-                            if (originalName2CorrectedName.containsKey((String) parentFields.get("OtherSampleId")) && !originalName2CorrectedName.get((String) parentFields.get("OtherSampleId")).equals((String) parentFields.get("OtherSampleId"))) {
-                                ss.setCorrectedCmoId(originalName2CorrectedName.get((String) parentFields.get("OtherSampleId")));
+                            if (originalName2CorrectedName.containsKey(parentFields.get("OtherSampleId")) && !originalName2CorrectedName.get(parentFields.get("OtherSampleId")).equals(parentFields.get("OtherSampleId"))) {
+                                ss.setCorrectedCmoId(originalName2CorrectedName.get(parentFields.get("OtherSampleId")));
                             } else {
                                 ss.setCorrectedCmoId((String) parentFields.get("OtherSampleId"));
                             }

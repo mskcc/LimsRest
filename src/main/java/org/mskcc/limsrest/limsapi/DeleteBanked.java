@@ -1,6 +1,5 @@
 package org.mskcc.limsrest.limsapi;
 
-
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sapioutils.shared.managers.DataRecordUtilManager;
@@ -15,7 +14,6 @@ import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.List;
 
-
 /**
  * A queued task that takes a user sample id and service id, checks to see if that banked sample exists, if it does, deletes it. NOTE: banked samples are not normally
  * deleted. This service is explicitly for e2e testing to avoid polluting the database with testing cruff
@@ -24,11 +22,10 @@ import java.util.List;
  * 
  */
 @Service
-public class DeleteBanked  extends LimsTask {
+public class DeleteBanked extends LimsTask {
+    private final static Log log = LogFactory.getLog(DeleteBanked.class);
    String serviceId;
    String userId;
-   
-   private Log log = LogFactory.getLog(DeleteBanked.class);
 
  public void init(String userId, String serviceId){
    this.userId = userId;
@@ -37,7 +34,7 @@ public class DeleteBanked  extends LimsTask {
  public void init(String serviceId){
    this.serviceId = serviceId;
  }
- //execute the velox call
+
 //@PreAuthorize("hasRole('ADMIN')")
 @Override
  public Object execute(VeloxConnection conn){

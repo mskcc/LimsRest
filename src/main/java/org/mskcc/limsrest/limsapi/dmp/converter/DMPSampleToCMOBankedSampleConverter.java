@@ -34,7 +34,7 @@ public class DMPSampleToCMOBankedSampleConverter implements ExternalToBankedSamp
         Map<String, String> tumorTypeToCode = new HashMap<>();
         try {
             for (TumorType tumorType : tumorTypeRetriever.retrieve()) {
-                tumorTypeToCode.put(String.format("%s:%s", tumorType.getTissue(), tumorType.getName()),
+                tumorTypeToCode.put(String.format("%s:%s", tumorType.getTissue_type(), tumorType.getTumor_type()),
                         tumorType.getCode());
             }
 

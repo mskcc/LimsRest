@@ -5,20 +5,21 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.AddSampleToPool;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.concurrent.Future;
 
 @RestController
+@RequestMapping("/")
 public class SwapPools {
-    private final Log log = LogFactory.getLog(SwapPools.class);
+    private final static Log log = LogFactory.getLog(SwapPools.class);
     private final ConnectionQueue connQueue;
-    private final AddSampleToPool task;
+    private final AddSampleToPool task = new AddSampleToPool();
 
-    public SwapPools(ConnectionQueue connQueue, AddSampleToPool adder) {
+    public SwapPools(ConnectionQueue connQueue) {
         this.connQueue = connQueue;
-        this.task = adder;
     }
 
     @GetMapping("/swapPools")
@@ -28,7 +29,7 @@ public class SwapPools {
         task.init(pool, sample, removePool, igoUser);
         Future<Object> result = connQueue.submitTask(task);
         try {
-            return "Record Id:" + (String) result.get();
+            return "Record Id:" + result.get();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return "ERROR IN SWAPPING POOL: " + e.getMessage();

@@ -13,8 +13,8 @@ import java.util.List;
 /**
  *
  */
-public class GetSamplesInRequestTask extends LimsTask {
-    private Log log = LogFactory.getLog(GetSamplesInRequestTask.class);
+public class GetRequestSamplesTask extends LimsTask {
+    private static Log log = LogFactory.getLog(GetRequestSamplesTask.class);
 
     protected String requestId;
     protected boolean tumorOnly;
@@ -81,7 +81,6 @@ public class GetSamplesInRequestTask extends LimsTask {
         }
         return samplesIGOComplete;
     }
-
 
 
     public static class RequestSampleList {

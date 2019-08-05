@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.connection.ConnectionQueue;
 import org.mskcc.limsrest.limsapi.SetSampleStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,6 +14,7 @@ import java.io.StringWriter;
 import java.util.concurrent.Future;
 
 @RestController
+@RequestMapping("/")
 @Deprecated // seems never used
 public class FixSampleStatus {
 
@@ -25,7 +27,7 @@ public class FixSampleStatus {
         this.task = setter;
     }
 
-    @RequestMapping("/fixSampleStatus")
+    @GetMapping("/fixSampleStatus")
     public String getContent(@RequestParam(value = "sample") String sample,
                              @RequestParam(value = "status") String status, @RequestParam(value = "igoUser") String igoUser) {
         if (!Whitelists.sampleMatches(sample))
@@ -34,7 +36,7 @@ public class FixSampleStatus {
         task.init(sample, status, igoUser);
         Future<Object> result = connQueue.submitTask(task);
         try {
-            return "Status:" + (String) result.get();
+            return "Status:" + result.get();
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);

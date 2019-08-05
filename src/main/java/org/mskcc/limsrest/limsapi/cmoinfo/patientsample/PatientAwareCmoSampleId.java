@@ -72,7 +72,7 @@ public class PatientAwareCmoSampleId implements CmoSampleId {
     public int hashCode() {
         int result = patientId != null ? patientId.hashCode() : 0;
         result = 31 * result + (sampleTypeAbbr != null ? sampleTypeAbbr.hashCode() : 0);
-        result = 31 * result + (int) (sampleCount ^ (sampleCount >>> 32));
+        result = 31 * result + (sampleCount ^ (sampleCount >>> 32));
         result = 31 * result + (nucleicAcid != null ? nucleicAcid.hashCode() : 0);
         return result;
     }

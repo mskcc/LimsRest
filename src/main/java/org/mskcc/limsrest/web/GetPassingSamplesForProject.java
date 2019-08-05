@@ -17,6 +17,7 @@ import org.apache.commons.logging.LogFactory;
 Called by the BIC Validator?
  */
 @RestController
+@RequestMapping("/")
 public class GetPassingSamplesForProject{
 
     private final ConnectionQueue connQueue; 

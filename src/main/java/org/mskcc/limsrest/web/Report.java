@@ -7,6 +7,7 @@ import org.mskcc.limsrest.limsapi.GetHiseq;
 import org.mskcc.limsrest.limsapi.GetReadyForIllumina;
 import org.mskcc.limsrest.limsapi.RunSummary;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,11 +17,12 @@ import java.util.LinkedList;
 import java.util.concurrent.Future;
 
 @RestController
+@RequestMapping("/")
 public class Report {
+    private final static Log log = LogFactory.getLog(Report.class);
     private final ConnectionQueue connQueue; 
     private final GetHiseq task;
     private final GetReadyForIllumina illuminaTask;
-    private final Log log = LogFactory.getLog(Report.class);
    
     public Report( ConnectionQueue connQueue, GetHiseq getHiseq, GetReadyForIllumina illuminaTask){
         this.connQueue = connQueue;
