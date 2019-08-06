@@ -446,7 +446,7 @@ public class PromoteBanked extends LimsTask {
         }
     }
 
-    private void validateBankedSample(BankedSample bankedSample) {
+    private void checkSampleTypeAndPatientId(BankedSample bankedSample) {
         CommonUtils.requireNonNullNorEmpty(bankedSample.getCMOPatientId(), String.format("Cmo Patient id is empty for" +
                 " banked " +
                 "sample: %s", bankedSample.getId()));
@@ -504,7 +504,7 @@ public class PromoteBanked extends LimsTask {
 
     String getCorrectedCmoSampleId(BankedSample bankedSample, String requestId) {
         try {
-            validateBankedSample(bankedSample);
+            checkSampleTypeAndPatientId(bankedSample);
 
             if (!shouldGenerateCmoId(bankedSample)) {
                 log.info(String.format("Non-Human sample: %s with species: %s won't have cmo sample id generated.",
@@ -538,8 +538,7 @@ public class PromoteBanked extends LimsTask {
         return !StringUtils.isEmpty(bankedSample.getSpecies()) && humanSamplePredicate.test(bankedSample);
     }
 
-    private CorrectedCmoSampleView createFrom(BankedSample bankedSample) throws
-            LimsException {
+    private CorrectedCmoSampleView createFrom(BankedSample bankedSample) throws LimsException {
         return bankedSampleToCorrectedCmoSampleIdConverter.convert(bankedSample);
     }
 

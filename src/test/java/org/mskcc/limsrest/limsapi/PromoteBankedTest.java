@@ -163,9 +163,6 @@ public class PromoteBankedTest {
     public void whenSpeciesIsHumanOrRecipeIsTreatedAsHuman_shouldGenerateCmoSampleId() throws Exception {
         String mockCorrectedId = "C-AAAAA1-V001-d";
 
-        Mockito.when(correctedCmoSampleIdGenerator.generate(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any
-                ())).thenReturn(mockCorrectedId);
-
         assertCmoSampleIdGenerated("Mouse", IMPACT_341.getValue(), mockCorrectedId);
         assertCmoSampleIdGenerated("Mouse", HEME_PACT_V_3.getValue(), mockCorrectedId);
         assertCmoSampleIdGenerated("Human", HEME_PACT_V_3.getValue(), mockCorrectedId);

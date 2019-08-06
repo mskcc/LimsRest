@@ -24,8 +24,7 @@ public class BankedSampleToCorrectedCmoSampleIdConverter implements CorrectedCmo
             correctedCmoSampleView.setPatientId(bankedSample.getCMOPatientId());
             correctedCmoSampleView.setRequestId(bankedSample.getRequestId());
 
-            Optional<NucleicAcid> nucleicAcid = Utils.getOptionalNucleicAcid(bankedSample.getNAtoExtract(),
-                    bankedSample.getId());
+            Optional<NucleicAcid> nucleicAcid = Utils.getOptionalNucleicAcid(bankedSample.getNAtoExtract(), bankedSample.getId());
             nucleicAcid.ifPresent(correctedCmoSampleView::setNucleidAcid);
 
             correctedCmoSampleView.setSampleType(getSampleType(bankedSample));
