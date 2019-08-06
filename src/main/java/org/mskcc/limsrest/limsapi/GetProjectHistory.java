@@ -6,7 +6,7 @@ import com.velox.api.datarecord.NotFound;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-//import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,7 +31,7 @@ public class GetProjectHistory  extends LimsTask
         this.projects = projects.clone();
   }
 
-    //@PreAuthorize("hasRole('READ')")
+    @PreAuthorize("hasRole('READ')")
     @Override
     public Object execute(VeloxConnection conn) {
         TreeSet<HistoricalEvent> known = new TreeSet<>();

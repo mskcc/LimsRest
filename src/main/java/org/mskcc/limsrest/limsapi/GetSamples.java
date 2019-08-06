@@ -5,7 +5,7 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-//import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.io.PrintWriter;
@@ -34,7 +34,7 @@ public class GetSamples extends LimsTask {
         this.filter = "true".equals(filter);
     }
 
-    //@PreAuthorize("hasRole('READ')")
+    @PreAuthorize("hasRole('READ')")
     @Override
     public Object execute(VeloxConnection conn) {
         List<RequestSummary> rss = new LinkedList<>();

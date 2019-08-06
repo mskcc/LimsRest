@@ -11,7 +11,7 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.limsapi.assignedprocess.QcStatus;
 import org.mskcc.limsrest.limsapi.assignedprocess.QcStatusAwareProcessAssigner;
 
-//import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.rmi.RemoteException;
@@ -55,7 +55,7 @@ public class ToggleSampleQcStatus extends LimsTask {
         }
     }
 
-    //@PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER')")
     @Override
     public Object execute(VeloxConnection conn) {
         // designed to update either SeqAnalysisSampleQC or PostSeqAnalysisQC LIMS status tables

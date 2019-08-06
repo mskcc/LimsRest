@@ -12,7 +12,7 @@ import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverter;
 import org.mskcc.limsrest.limsapi.cmoinfo.converter.SampleToCorrectedCmoIdConverter;
 import org.mskcc.limsrest.limsapi.converter.SampleRecordToSampleConverter;
 import org.mskcc.util.VeloxConstants;
-//import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,7 +34,7 @@ public class GenerateSampleCmoIdTask extends LimsTask {
         this.sampleIgoId = sampleIgoId;
     }
 
-    //@PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Override
     public String execute(VeloxConnection conn) {
         if (this.correctedCmoSampleView == null)

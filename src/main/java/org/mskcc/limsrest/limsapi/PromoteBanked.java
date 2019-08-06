@@ -24,7 +24,7 @@ import org.mskcc.util.CommonUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-//import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 
@@ -117,7 +117,7 @@ public class PromoteBanked extends LimsTask {
         }
     }
 
-    //@PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Override
     public ResponseEntity<String> execute(VeloxConnection conn) {
         if (dryrun) {

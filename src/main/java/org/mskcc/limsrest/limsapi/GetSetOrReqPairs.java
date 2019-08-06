@@ -10,7 +10,7 @@ import java.util.ListIterator;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-//import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import org.apache.commons.logging.Log;
@@ -39,7 +39,7 @@ public class GetSetOrReqPairs extends LimsTask
     this.isMappingQuery = false;
   }
 
-  //@PreAuthorize("hasRole('READ')")
+  @PreAuthorize("hasRole('READ')")
   public Object execute(VeloxConnection conn)
   {
     LinkedList<HashMap<String, String>> listMappings = new LinkedList<>();

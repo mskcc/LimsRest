@@ -7,7 +7,7 @@ import com.velox.api.datarecord.NotFound;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-//import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.rmi.RemoteException;
@@ -27,7 +27,7 @@ public class GetReadyForIllumina extends LimsTask {
         request2OutstandingSamples  = new HashMap<>();
     }
 
-    //@PreAuthorize("hasRole('READ')")
+    @PreAuthorize("hasRole('READ')")
     @Override
     public Object execute(VeloxConnection conn) {
         List<RunSummary> results = new LinkedList<>();

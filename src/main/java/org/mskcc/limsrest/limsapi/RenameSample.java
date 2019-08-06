@@ -6,7 +6,7 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-//import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.io.PrintWriter;
@@ -43,7 +43,7 @@ public class RenameSample extends LimsTask
      this.changeCount = 0;
   }
  //execute the velox call
-//@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN')")
 @Override
  public Object execute(VeloxConnection conn){
 

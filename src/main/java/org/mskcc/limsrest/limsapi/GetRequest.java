@@ -4,7 +4,7 @@ package org.mskcc.limsrest.limsapi;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.mskcc.limsrest.staticstrings.Messages;
-//import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedList;
@@ -27,7 +27,7 @@ public class GetRequest extends LimsTask {
         this.possibleRequestFields = requestFields;
     }
 
-    //@PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Override
     public Object execute(VeloxConnection conn) {
         LinkedList<RequestDetailed> rds = new LinkedList<>();

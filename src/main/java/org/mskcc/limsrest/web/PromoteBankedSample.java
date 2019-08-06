@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-//import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -32,7 +32,7 @@ public class PromoteBankedSample {
         this.task = banked;
     }
 
-    //@PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/promoteBankedSample")
     public ResponseEntity<String> getContent(@RequestParam(value = "bankedId") String[] bankedId,
                                              @RequestParam(value = "user") String user,

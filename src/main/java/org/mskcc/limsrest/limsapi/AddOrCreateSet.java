@@ -8,7 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.util.VeloxConstants;
-//import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -58,7 +58,7 @@ public class AddOrCreateSet extends LimsTask {
             this.categories = categories.clone();
     }
 
-    //@PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Override
     public Object execute(VeloxConnection conn) {
         if (requestIds == null && igoIds == null && pairs == null) {

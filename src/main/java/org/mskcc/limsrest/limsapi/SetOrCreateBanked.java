@@ -6,7 +6,7 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.mskcc.domain.sample.TumorNormalType;
 import org.mskcc.limsrest.staticstrings.Messages;
-//import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -156,7 +156,7 @@ public class SetOrCreateBanked extends LimsTask {
         this.transactionId = transactionId;
     }
 
-    //@PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Override
     public Object execute(VeloxConnection conn) {
         String recordId;

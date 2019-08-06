@@ -2,7 +2,7 @@ package org.mskcc.limsrest.limsapi;
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
-//import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.io.PrintWriter;
@@ -26,7 +26,7 @@ public class SetSampleStatus extends LimsTask {
         this.igoUser = igoUser;
     }
 
-    //@PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Override
     public Object execute(VeloxConnection conn) {
         String finalStatus = status;

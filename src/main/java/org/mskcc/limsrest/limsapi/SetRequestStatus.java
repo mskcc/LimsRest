@@ -5,7 +5,7 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-//import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.io.PrintWriter;
@@ -27,7 +27,7 @@ import java.util.Map;
 public class SetRequestStatus extends LimsTask {
     private Log log = LogFactory.getLog(SetRequestStatus.class);
 
-    //@PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Override
     public Object execute(VeloxConnection conn) {
         LinkedList<String> results = new LinkedList<String>();
