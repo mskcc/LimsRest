@@ -43,9 +43,13 @@ import java.util.regex.Pattern;
 public class PromoteBanked extends LimsTask {
     private static final Log log = LogFactory.getLog(PromoteBanked.class);
 
+    private static final List<String> HUMAN_RECIPES =
+            Arrays.asList("IMPACT341","IMPACT410","IMPACT410+","IMPACT468","HemePACT_v3","HemePACT_v4","MSK-ACCESS_v1");
+
+    private static final HumanSamplePredicate humanSamplePredicate = new HumanSamplePredicate();
+
     private final CorrectedCmoIdConverter<BankedSample> bankedSampleToCorrectedCmoSampleIdConverter = new BankedSampleToCorrectedCmoSampleIdConverter();
     private final CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator = new SampleTypeCorrectedCmoSampleIdGenerator();
-    private final HumanSamplePredicate humanSamplePredicate = new HumanSamplePredicate();
     private final BankedSampleToSampleConverter bankedSampleToSampleConverter = new BankedSampleToSampleConverter();
 
     String[] bankedIds;
@@ -63,8 +67,6 @@ public class PromoteBanked extends LimsTask {
             .put(200, 120.0)
             .put(250, 160.0)
             .build();
-
-    private final List<String> humanRecipes = Arrays.asList("IMPACT341","IMPACT410","IMPACT410+","IMPACT468","HemePACT_v3","HemePACT_v4","MSK-ACCESS_v1");
 
     public PromoteBanked() {
     }
@@ -506,20 +508,17 @@ public class PromoteBanked extends LimsTask {
         try {
             checkSampleTypeAndPatientId(bankedSample);
 
-            if (!shouldGenerateCmoId(bankedSample)) {
+            if (shouldGenerateCmoId(bankedSample)) {
+                CorrectedCmoSampleView sampleView = createFrom(bankedSample);
+                String cmoSampleId = correctedCmoSampleIdGenerator.generate(sampleView, requestId, dataRecordManager, user);
+                log.info(String.format("Generated CMO Sample id for banked sample with id: %s (%s) is: %s", bankedSample
+                        .getUserSampleID(), bankedSample.getOtherSampleId(), cmoSampleId));
+                return cmoSampleId;
+            } else {
                 log.info(String.format("Non-Human sample: %s with species: %s won't have cmo sample id generated.",
                         bankedSample.getUserSampleID(), bankedSample.getSpecies()));
                 return "";
             }
-
-            CorrectedCmoSampleView correctedCmoSampleView = createFrom(bankedSample);
-
-            String cmoSampleId = correctedCmoSampleIdGenerator.generate(correctedCmoSampleView, requestId,
-                    dataRecordManager, user);
-
-            log.info(String.format("Generated CMO Sample id for banked sample with id: %s (%s) is: %s", bankedSample
-                    .getUserSampleID(), bankedSample.getOtherSampleId(), cmoSampleId));
-            return cmoSampleId;
         } catch (Exception e) {
             String message = String.format("Corrected cmo id autogeneration failed for banked sample: %s",
                     bankedSample.getUserSampleID());
@@ -530,11 +529,11 @@ public class PromoteBanked extends LimsTask {
         }
     }
 
-    private boolean shouldGenerateCmoId(BankedSample bankedSample) {
-        return isHumanSample(bankedSample) || humanRecipes.contains(bankedSample.getRecipe());
+    protected static boolean shouldGenerateCmoId(BankedSample bankedSample) {
+        return isHumanSample(bankedSample) || HUMAN_RECIPES.contains(bankedSample.getRecipe());
     }
 
-    private boolean isHumanSample(BankedSample bankedSample) {
+    protected static boolean isHumanSample(BankedSample bankedSample) {
         return !StringUtils.isEmpty(bankedSample.getSpecies()) && humanSamplePredicate.test(bankedSample);
     }
 

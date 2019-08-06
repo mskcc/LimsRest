@@ -8,8 +8,6 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.junit.Before;
 import org.junit.Test;
 import org.mskcc.domain.sample.BankedSample;
-import org.mskcc.limsrest.limsapi.converter.ExternalToBankedSampleConverter;
-import org.mskcc.limsrest.limsapi.dmp.converter.DMPSampleToCMOBankedSampleConverter;
 import org.mskcc.limsrest.limsapi.retriever.LimsDataRetriever;
 import org.mskcc.limsrest.limsapi.store.VeloxRecordSaver;
 
@@ -27,8 +25,6 @@ import static org.mockito.Mockito.when;
 public class GenerateBankedSamplesFromDMPTest {
     private TumorTypeRetriever tumorTypeRetriever = mock(TumorTypeRetriever.class);
     private GenerateBankedSamplesFromDMP generateBankedSamplesFromDMP;
-    private ExternalToBankedSampleConverter externalToBankedSampleConverter = new DMPSampleToCMOBankedSampleConverter
-            (tumorTypeRetriever);
     private DMPSamplesRetriever dmpSamplesRetriever = mock(DMPSamplesRetriever.class);
     private RecordSaverSpy recordSaverSpy;
     private LimsDataRetriever limsDataRetriever = mock(LimsDataRetriever.class);
@@ -37,6 +33,9 @@ public class GenerateBankedSamplesFromDMPTest {
     public void setUp() throws Exception {
         recordSaverSpy = new RecordSaverSpy();
         generateBankedSamplesFromDMP = new GenerateBankedSamplesFromDMP();
+        generateBankedSamplesFromDMP.dmpSamplesRetriever = dmpSamplesRetriever;
+        generateBankedSamplesFromDMP.limsDataRetriever = limsDataRetriever;
+        generateBankedSamplesFromDMP.recordSaver = recordSaverSpy;
     }
 
     @Test
@@ -51,7 +50,7 @@ public class GenerateBankedSamplesFromDMPTest {
 
         List<DMPSample> tracking1DMPSamples = Arrays.asList(getDmpSample("id11", "i1"));
         when(dmpSamplesRetriever.getDMPSamples(trackingId1)).thenReturn(tracking1DMPSamples);
-        generateBankedSamplesFromDMP.init(date);
+        generateBankedSamplesFromDMP.setDate(date);
 
         //when
         generateBankedSamplesFromDMP.execute(mock(VeloxConnection.class));
@@ -67,12 +66,10 @@ public class GenerateBankedSamplesFromDMPTest {
         LocalDate date = LocalDate.of(2017, 11, 20);
         List<String> trackingIds = Arrays.asList(trackingId1);
         when(dmpSamplesRetriever.retrieveTrackingIds(date)).thenReturn(trackingIds);
-
         when(limsDataRetriever.getBankedSamples(any(), any(), any())).thenReturn(Collections.emptyList());
-
         List<DMPSample> tracking1DMPSamples = Arrays.asList(getDmpSample("id11", "i1"));
         when(dmpSamplesRetriever.getDMPSamples(trackingId1)).thenReturn(tracking1DMPSamples);
-        generateBankedSamplesFromDMP.init(date);
+        generateBankedSamplesFromDMP.setDate(date);
 
         //when
         generateBankedSamplesFromDMP.execute(mock(VeloxConnection.class));
@@ -96,7 +93,7 @@ public class GenerateBankedSamplesFromDMPTest {
         List<DMPSample> tracking1DMPSamples = Arrays.asList(getDmpSample("id11", "i1"), getDmpSample("id12", "i2"),
                 getDmpSample("id13", "i3"));
         when(dmpSamplesRetriever.getDMPSamples(trackingId1)).thenReturn(tracking1DMPSamples);
-        generateBankedSamplesFromDMP.init(date);
+        generateBankedSamplesFromDMP.setDate(date);
 
         //when
         generateBankedSamplesFromDMP.execute(mock(VeloxConnection.class));
@@ -118,7 +115,7 @@ public class GenerateBankedSamplesFromDMPTest {
         List<DMPSample> tracking1DMPSamples = Arrays.asList(getDmpSample("id11", "i1"), getDmpSample("id12", "i2"),
                 getDmpSample("id13", "i3"));
         when(dmpSamplesRetriever.getDMPSamples(trackingId1)).thenReturn(tracking1DMPSamples);
-        generateBankedSamplesFromDMP.init(date);
+        generateBankedSamplesFromDMP.setDate(date);
 
         //when
         generateBankedSamplesFromDMP.execute(mock(VeloxConnection.class));
@@ -136,18 +133,17 @@ public class GenerateBankedSamplesFromDMPTest {
         LocalDate date = LocalDate.of(2017, 11, 20);
         List<String> trackingIds = Arrays.asList(trackingId1, trackingId2);
         when(dmpSamplesRetriever.retrieveTrackingIds(date)).thenReturn(trackingIds);
+        when(limsDataRetriever.getBankedSamples(eq(String.format("%s = '%s'", BankedSample.DMP_TRACKING_ID, trackingId1)), any(), any())).thenReturn(Collections.emptyList());
+        when(limsDataRetriever.getBankedSamples(eq(String.format("%s = '%s'", BankedSample.DMP_TRACKING_ID, trackingId2)), any(), any())).thenReturn(Arrays.asList(new BankedSample("id")));
 
-        when(limsDataRetriever.getBankedSamples(eq(String.format("%s = '%s'", BankedSample.DMP_TRACKING_ID,
-                trackingId1)), any(), any())).thenReturn(Collections.emptyList());
-        when(limsDataRetriever.getBankedSamples(eq(String.format("%s = '%s'", BankedSample.DMP_TRACKING_ID,
-                trackingId2)), any(), any())).thenReturn(Arrays.asList(new BankedSample("id")));
-
-        List<DMPSample> tracking1DMPSamples = Arrays.asList(getDmpSample("id11", "i11"), getDmpSample("id12", "i12"),
+        List<DMPSample> tracking1DMPSamples = Arrays.asList(
+                getDmpSample("id11", "i11"),
+                getDmpSample("id12", "i12"),
                 getDmpSample("id13", "i13"));
         List<DMPSample> tracking2DMPSamples = Arrays.asList(getDmpSample("id21", "i21"), getDmpSample("id22", "i22"));
         when(dmpSamplesRetriever.getDMPSamples(trackingId1)).thenReturn(tracking1DMPSamples);
         when(dmpSamplesRetriever.getDMPSamples(trackingId2)).thenReturn(tracking2DMPSamples);
-        generateBankedSamplesFromDMP.init(date);
+        generateBankedSamplesFromDMP.setDate(date);
 
         //when
         generateBankedSamplesFromDMP.execute(mock(VeloxConnection.class));
@@ -177,7 +173,6 @@ public class GenerateBankedSamplesFromDMPTest {
         LocalDate date = LocalDate.of(2017, 11, 20);
         List<String> trackingIds = Arrays.asList(trackingId1, trackingId2, trackingId3, trackingId4);
         when(dmpSamplesRetriever.retrieveTrackingIds(date)).thenReturn(trackingIds);
-
         when(limsDataRetriever.getBankedSamples(any(), any(), any())).thenReturn(Collections.emptyList());
 
         List<DMPSample> tracking1DMPSamples = Arrays.asList(getDmpSample("id11", "i11"), getDmpSample
@@ -190,7 +185,7 @@ public class GenerateBankedSamplesFromDMPTest {
         when(dmpSamplesRetriever.getDMPSamples(trackingId2)).thenReturn(tracking2DMPSamples);
         when(dmpSamplesRetriever.getDMPSamples(trackingId3)).thenReturn(tracking3DMPSamples);
         when(dmpSamplesRetriever.getDMPSamples(trackingId4)).thenReturn(tracking4DMPSamples);
-        generateBankedSamplesFromDMP.init(date);
+        generateBankedSamplesFromDMP.setDate(date);
 
         //when
         generateBankedSamplesFromDMP.execute(mock(VeloxConnection.class));

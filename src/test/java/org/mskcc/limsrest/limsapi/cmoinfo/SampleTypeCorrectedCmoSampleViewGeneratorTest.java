@@ -17,7 +17,6 @@ import org.mskcc.limsrest.limsapi.cmoinfo.formatter.CmoSampleIdFormatter;
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdFormatter;
 import org.mskcc.limsrest.limsapi.cmoinfo.patientsample.PatientCmoSampleIdResolver;
 import org.mskcc.limsrest.limsapi.cmoinfo.retriever.*;
-import org.mskcc.util.notificator.Notificator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,8 +65,9 @@ public class SampleTypeCorrectedCmoSampleViewGeneratorTest {
     @Test
     public void whenThereIsOnePatientSampleFromSameRequestWithCount1_shouldReturnCmoIdWithNumber2() throws Exception {
         String requestId = "5432_P";
-        when(samplesRetriever.retrieve(any(), any(), any())).thenReturn(Arrays.asList(getSample("C-1235-X001-d",
-                requestId)));
+        when(samplesRetriever.retrieve(any(), any(), any())).thenReturn(Arrays.asList(getSample("C-1235-X001-d", requestId)));
+        sampleTypeCorrectedCmoSampleIdGenerator.patientSamplesRetriever = samplesRetriever;
+
         CorrectedCmoSampleView sample = getSample("4324", "C-1235", SpecimenType.XENOGRAFT, NucleicAcid.DNA);
 
         String cmoId = sampleTypeCorrectedCmoSampleIdGenerator.generate(sample, requestId, drm, user);
@@ -79,8 +79,8 @@ public class SampleTypeCorrectedCmoSampleViewGeneratorTest {
     public void whenThereIsOnePatientSampleFromSameRequestWithSomeCount_shouldReturnCmoIdWithThisCountPlusOne()
             throws Exception {
         String requestId = "5432_P";
-        when(samplesRetriever.retrieve(any(), any(), any())).thenReturn(Arrays.asList(getSample("C-1235-X012-d",
-                requestId)));
+        when(samplesRetriever.retrieve(any(), any(), any())).thenReturn(Arrays.asList(getSample("C-1235-X012-d", requestId)));
+        sampleTypeCorrectedCmoSampleIdGenerator.patientSamplesRetriever = samplesRetriever;
         CorrectedCmoSampleView sample = getSample("4324", "C-1235", SpecimenType.XENOGRAFT, NucleicAcid.DNA);
 
 
@@ -94,6 +94,7 @@ public class SampleTypeCorrectedCmoSampleViewGeneratorTest {
     public void whenThereIsOnePatientSampleFromDifferentRequest_shouldReturnCmoIdWithNumber2() throws Exception {
         when(samplesRetriever.retrieve(any(), any(), any())).thenReturn(Arrays.asList(getSample("C-1235-X001-d",
                 "1234_A")));
+        sampleTypeCorrectedCmoSampleIdGenerator.patientSamplesRetriever = samplesRetriever;
         CorrectedCmoSampleView sample = getSample("4324", "C-1235", SpecimenType.PDX, NucleicAcid.RNA);
 
         //when
