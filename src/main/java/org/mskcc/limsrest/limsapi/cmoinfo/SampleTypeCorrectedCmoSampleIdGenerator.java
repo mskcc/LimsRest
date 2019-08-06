@@ -44,7 +44,7 @@ public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSamp
                     new FormattedCmoSampleIdRetriever(new PatientCmoSampleIdResolver(new IncrementalSampleCounterRetriever(new FormatAwareCorrectedCmoIdConverterFactory(new CspaceSampleTypeAbbreviationRetriever())),
                             new CspaceSampleTypeAbbreviationRetriever()), new PatientCmoSampleIdFormatter()),
                     new FormattedCmoSampleIdRetriever(new CellLineCmoSampleIdResolver(), new CellLineCmoSampleIdFormatter()));
-    private final PatientSamplesRetriever patientSamplesRetriever = new PatientSamplesWithCmoInfoRetriever(new SampleToCorrectedCmoIdConverter(), new SampleRecordToSampleConverter());
+    protected PatientSamplesRetriever patientSamplesRetriever = new PatientSamplesWithCmoInfoRetriever(new SampleToCorrectedCmoIdConverter(), new SampleRecordToSampleConverter());
 
     private final Multimap<String, CorrectedCmoSampleView> generatedSamples = HashMultimap.create();
 
@@ -61,19 +61,15 @@ public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSamp
             CommonUtils.requireNonNullNorEmpty(patientId, String.format("Patient id is not set for sample: %s",
                     correctedCmoSampleView.getId()));
 
-            List<CorrectedCmoSampleView> cmoSampleViews = patientSamplesRetriever.retrieve(patientId,
-                    dataRecordManager, user);
-
-            CmoSampleIdRetriever cmoSampleIdRetriever = cmoSampleIdRetrieverFactory.getCmoSampleIdRetriever
-                    (correctedCmoSampleView);
+            List<CorrectedCmoSampleView> cmoSampleViews = patientSamplesRetriever.retrieve(patientId, dataRecordManager, user);
 
             cmoSampleViews.addAll(generatedSamples.get(patientId));
             LOGGER.info(String.format("Added %d samples for patient %s generated during current run for cmo id " +
                     "generation: %s", generatedSamples.size(), patientId, generatedSamples.values()));
-
             List<CorrectedCmoSampleView> filteredViews = getFilteredCmoViews(correctedCmoSampleView, cmoSampleViews);
 
-            String cmoSampleId = cmoSampleIdRetriever.retrieve(correctedCmoSampleView, filteredViews, requestId);
+            CmoSampleIdRetriever idRetriever = cmoSampleIdRetrieverFactory.getCmoSampleIdRetriever(correctedCmoSampleView);
+            String cmoSampleId = idRetriever.retrieve(correctedCmoSampleView, filteredViews, requestId);
 
             if (shouldOverrideCmoId(correctedCmoSampleView, cmoSampleId))
                 correctedCmoSampleView.setCorrectedCmoId(cmoSampleId);
@@ -87,12 +83,12 @@ public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSamp
         }
     }
 
-    private boolean shouldOverrideCmoId(CorrectedCmoSampleView correctedCmoSampleView, String cmoSampleId) {
-        return StringUtils.isEmpty(correctedCmoSampleView.getCorrectedCmoId()) || !isSame(correctedCmoSampleView
-                .getCorrectedCmoId(), cmoSampleId);
+    protected static boolean shouldOverrideCmoId(CorrectedCmoSampleView correctedCmoSampleView, String cmoSampleId) {
+        return StringUtils.isEmpty(correctedCmoSampleView.getCorrectedCmoId()) ||
+                !isSame(correctedCmoSampleView.getCorrectedCmoId(), cmoSampleId);
     }
 
-    private boolean isSame(String current, String potential) {
+    protected static boolean isSame(String current, String potential) {
         try {
             StringCmoIdToCmoIdConverter stringCmoIdToCmoIdConverter = new StringCmoIdToCmoIdConverter();
 

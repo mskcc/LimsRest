@@ -36,7 +36,7 @@ public class CreateBankedSamplesFromDMP {
             log.info(String.format("Starting to create banked samples from DMP samples for date: %s", localDate));
             log.info("Creating task");
 
-            task.init(localDate);
+            task.setDate(localDate);
 
             log.info("Getting result");
             Future<Object> result = connQueue.submitTask(task);

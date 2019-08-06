@@ -26,16 +26,16 @@ public class GenerateBankedSamplesFromDMP extends LimsTask {
     private final ExternalToBankedSampleConverter externalToBankedSampleConverter =
             new DMPSampleToCMOBankedSampleConverter(new OncotreeTumorTypeRetriever());
     //TODO set string normally
-    private final DMPSamplesRetriever dmpSamplesRetriever = new WebServiceDMPSamplesRetriever("http://plvpathhydra1.mskcc.org:8001/");
-    private final RecordSaver recordSaver = new VeloxRecordSaver();
-    private final LimsDataRetriever limsDataRetriever = new VeloxLimsDataRetriever();
+    protected DMPSamplesRetriever dmpSamplesRetriever = new WebServiceDMPSamplesRetriever("http://plvpathhydra1.mskcc.org:8001/");
+    protected RecordSaver recordSaver = new VeloxRecordSaver();
+    protected LimsDataRetriever limsDataRetriever = new VeloxLimsDataRetriever();
 
     private LocalDate date;
 
     public GenerateBankedSamplesFromDMP() {
     }
 
-    public void init(LocalDate date) {
+    public void setDate(LocalDate date) {
         this.date = date;
     }
 
