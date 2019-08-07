@@ -73,11 +73,6 @@ public class App extends SpringBootServletInitializer {
     }
 
     @Bean
-    public WebServerFactoryCustomizer<ConfigurableServletWebServerFactory> webServerFactoryCustomizer() {
-        return factory -> factory.setContextPath("/LimsRest");
-    }
-
-    @Bean
     public Docket api() {
         return new Docket(DocumentationType.SWAGGER_2)
                 .useDefaultResponseMessages(true)
