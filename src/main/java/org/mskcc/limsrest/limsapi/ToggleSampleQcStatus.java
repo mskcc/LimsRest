@@ -24,7 +24,7 @@ import java.util.List;
  */
 @Service
 public class ToggleSampleQcStatus extends LimsTask {
-    private Log log = LogFactory.getLog(ToggleSampleQcStatus.class);
+    private static Log log = LogFactory.getLog(ToggleSampleQcStatus.class);
 
     boolean isSeqAnalysisSampleqc = true; // which LIMS table to update
 

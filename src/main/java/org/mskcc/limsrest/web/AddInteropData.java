@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.LimsException;
 import org.mskcc.limsrest.limsapi.SetOrCreateInteropData;
 import org.mskcc.limsrest.staticstrings.Messages;
@@ -24,11 +24,11 @@ import java.util.concurrent.Future;
 public class AddInteropData {
 
     private static final Log log = LogFactory.getLog(AddInteropData.class);
-    private ConnectionQueue connectionQueue;
+    private ConnectionPoolLIMS connectionQueue;
     private SetOrCreateInteropData setOrCreateInteropData;
     private static ObjectMapper objectMapper;
 
-    public AddInteropData(ConnectionQueue connectionQueue, SetOrCreateInteropData setOrCreateInteropData) {
+    public AddInteropData(ConnectionPoolLIMS connectionQueue, SetOrCreateInteropData setOrCreateInteropData) {
         this.connectionQueue = connectionQueue;
         this.setOrCreateInteropData = setOrCreateInteropData;
         objectMapper = new ObjectMapper();

@@ -1,6 +1,5 @@
 package org.mskcc.limsrest.limsapi;
 
-
 import com.velox.api.datamgmtserver.DataMgmtServer;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
@@ -12,6 +11,7 @@ import com.velox.sapioutils.client.standalone.VeloxStandalone;
 import com.velox.sapioutils.client.standalone.VeloxStandaloneManagerContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.assignedprocess.QcStatus;
 import org.mskcc.limsrest.staticstrings.Messages;
 
@@ -21,7 +21,7 @@ import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import static org.mskcc.util.CommonUtils.runAndCatchNpe;
+import static org.mskcc.limsrest.util.Utils.runAndCatchNpe;
 
 /**
  * This is the base class for tasks that run through the connection queue.
@@ -29,10 +29,11 @@ import static org.mskcc.util.CommonUtils.runAndCatchNpe;
  *
  * @author Aaron Gabow
  */
-public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
-    private Log log = LogFactory.getLog(LimsTask.class);
+public abstract class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
+    private static Log log = LogFactory.getLog(LimsTask.class);
 
-    protected VeloxConnection velox_conn;
+    private ConnectionPoolLIMS p;
+
     protected User user;
     protected DataRecordManager dataRecordManager;
     protected DataMgmtServer dataMgmtServer;
@@ -41,15 +42,13 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
     public LimsTask() {
     }
 
-    public void setVeloxConnection(VeloxConnection conn) {
-        velox_conn = conn;
+    public void setConnectionPool(ConnectionPoolLIMS p) {
+        this.p = p;
     }
 
-    //put it in the completion service
     @Override
     public Object call() throws Exception {
-        Object result;
-        System.out.println("OPENING CONNECTION");
+        VeloxConnection velox_conn = p.getConnection();
         velox_conn.open();
         try {
             if (velox_conn.isConnected()) {
@@ -60,21 +59,13 @@ public class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
             } else {
                 log.error("the lims task has a null connection");
             }
-            result = VeloxStandalone.run(velox_conn, this);
+            return VeloxStandalone.run(velox_conn, this);
         } finally {
             velox_conn.close();
         }
-        return result;
-    }
-
-    @Override
-    public Object execute(VeloxConnection conn) {
-        RequestSummary rs = new RequestSummary("Empty");
-        return rs;
     }
 
     public SampleQcSummary annotateQcSummary(DataRecord qc) {
-
         SampleQcSummary qcSummary = new SampleQcSummary();
         try {
             Map<String, Object> qcFields = qc.getFields(user);

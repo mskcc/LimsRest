@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.GetBanked;
 import org.mskcc.limsrest.limsapi.LimsException;
 import org.mskcc.limsrest.limsapi.SampleSummary;
@@ -36,12 +36,12 @@ import java.util.concurrent.Future;
 @RequestMapping("/")
 public class GetBankedSamples {
     private static Log log = LogFactory.getLog(GetBankedSamples.class);
-    private final ConnectionQueue connQueue;
+    private final ConnectionPoolLIMS conn;
     private final GetBanked task;
 
 
-    public GetBankedSamples(ConnectionQueue connQueue, GetBanked project) {
-        this.connQueue = connQueue;
+    public GetBankedSamples(ConnectionPoolLIMS conn, GetBanked project) {
+        this.conn = conn;
         this.task = project;
     }
 
@@ -90,7 +90,7 @@ public class GetBankedSamples {
             task.initInvestigator(investigator);
         }
 
-        Future<Object> result = connQueue.submitTask(task);
+        Future<Object> result = conn.submitTask(task);
         try {
             samples = (LinkedList<SampleSummary>) result.get();
             if (samples.size() > 0) {

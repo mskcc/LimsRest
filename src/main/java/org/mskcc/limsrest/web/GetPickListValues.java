@@ -20,12 +20,12 @@ import org.apache.commons.logging.LogFactory;
 @RequestMapping("/")
 public class GetPickListValues {
     private static Log log = LogFactory.getLog(GetPickListValues.class);
-    private final ConnectionQueue connQueue;
+    private final ConnectionPoolLIMS conn;
 
     private final GetPickList task = new GetPickList();
 
-    public GetPickListValues(){
-        this.connQueue = App.connQueue;
+    public GetPickListValues(ConnectionPoolLIMS conn){
+        this.conn = conn;
     }
 
     @GetMapping("/getPickListValues")
@@ -38,7 +38,7 @@ public class GetPickListValues {
         }
         task.init(list);
         log.info("Starting /getPickListValues query for " + list);
-        Future<Object> result = connQueue.submitTask(task);
+        Future<Object> result = conn.submitTask(task);
         try {
             values = (List<String>) result.get();
         } catch (Exception e) {

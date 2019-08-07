@@ -11,7 +11,7 @@ import java.util.List;
  * Find all samples associated with a project/request 
  */
 public class GetProjectDetails extends LimsTask {
-    private Log log = LogFactory.getLog(GetProjectDetails.class);
+    private static Log log = LogFactory.getLog(GetProjectDetails.class);
     protected String project;
 
     public void init(String project) {

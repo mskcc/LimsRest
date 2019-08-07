@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.dmp.DefaultTodayDateRetriever;
 import org.mskcc.limsrest.limsapi.dmp.GenerateBankedSamplesFromDMP;
 import org.springframework.http.HttpStatus;
@@ -19,18 +19,18 @@ import static org.mockito.Mockito.when;
 public class CreateBankedSamplesFromDMPTest {
     private final GenerateBankedSamplesFromDMP generateBankedSamplesFromDMP = mock
             (GenerateBankedSamplesFromDMP.class);
-    private final ConnectionQueue connQueue = mock(ConnectionQueue.class);
+    private final ConnectionPoolLIMS conn = mock(ConnectionPoolLIMS.class);
     private final DefaultTodayDateRetriever dateRetriever = mock(DefaultTodayDateRetriever.class);
     private CreateBankedSamplesFromDMP createBankedSamplesFromDMP;
 
     @Before
     public void setUp() throws Exception {
-        createBankedSamplesFromDMP = new CreateBankedSamplesFromDMP(connQueue);
+        createBankedSamplesFromDMP = new CreateBankedSamplesFromDMP(conn);
     }
 
     @Test
     public void whenDateIsNullAndNoErrors_shouldReturnOk() throws Exception {
-        when(connQueue.submitTask(any())).thenReturn(mock(FutureTask.class));
+        when(conn.submitTask(any())).thenReturn(mock(FutureTask.class));
 
         ResponseEntity<String> response = createBankedSamplesFromDMP.getSampleCmoId(null);
 

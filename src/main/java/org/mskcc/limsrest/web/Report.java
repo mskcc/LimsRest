@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.GetHiseq;
 import org.mskcc.limsrest.limsapi.GetReadyForIllumina;
 import org.mskcc.limsrest.limsapi.RunSummary;
@@ -20,12 +20,12 @@ import java.util.concurrent.Future;
 @RequestMapping("/")
 public class Report {
     private final static Log log = LogFactory.getLog(Report.class);
-    private final ConnectionQueue connQueue; 
+    private final ConnectionPoolLIMS conn;
     private final GetHiseq task;
     private final GetReadyForIllumina illuminaTask;
    
-    public Report( ConnectionQueue connQueue, GetHiseq getHiseq, GetReadyForIllumina illuminaTask){
-        this.connQueue = connQueue;
+    public Report(ConnectionPoolLIMS conn, GetHiseq getHiseq, GetReadyForIllumina illuminaTask){
+        this.conn = conn;
         this.task = getHiseq;
         this.illuminaTask = illuminaTask;
     }
@@ -58,7 +58,7 @@ public class Report {
          runSums.add(rs);
          return runSums;
        }
-       Future<Object> result = connQueue.submitTask(task);
+       Future<Object> result = conn.submitTask(task);
        try{
          runSums = (LinkedList<RunSummary>)result.get();
        } catch(Exception e){
@@ -75,7 +75,7 @@ public class Report {
     public LinkedList<RunSummary> getContent() {
        log.info("Starting get Hiseq List");
        task.init("");
-       Future<Object> result = connQueue.submitTask(task);
+       Future<Object> result = conn.submitTask(task);
        RunSummary rs = new RunSummary("BLANK_RUN", "BLANK_REQUEST");
        LinkedList<RunSummary> runSums = new LinkedList<>();
        try{
@@ -94,7 +94,7 @@ public class Report {
    public LinkedList<RunSummary> getPlan(@RequestParam(value="user") String user){
            log.info("Starting plan Runs for user " + user);
        illuminaTask.init();
-       Future<Object> result = connQueue.submitTask(illuminaTask);
+       Future<Object> result = conn.submitTask(illuminaTask);
        RunSummary rs = new RunSummary("BLANK_RUN", "BLANK_REQUEST");
        LinkedList<RunSummary> runSums = new LinkedList<>();
        try{

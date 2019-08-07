@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.GetSampleQc;
 import org.mskcc.limsrest.limsapi.RequestSummary;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,11 +19,11 @@ import java.util.concurrent.Future;
 @RequestMapping("/")
 public class GetProjectQc {
     private static Log log = LogFactory.getLog(GetProjectQc.class);
-    private final ConnectionQueue connQueue;
+    private final ConnectionPoolLIMS conn;
     private final GetSampleQc task;
 
-    public GetProjectQc( ConnectionQueue connQueue, GetSampleQc getQc){
-        this.connQueue = connQueue;
+    public GetProjectQc(ConnectionPoolLIMS conn, GetSampleQc getQc){
+        this.conn = conn;
         this.task = getQc;
     }
 
@@ -42,7 +42,7 @@ public class GetProjectQc {
         }
 
         task.init(project);
-        Future<Object> result = connQueue.submitTask(task);
+        Future<Object> result = conn.submitTask(task);
         List<RequestSummary> rss = new LinkedList<>();
         try {
             rss = (List<RequestSummary>)result.get();

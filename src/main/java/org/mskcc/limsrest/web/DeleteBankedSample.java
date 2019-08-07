@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.DeleteBanked;
 import org.mskcc.limsrest.limsapi.LimsException;
 import org.mskcc.limsrest.staticstrings.Messages;
@@ -21,13 +21,13 @@ import java.util.concurrent.Future;
 @RestController
 @RequestMapping("/")
 public class DeleteBankedSample {
-    private final Log log = LogFactory.getLog(DeleteBankedSample.class);
-    private final ConnectionQueue connQueue; 
-    private final DeleteBanked task;
+    private static Log log = LogFactory.getLog(DeleteBankedSample.class);
+
+    private final ConnectionPoolLIMS conn;
+    private final DeleteBanked task = new DeleteBanked();
    
-    public DeleteBankedSample( ConnectionQueue connQueue, DeleteBanked banked){
-        this.connQueue = connQueue;
-        this.task = banked;
+    public DeleteBankedSample( ConnectionPoolLIMS conn){
+        this.conn = conn;
     }
 
     @GetMapping("/deleteBankedSample")
@@ -42,7 +42,7 @@ public class DeleteBankedSample {
        log.info("Creating task");
        task.init(userId, serviceId); 
        log.info("Getting result");
-       Future<Object> result = connQueue.submitTask(task);
+       Future<Object> result = conn.submitTask(task);
 
        String returnCode = "";
        try{
@@ -72,7 +72,7 @@ public class DeleteBankedSample {
        log.info("Creating task");
        task.init(serviceId);
        log.info("Getting result");
-       Future<Object> result = connQueue.submitTask(task);
+       Future<Object> result = conn.submitTask(task);
 
        String returnCode = "";
        try{

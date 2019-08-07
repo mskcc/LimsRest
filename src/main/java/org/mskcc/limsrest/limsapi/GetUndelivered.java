@@ -25,7 +25,7 @@ import java.util.Set;
  */
 @Service
 public class GetUndelivered extends LimsTask {
-    private Log log = LogFactory.getLog(GetDelivered.class);
+    private static Log log = LogFactory.getLog(GetDelivered.class);
     private String passed = "Passed";
     private String failed = "Failed";
     private String daysToExamine = "30"; //we need this to not look at all requests

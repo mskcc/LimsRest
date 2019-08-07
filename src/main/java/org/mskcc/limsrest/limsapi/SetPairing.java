@@ -1,6 +1,4 @@
-
 package org.mskcc.limsrest.limsapi;
-
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
@@ -13,16 +11,13 @@ import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.List;
 
-
 /**
  * A queued task that takes a request id and map of values and sets them 
  * 
  * @author Aaron Gabow
- * 
  */
 @Service
-public class SetPairing  extends LimsTask 
-{
+public class SetPairing extends LimsTask {
   String igoUser;
   String requestId;
   String tumorId;
@@ -38,7 +33,6 @@ public class SetPairing  extends LimsTask
     this.tIgoId = tumorIgoId;
     this.nIgoId = normalIgoId;
   }
- //execute the velox call
 
 @PreAuthorize("hasRole('ADMIN')")
 @Override
@@ -127,5 +121,4 @@ public class SetPairing  extends LimsTask
 
   return recordId; 
  }
-
 }

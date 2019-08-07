@@ -14,7 +14,7 @@ import java.util.*;
 @Service
 public class GetPassingSamples extends LimsTask {
     protected String project;
-    private Log log = LogFactory.getLog(GetPassingSamples.class);
+    private static Log log = LogFactory.getLog(GetPassingSamples.class);
     private int day;
     private int month;
     private int year;

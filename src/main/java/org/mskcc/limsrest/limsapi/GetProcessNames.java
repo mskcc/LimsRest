@@ -1,4 +1,3 @@
-
 package org.mskcc.limsrest.limsapi;
 
 import com.velox.api.datarecord.DataRecord;
@@ -17,13 +16,11 @@ import java.util.List;
  * A queued task that returns all process names for the system 
  * 
  * @author Aaron Gabow
- * 
  */
 @Service
 public class GetProcessNames extends LimsTask {
-    private Log log = LogFactory.getLog(GetProcessNames.class);
+    private static Log log = LogFactory.getLog(GetProcessNames.class);
 
-    //execute the velox call
     @PreAuthorize("hasRole('READ')")
     @Override
     public Object execute(VeloxConnection conn) {

@@ -1,6 +1,5 @@
 package org.mskcc.limsrest.limsapi;
 
-
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
@@ -17,7 +16,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-
 /**
  * A queued task that takes a request id and returns all some request information and some sample information 
  * 
@@ -25,7 +23,7 @@ import java.util.Map;
  */
 @Service
 public class SetRequestStatus extends LimsTask {
-    private Log log = LogFactory.getLog(SetRequestStatus.class);
+    private static Log log = LogFactory.getLog(SetRequestStatus.class);
 
     @PreAuthorize("hasRole('ADMIN')")
     @Override

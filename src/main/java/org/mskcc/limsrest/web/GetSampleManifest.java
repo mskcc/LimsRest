@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.GetSampleManifestTask;
 import org.mskcc.limsrest.limsapi.SampleManifest;
 import org.springframework.http.HttpStatus;
@@ -22,11 +22,11 @@ import java.util.concurrent.Future;
 @RequestMapping("/")
 public class GetSampleManifest {
     private static Log log = LogFactory.getLog(GetSampleManifest.class);
-    private final ConnectionQueue connQueue;
+    private final ConnectionPoolLIMS conn;
     private final GetSampleManifestTask task = new GetSampleManifestTask();
 
-    public GetSampleManifest(ConnectionQueue connQueue) {
-        this.connQueue = connQueue;
+    public GetSampleManifest(ConnectionPoolLIMS conn) {
+        this.conn = conn;
     }
 
     @GetMapping("/api/getSampleManifest")
@@ -39,7 +39,7 @@ public class GetSampleManifest {
         // TODO whiteList Whitelists.sampleMatches()
         task.init(igoIds);
 
-        Future<Object> r = connQueue.submitTask(task);
+        Future<Object> r = conn.submitTask(task);
 
         try {
             SampleManifestResult result = (SampleManifestResult) r.get();

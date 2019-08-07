@@ -21,7 +21,7 @@ import java.util.*;
  */
 @Service
 public class GetReadyForIllumina extends LimsTask {
-    private Log log = LogFactory.getLog(GetReadyForIllumina.class);
+    private static Log log = LogFactory.getLog(GetReadyForIllumina.class);
     private HashMap<String, List<String>> request2OutstandingSamples;
     public void init(){
         request2OutstandingSamples  = new HashMap<>();

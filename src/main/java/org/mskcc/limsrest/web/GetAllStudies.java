@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.ListStudies;
 import org.mskcc.limsrest.limsapi.ProjectSummary;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,20 +18,23 @@ import java.util.concurrent.Future;
 @RequestMapping("/")
 public class GetAllStudies {
     private static Log log = LogFactory.getLog(GetAllStudies.class);
-    private final ConnectionQueue connQueue;
-    private final ListStudies task = new ListStudies();
 
-    public GetAllStudies(ConnectionQueue connQueue) {
-        this.connQueue = connQueue;
+    private final ConnectionPoolLIMS conn;
+    private final ListStudies task;
+
+    public GetAllStudies(ConnectionPoolLIMS conn, ListStudies task) {
+        this.conn = conn;
+        this.task = task;
     }
 
     @GetMapping("/getAllStudies")
     public List<ProjectSummary> getContent(@RequestParam(value = "cmoOnly", defaultValue = "NULL") String cmoOnly) {
-        task.init(cmoOnly);
-        Future<Object> result = connQueue.submitTask(task);
         log.info("Starting /getAllStudies");
+        task.init(cmoOnly);
+        Future<Object> result = conn.submitTask(task);
         try {
-            return (List<ProjectSummary>) result.get();
+            List<ProjectSummary> r = (List<ProjectSummary>) result.get();
+            return r;
         } catch (Exception e) {
             ProjectSummary errorProj = new ProjectSummary();
             errorProj.setCmoProjectId(e.getMessage());

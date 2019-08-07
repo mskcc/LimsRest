@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.GetRequest;
 import org.mskcc.limsrest.limsapi.LimsException;
 import org.mskcc.limsrest.limsapi.RequestDetailed;
@@ -27,12 +27,12 @@ import java.util.concurrent.Future;
 @RequestMapping("/")
 public class LimsRequest {
     private static Log log = LogFactory.getLog(LimsRequest.class);
-    private final ConnectionQueue connQueue; 
+    private final ConnectionPoolLIMS conn;
     private final SetRequest task;
     private final GetRequest reader;
    
-    public LimsRequest( ConnectionQueue connQueue, SetRequest setter, GetRequest reader){
-        this.connQueue = connQueue;
+    public LimsRequest(ConnectionPoolLIMS conn, SetRequest setter, GetRequest reader){
+        this.conn = conn;
         this.task = setter;
         this.reader = reader;
     }
@@ -52,7 +52,7 @@ public class LimsRequest {
        requestFields.put("ReadMe", readMe);
        task.init(igoUser, request, requestFields); 
                          
-       Future<Object> result = connQueue.submitTask(task);
+       Future<Object> result = conn.submitTask(task);
        String returnCode = "";
        try{
          returnCode =  (String)result.get();
@@ -88,7 +88,7 @@ public class LimsRequest {
            return new ResponseEntity(reqSummary, HttpStatus.BAD_REQUEST);
       }     
       reader.init(igoUser, request, fieldName);
-      Future<Object> result = connQueue.submitTask(reader);
+      Future<Object> result = conn.submitTask(reader);
       try{
          reqSummary = (LinkedList<RequestDetailed>)result.get();
        } catch(Exception e){

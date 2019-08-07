@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.GetSet;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,11 +17,11 @@ import java.util.concurrent.Future;
 @RequestMapping("/")
 public class GetSampleSet {
     private static Log log = LogFactory.getLog(GetSampleSet.class);
-    private final ConnectionQueue connQueue;
+    private final ConnectionPoolLIMS conn;
     private final GetSet task;
 
-    public GetSampleSet(ConnectionQueue connQueue, GetSet getSet) {
-        this.connQueue = connQueue;
+    public GetSampleSet(ConnectionPoolLIMS conn, GetSet getSet) {
+        this.conn = conn;
         this.task = getSet;
     }
 
@@ -34,7 +34,7 @@ public class GetSampleSet {
             return sets;
         }
         task.init(name);
-        Future<Object> result = connQueue.submitTask(task);
+        Future<Object> result = conn.submitTask(task);
         try {
             sets = (List<String>) result.get();
         } catch (Exception e) {

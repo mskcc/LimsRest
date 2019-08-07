@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.ToggleAutorunnable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,11 +21,11 @@ import java.util.regex.Pattern;
 @RequestMapping("/")
 public class SetAutorunnable {
     private final static Log log = LogFactory.getLog(SetAutorunnable.class);
-    private final ConnectionQueue connQueue; 
+    private final ConnectionPoolLIMS conn;
     private final ToggleAutorunnable task;
 
-    public SetAutorunnable( ConnectionQueue connQueue, ToggleAutorunnable toggle){
-        this.connQueue = connQueue;
+    public SetAutorunnable(ConnectionPoolLIMS conn, ToggleAutorunnable toggle){
+        this.conn = conn;
         this.task = toggle;
     }
 
@@ -33,7 +33,7 @@ public class SetAutorunnable {
     public List<String> getContent() {
        task.init("ALL", "true", null, null);
        log.info("Setting all autorunnable");
-       Future<Object> result = connQueue.submitTask(task);
+       Future<Object> result = conn.submitTask(task);
        List<String> values = new LinkedList<>(); 
        try{
          values = (List<String>)result.get();
@@ -61,7 +61,7 @@ public class SetAutorunnable {
         return values;
      }
       task.init(req, status, comment, igoUser);
-      Future<Object> result = connQueue.submitTask(task);
+      Future<Object> result = conn.submitTask(task);
       try{
          values = (List<String>)result.get();
        } catch(Exception e){

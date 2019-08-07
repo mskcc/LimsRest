@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.GetDelivered;
 import org.mskcc.limsrest.limsapi.RequestSummary;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,13 +20,12 @@ import java.util.concurrent.Future;
 @RestController
 @RequestMapping("/")
 public class GetRecentDeliveries {
-    private final static Log log = LogFactory.getLog(GetRecentDeliveries.class);
-    private final ConnectionQueue connQueue;
-    private final GetDelivered task;
+    private static Log log = LogFactory.getLog(GetRecentDeliveries.class);
+    private final ConnectionPoolLIMS conn;
+    private final GetDelivered task = new GetDelivered();
 
-    public GetRecentDeliveries(ConnectionQueue connQueue, GetDelivered task) {
-        this.connQueue = connQueue;
-        this.task = task;
+    public GetRecentDeliveries(ConnectionPoolLIMS conn) {
+        this.conn = conn;
     }
 
     @GetMapping("/getRecentDeliveries")
@@ -45,7 +44,7 @@ public class GetRecentDeliveries {
             task.init();
         }
 
-        Future<Object> result = connQueue.submitTask(task);
+        Future<Object> result = conn.submitTask(task);
         try {
             return (List<RequestSummary>) result.get();
         } catch (Exception e) {

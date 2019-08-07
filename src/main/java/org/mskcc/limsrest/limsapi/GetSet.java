@@ -12,7 +12,7 @@ import java.util.List;
 
 @Service
 public class GetSet extends LimsTask {
-    private Log log = LogFactory.getLog(GetSet.class);
+    private static Log log = LogFactory.getLog(GetSet.class);
     protected String name;
 
     public void init(String name) {

@@ -32,7 +32,7 @@ public class RenameSample extends LimsTask
   String requestId;
   String igoUser;
   int changeCount;
-  private Log log = LogFactory.getLog(RenameSample.class);
+  private static Log log = LogFactory.getLog(RenameSample.class);
 
   public void init(String igoUser, String request,  String igoId, String newSampleId, String newUserId){
     this.igoUser =  igoUser;                    

@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.AddOrCreateSet;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,12 +15,12 @@ import java.util.concurrent.Future;
 @RestController
 @RequestMapping("/")
 public class AddSampleSet {
-    private final Log log = LogFactory.getLog(AddSampleSet.class);
-    private final ConnectionQueue connQueue;
+    private static Log log = LogFactory.getLog(AddSampleSet.class);
+    private final ConnectionPoolLIMS conn;
     private final AddOrCreateSet task = new AddOrCreateSet();
 
-    public AddSampleSet(ConnectionQueue connQueue) {
-        this.connQueue = connQueue;
+    public AddSampleSet(ConnectionPoolLIMS conn) {
+        this.conn = conn;
     }
 
     @GetMapping("/addSampleSet")
@@ -72,7 +72,7 @@ public class AddSampleSet {
             }
             task.init(igoUser, name, mapName, request, igoId, pair, category, baitSet, primeRecipe, primeRequest,
                     externalSpecimen);
-            Future<Object> result = connQueue.submitTask(task);
+            Future<Object> result = conn.submitTask(task);
             try {
                 return "Record Id:" + result.get();
             } catch (Exception e) {

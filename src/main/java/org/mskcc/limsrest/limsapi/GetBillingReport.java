@@ -19,7 +19,7 @@ import java.util.List;
  */
 @Service @Deprecated // code started but not completed or used?
 public class GetBillingReport extends LimsTask {
-    private Log log = LogFactory.getLog(GetBillingReport.class);
+    private static Log log = LogFactory.getLog(GetBillingReport.class);
 
     protected String project;
 

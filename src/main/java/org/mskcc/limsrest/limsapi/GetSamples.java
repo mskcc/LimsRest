@@ -25,7 +25,7 @@ import java.util.Map;
 @Service
 public class GetSamples extends LimsTask {
     protected String[] projects;
-    private Log log = LogFactory.getLog(GetSamples.class);
+    private static Log log = LogFactory.getLog(GetSamples.class);
     private boolean filter;
 
     public void init(final String[] projects, final String filter) {

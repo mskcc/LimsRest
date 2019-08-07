@@ -1,4 +1,3 @@
-
 package org.mskcc.limsrest.limsapi;
 
 import com.velox.api.datarecord.DataRecord;
@@ -12,17 +11,14 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.TreeSet;
 
-
 /**
  * A queued task that takes a request id and returns all the start and end date for task based on the creation and last modified date of every sample 
  * 
  * @author Aaron Gabow
  */
 @Service
-public class GetProjectHistory  extends LimsTask 
-{
-  
-  private Log log = LogFactory.getLog(GetProjectHistory.class);
+public class GetProjectHistory extends LimsTask {
+  private static Log log = LogFactory.getLog(GetProjectHistory.class);
 
   protected String[] projects;
 

@@ -1,6 +1,5 @@
 package org.mskcc.limsrest.limsapi;
 
-
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
@@ -20,7 +19,7 @@ import org.mskcc.limsrest.limsapi.cmoinfo.converter.CorrectedCmoIdConverter;
 import org.mskcc.limsrest.limsapi.promote.BankedSampleToSampleConverter;
 import org.mskcc.limsrest.staticstrings.Constants;
 import org.mskcc.limsrest.staticstrings.Messages;
-import org.mskcc.util.CommonUtils;
+import org.mskcc.limsrest.util.Utils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -449,10 +448,10 @@ public class PromoteBanked extends LimsTask {
     }
 
     private void checkSampleTypeAndPatientId(BankedSample bankedSample) {
-        CommonUtils.requireNonNullNorEmpty(bankedSample.getCMOPatientId(), String.format("Cmo Patient id is empty for" +
+        Utils.requireNonNullNorEmpty(bankedSample.getCMOPatientId(), String.format("Cmo Patient id is empty for" +
                 " banked " +
                 "sample: %s", bankedSample.getId()));
-        CommonUtils.requireNonNullNorEmpty(bankedSample.getSampleType(), String.format("Sample Type is empty for " +
+        Utils.requireNonNullNorEmpty(bankedSample.getSampleType(), String.format("Sample Type is empty for " +
                 "banked sample: " +
                 "%s", bankedSample.getId()));
     }

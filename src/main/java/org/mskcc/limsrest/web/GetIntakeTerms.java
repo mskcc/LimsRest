@@ -20,11 +20,11 @@ import org.apache.commons.logging.LogFactory;
 @RequestMapping("/")
 public class GetIntakeTerms {
     private static Log log = LogFactory.getLog(GetIntakeTerms.class);
-    private final ConnectionQueue connQueue; 
+    private final ConnectionPoolLIMS conn;
     private final GetIntakeFormDescription task;
 
-    public GetIntakeTerms( ConnectionQueue connQueue, GetIntakeFormDescription intake){
-        this.connQueue = connQueue;
+    public GetIntakeTerms(ConnectionPoolLIMS conn, GetIntakeFormDescription intake){
+        this.conn = conn;
         this.task = intake;
     }
 
@@ -45,7 +45,7 @@ public class GetIntakeTerms {
        log.info("Starting get intake for " + type + " and " + recipe);
        type = type.replaceAll("_PIPI_SLASH_", "/");
        task.init(type, recipe);
-       Future<Object> result = connQueue.submitTask(task);
+       Future<Object> result = conn.submitTask(task);
        try{
          values = (List<List<String>>)result.get();
        } catch(Exception e){

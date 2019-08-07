@@ -1,6 +1,4 @@
-
 package org.mskcc.limsrest.limsapi;
-
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
@@ -12,16 +10,13 @@ import java.io.StringWriter;
 import java.util.LinkedList;
 import java.util.List;
 
-
 /**
  * A queued task that takes a request id and a true/false status and sets the BicAutorunnable field 
  * 
  * @author Aaron Gabow
- * 
  */
 @Service
-public class  ToggleAutorunnable  extends LimsTask 
-{
+public class ToggleAutorunnable extends LimsTask {
   String requestId;
   String status;
   String comment;
@@ -34,11 +29,9 @@ public class  ToggleAutorunnable  extends LimsTask
    this.igoUser = igoUser;
 }
 
- //execute the velox call
 @PreAuthorize("hasRole('ADMIN')")
 @Override
  public Object execute(VeloxConnection conn){
-// private void runProgram(User apiUser, DataRecordManager dataRecordManager) {
   LinkedList<String> statuses = new LinkedList<>();  
 
   try { 
@@ -84,5 +77,4 @@ public class  ToggleAutorunnable  extends LimsTask
 
   return statuses;
  }
-
 }

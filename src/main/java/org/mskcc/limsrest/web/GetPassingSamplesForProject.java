@@ -20,12 +20,12 @@ Called by the BIC Validator?
 @RequestMapping("/")
 public class GetPassingSamplesForProject{
 
-    private final ConnectionQueue connQueue; 
+    private final ConnectionPoolLIMS conn;
     private final GetPassingSamples task;
     private final Log log = LogFactory.getLog(GetPassingSamplesForProject.class);
 
-    public GetPassingSamplesForProject( ConnectionQueue connQueue, GetPassingSamples getPassing ){
-        this.connQueue = connQueue;
+    public GetPassingSamplesForProject(ConnectionPoolLIMS conn, GetPassingSamples getPassing ){
+        this.conn = conn;
         this.task = getPassing;
     }
 
@@ -51,7 +51,7 @@ public class GetPassingSamplesForProject{
         }
         log.info("Starting to get passing samples for project " + project + " for user " + user);
         task.init(project, dayParam, monthParam, yearParam);
-        Future<Object> result = connQueue.submitTask(task);
+        Future<Object> result = conn.submitTask(task);
         try {
             rs = (RequestSummary) result.get();
         } catch (Exception e) {

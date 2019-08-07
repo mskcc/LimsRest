@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.GetProjectHistory;
 import org.mskcc.limsrest.limsapi.HistoricalEvent;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,11 +22,11 @@ import java.util.concurrent.Future;
 public class GetTimelines {
     private static Log log = LogFactory.getLog(GetTimelines.class);
 
-    private final ConnectionQueue connQueue;
+    private final ConnectionPoolLIMS conn;
     private final GetProjectHistory task;
 
-    public GetTimelines(ConnectionQueue connQueue, GetProjectHistory getHistory) {
-        this.connQueue = connQueue;
+    public GetTimelines(ConnectionPoolLIMS conn, GetProjectHistory getHistory) {
+        this.conn = conn;
         this.task = getHistory;
     }
 
@@ -40,7 +40,7 @@ public class GetTimelines {
         }
         log.info("Starting get Timeline " + project[0]);
         task.init(project);
-        Future<Object> result = connQueue.submitTask(task);
+        Future<Object> result = conn.submitTask(task);
         try {
             timeline = new LinkedList((Set<HistoricalEvent>) result.get());
         } catch (Exception e) {

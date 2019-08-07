@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.ToggleSampleQcStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,11 +16,11 @@ import java.util.concurrent.Future;
 @RequestMapping("/")
 public class SetQcStatus {
     private final static Log log = LogFactory.getLog(SetQcStatus.class);
-    private final ConnectionQueue connQueue; 
+    private final ConnectionPoolLIMS conn;
     private final ToggleSampleQcStatus task;
    
-    public SetQcStatus( ConnectionQueue connQueue, ToggleSampleQcStatus toggle){
-        this.connQueue = connQueue;
+    public SetQcStatus(ConnectionPoolLIMS conn, ToggleSampleQcStatus toggle){
+        this.conn = conn;
         this.task = toggle;
     }
 
@@ -58,7 +58,7 @@ public class SetQcStatus {
         if (recordId != null) {
             long record = Long.parseLong(recordId);
             task.init(record, status, request, sample, run, qcType, analyst, note, fastqPath);
-            Future<Object> result = connQueue.submitTask(task);
+            Future<Object> result = conn.submitTask(task);
             try {
                 return "NewStatus:" + result.get();
             } catch (Exception e) {

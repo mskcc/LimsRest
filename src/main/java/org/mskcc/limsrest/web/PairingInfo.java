@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.SetPairing;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,11 +20,11 @@ import java.util.concurrent.Future;
 @RequestMapping("/")
 public class PairingInfo {
     private static Log log = LogFactory.getLog(PairingInfo.class);
-    private final ConnectionQueue connQueue; 
+    private final ConnectionPoolLIMS conn;
     private final SetPairing task;
    
-    public PairingInfo( ConnectionQueue connQueue, SetPairing setter){
-        this.connQueue = connQueue;
+    public PairingInfo(ConnectionPoolLIMS conn, SetPairing setter){
+        this.conn = conn;
         this.task = setter;
     }
 
@@ -54,7 +54,7 @@ public class PairingInfo {
        log.info("starting pairing with request " + request + " tumorId " + tumorId + " normalId " + normalId + " tumorIgoId " + tumorIgoId + " normalIgoId " + normalIgoId);
        task.init(igoUser, request, tumorId, normalId, tumorIgoId, normalIgoId); 
                          
-       Future<Object> result = connQueue.submitTask(task);
+       Future<Object> result = conn.submitTask(task);
        String returnCode = "";
        try{
          returnCode =  (String)result.get();

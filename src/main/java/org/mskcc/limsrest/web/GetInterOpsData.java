@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.interops.GetInterOpsDataTask;
 import org.mskcc.util.Constants;
 import org.springframework.http.HttpStatus;
@@ -23,11 +23,11 @@ import java.util.concurrent.Future;
 public class GetInterOpsData {
     private static final Log log = LogFactory.getLog(GetInterOpsData.class);
 
-    private final ConnectionQueue connQueue;
+    private final ConnectionPoolLIMS conn;
     private final GetInterOpsDataTask task;
 
-    public GetInterOpsData(ConnectionQueue connQueue, GetInterOpsDataTask task) {
-        this.connQueue = connQueue;
+    public GetInterOpsData(ConnectionPoolLIMS conn, GetInterOpsDataTask task) {
+        this.conn = conn;
         this.task = task;
     }
 
@@ -39,7 +39,7 @@ public class GetInterOpsData {
         log.info("Starting get /getInterOpsData " + runId);
         try {
             task.init(runId);
-            Future<Object> result = connQueue.submitTask(task);
+            Future<Object> result = conn.submitTask(task);
             interOps = (List<Map<String, String>>) result.get();
         } catch (Exception e) {
             log.error(String.format("Error while retrieving results for getInterOpsData run id: %s", runId), e);

@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.AddPoolToLane;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,17 +13,15 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.concurrent.Future;
 
-
 @RestController
 @RequestMapping("/")
 public class AddPoolToFlowcellLane{
-    private final Log log = LogFactory.getLog(AddPoolToFlowcellLane.class);
-    private final ConnectionQueue connQueue; 
-    private final AddPoolToLane task;
+    private static Log log = LogFactory.getLog(AddPoolToFlowcellLane.class);
+    private final ConnectionPoolLIMS conn;
+    private final AddPoolToLane task = new AddPoolToLane();
    
-    public AddPoolToFlowcellLane( ConnectionQueue connQueue, AddPoolToLane adder){
-        this.connQueue = connQueue;
-        this.task = adder;
+    public AddPoolToFlowcellLane( ConnectionPoolLIMS conn){
+        this.conn = conn;
     }
 
     @GetMapping("/addPoolToFlowcellLane")
@@ -47,7 +45,7 @@ public class AddPoolToFlowcellLane{
             isForce = true;
        }
        task.init(flowcell, sample, removeSample, igoUser, Long.parseLong(lane), isForce);
-       Future<Object> result = connQueue.submitTask(task);
+       Future<Object> result = conn.submitTask(task);
        String returnCode = "";
        try{
          returnCode = "Record Id:" + result.get();

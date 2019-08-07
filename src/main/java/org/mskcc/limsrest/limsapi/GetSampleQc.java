@@ -18,7 +18,7 @@ import java.util.stream.Stream;
 
 @Service
 public class GetSampleQc extends LimsTask {
-    private Log log = LogFactory.getLog(GetSampleQc.class);
+    private static Log log = LogFactory.getLog(GetSampleQc.class);
     protected String[] projectList;
 
     @Value("${delphiRestUrl}")

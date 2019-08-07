@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.GenerateSampleCmoIdTask;
 import org.mskcc.limsrest.staticstrings.Constants;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +18,7 @@ public class GetCorrectedSampleCmoIdTest {
 
     @Before
     public void setUp() throws Exception {
-        getCorrectedSampleCmoId = new GetCorrectedSampleCmoId(mock(ConnectionQueue.class), mock
+        getCorrectedSampleCmoId = new GetCorrectedSampleCmoId(mock(ConnectionPoolLIMS.class), mock
                 (GenerateSampleCmoIdTask.class));
     }
 

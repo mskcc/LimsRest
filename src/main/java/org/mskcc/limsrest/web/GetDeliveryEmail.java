@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.DeliveryEmail;
 import org.mskcc.limsrest.limsapi.GetDeliveryEmailDetails;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,11 +16,11 @@ import java.util.concurrent.Future;
 @RequestMapping("/")
 public class GetDeliveryEmail {
     private static Log log = LogFactory.getLog(GetDeliveryEmail.class);
-    private final ConnectionQueue connQueue;
+    private final ConnectionPoolLIMS conn;
     private final GetDeliveryEmailDetails task;
 
-    public GetDeliveryEmail(ConnectionQueue connQueue, GetDeliveryEmailDetails getQc) {
-        this.connQueue = connQueue;
+    public GetDeliveryEmail(ConnectionPoolLIMS conn, GetDeliveryEmailDetails getQc) {
+        this.conn = conn;
         this.task = getQc;
     }
 
@@ -32,7 +32,7 @@ public class GetDeliveryEmail {
             return null;
 
         task.init(request);
-        Future<Object> result = connQueue.submitTask(task);
+        Future<Object> result = conn.submitTask(task);
         try {
             return (DeliveryEmail)result.get();
         } catch(Exception e) {

@@ -1,12 +1,9 @@
-
 package org.mskcc.limsrest.limsapi;
-
 
 import com.velox.api.datarecord.AlreadyExists;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -14,23 +11,18 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-
 /**
  * A queued task that takes a sample id and a flowcellid, lane pair and if no sample has a barcode conflict with the new lane, reassigns the pool to that lane
  * 
  * @author Aaron Gabow
- * 
  */
-@Service
-public class AddPoolToLane  extends LimsTask
-{
+public class AddPoolToLane extends LimsTask {
   String flowcell; 
   String sampleId;
   String removeSampleId;
   String igoUser;
   Long laneId;
   boolean force;
-
 
   public void init(String flowcell, String sampleId, String removeSampleId, String igoUser, Long lane, boolean force){ 
     this.flowcell = flowcell;
@@ -40,7 +32,7 @@ public class AddPoolToLane  extends LimsTask
     this.igoUser = igoUser; 
     this.force = force;
   }
- //execute the velox call
+
 @PreAuthorize("hasRole('ADMIN')")
 @Override
  public Object execute(VeloxConnection conn){
@@ -98,19 +90,14 @@ public class AddPoolToLane  extends LimsTask
       return "ERROR: The pool already is in the lane";
     }
 
-
     dataRecordManager.storeAndCommit(igoUser  + " put pool " + sampleId + " in lane " + laneId, user);
-
-
   } catch (Throwable e) {
           StringWriter sw = new StringWriter();
           PrintWriter pw = new PrintWriter(sw);
           e.printStackTrace(pw);
            return "ERROR IN ADDING POOL TO LANE: " + e.getMessage() + "TRACE: " + sw.toString();
-
   }
 
   return "Pool "+ sampleId + " in lane " + laneId; 
  }
-
 }

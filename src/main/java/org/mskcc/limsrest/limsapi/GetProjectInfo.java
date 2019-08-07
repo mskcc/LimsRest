@@ -7,17 +7,14 @@ import org.apache.commons.logging.LogFactory;
 
 import java.util.List;
 
-
 /**
  * A queued task that takes a run name and returns a combination of a sample and request info
  * 
  * @author Aaron Gabow
- * 
  */
 public class GetProjectInfo extends LimsTask {
-
+    private static Log log = LogFactory.getLog(GetProjectInfo.class);
     protected String project;
-    private Log log = LogFactory.getLog(GetProjectInfo.class);
 
     public void init(String project) {
         this.project = project;
@@ -25,7 +22,6 @@ public class GetProjectInfo extends LimsTask {
 
     @Override
     public Object execute(VeloxConnection conn) {
-// private void runProgram(User apiUser, DataRecordManager dataRecordManager) {
         RequestSummary rs = new RequestSummary(project);
 
         try {
@@ -57,7 +53,6 @@ public class GetProjectInfo extends LimsTask {
                     }
                     ss.setQc(qcSummary);
                     rs.addSample(ss);
-
                 }
             }
         } catch (Throwable e) {

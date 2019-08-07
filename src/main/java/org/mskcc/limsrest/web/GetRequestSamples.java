@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.GetRequestSamplesTask;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,11 +18,11 @@ import java.util.concurrent.Future;
 public class GetRequestSamples {
     private final static Log log = LogFactory.getLog(GetRequestSamples.class);
 
-    private final ConnectionQueue connQueue;
+    private final ConnectionPoolLIMS conn;
     private final GetRequestSamplesTask task = new GetRequestSamplesTask();
 
-    public GetRequestSamples(ConnectionQueue connQueue) {
-        this.connQueue = connQueue;
+    public GetRequestSamples(ConnectionPoolLIMS conn) {
+        this.conn = conn;
     }
 
     @GetMapping("/api/getRequestSamples")
@@ -35,7 +35,7 @@ public class GetRequestSamples {
         }
 
         task.init(requestId, tumorOnly);
-        Future<Object> result = connQueue.submitTask(task);
+        Future<Object> result = conn.submitTask(task);
         GetRequestSamplesTask.RequestSampleList sl;
         try {
             sl = (GetRequestSamplesTask.RequestSampleList) result.get();

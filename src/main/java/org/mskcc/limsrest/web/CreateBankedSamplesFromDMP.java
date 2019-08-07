@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.dmp.DateRetriever;
 import org.mskcc.limsrest.limsapi.dmp.DefaultTodayDateRetriever;
 import org.mskcc.limsrest.limsapi.dmp.GenerateBankedSamplesFromDMP;
@@ -20,12 +20,12 @@ import java.util.concurrent.Future;
 public class CreateBankedSamplesFromDMP {
     private static final Log log = LogFactory.getLog(CreateBankedSamplesFromDMP.class);
 
-    private final ConnectionQueue connQueue;
+    private final ConnectionPoolLIMS conn;
     private final GenerateBankedSamplesFromDMP task = new GenerateBankedSamplesFromDMP();
     private final DateRetriever dateRetriever = new DefaultTodayDateRetriever();
 
-    public CreateBankedSamplesFromDMP(ConnectionQueue connQueue) {
-        this.connQueue = connQueue;
+    public CreateBankedSamplesFromDMP(ConnectionPoolLIMS conn) {
+        this.conn = conn;
     }
 
     @RequestMapping("/createBankedSamplesFromDMP")
@@ -39,7 +39,7 @@ public class CreateBankedSamplesFromDMP {
             task.setDate(localDate);
 
             log.info("Getting result");
-            Future<Object> result = connQueue.submitTask(task);
+            Future<Object> result = conn.submitTask(task);
 
             String response = (String) result.get();
 

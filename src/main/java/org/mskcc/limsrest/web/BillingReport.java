@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.GetBillingReport;
 import org.mskcc.limsrest.limsapi.RunSummary;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,12 +20,12 @@ import java.util.concurrent.Future;
 @RequestMapping("/") @Deprecated // code started but not completed or used?
 public class BillingReport {
 
-    private final ConnectionQueue connQueue;
+    private final ConnectionPoolLIMS conn;
     private final GetBillingReport task;
-    private Log log = LogFactory.getLog(BillingReport.class);
+    private static Log log = LogFactory.getLog(BillingReport.class);
 
-    public BillingReport(ConnectionQueue connQueue, GetBillingReport getBillingReport) {
-        this.connQueue = connQueue;
+    public BillingReport(ConnectionPoolLIMS conn, GetBillingReport getBillingReport) {
+        this.conn = conn;
         this.task = getBillingReport;
     }
 
@@ -35,7 +35,7 @@ public class BillingReport {
         LinkedList<RunSummary> runSums = new LinkedList<>();
         log.info("Starting get billing report for project " + proj);
         task.init(proj);
-        Future<Object> result = connQueue.submitTask(task);
+        Future<Object> result = conn.submitTask(task);
         try {
             runSums = (LinkedList<RunSummary>) result.get();
         } catch (Exception e) {

@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.AddSampleToPool;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,11 +15,11 @@ import java.util.concurrent.Future;
 @RequestMapping("/")
 public class SwapPools {
     private final static Log log = LogFactory.getLog(SwapPools.class);
-    private final ConnectionQueue connQueue;
+    private final ConnectionPoolLIMS conn;
     private final AddSampleToPool task = new AddSampleToPool();
 
-    public SwapPools(ConnectionQueue connQueue) {
-        this.connQueue = connQueue;
+    public SwapPools(ConnectionPoolLIMS conn) {
+        this.conn = conn;
     }
 
     @GetMapping("/swapPools")
@@ -27,7 +27,7 @@ public class SwapPools {
         log.info("Swapping sample " + sample + " from pool " + removePool + " to pool " + pool + " by user " + igoUser);
 
         task.init(pool, sample, removePool, igoUser);
-        Future<Object> result = connQueue.submitTask(task);
+        Future<Object> result = conn.submitTask(task);
         try {
             return "Record Id:" + result.get();
         } catch (Exception e) {

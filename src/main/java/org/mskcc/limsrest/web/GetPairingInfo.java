@@ -24,12 +24,12 @@ import org.apache.commons.logging.LogFactory;
 @RequestMapping("/") @Deprecated // no longer used/moved to pipeline-kickoff?
 public class GetPairingInfo {
 
-    private final ConnectionQueue connQueue; 
+    private final ConnectionPoolLIMS conn;
     private final GetSetOrReqPairs task;
     private final Log log = LogFactory.getLog(GetPairingInfo.class);
 
-    public GetPairingInfo( ConnectionQueue connQueue, GetSetOrReqPairs getPairs){
-        this.connQueue = connQueue;
+    public GetPairingInfo(ConnectionPoolLIMS conn, GetSetOrReqPairs getPairs){
+        this.conn = conn;
         this.task = getPairs;
     }
 
@@ -54,7 +54,7 @@ public class GetPairingInfo {
           log.info("Trying to access catergory mapping without specifying project or set");
           return typeToId;
        }
-       Future<Object> result = connQueue.submitTask(task);
+       Future<Object> result = conn.submitTask(task);
        try{
            typeToId = (List<HashMap<String, String>>)result.get();
         } catch(Exception e){
@@ -87,7 +87,7 @@ public class GetPairingInfo {
                log.info("Trying to access pairing info without specifying project or set");
                return typeToId;
             }
-            Future<Object> result = connQueue.submitTask(task);
+            Future<Object> result = conn.submitTask(task);
             try{
                 typeToId = (List<HashMap<String, String>>)result.get();
             } catch(Exception e){

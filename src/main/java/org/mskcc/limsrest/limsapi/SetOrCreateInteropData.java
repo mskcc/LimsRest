@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 public class SetOrCreateInteropData extends LimsTask {
 
     List<Map<String, Object>> data;
-    private Log log = LogFactory.getLog(SetOrCreateInteropData.class);
+    private static Log log = LogFactory.getLog(SetOrCreateInteropData.class);
 
     public void init(List<Map<String, Object>> data) {
         this.data = data;

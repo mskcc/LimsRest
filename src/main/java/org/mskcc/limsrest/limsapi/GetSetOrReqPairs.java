@@ -19,7 +19,7 @@ import org.apache.commons.logging.LogFactory;
 @Service @Deprecated
 public class GetSetOrReqPairs extends LimsTask
 {
-  private Log log = LogFactory.getLog(GetSetOrReqPairs.class);
+  private static Log log = LogFactory.getLog(GetSetOrReqPairs.class);
   protected String request;
   protected String set;
   protected String mapName;

@@ -6,7 +6,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.*;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.GenerateSampleCmoIdTask;
 import org.mskcc.limsrest.staticstrings.Constants;
 import org.mskcc.limsrest.util.Utils;
@@ -26,11 +26,11 @@ import java.util.concurrent.Future;
 public class GetCorrectedSampleCmoId {
     private static Log log = LogFactory.getLog(GetCorrectedSampleCmoId.class);
     private final static String DMP_SUFFIX = "Z";
-    private final ConnectionQueue connQueue;
+    private final ConnectionPoolLIMS conn;
     private final GenerateSampleCmoIdTask task;
 
-    public GetCorrectedSampleCmoId(ConnectionQueue connQueue, GenerateSampleCmoIdTask generateSampleCmoIdTask) {
-        this.connQueue = connQueue;
+    public GetCorrectedSampleCmoId(ConnectionPoolLIMS conn, GenerateSampleCmoIdTask generateSampleCmoIdTask) {
+        this.conn = conn;
         this.task = generateSampleCmoIdTask;
     }
 
@@ -51,7 +51,7 @@ public class GetCorrectedSampleCmoId {
             task.init(sampleIgoId);
 
             log.info("Getting result of Generate sample cmo id task");
-            Future<Object> result = connQueue.submitTask(task);
+            Future<Object> result = conn.submitTask(task);
 
             String correctedSampleCmoId = (String) result.get();
 
@@ -111,7 +111,7 @@ public class GetCorrectedSampleCmoId {
             task.init(correctedCmoSampleView);
 
             log.info("Getting result of Generate sample cmo id task");
-            Future<Object> result = connQueue.submitTask(task);
+            Future<Object> result = conn.submitTask(task);
 
             String correctedSampleCmoId = (String) result.get();
             log.info(String.format("Generated CMO Sample ID: %s", correctedSampleCmoId));
@@ -187,7 +187,7 @@ public class GetCorrectedSampleCmoId {
             task.init(correctedCmoSampleView);
 
             log.info("Getting result of Generate sample cmo id task");
-            Future<Object> result = connQueue.submitTask(task);
+            Future<Object> result = conn.submitTask(task);
 
             String correctedSampleCmoId = (String) result.get();
             log.info(String.format("Generated CMO Sample ID: %s", correctedSampleCmoId));
@@ -225,7 +225,7 @@ public class GetCorrectedSampleCmoId {
                 task.init(correctedCmoSampleView);
 
                 log.info("Getting result of Generate sample cmo id task");
-                Future<Object> result = connQueue.submitTask(task);
+                Future<Object> result = conn.submitTask(task);
 
                 String correctedSampleCmoId = (String) result.get();
                 log.info(String.format("Generated CMO Sample ID: %s", correctedSampleCmoId));

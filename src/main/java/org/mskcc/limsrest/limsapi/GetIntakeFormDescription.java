@@ -19,7 +19,7 @@ import org.apache.commons.logging.LogFactory;
 @Service
 public class GetIntakeFormDescription extends LimsTask
 {
-  private Log log = LogFactory.getLog(GetIntakeFormDescription.class);
+  private static Log log = LogFactory.getLog(GetIntakeFormDescription.class);
   private String type;
   private String request;
 

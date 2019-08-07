@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.LimsException;
 import org.mskcc.limsrest.limsapi.SetOrCreateBanked;
 import org.mskcc.limsrest.staticstrings.Messages;
@@ -18,12 +18,12 @@ import java.util.concurrent.Future;
 @RequestMapping("/")
 public class SetBankedSample {
     private static Log log = LogFactory.getLog(SetBankedSample.class);
-    private final ConnectionQueue connQueue;
+    private final ConnectionPoolLIMS conn;
     private final SetOrCreateBanked task;
 
 
-    public SetBankedSample(ConnectionQueue connQueue, SetOrCreateBanked banked) {
-        this.connQueue = connQueue;
+    public SetBankedSample(ConnectionPoolLIMS conn, SetOrCreateBanked banked) {
+        this.conn = conn;
         this.task = banked;
     }
 
@@ -142,7 +142,7 @@ public class SetBankedSample {
                 Integer.parseInt(rowIndex),
                 Long.parseLong(transactionId));
 
-        Future<Object> result = connQueue.submitTask(task);
+        Future<Object> result = conn.submitTask(task);
         String returnCode;
 
         try {

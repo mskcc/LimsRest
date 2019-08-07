@@ -13,7 +13,7 @@ import java.util.List;
  *
  */
 public class GetSampleManifestTask extends LimsTask {
-    private Log log = LogFactory.getLog(GetSampleManifestTask.class);
+    private static Log log = LogFactory.getLog(GetSampleManifestTask.class);
 
     protected String [] igoIds;
 

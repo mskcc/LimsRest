@@ -4,11 +4,27 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.NucleicAcid;
 import org.mskcc.limsrest.limsapi.PatientSamplesWithCmoInfoRetriever;
+import org.mskcc.util.CommonUtils;
 
 import java.util.Optional;
 
 public class Utils {
     private final static Log LOGGER = LogFactory.getLog(PatientSamplesWithCmoInfoRetriever.class);
+
+    public static void runAndCatchNpe(Runnable runnable) {
+        try {
+            runnable.run();
+        } catch (NullPointerException var2) {
+        }
+    }
+
+    public static String requireNonNullNorEmpty(String string, String message) {
+        if (string != null && !"".equals(string)) {
+            return string;
+        } else {
+            throw new RuntimeException(message);
+        }
+    }
 
     public static Optional<NucleicAcid> getOptionalNucleicAcid(String nucleicAcid, String sampleId) {
         try {

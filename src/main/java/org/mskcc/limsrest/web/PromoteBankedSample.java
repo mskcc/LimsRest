@@ -3,7 +3,7 @@ package org.mskcc.limsrest.web;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.LimsException;
 import org.mskcc.limsrest.limsapi.PromoteBanked;
 import org.mskcc.limsrest.staticstrings.Constants;
@@ -23,12 +23,12 @@ import java.util.concurrent.Future;
 @RequestMapping("/")
 public class PromoteBankedSample {
     private final static Log log = LogFactory.getLog(PromoteBankedSample.class);
-    private final ConnectionQueue connQueue;
+    private final ConnectionPoolLIMS conn;
     private final PromoteBanked task;
 
 
-    public PromoteBankedSample(ConnectionQueue connQueue, PromoteBanked banked) {
-        this.connQueue = connQueue;
+    public PromoteBankedSample(ConnectionPoolLIMS conn, PromoteBanked banked) {
+        this.conn = conn;
         this.task = banked;
     }
 
@@ -69,7 +69,7 @@ public class PromoteBankedSample {
         log.info("Creating task");
         task.init(bankedId, project, request, service, igoUser, dryrun);
         log.info("Getting result");
-        Future<Object> result = connQueue.submitTask(task);
+        Future<Object> result = conn.submitTask(task);
 
         ResponseEntity<String> returnCode;
 

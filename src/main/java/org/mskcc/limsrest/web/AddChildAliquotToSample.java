@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.AddChildSample;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,15 +14,15 @@ import java.io.StringWriter;
 import java.util.concurrent.Future;
 
 
-@RestController @RequestMapping("/")
+@RestController
+@RequestMapping("/")
 public class AddChildAliquotToSample {
-    private Log log = LogFactory.getLog(AddChildAliquotToSample.class);
-    private final ConnectionQueue connQueue;
-    private final AddChildSample task;
+    private static Log log = LogFactory.getLog(AddChildAliquotToSample.class);
+    private final ConnectionPoolLIMS conn;
+    private final AddChildSample task = new AddChildSample();
 
-    public AddChildAliquotToSample(ConnectionQueue connQueue, AddChildSample adder) {
-        this.connQueue = connQueue;
-        this.task = adder;
+    public AddChildAliquotToSample(ConnectionPoolLIMS conn) {
+        this.conn = conn;
     }
 
     @GetMapping("/addChildAliquotToSample")
@@ -35,7 +35,7 @@ public class AddChildAliquotToSample {
             return "FAILURE: sample is not using a valid format";
         log.info("Starting to add child aliquot to " + sample + " by" + igoUser);
         task.init(sample, status, additionalType, igoUser, childSample);
-        Future<Object> result = connQueue.submitTask(task);
+        Future<Object> result = conn.submitTask(task);
         try {
             return "Record Id:" + result.get();
         } catch (Exception e) {

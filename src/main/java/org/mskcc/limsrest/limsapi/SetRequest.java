@@ -1,6 +1,4 @@
-
 package org.mskcc.limsrest.limsapi;
-
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
@@ -14,16 +12,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 /**
  * A queued task that takes a request id and map of values and sets them 
  * 
  * @author Aaron Gabow
- * 
  */
 @Service
-public class SetRequest  extends LimsTask 
-{
+public class SetRequest extends LimsTask {
   String igoUser;
   String requestId;
   HashMap<String, Object> possibleRequestFields;
@@ -33,8 +28,6 @@ public class SetRequest  extends LimsTask
     this.requestId = requestId; 
     this.possibleRequestFields = requestFields;
   }
- //execute the velox call
-
 @PreAuthorize("hasRole('ADMIN')")
 @Override
  public Object execute(VeloxConnection conn){
@@ -74,8 +67,6 @@ public class SetRequest  extends LimsTask
            return Messages.ERROR_IN +  " SETTING REQUEST: " + e.getMessage() + "TRACE: " + sw.toString();   
   
   }
-
   return Messages.SUCCESS; 
  }
-
 }

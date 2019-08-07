@@ -4,6 +4,8 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -11,9 +13,10 @@ import java.util.List;
 /**
  * Find all studies/projects and list them 
  */
+@Service
 public class ListStudies extends LimsTask {
+    private static Log log = LogFactory.getLog(ListStudies.class);
     boolean cmoOnly = true;
-    private Log log = LogFactory.getLog(ListStudies.class);
 
     public void init(String cmoOnly) {
         if ("false".equals(cmoOnly.toLowerCase())) {
@@ -24,7 +27,6 @@ public class ListStudies extends LimsTask {
     @Override
     public Object execute(VeloxConnection conn) {
         LinkedList<ProjectSummary> allProjects = new LinkedList<>();
-
         try {
             List<DataRecord> limsProjectList = dataRecordManager.queryDataRecords("Project", null, user);
             for (DataRecord p : limsProjectList) {

@@ -12,7 +12,7 @@ import java.util.List;
  * Returns all IGO Complete QC records for a given sample.
  */
 public class GetIGOCompleteQCTask extends LimsTask {
-    private Log log = LogFactory.getLog(GetIGOCompleteQCTask.class);
+    private static Log log = LogFactory.getLog(GetIGOCompleteQCTask.class);
 
     protected String sampleId;
 

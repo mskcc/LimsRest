@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.GetIGOCompleteQCTask;
 import org.mskcc.limsrest.limsapi.SampleQcSummary;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,11 +18,11 @@ import java.util.concurrent.Future;
 public class GetIGOCompleteQC {
     private static Log log = LogFactory.getLog(GetIGOCompleteQC.class);
 
-    private final ConnectionQueue connQueue;
+    private final ConnectionPoolLIMS conn;
     private final GetIGOCompleteQCTask task = new GetIGOCompleteQCTask();
 
-    public GetIGOCompleteQC(ConnectionQueue connQueue) {
-        this.connQueue = connQueue;
+    public GetIGOCompleteQC(ConnectionPoolLIMS conn) {
+        this.conn = conn;
     }
 
     @GetMapping("/getIGOCompleteQC")
@@ -35,7 +35,7 @@ public class GetIGOCompleteQC {
         }
 
         task.init(sampleId);
-        Future<Object> result = connQueue.submitTask(task);
+        Future<Object> result = conn.submitTask(task);
         try {
             return (List<SampleQcSummary>) result.get();
         } catch (Exception e) {

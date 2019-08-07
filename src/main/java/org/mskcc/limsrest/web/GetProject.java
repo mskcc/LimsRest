@@ -20,12 +20,12 @@ import org.apache.commons.logging.LogFactory;
 @RequestMapping("/")
 public class GetProject {
     private static Log log = LogFactory.getLog(GetProject.class);
-    private final ConnectionQueue connQueue; 
+    private final ConnectionPoolLIMS conn;
     private final GetSamples task;
 
    
-    public GetProject( ConnectionQueue connQueue, GetSamples getSamples){
-        this.connQueue = connQueue;
+    public GetProject(ConnectionPoolLIMS conn, GetSamples getSamples){
+        this.conn = conn;
         this.task = getSamples;
     }
 
@@ -47,7 +47,7 @@ public class GetProject {
         log.info("Starting get PM project for projects: " + sb.toString());
 
        task.init(project, filter.toLowerCase());
-       Future<Object> result = connQueue.submitTask(task);
+       Future<Object> result = conn.submitTask(task);
        try{
          rss = (List<RequestSummary>)result.get();
        } catch(Exception e){

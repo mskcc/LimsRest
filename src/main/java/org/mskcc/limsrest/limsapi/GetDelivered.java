@@ -22,13 +22,13 @@ import java.util.Map;
  * 
  * @author Aaron Gabow
  */
-@Service
 public class GetDelivered extends LimsTask {
+    private static Log log = LogFactory.getLog(GetDelivered.class);
+
     final String ignoreTerm = "Under-Review";
     int time = 0;
     String units = "";
     String investigator = "";
-    private Log log = LogFactory.getLog(GetDelivered.class);
 
     public void init(int time, String units) {
         this.time = time;

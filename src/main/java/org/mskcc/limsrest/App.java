@@ -1,12 +1,12 @@
 package org.mskcc.limsrest;
 
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.web.server.WebServerFactoryCustomizer;
-import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.PropertySource;
@@ -28,8 +28,7 @@ import java.util.List;
 @EnableSwagger2
 @PropertySource({"classpath:/connect.txt", "classpath:/app.properties"})
 public class App extends SpringBootServletInitializer {
-
-    public static ConnectionQueue connQueue;
+    private static Log log = LogFactory.getLog(App.class);
 
     @Autowired
     private Environment env;
@@ -57,19 +56,20 @@ public class App extends SpringBootServletInitializer {
         SpringApplication.run(App.class, args);
     }
 
-    @PostConstruct
-    public void init() {
-        connQueue = connectionQueue();
-    }
 
     @Bean(destroyMethod = "cleanup")
-    public ConnectionQueue connectionQueue() {
+    public ConnectionPoolLIMS connectionQueue() {
         String host = env.getProperty("lims.host");
-        String port = env.getProperty("lims.port");
-        String user = env.getProperty("lims.user");
-        String pass = env.getProperty("lims.pword");
+        Integer port = Integer.parseInt(env.getProperty("lims.port"));
         String guid = env.getProperty("lims.guid");
-        return new ConnectionQueue(host, port, user, pass, guid);
+
+        String user1 = env.getProperty("lims.user1");
+        String pass1 = env.getProperty("lims.pword1");
+        String user2 = env.getProperty("lims.user2");
+        String pass2 = env.getProperty("lims.pword2");
+
+        log.info("Creating LIMS connection pool.");
+        return new ConnectionPoolLIMS(host, port, guid, user1, pass1, user2, pass2);
     }
 
     @Bean

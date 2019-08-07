@@ -2,7 +2,7 @@ package org.mskcc.limsrest.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionQueue;
+import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.mskcc.limsrest.limsapi.RenameSample;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,11 +18,11 @@ import java.util.concurrent.Future;
 @RequestMapping("/")
 public class SetSampleName {
     private final static Log log = LogFactory.getLog(SetSampleName.class);
-    private final ConnectionQueue connQueue; 
+    private final ConnectionPoolLIMS conn;
     private final RenameSample task;
    
-    public SetSampleName( ConnectionQueue connQueue, RenameSample renamer){
-        this.connQueue = connQueue;
+    public SetSampleName(ConnectionPoolLIMS conn, RenameSample renamer){
+        this.conn = conn;
         this.task = renamer;
     }
 
@@ -48,7 +48,7 @@ public class SetSampleName {
 
        task.init(igoUser, request,  igoId, newSampleId, newUserId); 
                          
-       Future<Object> result = connQueue.submitTask(task);
+       Future<Object> result = conn.submitTask(task);
        String returnCode = "";
        try{
          returnCode = "Sample Id:" + result.get();
