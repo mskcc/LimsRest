@@ -1,6 +1,4 @@
-
 package org.mskcc.limsrest.limsapi;
-
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
@@ -15,39 +13,37 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
 /**
  * A queued task that takes a sample name, sees if it has reached the sequencer and then renames the sample and any child records that reference the old name,  
  * including fixing pools with the name within the concatonated pool 
  *
  * @author Aaron Gabow
- * 
  */
 @Service
-public class RenameSample extends LimsTask 
-{
-  String oldSampleId;
-  String igoId;
-  String newSampleId;
-  String newUserId;
-  String requestId;
-  String igoUser;
-  int changeCount;
-  private static Log log = LogFactory.getLog(RenameSample.class);
-
-  public void init(String igoUser, String request,  String igoId, String newSampleId, String newUserId){
-    this.igoUser =  igoUser;                    
-    this.igoId = igoId;
-    this.newSampleId = newSampleId;
-    this.newUserId = newUserId;
-    this.requestId = request;
-     this.changeCount = 0;
-  }
- //execute the velox call
-@PreAuthorize("hasRole('ADMIN')")
-@Override
- public Object execute(VeloxConnection conn){
+public class RenameSample extends LimsTask {
+    private static Log log = LogFactory.getLog(RenameSample.class);
+    String oldSampleId;
+    String igoId;
+    String newSampleId;
+    String newUserId;
+    String requestId;
+    String igoUser;
+    int changeCount;
 
 
+    public void init(String igoUser, String request, String igoId, String newSampleId, String newUserId) {
+        this.igoUser = igoUser;
+        this.igoId = igoId;
+        this.newSampleId = newSampleId;
+        this.newUserId = newUserId;
+        this.requestId = request;
+        this.changeCount = 0;
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @Override
+    public Object execute(VeloxConnection conn) {
   //first make sure that there is a sample with the old name in the request
   //then make sure that there isn't a sample with the new name already in this request or any requests that children samples belong to
   try { 
@@ -89,41 +85,6 @@ public class RenameSample extends LimsTask
         }
     } else{
         return "No longer supported. Must use the Igo Id for the sample";
-        /*
-        List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request",  "RequestId = '" + requestId + "'", user);
-        if(requestList.size() != 1){
-            return "ERROR: The request id must match exactly one request";
-        }
-        DataRecord matchRequest = requestList.get(0);
-        DataRecord[] plates = matchRequest.getChildrenOfType("Plate", user);
-        if(plates.length != 0){
-            for(int i = 0; i < plates.length; i++){
-                DataRecord[] plateSamples = plates[i].getChildrenOfType("Sample", user);
-                for(int j = 0; j < plateSamples.length; j++){
-                    try{
-                        if( oldSampleId.equals(plateSamples[i].getStringVal("OtherSampleId", user))){
-                            root = plateSamples[i];
-                        } else{
-                            requestSamples.add(plateSamples[i]);
-                        }
-                    }catch(NullPointerException npe){}
-
-                }
-            }
-        }
-        DataRecord[] samps = matchRequest.getChildrenOfType("Sample", user);
-        for(int i = 0; i< samps.length; i++){
-            try{
-                if(root == null && oldSampleId.equals(samps[i].getStringVal("OtherSampleId", user))){
-                    root = samps[i];
-                } else if( oldSampleId.equals(samps[i].getStringVal("OtherSampleId", user))){
-                   return "ERROR: Multiple samples match old sample name, making mapping ambiguous. Please use igo ids instead";
-                } else{
-                    requestSamples.add(samps[i]);
-                }
-            }catch(NullPointerException npe){}      
-        }
-    */
     }
     
     if(root == null){
@@ -191,18 +152,14 @@ public class RenameSample extends LimsTask
 
      //need to fix any records that reference that aren't descendants that reference the sample id. We probably don't want to change pairing.
     dataRecordManager.storeAndCommit( "Change the previous sample name to " + newSampleId + " in request " + requestId + " by user " + igoUser, user);
-
-
   } catch (Throwable e) {
           StringWriter sw = new StringWriter();
           PrintWriter pw = new PrintWriter(sw);
           e.printStackTrace(pw);
           log.info(e.getMessage() + " TRACE: " + sw.toString());
-          return "ERROR IN RENAMING SAMPLE SAMPLE: " + e.getMessage() ;   
-  
+          return "ERROR IN RENAMING SAMPLE SAMPLE: " + e.getMessage() ;
   }
 
   return "SUCCESS: Changed " + changeCount + " records.";
  }
-
 }

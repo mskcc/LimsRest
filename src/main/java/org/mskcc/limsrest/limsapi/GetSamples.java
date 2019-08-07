@@ -1,4 +1,3 @@
-
 package org.mskcc.limsrest.limsapi;
 
 import com.velox.api.datarecord.DataRecord;
@@ -8,14 +7,11 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
 
 /**
  * A queued task that takes a request id and returns all some request information and some sample information 
@@ -24,8 +20,8 @@ import java.util.Map;
  */
 @Service
 public class GetSamples extends LimsTask {
-    protected String[] projects;
     private static Log log = LogFactory.getLog(GetSamples.class);
+    protected String[] projects;
     private boolean filter;
 
     public void init(final String[] projects, final String filter) {
