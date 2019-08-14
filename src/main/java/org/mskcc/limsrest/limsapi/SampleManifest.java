@@ -15,6 +15,7 @@ public class SampleManifest {
     private String preservation;
     private String collectionYear;
     private String gender;
+    private String species;
 
     private String baitSet;
 
@@ -60,6 +61,9 @@ public class SampleManifest {
 
     public SampleManifest() {}
 
+    public String getSpecies() { return species; }
+
+    public void setSpecies(String species) { this.species = species; }
 
     public String getTumorOrNormal() {
         return tumorOrNormal;
@@ -89,9 +93,7 @@ public class SampleManifest {
         return investigatorSampleId;
     }
 
-    public void setInvestigatorSampleId(String investigatorSampleId) {
-        this.investigatorSampleId = investigatorSampleId;
-    }
+    public void setInvestigatorSampleId(String investigatorSampleId) { this.investigatorSampleId = investigatorSampleId; }
 
     public String getOncoTreeCode() {
         return oncoTreeCode;
