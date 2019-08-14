@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import static org.mskcc.limsrest.util.Utils.runAndCatchNpe;
+
 /**
  *
  */
@@ -30,7 +32,7 @@ public class GetRequestSamplesTask extends LimsTask {
             List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + this.requestId + "'", this.user);
             if (requestList.size() != 1) {  // error: request ID not found or more than one found
                 log.error("Request not found:" + requestId);
-                return new RequestSampleList("NOT_FOUND", null);
+                return new RequestSampleList("NOT_FOUND");
             }
 
             // get set of all samples in that request that are "IGO Complete"
@@ -58,6 +60,15 @@ public class GetRequestSamplesTask extends LimsTask {
             }
 
             RequestSampleList rsl = new RequestSampleList(requestId, sampleList);
+            // "PIemail"
+            rsl.setLabHeadName(requestDataRecord.getStringVal("LaboratoryHead", user));
+            rsl.setLabHeadEmail(requestDataRecord.getStringVal("LabHeadEmail", user));
+            rsl.setProjectManagerName(requestDataRecord.getStringVal("ProjectManager", user));
+
+            rsl.setInvestigatorName(requestDataRecord.getStringVal("Investigator", user));
+            rsl.setInvestigatorEmail(requestDataRecord.getStringVal("Investigatoremail", user));
+            rsl.setDataAnalystName(requestDataRecord.getStringVal("DataAnalyst", user));
+            rsl.setDataAnalystEmail(requestDataRecord.getStringVal("DataAnalystEmail", user));
             log.info("Result size: " + sampleList.size() + " tumors only:" + tumorOnly);
             return rsl;
         } catch (Throwable e) {
@@ -85,12 +96,19 @@ public class GetRequestSamplesTask extends LimsTask {
 
     public static class RequestSampleList {
         public String requestId;
+        public String projectManagerName;
+        public String labHeadName, labHeadEmail;
+        public String investigatorName, investigatorEmail;
+        public String dataAnalystName, dataAnalystEmail;
+
         public List<RequestSample> samples;
 
         public RequestSampleList(){}
-        public RequestSampleList(String requestId, List<RequestSample> list) {
+        public RequestSampleList(String requestId){ this.requestId = requestId; }
+
+        public RequestSampleList(String requestId, List<RequestSample> samples) {
             this.requestId = requestId;
-            this.samples = list;
+            this.samples = samples;
         }
 
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -107,6 +125,60 @@ public class GetRequestSamplesTask extends LimsTask {
         }
         public void setSamples(List<RequestSample> samples) {
             this.samples = samples;
+        }
+        public String getProjectManagerName() {
+            return projectManagerName;
+        }
+
+        public void setProjectManagerName(String projectManagerName) {
+            this.projectManagerName = projectManagerName;
+        }
+
+        public String getInvestigatorName() {
+            return investigatorName;
+        }
+
+        public void setInvestigatorName(String investigatorName) {
+            this.investigatorName = investigatorName;
+        }
+
+        public String getInvestigatorEmail() {
+            return investigatorEmail;
+        }
+
+        public void setInvestigatorEmail(String investigatorEmail) {
+            this.investigatorEmail = investigatorEmail;
+        }
+
+        public String getDataAnalystName() {
+            return dataAnalystName;
+        }
+
+        public void setDataAnalystName(String dataAnalystName) {
+            this.dataAnalystName = dataAnalystName;
+        }
+
+        public String getDataAnalystEmail() {
+            return dataAnalystEmail;
+        }
+
+        public void setDataAnalystEmail(String dataAnalystEmail) {
+            this.dataAnalystEmail = dataAnalystEmail;
+        }
+        public String getLabHeadName() {
+            return labHeadName;
+        }
+
+        public void setLabHeadName(String labHeadName) {
+            this.labHeadName = labHeadName;
+        }
+
+        public String getLabHeadEmail() {
+            return labHeadEmail;
+        }
+
+        public void setLabHeadEmail(String labHeadEmail) {
+            this.labHeadEmail = labHeadEmail;
         }
     }
 
