@@ -25,6 +25,7 @@ import org.mskcc.limsrest.service.cmoinfo.retriever.FormattedCmoSampleIdRetrieve
 import org.mskcc.limsrest.service.cmoinfo.retriever.IncrementalSampleCounterRetriever;
 import org.mskcc.limsrest.service.converter.SampleRecordToSampleConverter;
 import org.mskcc.util.CommonUtils;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
@@ -36,6 +37,7 @@ import static org.mskcc.domain.sample.SpecimenType.CELLLINE;
  * SampleTypeCorrectedCmoSampleGenerator generates CMO Sample ID for both Cell line and non-Cell line samples.
  * In case of Cmo Sample Id generation error notification will be sent.
  */
+@Service
 public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSampleIdGenerator {
     private final static Log LOGGER = LogFactory.getLog(SampleTypeCorrectedCmoSampleIdGenerator.class);
 
@@ -51,7 +53,7 @@ public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSamp
     public SampleTypeCorrectedCmoSampleIdGenerator() {
     }
 
-    @Override // TODO review synchronized
+    @Override
     public synchronized String generate(CorrectedCmoSampleView correctedCmoSampleView, String requestId,
                                         DataRecordManager dataRecordManager, User user) {
         LOGGER.info(String.format("Generating cmo id for view: %s", correctedCmoSampleView));

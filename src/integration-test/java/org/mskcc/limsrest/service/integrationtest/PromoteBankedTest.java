@@ -116,8 +116,7 @@ public class PromoteBankedTest {
 
             connection = getVeloxConnection(connectionTest);
             openConnection();
-
-            promoteBanked.setVeloxConnection(getVeloxConnection(connectionPromoteBanked));
+            //promoteBanked.setVeloxConnection(getVeloxConnection(connectionPromoteBanked));
 
             try {
                 cleanupTestingRecords(projectRecord);

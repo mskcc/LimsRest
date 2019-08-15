@@ -1,5 +1,7 @@
 package org.mskcc.limsrest.service;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.NotFound;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
@@ -8,6 +10,8 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.TreeSet;
 
@@ -18,14 +22,14 @@ import java.util.TreeSet;
  */
 @Service
 public class GetProjectHistory extends LimsTask {
-  private static Log log = LogFactory.getLog(GetProjectHistory.class);
+    private static Log log = LogFactory.getLog(GetProjectHistory.class);
 
-  protected String[] projects;
+    protected String[] projects;
 
-  public void init(String[] projects){
-    if(projects != null)
-        this.projects = projects.clone();
-  }
+    public void init(String[] projects) {
+        if (projects != null)
+            this.projects = projects.clone();
+    }
 
     @PreAuthorize("hasRole('READ')")
     @Override
@@ -120,4 +124,122 @@ public class GetProjectHistory extends LimsTask {
 
         return known;
     }
+
+    public static class HistoricalEvent extends RestDescriptor implements Comparable {
+        public GregorianCalendar start;
+        public GregorianCalendar end;
+        String taskName;
+        String requestId;
+
+        public HistoricalEvent(long startInMS, long endInMS, String requestId, String taskName) {
+            this.start = new GregorianCalendar();
+            this.end = new GregorianCalendar();
+            start.setTimeInMillis(startInMS);
+            end.setTimeInMillis(endInMS);
+            this.requestId = requestId;
+            this.taskName = taskName;
+
+        }
+
+        public int compCal(Calendar c1, Calendar c2) {
+            if (c1 == c2) return 0;
+            if (c1.get(Calendar.YEAR) > c2.get(Calendar.YEAR)) {
+                return 1;
+            } else if (c1.get(Calendar.YEAR) < c2.get(Calendar.YEAR)) {
+                return -1;
+            } else {
+                if (c1.get(Calendar.MONTH) > c2.get(Calendar.MONTH)) {
+                    return 1;
+                } else if (c1.get(Calendar.MONTH) < c2.get(Calendar.MONTH)) {
+                    return -1;
+                } else {
+                    if (c1.get(Calendar.DAY_OF_MONTH) > c2.get(Calendar.DAY_OF_MONTH)) {
+                        return 1;
+                    } else if (c1.get(Calendar.DAY_OF_MONTH) < c2.get(Calendar.DAY_OF_MONTH)) {
+                        return -1;
+                    } else {
+                        return 0;
+                    }
+                }
+            }
+
+        }
+
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
+        public String getRequestId() {
+            return requestId;
+        }
+
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
+        public String getStartDate() {
+            StringBuffer sb = new StringBuffer();
+            sb.append(start.get(Calendar.YEAR));
+            sb.append("-");
+            sb.append(start.get(Calendar.MONTH) + 1);
+            sb.append("-");
+            sb.append(start.get(Calendar.DAY_OF_MONTH));
+            return sb.toString();
+        }
+
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
+        public String getEndDate() {
+            if (end.get(Calendar.YEAR) < 1980) {
+                return "";
+            }
+            StringBuffer sb = new StringBuffer();
+            sb.append(end.get(Calendar.YEAR));
+            sb.append("-");
+            sb.append(end.get(Calendar.MONTH) + 1);
+            sb.append("-");
+            sb.append(end.get(Calendar.DAY_OF_MONTH));
+            return sb.toString();
+        }
+
+        @JsonIgnore
+        public GregorianCalendar getStart() {
+            return start;
+        }
+
+        @JsonIgnore
+        public GregorianCalendar getEnd() {
+            return end;
+        }
+
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
+        public String getTaskName() {
+            return taskName;
+        }
+
+        @Override
+        public int compareTo(Object o) {
+            if (this == o) return 0;
+            final HistoricalEvent h = (HistoricalEvent) o;
+
+            if (compCal(start, h.getStart()) == 1) {
+                return 1;
+            } else if (compCal(start, h.getStart()) == -1) {
+                return -1;
+            } else if (compCal(end, h.getEnd()) == 1) {
+                return 1;
+            } else if (compCal(end, h.getEnd()) == -1) {
+                return -1;
+            } else {
+                return taskName.compareTo(h.getTaskName());
+            }
+
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null) return false;
+            if (this.getClass() != o.getClass()) return false;
+            return equals((HistoricalEvent) o);
+        }
+
+        public boolean equals(HistoricalEvent h) {
+            return (compCal(start, h.getStart()) == 0 && compCal(end, h.getEnd()) == 0 && taskName.equals(h.getTaskName()));
+        }
+    }
+
 }

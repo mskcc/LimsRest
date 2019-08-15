@@ -6,6 +6,7 @@ import java.util.List;
 public class SampleManifest {
     private String igoId;
 
+    private String cmoSampleId;
     private String cmoPatientId;
     private String investigatorSampleId;
     private String oncoTreeCode;
@@ -60,6 +61,10 @@ public class SampleManifest {
     }
 
     public SampleManifest() {}
+
+    public String getCmoSampleId() { return cmoSampleId; }
+
+    public void setCmoSampleId(String cmoSampleId) { this.cmoSampleId = cmoSampleId; }
 
     public String getSpecies() { return species; }
 

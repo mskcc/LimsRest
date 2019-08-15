@@ -13,13 +13,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.*;
 import org.mskcc.limsrest.service.cmoinfo.CorrectedCmoSampleIdGenerator;
-import org.mskcc.limsrest.service.cmoinfo.SampleTypeCorrectedCmoSampleIdGenerator;
 import org.mskcc.limsrest.service.cmoinfo.converter.BankedSampleToCorrectedCmoSampleIdConverter;
 import org.mskcc.limsrest.service.cmoinfo.converter.CorrectedCmoIdConverter;
 import org.mskcc.limsrest.service.promote.BankedSampleToSampleConverter;
 import org.mskcc.limsrest.util.Constants;
 import org.mskcc.limsrest.util.Messages;
 import org.mskcc.limsrest.util.Utils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,7 +48,8 @@ public class PromoteBanked extends LimsTask {
     private static final HumanSamplePredicate humanSamplePredicate = new HumanSamplePredicate();
 
     private final CorrectedCmoIdConverter<BankedSample> bankedSampleToCorrectedCmoSampleIdConverter = new BankedSampleToCorrectedCmoSampleIdConverter();
-    private final CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator = new SampleTypeCorrectedCmoSampleIdGenerator();
+    @Autowired
+    private CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator;
     private final BankedSampleToSampleConverter bankedSampleToSampleConverter = new BankedSampleToSampleConverter();
 
     String[] bankedIds;
