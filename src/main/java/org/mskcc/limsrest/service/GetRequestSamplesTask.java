@@ -58,7 +58,7 @@ public class GetRequestSamplesTask extends LimsTask {
             }
 
             RequestSampleList rsl = new RequestSampleList(requestId, sampleList);
-            // "PIemail"
+            rsl.setPiEmail(requestDataRecord.getStringVal("PIemail", user));
             rsl.setLabHeadName(requestDataRecord.getStringVal("LaboratoryHead", user));
             rsl.setLabHeadEmail(requestDataRecord.getStringVal("LabHeadEmail", user));
             rsl.setProjectManagerName(requestDataRecord.getStringVal("ProjectManager", user));
@@ -95,6 +95,7 @@ public class GetRequestSamplesTask extends LimsTask {
     public static class RequestSampleList {
         public String requestId;
         public String projectManagerName;
+        public String piEmail;
         public String labHeadName, labHeadEmail;
         public String investigatorName, investigatorEmail;
         public String dataAnalystName, dataAnalystEmail;
@@ -126,6 +127,14 @@ public class GetRequestSamplesTask extends LimsTask {
         }
         public String getProjectManagerName() {
             return projectManagerName;
+        }
+
+        public String getPiEmail() {
+            return piEmail;
+        }
+
+        public void setPiEmail(String piEmail) {
+            this.piEmail = piEmail;
         }
 
         public void setProjectManagerName(String projectManagerName) {
