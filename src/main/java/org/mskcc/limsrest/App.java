@@ -2,7 +2,6 @@ package org.mskcc.limsrest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.connection.ConnectionPoolLIMS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -11,6 +10,9 @@ import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.builders.PathSelectors;
@@ -21,7 +23,6 @@ import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
-import javax.annotation.PostConstruct;
 import java.util.List;
 
 @SpringBootApplication
@@ -51,11 +52,9 @@ public class App extends SpringBootServletInitializer {
     @Value("#{'${human.recipes}'.split(',')}")
     private List<String> humanRecipes;
 
-
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
     }
-
 
     @Bean(destroyMethod = "cleanup")
     public ConnectionPoolLIMS connectionQueue() {

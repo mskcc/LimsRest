@@ -20,7 +20,7 @@ public class ConnectionPoolLIMS {
 
     public VeloxConnection getConnection() {
         // use the connection that is not busy (current logic prefers conn1)
-        if (conn1.isConnected()) {
+        if (conn1.isConnected()) { // TODO check other connection is open or it must be since only 2 threads?
             System.out.println("USING CONNECTION 2");
             return conn2;
         } else {
