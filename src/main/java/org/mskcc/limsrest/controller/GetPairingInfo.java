@@ -21,7 +21,7 @@ import org.apache.commons.logging.LogFactory;
 
 
 @RestController
-@RequestMapping("/") @Deprecated // no longer used/moved to pipeline-kickoff?
+@RequestMapping("/") @Deprecated // no longer used/moved to pipeline-kickoff
 public class GetPairingInfo {
 
     private final ConnectionPoolLIMS conn;
