@@ -3,7 +3,7 @@ package org.mskcc.limsrest.util;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.NucleicAcid;
-import org.mskcc.limsrest.limsapi.PatientSamplesWithCmoInfoRetriever;
+import org.mskcc.limsrest.service.PatientSamplesWithCmoInfoRetriever;
 
 import java.util.Optional;
 

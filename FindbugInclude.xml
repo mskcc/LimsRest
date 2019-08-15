@@ -1,16 +1,16 @@
 <FindBugsFilter>
   <Match>
-    <Class name="org.mskcc.limsrest.limsapi.GetPassingSamples" />
+    <Class name="org.mskcc.limsrest.service.GetPassingSamples" />
     <Method name="execute" />
     <Bug code="RCN" />
   </Match>
   <Match>
-    <Class name="org.mskcc.limsrest.limsapi.HistoricalEvent" />
+    <Class name="org.mskcc.limsrest.service.HistoricalEvent" />
     <Method name="equals" />
     <Bug code="HE" />
   </Match>
   <Match>
-    <Class name="org.mskcc.limsrest.limsapi.GetProjectHistory" />
+    <Class name="org.mskcc.limsrest.service.GetProjectHistory" />
     <Method name="execute" />
     <Bug code="DE" />
   </Match>
