@@ -4,7 +4,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionPoolLIMS;
 import org.mskcc.limsrest.service.GetProjectHistory;
-import org.mskcc.limsrest.service.HistoricalEvent;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -31,8 +30,8 @@ public class GetTimelines {
     }
 
     @GetMapping("/getTimeline")
-    public LinkedList<HistoricalEvent> getContent(@RequestParam(value = "project") String[] project) {
-        LinkedList<HistoricalEvent> timeline = new LinkedList<>();
+    public LinkedList<GetProjectHistory.HistoricalEvent> getContent(@RequestParam(value = "project") String[] project) {
+        LinkedList<GetProjectHistory.HistoricalEvent> timeline = new LinkedList<>();
         for (int i = 0; i < project.length; i++) {
             if (!Whitelists.requestMatches(project[i])) {
                 return timeline;
@@ -42,7 +41,7 @@ public class GetTimelines {
         task.init(project);
         Future<Object> result = conn.submitTask(task);
         try {
-            timeline = new LinkedList((Set<HistoricalEvent>) result.get());
+            timeline = new LinkedList((Set<GetProjectHistory.HistoricalEvent>) result.get());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
