@@ -8,6 +8,7 @@ import org.mskcc.limsrest.service.LimsTask;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,7 +24,7 @@ public class GetInterOpsDataTask extends LimsTask {
 
     @Override
     public Object execute(VeloxConnection conn) {
-        List<Map<String, Object>> interOps = new ArrayList<>();
+        List<Map<String, String>> interOps = new ArrayList<>();
         try {
             List<DataRecord> interOpsRecords = dataRecordManager.queryDataRecords("InterOpsDatum","i_Runwithnumberprefixremoved LIKE'%" + runId + "%'" , user);
 
@@ -35,12 +36,21 @@ public class GetInterOpsDataTask extends LimsTask {
 
             for (DataRecord  record: interOpsRecords) {
                 Map<String, Object> fields = record.getFields(user);
-                interOps.add(fields);
+                Map<String, String> fieldsMap = new HashMap<>();
+                fields.forEach((k, v) -> fieldsMap.put(k, toString(v)));
+
+                interOps.add(fieldsMap);
             }
 
         } catch (Exception e) {
             log.error(String.format("Error while retrieving InterOpsDatum for run id: %s", runId), e);
         }
         return interOps;
+    }
+
+    public static String toString(Object x) {
+        if (x == null)
+            return null;
+        return x.toString();
     }
 }
