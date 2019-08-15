@@ -61,6 +61,8 @@ public class GetSampleManifestTask extends LimsTask {
                 s.setGender(cmoInfo.getStringVal("Gender", user));
                 s.setSpecies(cmoInfo.getStringVal("Species", user));
 
+                s.setCmoSampleId(cmoInfo.getStringVal("CorrectedCMOID", user));
+
                 // library concentration & volume
                 // often null in samplecmoinforecords then query KAPALibPlateSetupProtocol1.TargetMassAliq1
                 //String dmpLibraryInput = cmoInfo.getStringVal("DMPLibraryInput", user); // often null
