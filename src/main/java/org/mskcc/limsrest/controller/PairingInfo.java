@@ -17,55 +17,56 @@ import java.util.concurrent.Future;
 
 
 @RestController
-@RequestMapping("/")
+@RequestMapping("/") @Deprecated
 public class PairingInfo {
     private static Log log = LogFactory.getLog(PairingInfo.class);
+
     private final ConnectionPoolLIMS conn;
     private final SetPairing task;
-   
-    public PairingInfo(ConnectionPoolLIMS conn, SetPairing setter){
+
+    public PairingInfo(ConnectionPoolLIMS conn, SetPairing setter) {
         this.conn = conn;
         this.task = setter;
     }
 
-    @RequestMapping(value="/pairingInfo",  method = RequestMethod.POST)
-    public ResponseEntity<String> getContent(@RequestParam(value="request") String request, @RequestParam(value="igoUser") String igoUser, 
-                           @RequestParam(value="user") String user, 
-                           @RequestParam(value="tumorId", required=false) String tumorId, @RequestParam(value="normalId", required=false) String normalId,
-                           @RequestParam(value="tumorIgoId", required=false) String tumorIgoId, @RequestParam(value="normalIgoId", required=false) String normalIgoId){
+    @RequestMapping(value = "/pairingInfo", method = RequestMethod.POST)
+    public ResponseEntity<String> getContent(@RequestParam(value = "request") String request, @RequestParam(value = "igoUser") String igoUser,
+                                             @RequestParam(value = "user") String user,
+                                             @RequestParam(value = "tumorId", required = false) String tumorId, @RequestParam(value = "normalId", required = false) String normalId,
+                                             @RequestParam(value = "tumorIgoId", required = false) String tumorIgoId, @RequestParam(value = "normalIgoId", required = false) String normalIgoId) {
 
-       if(!Whitelists.textMatches(igoUser))
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("igoUser is not using a valid format. " + Whitelists.requestFormatText());
-       if(!Whitelists.requestMatches(request)){
-           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("requestId is not using a valid format. " + Whitelists.requestFormatText());
-        } 
-        if(tumorId != null && !Whitelists.textMatches(tumorId)){
-           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("tumorId is not using a valid format. " + Whitelists.textFormatText());
+        if (!Whitelists.textMatches(igoUser))
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("igoUser is not using a valid format. " + Whitelists.requestFormatText());
+        if (!Whitelists.requestMatches(request)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("requestId is not using a valid format. " + Whitelists.requestFormatText());
         }
-        if(normalId != null && !Whitelists.textMatches(normalId)){
-           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("normalId is not using a valid format. " + Whitelists.textFormatText());
+        if (tumorId != null && !Whitelists.textMatches(tumorId)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("tumorId is not using a valid format. " + Whitelists.textFormatText());
         }
-        if(tumorIgoId != null && !Whitelists.sampleMatches(tumorIgoId)){
-           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("tumorIgoId is not using a valid format. " + Whitelists.sampleFormatText());
+        if (normalId != null && !Whitelists.textMatches(normalId)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("normalId is not using a valid format. " + Whitelists.textFormatText());
         }
-        if(normalIgoId != null && !Whitelists.sampleMatches(normalIgoId)){
-           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("normalIgoId is not using a valid format. " + Whitelists.sampleFormatText());
+        if (tumorIgoId != null && !Whitelists.sampleMatches(tumorIgoId)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("tumorIgoId is not using a valid format. " + Whitelists.sampleFormatText());
         }
-       log.info("starting pairing with request " + request + " tumorId " + tumorId + " normalId " + normalId + " tumorIgoId " + tumorIgoId + " normalIgoId " + normalIgoId);
-       task.init(igoUser, request, tumorId, normalId, tumorIgoId, normalIgoId); 
-                         
-       Future<Object> result = conn.submitTask(task);
-       String returnCode = "";
-       try{
-         returnCode =  (String)result.get();
-       } catch(Exception e){
-         StringWriter sw = new StringWriter();
-         PrintWriter pw = new PrintWriter(sw);
-         e.printStackTrace(pw);
-         returnCode =  e.getMessage() + "\nTRACE: " + sw.toString();
-         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(returnCode);
-                    
-       }
-       return ResponseEntity.ok(returnCode); 
+        if (normalIgoId != null && !Whitelists.sampleMatches(normalIgoId)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("normalIgoId is not using a valid format. " + Whitelists.sampleFormatText());
+        }
+        log.info("/pairingInfo starting pairing with request " + request + " tumorId " + tumorId + " normalId " + normalId + " tumorIgoId " + tumorIgoId + " normalIgoId " + normalIgoId);
+        task.init(igoUser, request, tumorId, normalId, tumorIgoId, normalIgoId);
+
+        Future<Object> result = conn.submitTask(task);
+        String returnCode = "";
+        try {
+            returnCode = (String) result.get();
+        } catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            returnCode = e.getMessage() + "\nTRACE: " + sw.toString();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(returnCode);
+
+        }
+        return ResponseEntity.ok(returnCode);
     }
 }
