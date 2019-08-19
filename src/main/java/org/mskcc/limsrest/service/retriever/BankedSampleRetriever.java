@@ -12,12 +12,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class VeloxLimsDataRetriever implements LimsDataRetriever {
+public class BankedSampleRetriever implements LimsDataRetriever {
     @Override
     public List<BankedSample> getBankedSamples(String query, DataRecordManager dataRecordManager, User user) throws
             NotFound, IoError, RemoteException {
-        List<DataRecord> dataRecords = dataRecordManager.queryDataRecords(BankedSample.DATA_TYPE_NAME,
-                query, user);
+        List<DataRecord> dataRecords = dataRecordManager.queryDataRecords(BankedSample.DATA_TYPE_NAME, query, user);
 
         List<BankedSample> bankedSamples = new ArrayList<>();
         for (DataRecord dataRecord : dataRecords) {
