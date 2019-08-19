@@ -5,7 +5,6 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionPoolLIMS;
 import org.mskcc.limsrest.service.ListStudies;
 import org.mskcc.limsrest.service.ProjectSummary;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,7 +26,7 @@ public class GetAllStudies {
         this.task = task;
     }
 
-    @GetMapping("/getAllStudies")
+    @RequestMapping("/getAllStudies")
     public List<ProjectSummary> getContent(@RequestParam(value = "cmoOnly", defaultValue = "NULL") String cmoOnly) {
         log.info("Starting /getAllStudies");
         task.init(cmoOnly);

@@ -8,7 +8,7 @@ import org.mskcc.limsrest.service.LimsTask;
 import org.mskcc.limsrest.service.converter.ExternalToBankedSampleConverter;
 import org.mskcc.limsrest.service.dmp.converter.DMPSampleToCMOBankedSampleConverter;
 import org.mskcc.limsrest.service.retriever.LimsDataRetriever;
-import org.mskcc.limsrest.service.retriever.VeloxLimsDataRetriever;
+import org.mskcc.limsrest.service.retriever.BankedSampleRetriever;
 import org.mskcc.limsrest.service.store.RecordSaver;
 import org.mskcc.limsrest.service.store.VeloxRecordSaver;
 import org.mskcc.limsrest.util.Messages;
@@ -28,11 +28,21 @@ public class GenerateBankedSamplesFromDMP extends LimsTask {
     //TODO set string normally
     protected DMPSamplesRetriever dmpSamplesRetriever = new WebServiceDMPSamplesRetriever("http://plvpathhydra1.mskcc.org:8001/");
     protected RecordSaver recordSaver = new VeloxRecordSaver();
-    protected LimsDataRetriever limsDataRetriever = new VeloxLimsDataRetriever();
+    protected LimsDataRetriever limsDataRetriever = new BankedSampleRetriever();
 
     private LocalDate date;
 
     public GenerateBankedSamplesFromDMP() {
+    }
+
+    public void setLimsDataRetriever(LimsDataRetriever limsDataRetriever) {
+        this.limsDataRetriever = limsDataRetriever;
+    }
+    public void setDmpSamplesRetriever(DMPSamplesRetriever dmpSamplesRetriever) {
+        this.dmpSamplesRetriever = dmpSamplesRetriever;
+    }
+    public void setRecordSaver(RecordSaver recordSaver) {
+        this.recordSaver = recordSaver;
     }
 
     public void setDate(LocalDate date) {

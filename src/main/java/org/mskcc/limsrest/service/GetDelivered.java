@@ -250,6 +250,7 @@ public class GetDelivered extends LimsTask {
             RequestSummary errorRs = new RequestSummary();
             delivered.add(errorRs);
         }
+        log.info("GetDelivered completed.");
         return delivered;
     }
 }

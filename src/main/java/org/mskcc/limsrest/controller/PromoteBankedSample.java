@@ -9,7 +9,6 @@ import org.mskcc.limsrest.service.PromoteBanked;
 import org.mskcc.limsrest.util.Constants;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,7 +32,7 @@ public class PromoteBankedSample {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/promoteBankedSample")
+    @RequestMapping("/promoteBankedSample")  // POST called by REX
     public ResponseEntity<String> getContent(@RequestParam(value = "bankedId") String[] bankedId,
                                              @RequestParam(value = "user") String user,
                                              @RequestParam(value = "requestId", defaultValue = "NULL") String request,
@@ -41,7 +40,7 @@ public class PromoteBankedSample {
                                              @RequestParam(value = "serviceId") String service,
                                              @RequestParam(value = "igoUser") String igoUser,
                                              @RequestParam(value = "dryrun", defaultValue = "false") String dryrun) {
-        log.info("Starting to promote banked sample " + bankedId[0] + " to request " + request + ":" + service + ":"
+        log.info("Starting /promoteBankedSample " + bankedId[0] + " to request " + request + ":" + service + ":"
                 + project + " by service " + user + " and igo user: " + igoUser);
 
         for (String bid : bankedId) {

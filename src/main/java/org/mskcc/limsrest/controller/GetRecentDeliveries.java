@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -31,8 +32,10 @@ public class GetRecentDeliveries {
     @GetMapping("/getRecentDeliveries")
     public List<RequestSummary> getContent(@RequestParam(value = "time", defaultValue = "NULL") String time,
                                            @RequestParam(value = "units", defaultValue = "NULL") String units,
-                                           @RequestParam(value = "investigator", defaultValue = "NULL") String investigator) {
-        log.info("Starting get recent deliveries since " + time);
+                                           @RequestParam(value = "investigator", defaultValue = "NULL") String investigator,
+                                           HttpServletRequest request) {
+        log.info("/getRecentDeliveries client IP:" + request.getRemoteAddr());
+        log.info("Starting /getRecentDeliveries?time=" + time + "&units="+units);
 
         if (!time.equals("NULL") && !investigator.equals("NULL")) {
             task.init(investigator, Integer.parseInt(time), units);

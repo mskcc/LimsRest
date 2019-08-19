@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.LinkedList;
 
 import org.mskcc.limsrest.ConnectionPoolLIMS;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,7 +28,7 @@ public class GetProject {
         this.task = getSamples;
     }
 
-    @GetMapping("/getPmProject")
+    @RequestMapping("/getPmProject")  // POST method called by REX
     public List<RequestSummary> getContent(@RequestParam(value="project") String[] project, @RequestParam(value="filter", defaultValue="false") String filter) {
         List<RequestSummary> rss = new LinkedList<>();
         StringBuffer sb = new StringBuffer();
