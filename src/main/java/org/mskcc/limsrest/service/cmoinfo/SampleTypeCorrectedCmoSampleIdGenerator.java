@@ -25,7 +25,6 @@ import org.mskcc.limsrest.service.cmoinfo.retriever.FormattedCmoSampleIdRetrieve
 import org.mskcc.limsrest.service.cmoinfo.retriever.IncrementalSampleCounterRetriever;
 import org.mskcc.limsrest.service.converter.SampleRecordToSampleConverter;
 import org.mskcc.util.CommonUtils;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
@@ -37,7 +36,6 @@ import static org.mskcc.domain.sample.SpecimenType.CELLLINE;
  * SampleTypeCorrectedCmoSampleGenerator generates CMO Sample ID for both Cell line and non-Cell line samples.
  * In case of Cmo Sample Id generation error notification will be sent.
  */
-@Service
 public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSampleIdGenerator {
     private final static Log LOGGER = LogFactory.getLog(SampleTypeCorrectedCmoSampleIdGenerator.class);
 
@@ -54,30 +52,30 @@ public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSamp
     }
 
     @Override
-    public synchronized String generate(CorrectedCmoSampleView correctedCmoSampleView, String requestId,
-                                        DataRecordManager dataRecordManager, User user) {
+    public String generate(CorrectedCmoSampleView correctedCmoSampleView, String requestId, DataRecordManager dataRecordManager, User user) {
         LOGGER.info(String.format("Generating cmo id for view: %s", correctedCmoSampleView));
 
         try {
-            String patientId = correctedCmoSampleView.getPatientId();
-            CommonUtils.requireNonNullNorEmpty(patientId, String.format("Patient id is not set for sample: %s",
-                    correctedCmoSampleView.getId()));
+            synchronized (SampleTypeCorrectedCmoSampleIdGenerator.class) {
+                String patientId = correctedCmoSampleView.getPatientId();
+                CommonUtils.requireNonNullNorEmpty(patientId, String.format("Patient id is not set for sample: %s",
+                        correctedCmoSampleView.getId()));
 
-            List<CorrectedCmoSampleView> cmoSampleViews = patientSamplesRetriever.retrieve(patientId, dataRecordManager, user);
+                List<CorrectedCmoSampleView> cmoSampleViews = patientSamplesRetriever.retrieve(patientId, dataRecordManager, user);
 
-            cmoSampleViews.addAll(generatedSamples.get(patientId));
-            LOGGER.info(String.format("Added %d samples for patient %s generated during current run for cmo id " +
-                    "generation: %s", generatedSamples.size(), patientId, generatedSamples.values()));
-            List<CorrectedCmoSampleView> filteredViews = getFilteredCmoViews(correctedCmoSampleView, cmoSampleViews);
+                cmoSampleViews.addAll(generatedSamples.get(patientId));
+                LOGGER.info(String.format("Added %d samples for patient %s generated during current run for cmo id " +
+                        "generation: %s", generatedSamples.size(), patientId, generatedSamples.values()));
+                List<CorrectedCmoSampleView> filteredViews = getFilteredCmoViews(correctedCmoSampleView, cmoSampleViews);
 
-            CmoSampleIdRetriever idRetriever = cmoSampleIdRetrieverFactory.getCmoSampleIdRetriever(correctedCmoSampleView);
-            String cmoSampleId = idRetriever.retrieve(correctedCmoSampleView, filteredViews, requestId);
+                CmoSampleIdRetriever idRetriever = cmoSampleIdRetrieverFactory.getCmoSampleIdRetriever(correctedCmoSampleView);
+                String cmoSampleId = idRetriever.retrieve(correctedCmoSampleView, filteredViews, requestId);
 
-            if (shouldOverrideCmoId(correctedCmoSampleView, cmoSampleId))
-                correctedCmoSampleView.setCorrectedCmoId(cmoSampleId);
+                if (shouldOverrideCmoId(correctedCmoSampleView, cmoSampleId))
+                    correctedCmoSampleView.setCorrectedCmoId(cmoSampleId);
 
-            generatedSamples.put(patientId, correctedCmoSampleView);
-
+                generatedSamples.put(patientId, correctedCmoSampleView);
+            }
             return correctedCmoSampleView.getCorrectedCmoId();
         } catch (Exception e) {
             notifyAboutCorrectedCmoIdFailure(correctedCmoSampleView, requestId, e);

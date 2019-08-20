@@ -23,12 +23,10 @@ import java.util.concurrent.Future;
 public class PromoteBankedSample {
     private final static Log log = LogFactory.getLog(PromoteBankedSample.class);
     private final ConnectionPoolLIMS conn;
-    private final PromoteBanked task;
+    private final PromoteBanked task = new PromoteBanked();
 
-
-    public PromoteBankedSample(ConnectionPoolLIMS conn, PromoteBanked banked) {
+    public PromoteBankedSample(ConnectionPoolLIMS conn) {
         this.conn = conn;
-        this.task = banked;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -39,9 +37,9 @@ public class PromoteBankedSample {
                                              @RequestParam(value = "projectId", defaultValue = "NULL") String project,
                                              @RequestParam(value = "serviceId") String service,
                                              @RequestParam(value = "igoUser") String igoUser,
-                                             @RequestParam(value = "dryrun", defaultValue = "false") String dryrun) {
-        log.info("Starting /promoteBankedSample " + bankedId[0] + " to request " + request + ":" + service + ":"
-                + project + " by service " + user + " and igo user: " + igoUser);
+                                             @RequestParam(value = "dryrun", defaultValue = "false") boolean dryrun) {
+        log.info("Starting /promoteBankedSample " + bankedId[0] + " to requestId:" + request + ":"
+                + project + ",serviceId:" + service + ", igoUser: " + igoUser + " dryrun:" + dryrun);
 
         for (String bid : bankedId) {
             if (!Whitelists.sampleMatches(bid))
@@ -50,12 +48,10 @@ public class PromoteBankedSample {
         }
 
         if (!Whitelists.textMatches(igoUser))
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("igoUser is not using a valid format. " + Whitelists
-                    .textFormatText());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("igoUser is not using a valid format. " + Whitelists.textFormatText());
 
         if (!Whitelists.requestMatches(request))
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("requestId is not using a valid format. " + Whitelists
-                    .requestFormatText());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("requestId is not using a valid format. " + Whitelists.requestFormatText());
 
         if (!Whitelists.requestMatches(project))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("projectId is not using a valid format. " + Whitelists.requestFormatText());
@@ -63,25 +59,23 @@ public class PromoteBankedSample {
         if (!Whitelists.serviceMatches(service))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("serviceId is not using a valid format. " + Whitelists.serviceFormatText());
 
-        dryrun = dryrun.toLowerCase();
-        log.info("Creating task");
         task.init(bankedId, project, request, service, igoUser, dryrun);
-        log.info("Getting result");
+        log.info("Starting promote");
         Future<Object> result = conn.submitTask(task);
-
         try {
-            log.info("Waiting for result");
             ResponseEntity<String> returnCode = (ResponseEntity<String>) result.get();
 
-            if (returnCode.getHeaders().containsKey(Constants.ERRORS) && !dryrun.equals("true")) {
-                throw new LimsException(StringUtils.join(returnCode.getHeaders().get(Constants.ERRORS), ","));
+            if (returnCode.getHeaders().containsKey(Constants.ERRORS)) {
+                String errors = StringUtils.join(returnCode.getHeaders().get(Constants.ERRORS), ",");
+                log.error("Errors-" + errors);
+                throw new LimsException(errors);
             }
             return returnCode;
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
-
+            log.error("Promote error:" + e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage() + "\nTRACE: " + sw.toString());
         }
     }

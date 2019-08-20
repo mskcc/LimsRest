@@ -636,7 +636,7 @@ public class PromoteBankedTest {
             bankedIds[i] = String.valueOf(bankedRecords.get(i).getRecordId());
         }
 
-        promoteBanked.init(bankedIds, projectId, requestId, serviceId, "promoteBankedTest", "false");
+        promoteBanked.init(bankedIds, projectId, requestId, serviceId, "promoteBankedTest", false);
     }
 
     private DataRecord addPromoteBanked(String cmoPatientId, SpecimenType specimenType, Optional<SampleOrigin>

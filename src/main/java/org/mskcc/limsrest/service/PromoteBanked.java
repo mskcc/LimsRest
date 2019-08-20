@@ -19,12 +19,10 @@ import org.mskcc.limsrest.service.promote.BankedSampleToSampleConverter;
 import org.mskcc.limsrest.util.Constants;
 import org.mskcc.limsrest.util.Messages;
 import org.mskcc.limsrest.util.Utils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 
 import java.rmi.RemoteException;
@@ -39,7 +37,6 @@ import java.util.regex.Pattern;
  *
  * @author Aaron Gabow
  */
-@Service
 public class PromoteBanked extends LimsTask {
     private static final Log log = LogFactory.getLog(PromoteBanked.class);
 
@@ -49,8 +46,8 @@ public class PromoteBanked extends LimsTask {
     private static final HumanSamplePredicate humanSamplePredicate = new HumanSamplePredicate();
 
     private final CorrectedCmoIdConverter<BankedSample> bankedSampleToCorrectedCmoSampleIdConverter = new BankedSampleToCorrectedCmoSampleIdConverter();
-    @Autowired
-    private SampleTypeCorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator;
+    //@Autowired
+    private SampleTypeCorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator = new SampleTypeCorrectedCmoSampleIdGenerator();
     private final BankedSampleToSampleConverter bankedSampleToSampleConverter = new BankedSampleToSampleConverter();
 
     String[] bankedIds;
@@ -106,21 +103,19 @@ public class PromoteBanked extends LimsTask {
         seqRequirementMap.put("RequestedReads", requestedReads);
     }
 
-    public void init(String[] bankedIds, String projectId, String requestId, String serviceId, String igoUser, String
-            dryrun) {
+    public void init(String[] bankedIds, String projectId, String requestId, String serviceId, String igoUser, boolean dryrun) {
         this.bankedIds = bankedIds;
         this.projectId = projectId;
         this.requestId = requestId;
         this.serviceId = serviceId;
         this.igoUser = igoUser;
-        if (dryrun.equals("true")) {
-            this.dryrun = true;
-        }
+        this.dryrun = dryrun;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @Override
     public ResponseEntity<String> execute(VeloxConnection conn) {
+        log.info("Executing...dryrun=" + dryrun);
         if (dryrun) {
             String nextRequest = "";
             if (requestId.equals("NULL") && projectId.equals("NULL")) {
@@ -145,6 +140,7 @@ public class PromoteBanked extends LimsTask {
 
             return ResponseEntity.ok(nextRequest);
         }
+
         try {
             List<DataRecord> validBarcodeList = dataRecordManager.queryDataRecords("IndexAssignment", "IndexType != " +
                     "'IDT_TRIM'", user);
@@ -170,6 +166,7 @@ public class PromoteBanked extends LimsTask {
             DataRecord req = null;
             //TODO THREAD WARNING: Not thread safe. Depends on the queue being single consumer thread to handle concurrency
             if (requestId.equals("NULL") && projectId.equals("NULL")) {
+                log.info("Creating new request.");
                 try {
                     List<DataRecord> mappedReq = dataRecordManager.queryDataRecords("Request", "IlabRequest = '" +
                             serviceId + "'", user);
@@ -197,8 +194,7 @@ public class PromoteBanked extends LimsTask {
                     throw new LimsException("Unable to create a new request for this project: " + e.getMessage());
                 }
             } else if (!requestId.equals("NULL")) {
-                List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" +
-                        requestId + "'", user);
+                List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
                 if (requestList.size() == 0) {
                     throw new LimsException("There is no request with id '" + requestId + "'");
                 }
@@ -237,6 +233,8 @@ public class PromoteBanked extends LimsTask {
                     }
                 }
             }
+            log.info("Using request: " + req.getStringVal(("RequestId"), user));
+
             if (bankedList.size() == 0) {
                 throw new LimsException("No banked sample with ids '" + sb.toString() + "'");
             }
