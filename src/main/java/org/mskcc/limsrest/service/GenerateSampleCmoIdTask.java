@@ -6,7 +6,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.domain.sample.Sample;
-import org.mskcc.limsrest.service.cmoinfo.CorrectedCmoSampleIdGenerator;
 import org.mskcc.limsrest.service.cmoinfo.SampleTypeCorrectedCmoSampleIdGenerator;
 import org.mskcc.limsrest.service.cmoinfo.converter.CorrectedCmoIdConverter;
 import org.mskcc.limsrest.service.cmoinfo.converter.SampleToCorrectedCmoIdConverter;
@@ -23,7 +22,7 @@ public class GenerateSampleCmoIdTask extends LimsTask {
     private final static Log log = LogFactory.getLog(GenerateSampleCmoIdTask.class);
 
     @Autowired
-    private CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator;
+    private SampleTypeCorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator;
     private final CorrectedCmoIdConverter<Sample> sampleToCorrectedCmoIdConverter = new SampleToCorrectedCmoIdConverter();
     private final SampleRecordToSampleConverter sampleRecordToSampleConverter = new SampleRecordToSampleConverter();
 

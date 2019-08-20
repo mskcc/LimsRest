@@ -55,8 +55,9 @@ import static org.mskcc.domain.sample.SpecimenType.*;
 public class PromoteBankedTest {
     private static final Log LOG = LogFactory.getLog(PromoteBankedTest.class);
 
-    private static final String connectionTest = "/lims-tango-dev.properties";
-    private static final String connectionPromoteBanked = "/lims-tango-test.properties";
+    private static ResourceBundle rbTest = ResourceBundle.getBundle("tangotest");
+
+    private static final String connectionPromoteBanked = "resources/lims-tango-test";
 
     private static final String USER_SAMP_ID1 = "userSampId1";
     private static final String USER_SAMP_ID2 = "userSampId2";
@@ -114,7 +115,7 @@ public class PromoteBankedTest {
         try {
             promoteBanked = getPromoteBanked();
 
-            connection = getVeloxConnection(connectionTest);
+            connection = getVeloxConnection(rbTest);
             openConnection();
             //promoteBanked.setVeloxConnection(getVeloxConnection(connectionPromoteBanked));
 
@@ -137,15 +138,13 @@ public class PromoteBankedTest {
         }
     }
 
-    private VeloxConnection getVeloxConnection(String connectionFile) throws Exception {
-        Properties properties = new Properties();
-        properties.load(new FileReader(getResourceFile(connectionFile)));
+    private VeloxConnection getVeloxConnection(ResourceBundle rb) {
         return new VeloxConnection(
-                (String) properties.get("lims.host"),
-                Integer.parseInt((String) properties.get("lims.port")),
-                (String) properties.get("lims.guid"),
-                (String) properties.get("lims.username"),
-                (String) properties.get("lims.password")
+                rb.getString("host"),
+                Integer.parseInt(rb.getString("port")),
+                rb.getString("guid"),
+                rb.getString("user"),
+                rb.getString("pass")
         );
     }
 
@@ -884,7 +883,7 @@ public class PromoteBankedTest {
         return new PromoteBanked();
     }
 
-    private String getResourceFile(String connectionFile) throws Exception {
+    private String getResourceFile(String connectionFile) {
         return PromoteBankedTest.class.getResource(connectionFile).getPath();
     }
 

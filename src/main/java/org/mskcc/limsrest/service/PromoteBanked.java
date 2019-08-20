@@ -12,7 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.*;
-import org.mskcc.limsrest.service.cmoinfo.CorrectedCmoSampleIdGenerator;
+import org.mskcc.limsrest.service.cmoinfo.SampleTypeCorrectedCmoSampleIdGenerator;
 import org.mskcc.limsrest.service.cmoinfo.converter.BankedSampleToCorrectedCmoSampleIdConverter;
 import org.mskcc.limsrest.service.cmoinfo.converter.CorrectedCmoIdConverter;
 import org.mskcc.limsrest.service.promote.BankedSampleToSampleConverter;
@@ -33,8 +33,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * A queued task that takes banked ids, a service id and optionally a request  and project. It will create the
- * project and request if needed, then it transforms the banked samples to real samples
+ * A queued task that takes banked ids, a service id and optionally a request  and project.
+ * <BR>
+ * It will create the project and request if needed, then it transforms the banked samples to real samples
  *
  * @author Aaron Gabow
  */
@@ -49,7 +50,7 @@ public class PromoteBanked extends LimsTask {
 
     private final CorrectedCmoIdConverter<BankedSample> bankedSampleToCorrectedCmoSampleIdConverter = new BankedSampleToCorrectedCmoSampleIdConverter();
     @Autowired
-    private CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator;
+    private SampleTypeCorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator;
     private final BankedSampleToSampleConverter bankedSampleToSampleConverter = new BankedSampleToSampleConverter();
 
     String[] bankedIds;
@@ -167,7 +168,7 @@ public class PromoteBanked extends LimsTask {
             SloanCMOUtils util = new SloanCMOUtils(managerContext);
 
             DataRecord req = null;
-            //THREAD WARNING: Not thread safe. Depends on the queue being single consumer thread to handle concurency
+            //TODO THREAD WARNING: Not thread safe. Depends on the queue being single consumer thread to handle concurrency
             if (requestId.equals("NULL") && projectId.equals("NULL")) {
                 try {
                     List<DataRecord> mappedReq = dataRecordManager.queryDataRecords("Request", "IlabRequest = '" +
@@ -258,8 +259,7 @@ public class PromoteBanked extends LimsTask {
             int offset = 1;
             HashMap<String, DataRecord> plateId2Plate = new HashMap<>();
             for (DataRecord bankedSample : bankedList) {
-                createRecords(bankedSample, req, requestId, barcodeId2Sequence, plateId2Plate, existentIds, maxId,
-                        offset);
+                createRecords(bankedSample, req, requestId, barcodeId2Sequence, plateId2Plate, existentIds, maxId, offset);
                 offset++;
                 bankedSample.setDataField("Promoted", Boolean.TRUE, user);
                 bankedSample.setDataField("RequestId", requestId, user);
@@ -295,8 +295,8 @@ public class PromoteBanked extends LimsTask {
         return message.toString();
     }
 
-    public void logBankedState(DataRecord bankedSample, StringBuilder logBuilder, AuditLog auditLog) throws
-            RemoteException {
+    public void logBankedState(DataRecord bankedSample, AuditLog auditLog) throws RemoteException {
+        StringBuilder logBuilder = new StringBuilder();
         Map<String, Object> fields = bankedSample.getFields(user);
         for (Map.Entry<String, Object> entry : fields.entrySet()) {
             if (entry.getValue() != null && !"".equals(entry.getValue())) {
@@ -313,15 +313,12 @@ public class PromoteBanked extends LimsTask {
             throws LimsException, InvalidValue, AlreadyExists, NotFound, IoError, RemoteException, ServerException {
         try {
             AuditLog auditLog = user.getAuditLog();
-            StringBuilder logBuilder = new StringBuilder();
-            logBankedState(bankedSampleRecord, logBuilder, auditLog);
+            logBankedState(bankedSampleRecord, auditLog);
         } catch (RemoteException rme) {
             log.info("ERROR: could not add the audit log information for promote");
         }
-        SloanCMOUtils util = new SloanCMOUtils(managerContext);
         Map<String, Object> bankedFields = bankedSampleRecord.getFields(user);
-        BankedSample bankedSample = new BankedSample((String) bankedFields.get(BankedSample.USER_SAMPLE_ID),
-                bankedFields);
+        BankedSample bankedSample = new BankedSample((String) bankedFields.get(BankedSample.USER_SAMPLE_ID), bankedFields);
 
         if (bankedSample.getPromoted()) {
             throw new LimsException(String.format("Trying to promote a banked sample: %s that has already been " +
@@ -329,13 +326,15 @@ public class PromoteBanked extends LimsTask {
         }
 
         String correctedCmoSampleId = getCorrectedCmoSampleId(bankedSample, requestId);
-        log.debug(String.format("Generated corrected cmo id: %s", correctedCmoSampleId));
+        log.info(String.format("Generated corrected cmo id: %s", correctedCmoSampleId));
 
         String otherSampleId = bankedSample.getOtherSampleId();
         if (existentIds.contains(otherSampleId)) {
             throw new LimsException("There already is a sample in the project with the name: " + otherSampleId);
         }
-        log.info("uuiding generating");
+
+        SloanCMOUtils util = new SloanCMOUtils(managerContext);
+        log.info("uuid generating");
         UuidGenerator uuidGen = new UuidGenerator();
         String uuid;
         try {

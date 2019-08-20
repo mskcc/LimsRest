@@ -56,6 +56,9 @@ public class GenerateBankedSamplesFromDMPTest {
         List<DMPSample> tracking1DMPSamples = Arrays.asList(getDmpSample("id11", "i1"));
         when(dmpSamplesRetriever.getDMPSamples(trackingId1)).thenReturn(tracking1DMPSamples);
         generateBankedSamplesFromDMP.setDate(date);
+        generateBankedSamplesFromDMP.setLimsDataRetriever(limsDataRetriever);
+        generateBankedSamplesFromDMP.setDmpSamplesRetriever(dmpSamplesRetriever);
+        generateBankedSamplesFromDMP.setRecordSaver(recordSaverSpy);
 
         //when
         generateBankedSamplesFromDMP.execute(mock(VeloxConnection.class));
@@ -77,6 +80,9 @@ public class GenerateBankedSamplesFromDMPTest {
         List<DMPSample> tracking1DMPSamples = Arrays.asList(getDmpSample("id11", "i1"));
         when(dmpSamplesRetriever.getDMPSamples(trackingId1)).thenReturn(tracking1DMPSamples);
         generateBankedSamplesFromDMP.setDate(date);
+        generateBankedSamplesFromDMP.setLimsDataRetriever(limsDataRetriever);
+        generateBankedSamplesFromDMP.setDmpSamplesRetriever(dmpSamplesRetriever);
+        generateBankedSamplesFromDMP.setRecordSaver(recordSaverSpy);
 
         //when
         generateBankedSamplesFromDMP.execute(mock(VeloxConnection.class));
@@ -101,6 +107,9 @@ public class GenerateBankedSamplesFromDMPTest {
                 getDmpSample("id13", "i3"));
         when(dmpSamplesRetriever.getDMPSamples(trackingId1)).thenReturn(tracking1DMPSamples);
         generateBankedSamplesFromDMP.setDate(date);
+        generateBankedSamplesFromDMP.setLimsDataRetriever(limsDataRetriever);
+        generateBankedSamplesFromDMP.setDmpSamplesRetriever(dmpSamplesRetriever);
+        generateBankedSamplesFromDMP.setRecordSaver(recordSaverSpy);
 
         //when
         generateBankedSamplesFromDMP.execute(mock(VeloxConnection.class));
@@ -123,6 +132,9 @@ public class GenerateBankedSamplesFromDMPTest {
                 getDmpSample("id13", "i3"));
         when(dmpSamplesRetriever.getDMPSamples(trackingId1)).thenReturn(tracking1DMPSamples);
         generateBankedSamplesFromDMP.setDate(date);
+        generateBankedSamplesFromDMP.setLimsDataRetriever(limsDataRetriever);
+        generateBankedSamplesFromDMP.setDmpSamplesRetriever(dmpSamplesRetriever);
+        generateBankedSamplesFromDMP.setRecordSaver(recordSaverSpy);
 
         //when
         generateBankedSamplesFromDMP.execute(mock(VeloxConnection.class));
@@ -152,6 +164,9 @@ public class GenerateBankedSamplesFromDMPTest {
         when(dmpSamplesRetriever.getDMPSamples(trackingId1)).thenReturn(tracking1DMPSamples);
         when(dmpSamplesRetriever.getDMPSamples(trackingId2)).thenReturn(tracking2DMPSamples);
         generateBankedSamplesFromDMP.setDate(date);
+        generateBankedSamplesFromDMP.setLimsDataRetriever(limsDataRetriever);
+        generateBankedSamplesFromDMP.setDmpSamplesRetriever(dmpSamplesRetriever);
+        generateBankedSamplesFromDMP.setRecordSaver(recordSaverSpy);
 
         //when
         generateBankedSamplesFromDMP.execute(mock(VeloxConnection.class));
@@ -195,6 +210,9 @@ public class GenerateBankedSamplesFromDMPTest {
         when(dmpSamplesRetriever.getDMPSamples(trackingId3)).thenReturn(tracking3DMPSamples);
         when(dmpSamplesRetriever.getDMPSamples(trackingId4)).thenReturn(tracking4DMPSamples);
         generateBankedSamplesFromDMP.setDate(date);
+        generateBankedSamplesFromDMP.setLimsDataRetriever(limsDataRetriever);
+        generateBankedSamplesFromDMP.setDmpSamplesRetriever(dmpSamplesRetriever);
+        generateBankedSamplesFromDMP.setRecordSaver(recordSaverSpy);
 
         //when
         generateBankedSamplesFromDMP.execute(mock(VeloxConnection.class));

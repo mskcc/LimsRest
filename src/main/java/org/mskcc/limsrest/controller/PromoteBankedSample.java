@@ -57,7 +57,6 @@ public class PromoteBankedSample {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("requestId is not using a valid format. " + Whitelists
                     .requestFormatText());
 
-
         if (!Whitelists.requestMatches(project))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("projectId is not using a valid format. " + Whitelists.requestFormatText());
 
@@ -70,15 +69,14 @@ public class PromoteBankedSample {
         log.info("Getting result");
         Future<Object> result = conn.submitTask(task);
 
-        ResponseEntity<String> returnCode;
-
         try {
             log.info("Waiting for result");
-            returnCode = (ResponseEntity<String>) result.get();
+            ResponseEntity<String> returnCode = (ResponseEntity<String>) result.get();
 
             if (returnCode.getHeaders().containsKey(Constants.ERRORS) && !dryrun.equals("true")) {
                 throw new LimsException(StringUtils.join(returnCode.getHeaders().get(Constants.ERRORS), ","));
             }
+            return returnCode;
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
@@ -86,7 +84,5 @@ public class PromoteBankedSample {
 
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage() + "\nTRACE: " + sw.toString());
         }
-
-        return returnCode;
     }
 }

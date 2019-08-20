@@ -11,7 +11,7 @@ import java.util.concurrent.Future;
  * LIMS connection pool with dedicated LIMS connections.
  */
 public class ConnectionPoolLIMS {
-    private static final ExecutorService executor = Executors.newFixedThreadPool(2);
+    private static final ExecutorService executor = Executors.newFixedThreadPool(1);
 
     private final VeloxConnection conn1;
     private final VeloxConnection conn2;
