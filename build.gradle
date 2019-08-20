@@ -1,6 +1,5 @@
 group 'org.mskcc.limsrest'
-version '1.16.10-SNAPSHOT'
-
+version '1.17.0'
 
 buildscript {
     repositories {
@@ -8,16 +7,16 @@ buildscript {
         mavenLocal()
     }
     dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.2.5.RELEASE")
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.1.6.RELEASE")
     }
 }
 
-apply plugin: 'java'
-apply plugin: 'application'
-apply plugin: 'idea'
-apply plugin: 'maven'
-apply plugin: 'spring-boot'
 apply plugin: 'war'
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'maven'
+apply plugin: 'idea'
 apply plugin: 'jacoco'
 
 jacoco {
@@ -42,16 +41,8 @@ if (target== 'dev'){
     }
 }
 
-war{
-    baseName = 'LimsRest##'
-    if(target == 'test'){
-        baseName = 'TestRest##'
-    }
-}
-
-jar {
-    baseName = 'lims-rest-service'
-    version =  '0.1.0'
+war {
+    archivesBaseName = 'LimsRest##'
 }
 
 repositories {
@@ -59,14 +50,11 @@ repositories {
     mavenLocal()
     maven { url "${nexusUrlReleases}" }
     maven { url "${nexusUrlSnapshots}" }
+    jcenter()
 }
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
-
-configurations.all {
-    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
-}
 
 configurations {
     providedRuntime
@@ -75,19 +63,23 @@ configurations {
 }
 
 dependencies {
-    compile ("org.springframework.boot:spring-boot-starter-tomcat")
-    compile ("org.springframework.boot:spring-boot-starter-web:2.1.6.RELEASE")
-    compile ("org.springframework.boot:spring-boot-starter-security:2.1.6.RELEASE")
+    compile 'org.mskcc.common:common-domain:2.13.0-SNAPSHOT'
+
+    compile "io.springfox:springfox-swagger-ui:2.9.2"
+    compile "io.springfox:springfox-swagger2:2.9.2"
+
+    compile "org.springframework.boot:spring-boot-starter-security:2.1.6.RELEASE"
+    compile "org.springframework.boot:spring-boot-starter-tomcat:2.1.6.RELEASE"
+    compile "org.springframework.boot:spring-boot-starter-web:2.1.6.RELEASE"
+
     testCompile(group: 'org.springframework', name: 'spring-test', version: '5.1.6.RELEASE')
     testCompile('org.springframework.boot:spring-boot-starter-test')
 
     compile ('javax.servlet:jstl:1.2')
-    compile ('com.fasterxml.jackson.core:jackson-databind')
-    compile (group: 'com.google.guava', name: 'guava', version: '18.+')
-    compile 'org.mskcc.common:common-domain:2.13.0-SNAPSHOT'
+    //compile ('com.fasterxml.jackson.core:jackson-databind')
+    
     compile 'com.velox.internalproducts:veloxapi:10.6.1-b777'
     compile 'com.velox.sloan.cmo:sloancmo:2.21.1-LIMS10.6.1_b84'
-
     compile 'com.velox.internalproducts:sapiogeneric:15.0.0-LIMS10.6.1'
     compile 'com.velox.internalproducts:sapioutils:15.0.0-LIMS10.6.1'
     compile 'com.velox.internalproducts:sapio-commons:15.0.0-LIMS10.6.1'
@@ -103,7 +95,7 @@ dependencies {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.3'
+    gradleVersion = '4.8'
 }
 
 bootRun {
