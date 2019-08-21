@@ -16,6 +16,11 @@ import org.mskcc.limsrest.service.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Queries the SampleIntakeForm table which has a mapping of sample type & headers for a sequencing request type.
+ * <BR>
+ * Used by the IGO sample submission website.
+ */
 @RestController
 @RequestMapping("/")
 public class GetIntakeTerms {
@@ -29,28 +34,29 @@ public class GetIntakeTerms {
     }
 
     @GetMapping("/getIntakeTerms")
-    public List<List<String>> getContent(@RequestParam(value="type", defaultValue="NULL") String type, @RequestParam(value="recipe", defaultValue="NULL") String recipe) {
-      List<List<String>> values = new LinkedList<>();
-       if(!Whitelists.textMatches(type)){
-          log.info( "FAILURE: type is not using a valid format");
-           values.add(Arrays.asList("", "", "FAILURE: type is not using a valid format"));
-           return values;
-       } 
-       if(!Whitelists.specialMatches(recipe)){
-          log.info( "FAILURE: recipe is not using a valid format");
-           values.add(Arrays.asList("", "", "FAILURE: recipe is not using a valid format"));
-           return values;
-       } 
-        
-       log.info("Starting get intake for " + type + " and " + recipe);
-       type = type.replaceAll("_PIPI_SLASH_", "/");
-       task.init(type, recipe);
-       Future<Object> result = conn.submitTask(task);
-       try{
-         values = (List<List<String>>)result.get();
-       } catch(Exception e){
-         values.add(Arrays.asList("", "", e.getMessage()));
-       }
-       return values;
+    public List<List<String>> getContent(@RequestParam(value = "type", defaultValue = "NULL") String type,
+                                         @RequestParam(value = "recipe", defaultValue = "NULL") String recipe) {
+        List<List<String>> values = new LinkedList<>();
+        if (!Whitelists.textMatches(type)) {
+            log.info("FAILURE: type is not using a valid format");
+            values.add(Arrays.asList("", "", "FAILURE: type is not using a valid format"));
+            return values;
+        }
+        if (!Whitelists.specialMatches(recipe)) {
+            log.info("FAILURE: recipe is not using a valid format");
+            values.add(Arrays.asList("", "", "FAILURE: recipe is not using a valid format"));
+            return values;
+        }
+
+        log.info("/getIntakeTerms for " + type + " and " + recipe);
+        type = type.replaceAll("_PIPI_SLASH_", "/");
+        task.init(type, recipe);
+        Future<Object> result = conn.submitTask(task);
+        try {
+            values = (List<List<String>>) result.get();
+        } catch (Exception e) {
+            values.add(Arrays.asList("", "", e.getMessage()));
+        }
+        return values;
     }
 }
