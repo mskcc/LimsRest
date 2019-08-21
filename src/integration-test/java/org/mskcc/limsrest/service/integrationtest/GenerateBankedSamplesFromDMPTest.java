@@ -14,8 +14,8 @@ import org.mskcc.limsrest.service.dmp.DMPSamplesRetriever;
 import org.mskcc.limsrest.service.dmp.GenerateBankedSamplesFromDMP;
 import org.mskcc.limsrest.service.dmp.TumorTypeRetriever;
 import org.mskcc.limsrest.service.dmp.converter.DMPSampleToCMOBankedSampleConverter;
-import org.mskcc.limsrest.service.retriever.LimsDataRetriever;
-import org.mskcc.limsrest.service.store.VeloxRecordSaver;
+import org.mskcc.limsrest.service.promote.LimsDataRetriever;
+import org.mskcc.limsrest.service.promote.BankedSampleSaver;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -236,7 +236,7 @@ public class GenerateBankedSamplesFromDMPTest {
         }
     }
 
-    private class RecordSaverSpy extends VeloxRecordSaver {
+    private class RecordSaverSpy extends BankedSampleSaver {
         private Multimap<Long, BankedSample> createdBankedSamples = LinkedHashMultimap.create();
 
         @Override

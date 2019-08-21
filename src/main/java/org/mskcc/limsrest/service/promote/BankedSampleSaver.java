@@ -1,4 +1,4 @@
-package org.mskcc.limsrest.service.store;
+package org.mskcc.limsrest.service.promote;
 
 import com.velox.api.datarecord.*;
 import com.velox.api.user.User;
@@ -7,8 +7,8 @@ import org.mskcc.domain.sample.BankedSample;
 
 import java.rmi.RemoteException;
 
-public class VeloxRecordSaver implements RecordSaver {
-    private static final Logger LOGGER = Logger.getLogger(VeloxRecordSaver.class);
+public class BankedSampleSaver implements RecordSaver {
+    private static final Logger LOGGER = Logger.getLogger(BankedSampleSaver.class);
 
     @Override
     public void save(BankedSample bankedSample, DataRecordManager dataRecordManager, User user) {
@@ -17,8 +17,7 @@ public class VeloxRecordSaver implements RecordSaver {
 
             DataRecord bankedRecord = addBankedSampleRecord(dataRecordManager, user);
             bankedRecord.setFields(bankedSample.getFields(), user);
-            dataRecordManager.storeAndCommit(String.format("Created Banked Sample %s", bankedSample.getUserSampleID()
-            ), user);
+            dataRecordManager.storeAndCommit(String.format("Created Banked Sample %s", bankedSample.getUserSampleID()), user);
         } catch (Exception e) {
             LOGGER.warn(String.format("Saving Banked Sample %s failed", bankedSample.getUserSampleID()), e);
         }

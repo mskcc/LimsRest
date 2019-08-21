@@ -28,7 +28,7 @@ public class GetBarcodeList {
 
     @GetMapping("/getBarcodeList")
     public List<BarcodeSummary> getContent(@RequestParam(value = "user", required=false) String user) {
-        log.info("Starting get barcode list for user" + user);
+        log.info("Starting /getBarcodeList for user" + user);
         Future<Object> result = conn.submitTask(task);
         try {
             return (List<BarcodeSummary>) result.get();

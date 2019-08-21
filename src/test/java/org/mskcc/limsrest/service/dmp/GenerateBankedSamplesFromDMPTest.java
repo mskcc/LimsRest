@@ -8,8 +8,8 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.junit.Before;
 import org.junit.Test;
 import org.mskcc.domain.sample.BankedSample;
-import org.mskcc.limsrest.service.retriever.LimsDataRetriever;
-import org.mskcc.limsrest.service.store.VeloxRecordSaver;
+import org.mskcc.limsrest.service.promote.LimsDataRetriever;
+import org.mskcc.limsrest.service.promote.BankedSampleSaver;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -209,7 +209,7 @@ public class GenerateBankedSamplesFromDMPTest {
         }
     }
 
-    private class RecordSaverSpy extends VeloxRecordSaver {
+    private class RecordSaverSpy extends BankedSampleSaver {
         private Multimap<Long, BankedSample> createdBankedSamples = LinkedHashMultimap.create();
 
         @Override

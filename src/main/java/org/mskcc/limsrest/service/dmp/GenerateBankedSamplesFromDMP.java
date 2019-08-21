@@ -7,10 +7,10 @@ import org.mskcc.domain.sample.BankedSample;
 import org.mskcc.limsrest.service.LimsTask;
 import org.mskcc.limsrest.service.converter.ExternalToBankedSampleConverter;
 import org.mskcc.limsrest.service.dmp.converter.DMPSampleToCMOBankedSampleConverter;
-import org.mskcc.limsrest.service.retriever.LimsDataRetriever;
-import org.mskcc.limsrest.service.retriever.BankedSampleRetriever;
-import org.mskcc.limsrest.service.store.RecordSaver;
-import org.mskcc.limsrest.service.store.VeloxRecordSaver;
+import org.mskcc.limsrest.service.promote.LimsDataRetriever;
+import org.mskcc.limsrest.service.promote.BankedSampleRetriever;
+import org.mskcc.limsrest.service.promote.RecordSaver;
+import org.mskcc.limsrest.service.promote.BankedSampleSaver;
 import org.mskcc.limsrest.util.Messages;
 
 import java.time.LocalDate;
@@ -27,7 +27,7 @@ public class GenerateBankedSamplesFromDMP extends LimsTask {
             new DMPSampleToCMOBankedSampleConverter(new OncotreeTumorTypeRetriever());
     //TODO set string normally
     protected DMPSamplesRetriever dmpSamplesRetriever = new WebServiceDMPSamplesRetriever("http://plvpathhydra1.mskcc.org:8001/");
-    protected RecordSaver recordSaver = new VeloxRecordSaver();
+    protected RecordSaver recordSaver = new BankedSampleSaver();
     protected LimsDataRetriever limsDataRetriever = new BankedSampleRetriever();
 
     private LocalDate date;

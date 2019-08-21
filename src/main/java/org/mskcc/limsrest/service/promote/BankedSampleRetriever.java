@@ -1,4 +1,4 @@
-package org.mskcc.limsrest.service.retriever;
+package org.mskcc.limsrest.service.promote;
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
