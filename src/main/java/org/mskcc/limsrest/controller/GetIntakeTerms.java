@@ -49,6 +49,7 @@ public class GetIntakeTerms {
         }
 
         log.info("/getIntakeTerms for " + type + " and " + recipe);
+        // database has "Blocks/Slides" client calls endpoint with type="Blocks_PIPI_SLASH_Slides"
         type = type.replaceAll("_PIPI_SLASH_", "/");
         task.init(type, recipe);
         Future<Object> result = conn.submitTask(task);
