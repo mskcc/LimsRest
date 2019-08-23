@@ -16,7 +16,7 @@ import java.util.List;
 public class GetPickList extends LimsTask {
     private String picklist;
 
-    public void init(String picklist) {
+    public void setPicklist(String picklist) {
         this.picklist = picklist;
     }
 

@@ -21,8 +21,6 @@ public class GetPickListValues {
     private static Log log = LogFactory.getLog(GetPickListValues.class);
     private final ConnectionPoolLIMS conn;
 
-    private final GetPickList task = new GetPickList();
-
     public GetPickListValues(ConnectionPoolLIMS conn){
         this.conn = conn;
     }
@@ -35,7 +33,8 @@ public class GetPickListValues {
             values.add("FAILURE: list is not using a valid format");
             return values;
         }
-        task.init(list);
+        GetPickList task = new GetPickList();
+        task.setPicklist(list);
         log.info("Starting /getPickListValues query for " + list);
         Future<Object> result = conn.submitTask(task);
         try {

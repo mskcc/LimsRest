@@ -23,7 +23,6 @@ import java.util.concurrent.Future;
 public class GetRecentDeliveries {
     private static Log log = LogFactory.getLog(GetRecentDeliveries.class);
     private final ConnectionPoolLIMS conn;
-    private final GetDelivered task = new GetDelivered();
 
     public GetRecentDeliveries(ConnectionPoolLIMS conn) {
         this.conn = conn;
@@ -34,8 +33,8 @@ public class GetRecentDeliveries {
                                            @RequestParam(value = "units", defaultValue = "NULL") String units,
                                            @RequestParam(value = "investigator", defaultValue = "NULL") String investigator,
                                            HttpServletRequest request) {
-        log.info("/getRecentDeliveries client IP:" + request.getRemoteAddr());
-        log.info("Starting /getRecentDeliveries?time=" + time + "&units="+units);
+        log.info("Starting /getRecentDeliveries?time=" + time + "&units=" + units + " client IP:" + request.getRemoteAddr());
+        GetDelivered task = new GetDelivered();
 
         if (!time.equals("NULL") && !investigator.equals("NULL")) {
             task.init(investigator, Integer.parseInt(time), units);
