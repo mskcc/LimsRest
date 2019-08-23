@@ -206,15 +206,14 @@ public class GetCorrectedSampleCmoId {
     }
 
     /**
-     * This function generates CMO Sample Id from parameters passed to a query
+     * This function generates multiple CMO Sample Ids from an array of input objects.
      *
      * @param correctedCmoSampleViews
      * @return Map of Igo id to CMO Sample Id
      */
-    @RequestMapping(name = "/getBulkSampleCmoIdsFromParams", method = RequestMethod.POST)
-    public ResponseEntity<Map<String, String>> getSampleCmoIdByCmoSampleView(
-            @RequestBody CorrectedCmoSampleView[] correctedCmoSampleViews) {
-
+    @PostMapping("/getBulkSampleCmoIdsFromParams")
+    public ResponseEntity<Map<String, String>> getSampleCmoIdByCmoSampleView(@RequestBody CorrectedCmoSampleView[] correctedCmoSampleViews) {
+        log.info("Starting /getBulkSampleCmoIdsFromParams");
         Map<String, String> cmoSampleIds = new HashMap<>();
         try {
             validate(correctedCmoSampleViews);
@@ -240,7 +239,7 @@ public class GetCorrectedSampleCmoId {
 
             return new ResponseEntity<>(headers, HttpStatus.OK);
         }
-
+        log.info("Completed /getBulkSampleCmoIdsFromParams");
         return ResponseEntity.ok(cmoSampleIds);
     }
 
