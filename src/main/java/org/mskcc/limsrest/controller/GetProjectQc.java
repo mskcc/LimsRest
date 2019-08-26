@@ -28,7 +28,7 @@ public class GetProjectQc {
     }
 
     @GetMapping("/getProjectQc")
-    public List<RequestSummary> getContent(@RequestParam(value="project", required=false) String[] project) {
+    public List<RequestSummary> getProjectSummary(@RequestParam(value="project", required = true) String[] project) {
         log.info("Starting get /getProjectQc for projects: " + Arrays.toString(project));
 
         if (project == null)

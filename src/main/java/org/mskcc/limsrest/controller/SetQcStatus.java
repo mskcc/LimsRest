@@ -17,14 +17,12 @@ import java.util.concurrent.Future;
 public class SetQcStatus {
     private final static Log log = LogFactory.getLog(SetQcStatus.class);
     private final ConnectionPoolLIMS conn;
-    private final ToggleSampleQcStatus task;
    
-    public SetQcStatus(ConnectionPoolLIMS conn, ToggleSampleQcStatus toggle){
+    public SetQcStatus(ConnectionPoolLIMS conn){
         this.conn = conn;
-        this.task = toggle;
     }
 
-    @GetMapping("/setQcStatus")
+    @RequestMapping("/setQcStatus")  // POST called by app.py
     public String getContent(@RequestParam(value = "record", required = false) String recordId,
                              @RequestParam(value = "status") String status,
                              @RequestParam(value = "project", required = false) String request,
@@ -57,6 +55,7 @@ public class SetQcStatus {
 
         if (recordId != null) {
             long record = Long.parseLong(recordId);
+            ToggleSampleQcStatus task = new ToggleSampleQcStatus();
             task.init(record, status, request, sample, run, qcType, analyst, note, fastqPath);
             Future<Object> result = conn.submitTask(task);
             try {

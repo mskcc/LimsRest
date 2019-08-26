@@ -22,7 +22,6 @@ import java.util.List;
  *
  * @author Aaron Gabow
  */
-@Service
 public class ToggleSampleQcStatus extends LimsTask {
     private static Log log = LogFactory.getLog(ToggleSampleQcStatus.class);
 

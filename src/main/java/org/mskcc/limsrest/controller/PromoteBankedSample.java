@@ -23,7 +23,6 @@ import java.util.concurrent.Future;
 public class PromoteBankedSample {
     private final static Log log = LogFactory.getLog(PromoteBankedSample.class);
     private final ConnectionPoolLIMS conn;
-    private final PromoteBanked task = new PromoteBanked();
 
     public PromoteBankedSample(ConnectionPoolLIMS conn) {
         this.conn = conn;
@@ -59,6 +58,7 @@ public class PromoteBankedSample {
         if (!Whitelists.serviceMatches(service))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("serviceId is not using a valid format. " + Whitelists.serviceFormatText());
 
+        PromoteBanked task = new PromoteBanked();
         task.init(bankedId, project, request, service, igoUser, dryrun);
         log.info("Starting promote");
         Future<Object> result = conn.submitTask(task);
