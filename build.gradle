@@ -1,5 +1,5 @@
 group 'org.mskcc.limsrest'
-version '1.17.0'
+version '1.17.1'
 
 buildscript {
     repositories {
@@ -76,14 +76,14 @@ dependencies {
     testCompile('org.springframework.boot:spring-boot-starter-test')
 
     compile ('javax.servlet:jstl:1.2')
-    //compile ('com.fasterxml.jackson.core:jackson-databind')
-    
+
+    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.9'
+
     compile 'com.velox.internalproducts:veloxapi:10.6.1-b777'
     compile 'com.velox.sloan.cmo:sloancmo:2.21.1-LIMS10.6.1_b84'
     compile 'com.velox.internalproducts:sapiogeneric:15.0.0-LIMS10.6.1'
     compile 'com.velox.internalproducts:sapioutils:15.0.0-LIMS10.6.1'
     compile 'com.velox.internalproducts:sapio-commons:15.0.0-LIMS10.6.1'
-    compile 'com.velox.internalproducts:veloxapi:10.6.1-b777'
 
     compile fileTree (dir: 'libs', include: '*.jar')
 
