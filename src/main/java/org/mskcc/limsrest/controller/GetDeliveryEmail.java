@@ -17,11 +17,9 @@ import java.util.concurrent.Future;
 public class GetDeliveryEmail {
     private static Log log = LogFactory.getLog(GetDeliveryEmail.class);
     private final ConnectionPoolLIMS conn;
-    private final GetDeliveryEmailDetails task;
 
-    public GetDeliveryEmail(ConnectionPoolLIMS conn, GetDeliveryEmailDetails getQc) {
+    public GetDeliveryEmail(ConnectionPoolLIMS conn) {
         this.conn = conn;
-        this.task = getQc;
     }
 
     @GetMapping("/getDeliveryEmail")
@@ -31,6 +29,7 @@ public class GetDeliveryEmail {
         if (request == null)
             return null;
 
+        GetDeliveryEmailDetails task = new GetDeliveryEmailDetails();
         task.init(request);
         Future<Object> result = conn.submitTask(task);
         try {

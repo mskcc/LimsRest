@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Service
 public class SetOrCreateInteropData extends LimsTask {
 
     List<Map<String, Object>> data;

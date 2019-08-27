@@ -5,12 +5,10 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 
 import java.util.LinkedList;
 import java.util.List;
 
-@Service
 public class GetSet extends LimsTask {
     private static Log log = LogFactory.getLog(GetSet.class);
     protected String name;

@@ -5,7 +5,6 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,7 +17,6 @@ import java.util.Map;
  * 
  * @author Aaron Gabow
  */
-@Service
 public class GetSamples extends LimsTask {
     private static Log log = LogFactory.getLog(GetSamples.class);
     protected String[] projects;

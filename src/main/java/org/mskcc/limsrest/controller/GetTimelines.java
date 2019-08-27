@@ -22,11 +22,9 @@ public class GetTimelines {
     private static Log log = LogFactory.getLog(GetTimelines.class);
 
     private final ConnectionPoolLIMS conn;
-    private final GetProjectHistory task;
 
-    public GetTimelines(ConnectionPoolLIMS conn, GetProjectHistory getHistory) {
+    public GetTimelines(ConnectionPoolLIMS conn) {
         this.conn = conn;
-        this.task = getHistory;
     }
 
     @GetMapping("/getTimeline")
@@ -38,6 +36,7 @@ public class GetTimelines {
             }
         }
         log.info("Starting get Timeline " + project[0]);
+        GetProjectHistory task = new GetProjectHistory();
         task.init(project);
         Future<Object> result = conn.submitTask(task);
         try {

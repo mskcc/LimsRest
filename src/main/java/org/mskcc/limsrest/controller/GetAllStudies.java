@@ -19,16 +19,15 @@ public class GetAllStudies {
     private static Log log = LogFactory.getLog(GetAllStudies.class);
 
     private final ConnectionPoolLIMS conn;
-    private final ListStudies task;
 
-    public GetAllStudies(ConnectionPoolLIMS conn, ListStudies task) {
+    public GetAllStudies(ConnectionPoolLIMS conn) {
         this.conn = conn;
-        this.task = task;
     }
 
     @RequestMapping("/getAllStudies")
     public List<ProjectSummary> getContent(@RequestParam(value = "cmoOnly", defaultValue = "NULL") String cmoOnly) {
         log.info("Starting /getAllStudies");
+        ListStudies task = new ListStudies();
         task.init(cmoOnly);
         Future<Object> result = conn.submitTask(task);
         try {

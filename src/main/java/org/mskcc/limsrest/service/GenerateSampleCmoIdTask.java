@@ -12,11 +12,9 @@ import org.mskcc.limsrest.service.cmoinfo.converter.SampleToCorrectedCmoIdConver
 import org.mskcc.limsrest.service.converter.SampleRecordToSampleConverter;
 import org.mskcc.util.VeloxConstants;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-@Service
 public class GenerateSampleCmoIdTask extends LimsTask {
     private final static Log log = LogFactory.getLog(GenerateSampleCmoIdTask.class);
 

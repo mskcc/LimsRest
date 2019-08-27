@@ -9,12 +9,10 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-@Service
 public class GetIntakeFormDescription extends LimsTask {
     private static Log log = LogFactory.getLog(GetIntakeFormDescription.class);
     private String type;

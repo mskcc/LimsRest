@@ -4,9 +4,6 @@ import java.util.List;
 import java.util.LinkedList;
 import com.fasterxml.jackson.annotation.*;
 
-
-
-
 public class RunSummary{
 
    private String awaitingSamples; 

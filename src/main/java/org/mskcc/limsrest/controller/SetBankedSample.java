@@ -19,12 +19,10 @@ import java.util.concurrent.Future;
 public class SetBankedSample {
     private static Log log = LogFactory.getLog(SetBankedSample.class);
     private final ConnectionPoolLIMS conn;
-    private final SetOrCreateBanked task;
 
 
-    public SetBankedSample(ConnectionPoolLIMS conn, SetOrCreateBanked banked) {
+    public SetBankedSample(ConnectionPoolLIMS conn) {
         this.conn = conn;
-        this.task = banked;
     }
 
     //userId refers to the the Sample.UserId in the lims
@@ -98,6 +96,7 @@ public class SetBankedSample {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("userId is not using a valid format");
         }
 
+        SetOrCreateBanked task = new SetOrCreateBanked();
         task.init(
                 igoUser,
                 investigator,

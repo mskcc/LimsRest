@@ -18,16 +18,15 @@ import java.util.concurrent.Future;
 public class GetProcesses {
     private static Log log = LogFactory.getLog(GetProcesses.class);
     private final ConnectionPoolLIMS conn;
-    private final GetProcessNames task;
 
-    public GetProcesses(ConnectionPoolLIMS conn, GetProcessNames processNamer) {
+    public GetProcesses(ConnectionPoolLIMS conn) {
         this.conn = conn;
-        this.task = processNamer;
     }
 
     @GetMapping("/getProcesses")
     public List<String> getContent(@RequestParam(value = "user") String user) {
         log.info("Starting process name query for user " + user);
+        GetProcessNames task = new GetProcessNames();
         Future<Object> result = conn.submitTask(task);
         List<String> values = new LinkedList<>();
         try {

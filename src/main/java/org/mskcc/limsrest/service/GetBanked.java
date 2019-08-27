@@ -6,7 +6,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.util.Messages;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -18,7 +17,6 @@ import java.util.Map;
  *
  * @author Aaron Gabow
  */
-@Service
 public class GetBanked extends LimsTask {
     private static final Log log = LogFactory.getLog(GetBanked.class);
 

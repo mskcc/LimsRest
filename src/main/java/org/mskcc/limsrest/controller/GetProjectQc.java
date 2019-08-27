@@ -20,11 +20,9 @@ import java.util.concurrent.Future;
 public class GetProjectQc {
     private static Log log = LogFactory.getLog(GetProjectQc.class);
     private final ConnectionPoolLIMS conn;
-    private final GetSampleQc task;
 
-    public GetProjectQc(ConnectionPoolLIMS conn, GetSampleQc getQc){
+    public GetProjectQc(ConnectionPoolLIMS conn){
         this.conn = conn;
-        this.task = getQc;
     }
 
     @GetMapping("/getProjectQc")
@@ -41,6 +39,7 @@ public class GetProjectQc {
             }
         }
 
+        GetSampleQc task = new GetSampleQc();
         task.init(project);
         Future<Object> result = conn.submitTask(task);
         List<RequestSummary> rss = new LinkedList<>();

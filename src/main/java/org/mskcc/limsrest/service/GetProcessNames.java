@@ -17,7 +17,6 @@ import java.util.List;
  * 
  * @author Aaron Gabow
  */
-@Service
 public class GetProcessNames extends LimsTask {
     private static Log log = LogFactory.getLog(GetProcessNames.class);
 

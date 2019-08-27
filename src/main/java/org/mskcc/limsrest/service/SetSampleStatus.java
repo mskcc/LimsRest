@@ -3,7 +3,6 @@ package org.mskcc.limsrest.service;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -14,7 +13,6 @@ import java.util.List;
  * 
  * @author Aaron Gabow
  */
-@Service
 public class SetSampleStatus extends LimsTask {
     private String status;
     private String sampleId;

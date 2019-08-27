@@ -22,11 +22,9 @@ public class PairingInfo {
     private static Log log = LogFactory.getLog(PairingInfo.class);
 
     private final ConnectionPoolLIMS conn;
-    private final SetPairing task;
 
-    public PairingInfo(ConnectionPoolLIMS conn, SetPairing setter) {
+    public PairingInfo(ConnectionPoolLIMS conn) {
         this.conn = conn;
-        this.task = setter;
     }
 
     @RequestMapping(value = "/pairingInfo", method = RequestMethod.POST)
@@ -53,6 +51,7 @@ public class PairingInfo {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("normalIgoId is not using a valid format. " + Whitelists.sampleFormatText());
         }
         log.info("/pairingInfo starting pairing with request " + request + " tumorId " + tumorId + " normalId " + normalId + " tumorIgoId " + tumorIgoId + " normalIgoId " + normalIgoId);
+        SetPairing task = new SetPairing();
         task.init(igoUser, request, tumorId, normalId, tumorIgoId, normalIgoId);
 
         Future<Object> result = conn.submitTask(task);

@@ -17,56 +17,59 @@ import java.util.Map;
  * 
  * @author Aaron Gabow
  */
-@Service
 public class SetRequest extends LimsTask {
-  String igoUser;
-  String requestId;
-  HashMap<String, Object> possibleRequestFields;
+    String igoUser;
+    String requestId;
+    HashMap<String, Object> possibleRequestFields;
 
-  public void init(String igoUser, String requestId, HashMap<String, Object> requestFields){
-    this.igoUser = igoUser;
-    this.requestId = requestId; 
-    this.possibleRequestFields = requestFields;
-  }
-@PreAuthorize("hasRole('ADMIN')")
-@Override
- public Object execute(VeloxConnection conn){
-  try {
-    if(requestId == null || requestId.equals("")){
-       throw new LimsException("Must have a request id to set the request");
-    }
-    List<DataRecord> matchedRequest = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId +  "'", user);
-    if(matchedRequest.size() == 0){
-       throw new Exception("No Request record in the lims matches " + requestId);
+    public void init(String igoUser, String requestId, HashMap<String, Object> requestFields) {
+        this.igoUser = igoUser;
+        this.requestId = requestId;
+        this.possibleRequestFields = requestFields;
     }
 
-    String[] allowedFields = {"ReadMe"};
-    Map<String, Object> requestFields = new HashMap<>();
-    for(String allowed : allowedFields){
-       if(possibleRequestFields.containsKey(allowed) && !possibleRequestFields.get(allowed).equals("NULL")){
-           requestFields.put(allowed, possibleRequestFields.get(allowed));
-           if(allowed.equals("ReadMe")){
-                StringBuilder currentReadMe = new StringBuilder();
-                try{currentReadMe.append(matchedRequest.get(0).getStringVal("ReadMe", user)); } catch(NullPointerException npe){}
-                if(currentReadMe.length() > 0){
-                     currentReadMe.append("\n---------\n");
+    @PreAuthorize("hasRole('ADMIN')")
+    @Override
+    public Object execute(VeloxConnection conn) {
+        try {
+            if (requestId == null || requestId.equals("")) {
+                throw new LimsException("Must have a request id to set the request");
+            }
+            List<DataRecord> matchedRequest = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
+            if (matchedRequest.size() == 0) {
+                throw new Exception("No Request record in the lims matches " + requestId);
+            }
+
+            String[] allowedFields = {"ReadMe"};
+            Map<String, Object> requestFields = new HashMap<>();
+            for (String allowed : allowedFields) {
+                if (possibleRequestFields.containsKey(allowed) && !possibleRequestFields.get(allowed).equals("NULL")) {
+                    requestFields.put(allowed, possibleRequestFields.get(allowed));
+                    if (allowed.equals("ReadMe")) {
+                        StringBuilder currentReadMe = new StringBuilder();
+                        try {
+                            currentReadMe.append(matchedRequest.get(0).getStringVal("ReadMe", user));
+                        } catch (NullPointerException npe) {
+                        }
+                        if (currentReadMe.length() > 0) {
+                            currentReadMe.append("\n---------\n");
+                        }
+                        currentReadMe.append(possibleRequestFields.get(allowed));
+                        requestFields.put("ReadMe", currentReadMe.toString());
+                    }
                 }
-                currentReadMe.append(possibleRequestFields.get(allowed));
-                requestFields.put("ReadMe", currentReadMe.toString() );
-           }
-       }
-    }
-    matchedRequest.get(0).setFields(requestFields, user);
-    Long.toString(matchedRequest.get(0).getRecordId());
-    dataRecordManager.storeAndCommit("Request " + requestId  + " updated through the web service", user);
+            }
+            matchedRequest.get(0).setFields(requestFields, user);
+            Long.toString(matchedRequest.get(0).getRecordId());
+            dataRecordManager.storeAndCommit("Request " + requestId + " updated through the web service", user);
 
-  } catch (Throwable e) {
-          StringWriter sw = new StringWriter();
-          PrintWriter pw = new PrintWriter(sw);
-          e.printStackTrace(pw);
-           return Messages.ERROR_IN +  " SETTING REQUEST: " + e.getMessage() + "TRACE: " + sw.toString();   
-  
-  }
-  return Messages.SUCCESS; 
- }
+        } catch (Throwable e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            return Messages.ERROR_IN + " SETTING REQUEST: " + e.getMessage() + "TRACE: " + sw.toString();
+
+        }
+        return Messages.SUCCESS;
+    }
 }

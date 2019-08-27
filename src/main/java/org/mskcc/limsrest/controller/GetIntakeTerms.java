@@ -26,11 +26,9 @@ import org.apache.commons.logging.LogFactory;
 public class GetIntakeTerms {
     private static Log log = LogFactory.getLog(GetIntakeTerms.class);
     private final ConnectionPoolLIMS conn;
-    private final GetIntakeFormDescription task;
 
-    public GetIntakeTerms(ConnectionPoolLIMS conn, GetIntakeFormDescription intake){
+    public GetIntakeTerms(ConnectionPoolLIMS conn){
         this.conn = conn;
-        this.task = intake;
     }
 
     @GetMapping("/getIntakeTerms")
@@ -51,6 +49,7 @@ public class GetIntakeTerms {
         log.info("/getIntakeTerms for " + type + " and " + recipe);
         // database has "Blocks/Slides" client calls endpoint with type="Blocks_PIPI_SLASH_Slides"
         type = type.replaceAll("_PIPI_SLASH_", "/");
+        GetIntakeFormDescription task = new GetIntakeFormDescription();
         task.init(type, recipe);
         Future<Object> result = conn.submitTask(task);
         try {

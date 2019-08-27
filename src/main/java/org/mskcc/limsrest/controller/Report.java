@@ -21,19 +21,16 @@ import java.util.concurrent.Future;
 public class Report {
     private final static Log log = LogFactory.getLog(Report.class);
     private final ConnectionPoolLIMS conn;
-    private final GetHiseq task;
-    private final GetReadyForIllumina illuminaTask;
    
-    public Report(ConnectionPoolLIMS conn, GetHiseq getHiseq, GetReadyForIllumina illuminaTask){
+    public Report(ConnectionPoolLIMS conn){
         this.conn = conn;
-        this.task = getHiseq;
-        this.illuminaTask = illuminaTask;
     }
 
     @GetMapping("/getHiseq")
     public LinkedList<RunSummary> getContent(@RequestParam(value = "run", required = false) String run, @RequestParam(value = "project", required = false) String[] projs) {
         RunSummary rs = new RunSummary("BLANK_RUN", "BLANK_REQUEST");
         LinkedList<RunSummary> runSums = new LinkedList<>();
+        GetHiseq task = new GetHiseq();
         if (run != null) {
             if (!Whitelists.textMatches(run)) {
                 runSums.add(rs);
@@ -73,6 +70,7 @@ public class Report {
     @GetMapping("/getHiseqList")
     public LinkedList<RunSummary> getContent() {
         log.info("Starting get Hiseq List");
+        GetHiseq task = new GetHiseq();
         task.init("");
         Future<Object> result = conn.submitTask(task);
         RunSummary rs = new RunSummary("BLANK_RUN", "BLANK_REQUEST");
@@ -92,6 +90,7 @@ public class Report {
     @GetMapping("/planRuns")
     public LinkedList<RunSummary> getPlan(@RequestParam(value = "user") String user) {
         log.info("Starting plan Runs for user " + user);
+        GetReadyForIllumina illuminaTask = new GetReadyForIllumina();
         illuminaTask.init();
         Future<Object> result = conn.submitTask(illuminaTask);
         RunSummary rs = new RunSummary("BLANK_RUN", "BLANK_REQUEST");

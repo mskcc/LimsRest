@@ -18,11 +18,9 @@ import java.util.concurrent.Future;
 public class GetSampleSet {
     private static Log log = LogFactory.getLog(GetSampleSet.class);
     private final ConnectionPoolLIMS conn;
-    private final GetSet task;
 
-    public GetSampleSet(ConnectionPoolLIMS conn, GetSet getSet) {
+    public GetSampleSet(ConnectionPoolLIMS conn) {
         this.conn = conn;
-        this.task = getSet;
     }
 
     @GetMapping("/getSampleSet")
@@ -33,6 +31,7 @@ public class GetSampleSet {
             sets.add("FAILURE: setName is not using a valid format");
             return sets;
         }
+        GetSet task = new GetSet();
         task.init(name);
         Future<Object> result = conn.submitTask(task);
         try {

@@ -24,11 +24,9 @@ public class GetInterOpsData {
     private static final Log log = LogFactory.getLog(GetInterOpsData.class);
 
     private final ConnectionPoolLIMS conn;
-    private final GetInterOpsDataTask task;
 
-    public GetInterOpsData(ConnectionPoolLIMS conn, GetInterOpsDataTask task) {
+    public GetInterOpsData(ConnectionPoolLIMS conn) {
         this.conn = conn;
-        this.task = task;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -38,6 +36,7 @@ public class GetInterOpsData {
 
         log.info("Starting get /getInterOpsData " + runId);
         try {
+            GetInterOpsDataTask task = new GetInterOpsDataTask();
             task.init(runId);
             Future<Object> result = conn.submitTask(task);
             interOps = (List<Map<String, String>>) result.get();

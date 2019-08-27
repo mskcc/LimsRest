@@ -8,7 +8,6 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -20,7 +19,6 @@ import java.util.TreeSet;
  * 
  * @author Aaron Gabow
  */
-@Service
 public class GetProjectHistory extends LimsTask {
     private static Log log = LogFactory.getLog(GetProjectHistory.class);
 

@@ -8,7 +8,6 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 
 import java.rmi.RemoteException;
 import java.rmi.ServerException;
@@ -19,10 +18,10 @@ import java.util.*;
  * The information is important for Pool planning for sequencing and making important pooling decisions.
  *
  */
-@Service
 public class GetReadyForIllumina extends LimsTask {
     private static Log log = LogFactory.getLog(GetReadyForIllumina.class);
     private HashMap<String, List<String>> request2OutstandingSamples;
+
     public void init(){
         request2OutstandingSamples  = new HashMap<>();
     }

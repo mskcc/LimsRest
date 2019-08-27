@@ -5,14 +5,12 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.service.LimsTask;
-import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Service
 public class GetInterOpsDataTask extends LimsTask {
     private static final Log log = LogFactory.getLog(GetInterOpsDataTask.class);
 

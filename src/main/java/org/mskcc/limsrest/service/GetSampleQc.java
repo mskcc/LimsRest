@@ -9,14 +9,12 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Service
 public class GetSampleQc extends LimsTask {
     private static Log log = LogFactory.getLog(GetSampleQc.class);
     protected String[] projectList;

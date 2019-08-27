@@ -18,8 +18,7 @@ public class GetCorrectedSampleCmoIdTest {
 
     @Before
     public void setUp() throws Exception {
-        getCorrectedSampleCmoId = new GetCorrectedSampleCmoId(mock(ConnectionPoolLIMS.class), mock
-                (GenerateSampleCmoIdTask.class));
+        getCorrectedSampleCmoId = new GetCorrectedSampleCmoId(mock(ConnectionPoolLIMS.class));
     }
 
     @Test

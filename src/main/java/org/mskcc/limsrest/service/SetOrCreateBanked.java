@@ -1,17 +1,14 @@
 package org.mskcc.limsrest.service;
 
-
 import com.velox.api.datarecord.AuditLog;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.mskcc.domain.sample.TumorNormalType;
 import org.mskcc.limsrest.util.Messages;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
-
 
 /**
  * A queued task that takes a sample id and other values and looks for a banked sample with that id
@@ -20,7 +17,6 @@ import java.util.List;
  *
  * @author Aaron Gabow
  */
-@Service
 public class SetOrCreateBanked extends LimsTask {
     String[] assay;
     String barcodePosition;

@@ -20,16 +20,15 @@ import java.util.concurrent.Future;
 public class GetBarcodeList {
     private static Log log = LogFactory.getLog(GetBarcodeList.class);
     private final ConnectionPoolLIMS conn;
-    private final GetBarcodeInfo task;
 
-    public GetBarcodeList(ConnectionPoolLIMS conn, GetBarcodeInfo barcodes) {
+    public GetBarcodeList(ConnectionPoolLIMS conn) {
         this.conn = conn;
-        this.task = barcodes;
     }
 
     @GetMapping("/getBarcodeList")
     public List<BarcodeSummary> getContent(@RequestParam(value = "user", required=false) String user, HttpServletRequest request) {
         log.info("/getBarcodeList for user:" + user + ", client IP:" + request.getRemoteAddr());
+        GetBarcodeInfo task = new GetBarcodeInfo();
         Future<Object> result = conn.submitTask(task);
         try {
             return (List<BarcodeSummary>) result.get();

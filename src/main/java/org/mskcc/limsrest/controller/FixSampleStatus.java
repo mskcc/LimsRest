@@ -19,12 +19,10 @@ import java.util.concurrent.Future;
 public class FixSampleStatus {
 
     private final ConnectionPoolLIMS conn;
-    private final SetSampleStatus task;
     private final Log log = LogFactory.getLog(AddPoolToFlowcellLane.class);
 
-    public FixSampleStatus(ConnectionPoolLIMS conn, SetSampleStatus setter) {
+    public FixSampleStatus(ConnectionPoolLIMS conn) {
         this.conn = conn;
-        this.task = setter;
     }
 
     @GetMapping("/fixSampleStatus")
@@ -33,6 +31,7 @@ public class FixSampleStatus {
         if (!Whitelists.sampleMatches(sample))
             return "FAILURE: sample is not using a valid format";
         log.info("Starting to fix status by user " + igoUser);
+        SetSampleStatus task = new SetSampleStatus();
         task.init(sample, status, igoUser);
         Future<Object> result = conn.submitTask(task);
         try {

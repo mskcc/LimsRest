@@ -19,14 +19,11 @@ Called by the BIC Validator?
 @RestController
 @RequestMapping("/")
 public class GetPassingSamplesForProject{
-
+    private static Log log = LogFactory.getLog(GetPassingSamplesForProject.class);
     private final ConnectionPoolLIMS conn;
-    private final GetPassingSamples task;
-    private final Log log = LogFactory.getLog(GetPassingSamplesForProject.class);
 
-    public GetPassingSamplesForProject(ConnectionPoolLIMS conn, GetPassingSamples getPassing ){
+    public GetPassingSamplesForProject(ConnectionPoolLIMS conn){
         this.conn = conn;
-        this.task = getPassing;
     }
 
     @GetMapping("/getPassingSamplesForProject")
@@ -49,7 +46,9 @@ public class GetPassingSamplesForProject{
             rs.setRestStatus("ERROR: projectis not using a valid format");
             return rs;
         }
-        log.info("Starting to get passing samples for project " + project + " for user " + user);
+
+        log.info("Starting to /getPassingSamplesForProject " + project + " for user " + user);
+        GetPassingSamples task = new GetPassingSamples();
         task.init(project, dayParam, monthParam, yearParam);
         Future<Object> result = conn.submitTask(task);
         try {

@@ -7,14 +7,13 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 
 import java.util.*;
 
-@Service
 public class GetPassingSamples extends LimsTask {
-    protected String project;
     private static Log log = LogFactory.getLog(GetPassingSamples.class);
+
+    protected String project;
     private int day;
     private int month;
     private int year;

@@ -7,7 +7,6 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -23,9 +22,9 @@ import java.util.Set;
  * or that are being redelivered within a window
  * @author Aaron Gabow
  */
-@Service
 public class GetUndelivered extends LimsTask {
-    private static Log log = LogFactory.getLog(GetDelivered.class);
+    private static Log log = LogFactory.getLog(GetUndelivered.class);
+
     private String passed = "Passed";
     private String failed = "Failed";
     private String daysToExamine = "30"; //we need this to not look at all requests

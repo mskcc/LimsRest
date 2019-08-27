@@ -5,7 +5,6 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -16,11 +15,10 @@ import java.util.Map;
 
 /**
  * A queued task that takes a sample name, sees if it has reached the sequencer and then renames the sample and any child records that reference the old name,  
- * including fixing pools with the name within the concatonated pool 
+ * including fixing pools with the name within the concatenated pool
  *
  * @author Aaron Gabow
  */
-@Service
 public class RenameSample extends LimsTask {
     private static Log log = LogFactory.getLog(RenameSample.class);
     String oldSampleId;

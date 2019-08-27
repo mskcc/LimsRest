@@ -5,7 +5,6 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.mskcc.limsrest.util.Messages;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -15,7 +14,6 @@ import java.util.List;
  * 
  * @author Aaron Gabow
  */
-@Service
 public class GetRequest extends LimsTask {
     String igoUser;
     String[] requestIds;

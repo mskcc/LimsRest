@@ -36,12 +36,9 @@ import java.util.concurrent.Future;
 public class GetBankedSamples {
     private static Log log = LogFactory.getLog(GetBankedSamples.class);
     private final ConnectionPoolLIMS conn;
-    private final GetBanked task;
 
-
-    public GetBankedSamples(ConnectionPoolLIMS conn, GetBanked project) {
+    public GetBankedSamples(ConnectionPoolLIMS conn) {
         this.conn = conn;
-        this.task = project;
     }
 
     @RequestMapping("/getBankedSamples")  // POST called by REX
@@ -53,6 +50,7 @@ public class GetBankedSamples {
                                                                   serviceRequest,
                                                           @RequestParam(value = "investigator", required = false)
                                                                   String investigator) {
+        GetBanked task = new GetBanked();
         LinkedList<SampleSummary> samples = new LinkedList<>();
         if (project != null) {
             if (!Whitelists.requestMatches(project)) {

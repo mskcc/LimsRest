@@ -25,12 +25,10 @@ public class AddInteropData {
 
     private static final Log log = LogFactory.getLog(AddInteropData.class);
     private ConnectionPoolLIMS connectionQueue;
-    private SetOrCreateInteropData setOrCreateInteropData;
     private static ObjectMapper objectMapper;
 
-    public AddInteropData(ConnectionPoolLIMS connectionQueue, SetOrCreateInteropData setOrCreateInteropData) {
+    public AddInteropData(ConnectionPoolLIMS connectionQueue) {
         this.connectionQueue = connectionQueue;
-        this.setOrCreateInteropData = setOrCreateInteropData;
         objectMapper = new ObjectMapper();
     }
 
@@ -56,6 +54,7 @@ public class AddInteropData {
             node.get("data").forEach(lane -> allFields.add(singleLaneSummary(run, lane)));
         }
 
+        SetOrCreateInteropData setOrCreateInteropData = new SetOrCreateInteropData();
         setOrCreateInteropData.init(allFields);
         Future<Object> result = connectionQueue.submitTask(setOrCreateInteropData);
         String returnCode = "";

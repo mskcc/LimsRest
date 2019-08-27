@@ -5,7 +5,6 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionPoolLIMS;
 import org.mskcc.limsrest.service.GetRequest;
 import org.mskcc.limsrest.service.RequestDetailed;
-import org.mskcc.limsrest.service.SetRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,11 +22,9 @@ import java.util.concurrent.Future;
 public class LimsRequest {
     private static Log log = LogFactory.getLog(LimsRequest.class);
     private final ConnectionPoolLIMS conn;
-    private final GetRequest reader;
    
-    public LimsRequest(ConnectionPoolLIMS conn, SetRequest setter, GetRequest reader){
+    public LimsRequest(ConnectionPoolLIMS conn){
         this.conn = conn;
-        this.reader = reader;
     }
 
     @RequestMapping(value = "/limsRequest", method = RequestMethod.GET)
@@ -45,6 +42,8 @@ public class LimsRequest {
             if (!Whitelists.textMatches(igoUser))
                 return new ResponseEntity(reqSummary, HttpStatus.BAD_REQUEST);
         }
+
+        GetRequest reader = new GetRequest();
         reader.init(igoUser, request, fieldName);
         Future<Object> result = conn.submitTask(reader);
         try {

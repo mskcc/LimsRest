@@ -27,11 +27,9 @@ public class GetCorrectedSampleCmoId {
     private static Log log = LogFactory.getLog(GetCorrectedSampleCmoId.class);
     private final static String DMP_SUFFIX = "Z";
     private final ConnectionPoolLIMS conn;
-    private final GenerateSampleCmoIdTask task;
 
-    public GetCorrectedSampleCmoId(ConnectionPoolLIMS conn, GenerateSampleCmoIdTask generateSampleCmoIdTask) {
+    public GetCorrectedSampleCmoId(ConnectionPoolLIMS conn) {
         this.conn = conn;
-        this.task = generateSampleCmoIdTask;
     }
 
     /**
@@ -48,6 +46,7 @@ public class GetCorrectedSampleCmoId {
             log.info(String.format("Starting to generate sample cmo id for sample igo id: %s", sampleIgoId));
 
             log.info("Creating Generate sample cmo id task");
+            GenerateSampleCmoIdTask task = new GenerateSampleCmoIdTask();
             task.init(sampleIgoId);
 
             log.info("Getting result of Generate sample cmo id task");
@@ -108,6 +107,7 @@ public class GetCorrectedSampleCmoId {
             log.info(String.format("Starting to generate sample cmo id for cmo sample: %s", correctedCmoSampleView));
 
             log.info("Creating Generate sample cmo id task");
+            GenerateSampleCmoIdTask task = new GenerateSampleCmoIdTask();
             task.init(correctedCmoSampleView);
 
             log.info("Getting result of Generate sample cmo id task");
@@ -184,6 +184,7 @@ public class GetCorrectedSampleCmoId {
             log.info(String.format("Starting to generate sample cmo id for sample: %s", correctedCmoSampleView));
 
             log.info("Creating Generate sample cmo id task");
+            GenerateSampleCmoIdTask task = new GenerateSampleCmoIdTask();
             task.init(correctedCmoSampleView);
 
             log.info("Getting result of Generate sample cmo id task");
@@ -221,6 +222,7 @@ public class GetCorrectedSampleCmoId {
                 log.info(String.format("Starting to generate sample cmo id for sample: %s", correctedCmoSampleViews.toString()));
 
                 log.info("Creating Generate sample cmo id task");
+                GenerateSampleCmoIdTask task = new GenerateSampleCmoIdTask();
                 task.init(correctedCmoSampleView);
 
                 log.info("Getting result of Generate sample cmo id task");

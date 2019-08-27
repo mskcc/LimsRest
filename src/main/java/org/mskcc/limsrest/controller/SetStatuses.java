@@ -20,16 +20,15 @@ import java.util.concurrent.Future;
 public class SetStatuses {
     private final static Log log = LogFactory.getLog(SetStatuses.class);
     private final ConnectionPoolLIMS conn;
-    private final SetRequestStatus task;
 
-    public SetStatuses(ConnectionPoolLIMS conn, SetRequestStatus requestStatus) {
+    public SetStatuses(ConnectionPoolLIMS conn) {
         this.conn = conn;
-        this.task = requestStatus;
     }
 
     @GetMapping("/setRequestStatuses")
     public List<String> getContent() {
         log.info("Starting to set request statuses");
+        SetRequestStatus task = new SetRequestStatus();
         Future<Object> result = conn.submitTask(task);
         List<String> values = new LinkedList<>();
         try {

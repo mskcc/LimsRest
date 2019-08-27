@@ -5,13 +5,11 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
 
-@Service
 public class GetDeliveryEmailDetails extends LimsTask {
     private static Log log = LogFactory.getLog(GetDeliveryEmailDetails.class);
     protected String requestID;

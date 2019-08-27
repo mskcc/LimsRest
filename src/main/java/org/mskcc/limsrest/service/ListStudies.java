@@ -4,7 +4,6 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.stereotype.Service;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -12,7 +11,6 @@ import java.util.List;
 /**
  * Find all studies/projects and list them 
  */
-@Service
 public class ListStudies extends LimsTask {
     private static Log log = LogFactory.getLog(ListStudies.class);
     boolean cmoOnly = true;

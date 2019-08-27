@@ -19,11 +19,9 @@ import java.util.concurrent.Future;
 public class SetSampleName {
     private final static Log log = LogFactory.getLog(SetSampleName.class);
     private final ConnectionPoolLIMS conn;
-    private final RenameSample task;
    
-    public SetSampleName(ConnectionPoolLIMS conn, RenameSample renamer){
+    public SetSampleName(ConnectionPoolLIMS conn){
         this.conn = conn;
-        this.task = renamer;
     }
 
     //userId refers to the the Sample.UserId in the lims
@@ -45,7 +43,7 @@ public class SetSampleName {
        if (!Whitelists.requestMatches(request))
            return "FAILURE: request is not using a valid format. " + Whitelists.requestFormatText();
 
-
+        RenameSample task = new RenameSample();
        task.init(igoUser, request,  igoId, newSampleId, newUserId); 
                          
        Future<Object> result = conn.submitTask(task);
