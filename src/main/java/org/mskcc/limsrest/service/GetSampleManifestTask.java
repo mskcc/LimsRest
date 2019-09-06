@@ -1,12 +1,18 @@
 package org.mskcc.limsrest.service;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.controller.GetSampleManifest;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -14,6 +20,8 @@ import java.util.List;
  */
 public class GetSampleManifestTask extends LimsTask {
     private static Log log = LogFactory.getLog(GetSampleManifestTask.class);
+
+    private FastQPathFinder fastQPathFinder;
 
     protected String [] igoIds;
 
@@ -131,12 +139,12 @@ public class GetSampleManifestTask extends LimsTask {
                                     String illuminaDate = runFolderElements[0].substring(runFolderElements[0].length()-6); // yymmdd
                                     String dateCreated = "20" + illuminaDate.substring(0,2) + "-" + illuminaDate.substring(2,4) + "-" + illuminaDate.substring(4,6);
 
-                                    SampleManifest.Run r = new SampleManifest.Run(runMode, runId, flowCellId, laneNum.intValue(), readLength, dateCreated);
+                                    List<String> fastqs = FastQPathFinder.search(runId, s.getInvestigatorSampleId() + "_IGO_" + s.getIgoId());
+                                    SampleManifest.Run r = new SampleManifest.Run(runMode, runId, flowCellId, laneNum.intValue(), readLength, dateCreated, fastqs);
                                     library.runs.add(r);
                                 }
                             }
                         }
-                        // TODO add fastq /ifs/archive path
 
                         if (reqLanes.size() > 0) { // only report this library if it made it to a sequencer/run
                             List<SampleManifest.Library> libraries = s.getLibraries();
@@ -152,6 +160,33 @@ public class GetSampleManifestTask extends LimsTask {
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
             return null;
+        }
+    }
+
+    public static class FastQPathFinder {
+        // TODO leave for vacation tomorrow, refactor later Sept. 2019
+        public static List<String> search(String run, String sample_IGO_igoid) {
+            String url = "http://delphi.mskcc.org:8080/ngs-stats/rundone/search/most/recent/fastqpath/" + run + "/" + sample_IGO_igoid;
+            log.info("Finding fastqs in fastq DB for: " + url);
+
+            try {
+                RestTemplate restTemplate = new RestTemplate();
+                ResponseEntity<List<ArchivedFastq>> response = restTemplate.exchange(
+                        url,
+                        HttpMethod.GET,
+                        null,
+                        new ParameterizedTypeReference<List<ArchivedFastq>>() {});
+                List<ArchivedFastq> fastqList = response.getBody();
+                List<String> result = new ArrayList<>();
+                for (ArchivedFastq fastq : fastqList) {
+                    result.add(fastq.fastq);
+                }
+                log.info("Fastq files found: " + result.size());
+                return result;
+            } catch (Exception e) {
+                log.error("ERROR:" + e.getMessage());
+                return null;
+            }
         }
     }
 }

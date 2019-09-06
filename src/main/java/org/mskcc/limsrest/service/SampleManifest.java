@@ -44,13 +44,14 @@ public class SampleManifest {
     }
 
     public static class Run {
-        public Run(String runMode, String runId, String flowCellId, Integer flowCelllane, String readLength, String runDate) {
+        public Run(String runMode, String runId, String flowCellId, Integer flowCelllane, String readLength, String runDate, List<String> fastqs) {
             this.runMode = runMode;
             this.runId = runId;
             this.flowCellId = flowCellId;
             this.flowCellLane = flowCelllane;
             this.readLength = readLength;
             this.runDate = runDate;
+            this.fastqs = fastqs;
         }
         public String runMode;
         public String runId;
@@ -58,6 +59,7 @@ public class SampleManifest {
         public Integer flowCellLane;
         public String readLength;
         public String runDate;
+        public List<String> fastqs;
     }
 
     public SampleManifest() {}
@@ -107,7 +109,6 @@ public class SampleManifest {
     public void setOncoTreeCode(String oncoTreeCode) {
         this.oncoTreeCode = oncoTreeCode;
     }
-
 
     public String getTissueLocation() {
         return tissueLocation;
