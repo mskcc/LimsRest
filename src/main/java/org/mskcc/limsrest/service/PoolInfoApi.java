@@ -44,9 +44,9 @@ public class PoolInfoApi {
             task.init(record, status);
             Future<Object> result = conn.submitTask(task);
             try {
-                Boolean taskSetStatus = (Boolean) result.get();
+                Boolean success = (Boolean) result.get();
                 String response;
-                if(taskSetStatus){
+                if(success){
                     response = String.format("Set status for record %s to '%s'", recordId, status);
                 } else {
                     response = String.format("Failed to set status for record %s to '%s'", recordId, status);

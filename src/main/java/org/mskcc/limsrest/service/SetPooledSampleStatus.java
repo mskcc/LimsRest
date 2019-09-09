@@ -4,14 +4,9 @@ import com.velox.api.datarecord.*;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.service.assignedprocess.QcStatus;
 import org.mskcc.limsrest.service.assignedprocess.QcStatusAwareProcessAssigner;
 import org.springframework.security.access.prepost.PreAuthorize;
-
-import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.rmi.ServerException;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.mskcc.util.VeloxConstants.SAMPLE;
@@ -52,7 +47,7 @@ public class SetPooledSampleStatus extends LimsTask {
             record = childSamples[0];
             if(isRecordForRepooling(record)){
                 String pooledSampleRecord = Long.toString(record.getRecordId());
-                log.info(String.format("Found sample, %s, with 'PoolingSampleLibProtocol' and setting status to '%s'", pooledSampleRecord, status));
+                log.info(String.format("Found sample, %s, with 'PoolingSampleLibProtocol'", pooledSampleRecord));
                 setDataField(record, "ExemplarSampleStatus", this.status);
                 return Boolean.TRUE;
             }
@@ -86,7 +81,7 @@ public class SetPooledSampleStatus extends LimsTask {
     private Boolean setDataField(DataRecord record, String dataFieldName, String newValue){
         try{
             Object oldStatus = record.getDataField("ExemplarSampleStatus", user);
-            log.info(String.format("Setting status from '%s' to '%s'", oldStatus, this.status));
+            log.info(String.format("Setting status of record %s from '%s' to '%s'", record.getRecordId(), oldStatus, this.status));
             record.setDataField("ExemplarSampleStatus", this.status, user);
             dataRecordManager.storeAndCommit("PostSeqAnalysisQC updated to " + status, user);
             return Boolean.TRUE;
