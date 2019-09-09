@@ -39,17 +39,18 @@ public class PoolInfoApi {
                              String user) {
         log.info("Searching for record: " + recordId);
         if (recordId != null && status != null) {
+            String mappedStatus = "Ready for - Pooling of Sample Libraries for Sequencing"; // Sample has differnet repool status
             long record = Long.parseLong(recordId);
             SetPooledSampleStatus task = new SetPooledSampleStatus();
-            task.init(record, status);
+            task.init(record, mappedStatus);
             Future<Object> result = conn.submitTask(task);
             try {
                 Boolean success = (Boolean) result.get();
                 String response;
                 if(success){
-                    response = String.format("Set status for record %s to '%s'", recordId, status);
+                    response = String.format("Set status for record %s to '%s'", recordId, mappedStatus);
                 } else {
-                    response = String.format("Failed to set status for record %s to '%s'", recordId, status);
+                    response = String.format("Failed to set status for record %s to '%s'", recordId, mappedStatus);
                 }
                 log.info(response);
                 return response;
