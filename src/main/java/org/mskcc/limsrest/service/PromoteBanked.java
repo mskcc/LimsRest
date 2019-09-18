@@ -414,8 +414,7 @@ public class PromoteBanked extends LimsTask {
                 if (requestedReads.equals("MiSeq-SingleRun")) {
                     rrMapped = 0.0;
                 } else if (!depthMatch.find()) {
-                    requestedReads = requestedReads.split("-")[0].trim();
-                    rrMapped = Double.parseDouble(requestedReads);
+                    rrMapped = selectLarger(requestedReads);
                 } else { //the value is expressed as a coverage
                     rrMapped = Double.parseDouble(depthMatch.group(1));
                 }
@@ -431,6 +430,13 @@ public class PromoteBanked extends LimsTask {
             promotedSampleRecord.addChild("SeqRequirement", seqRequirementMap, user);
         } catch (NullPointerException npe) {
         }
+    }
+
+    protected static double selectLarger(String requestedReads) {
+        // example 30-40 million
+        String [] parts = requestedReads.split("[ -]+");
+        requestedReads = parts[1].trim();
+        return Double.parseDouble(requestedReads);
     }
 
     void setSeqReqForWES(String requestedReads, Map<String, Object> seqRequirementMap) {
