@@ -5,6 +5,10 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.domain.sample.SpecimenType;
 
+import java.util.Objects;
+
+import static org.mskcc.util.Constants.MRN_REDACTED;
+
 public class CmoSampleIdRetrieverFactory {
     private final static Log LOGGER = LogFactory.getLog(CmoSampleIdRetrieverFactory.class);
 
@@ -18,7 +22,7 @@ public class CmoSampleIdRetrieverFactory {
     }
 
     public CmoSampleIdRetriever getCmoSampleIdRetriever(CorrectedCmoSampleView correctedCmoSampleView) {
-        if (isCellLine(correctedCmoSampleView.getSpecimenType())) {
+        if (isCellLine(correctedCmoSampleView)) {
             LOGGER.info(String.format("Sample: %s is of type CellLine", correctedCmoSampleView.getId()));
             return cellLineCmoSampleIdRetriever;
         }
@@ -27,7 +31,8 @@ public class CmoSampleIdRetrieverFactory {
         return patientCmoSampleIdRetriever;
     }
 
-    private boolean isCellLine(SpecimenType specimenType) {
-        return specimenType == SpecimenType.CELLLINE;
+    private boolean isCellLine(CorrectedCmoSampleView view) {
+        return view.getSpecimenType() == SpecimenType.CELLLINE && !Objects.equals(view.getNormalizedPatientId(),
+                MRN_REDACTED);
     }
 }

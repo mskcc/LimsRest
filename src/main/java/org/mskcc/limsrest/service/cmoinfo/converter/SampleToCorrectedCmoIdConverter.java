@@ -30,6 +30,7 @@ public class SampleToCorrectedCmoIdConverter implements CorrectedCmoIdConverter<
                     (correctedCmoSampleView::setNucleidAcid);
 
             correctedCmoSampleView.setPatientId(sample.getCmoSampleInfo().getCmoPatientId());
+            correctedCmoSampleView.setNormalizedPatientId(sample.getCmoSampleInfo().getNormalizedPatientId());
             correctedCmoSampleView.setRequestId(sample.getRequestId());
 
             if (!StringUtils.isEmpty(sample.get(Sample.RECIPE)))
