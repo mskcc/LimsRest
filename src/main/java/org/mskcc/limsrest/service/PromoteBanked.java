@@ -414,7 +414,10 @@ public class PromoteBanked extends LimsTask {
                 if (requestedReads.equals("MiSeq-SingleRun")) {
                     rrMapped = 0.0;
                 } else if (!depthMatch.find()) {
-                    rrMapped = selectLarger(requestedReads);
+                    if (requestedReads.contains("-"))
+                        rrMapped = selectLarger(requestedReads);
+                    else
+                        rrMapped = Double.parseDouble(requestedReads.trim());
                 } else { //the value is expressed as a coverage
                     rrMapped = Double.parseDouble(depthMatch.group(1));
                 }
