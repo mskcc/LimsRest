@@ -15,7 +15,7 @@ public class SampleManifest {
     private String sampleOrigin;
     private String preservation;
     private String collectionYear;
-    private String gender;
+    private String sex;
     private String species;
 
     private String baitSet;
@@ -142,12 +142,12 @@ public class SampleManifest {
         this.collectionYear = collectionYear;
     }
 
-    public String getGender() {
-        return gender;
+    public String getSex() {
+        return sex;
     }
 
-    public void setGender(String gender) {
-        this.gender = gender;
+    public void setSex(String sex) {
+        this.sex = sex;
     }
 
     public String getBaitSet() {

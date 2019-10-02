@@ -1,8 +1,8 @@
 package org.mskcc.limsrest.service;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.controller.GetSampleManifest;
@@ -12,8 +12,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  *
@@ -46,6 +47,17 @@ public class GetSampleManifestTask extends LimsTask {
                 }
                 DataRecord sample = samples.get(0);
 
+                List<DataRecord> qcs = sample.getDescendantsOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
+                Set<String> failedRuns = new HashSet<>();
+                for (DataRecord dr : qcs) {
+                    String qcResult = dr.getStringVal(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
+                    if ("Failed".equals(qcResult)) {
+                        String run = dr.getStringVal(SeqAnalysisSampleQCModel.SEQUENCER_RUN_FOLDER, user);
+                        failedRuns.add(run);
+                        System.out.println("Failed sample & run: " + run);
+                    }
+                }
+
                 // 06302_R_1 has no sampleCMOInfoRecord so use the same fields at the sample level
                 DataRecord cmoInfo;  // assign the dataRecord to query either sample table or samplecmoinforecords
                 if (sampleCMOInfoRecords.size() == 0) {
@@ -66,7 +78,7 @@ public class GetSampleManifestTask extends LimsTask {
                 s.setSampleOrigin(cmoInfo.getStringVal("SampleOrigin", user)); // formerly reported as Sample Type
                 s.setPreservation(cmoInfo.getStringVal("Preservation", user));
                 s.setCollectionYear(cmoInfo.getStringVal("CollectionYear", user));
-                s.setGender(cmoInfo.getStringVal("Gender", user));
+                s.setSex(cmoInfo.getStringVal("Gender", user));
                 s.setSpecies(cmoInfo.getStringVal("Species", user));
 
                 //s.setCmoSampleId(cmoInfo.getStringVal("CorrectedCMOID", user));
@@ -127,19 +139,25 @@ public class GetSampleManifestTask extends LimsTask {
                                 List<DataRecord> possibleRun = flowcell.get(0).getParentsOfType("IlluminaSeqExperiment", user);
                                 if (possibleRun.size() > 0) {
                                     //log.info("Getting a run");
-                                    //SequencerRunFolder example /ifs/lola/150814_LOLA_1298_BC7259ACXX/
                                     DataRecord seqExperiment = possibleRun.get(0);
                                     String runMode  = seqExperiment.getStringVal("SequencingRunMode", user);
                                     String flowCellId = seqExperiment.getStringVal("FlowcellId", user);
                                     String readLength = seqExperiment.getStringVal("ReadLength", user); // TODO blank in LIMS prior to April 2019
 
                                     // TODO function to convert Illumna yymmdd date as yyyy-MM-dd ?
-                                    String[] runFolderElements = seqExperiment.getStringVal("SequencerRunFolder", user).split("_");
+                                    // example: /ifs/pitt/161102_PITT_0089_AHFG3GBBXX/ or /ifs/lola/150814_LOLA_1298_BC7259ACXX/
+                                    String run = seqExperiment.getStringVal("SequencerRunFolder", user);
+                                    String[] runFolderElements = run.split("_");
                                     String runId = runFolderElements[1] + "_" + runFolderElements[2];
+                                    String runName = runId + "_" + runFolderElements[3];
+                                    runName = runName.replace("/", ""); // now PITT_0089_AHFG3GBBXX
                                     String illuminaDate = runFolderElements[0].substring(runFolderElements[0].length()-6); // yymmdd
                                     String dateCreated = "20" + illuminaDate.substring(0,2) + "-" + illuminaDate.substring(2,4) + "-" + illuminaDate.substring(4,6);
 
-                                    List<String> fastqs = FastQPathFinder.search(runId, s.getInvestigatorSampleId() + "_IGO_" + s.getIgoId());
+                                    List<String> fastqs = null;
+                                    // if QC was not failed query Fastq database for path to the fastqs for that run
+                                    if (!failedRuns.contains(runName))
+                                        fastqs = FastQPathFinder.search(runId, s.getInvestigatorSampleId() + "_IGO_" + s.getIgoId());
                                     SampleManifest.Run r = new SampleManifest.Run(runMode, runId, flowCellId, laneNum.intValue(), readLength, dateCreated, fastqs);
                                     library.runs.add(r);
                                 }
@@ -164,7 +182,7 @@ public class GetSampleManifestTask extends LimsTask {
     }
 
     public static class FastQPathFinder {
-        // TODO leave for vacation tomorrow, refactor later Sept. 2019
+        // TODO url to properties & make interface for FastQPathFinder
         public static List<String> search(String run, String sample_IGO_igoid) {
             String url = "http://delphi.mskcc.org:8080/ngs-stats/rundone/search/most/recent/fastqpath/" + run + "/" + sample_IGO_igoid;
             log.info("Finding fastqs in fastq DB for: " + url);
@@ -177,11 +195,16 @@ public class GetSampleManifestTask extends LimsTask {
                         null,
                         new ParameterizedTypeReference<List<ArchivedFastq>>() {});
                 List<ArchivedFastq> fastqList = response.getBody();
+                log.info("Fastq files found: " + fastqList.size());
+
+                // Return only most recent R1&R2 in case of re-demux
+                if (fastqList.size() > 2)
+                    fastqList = fastqList.subList(0,2);
                 List<String> result = new ArrayList<>();
                 for (ArchivedFastq fastq : fastqList) {
                     result.add(fastq.fastq);
                 }
-                log.info("Fastq files found: " + result.size());
+
                 return result;
             } catch (Exception e) {
                 log.error("ERROR:" + e.getMessage());
