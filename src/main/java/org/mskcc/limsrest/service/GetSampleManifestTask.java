@@ -2,6 +2,7 @@ package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.sloan.cmo.recmodels.SampleModel;
 import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -91,9 +92,13 @@ public class GetSampleManifestTask extends LimsTask {
                 for (DataRecord aliquot : aliquots) {
                     String sampleType = aliquot.getStringVal("ExemplarSampleType", user);
                     if ("DNA Library".equals(sampleType)) {
+                        String recipe = sample.getStringVal(SampleModel.RECIPE, user);
+                        if ("Fingerprinting".equals(recipe)) // for example 07951_S_50_1, skip for pipelines for now
+                            continue;
                         String sampleStatus = aliquot.getStringVal("ExemplarSampleStatus", user);
                         if (sampleStatus != null && sampleStatus.contains("Failed"))
                             continue;
+                        
                         DataRecord [] libPrepProtocols = aliquot.getChildrenOfType("DNALibraryPrepProtocol3", user);
                         Double volume = null;
                         if (libPrepProtocols.length == 1)
