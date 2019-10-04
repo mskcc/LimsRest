@@ -82,7 +82,7 @@ public class GetSampleManifestTask extends LimsTask {
                 s.setSex(cmoInfo.getStringVal("Gender", user));
                 s.setSpecies(cmoInfo.getStringVal("Species", user));
 
-                //s.setCmoSampleId(cmoInfo.getStringVal("CorrectedCMOID", user));
+                s.setCmoSampleId(cmoInfo.getStringVal("CorrectedCMOID", user));
 
                 // library concentration & volume
                 // often null in samplecmoinforecords then query KAPALibPlateSetupProtocol1.TargetMassAliq1
@@ -98,7 +98,7 @@ public class GetSampleManifestTask extends LimsTask {
                         String sampleStatus = aliquot.getStringVal("ExemplarSampleStatus", user);
                         if (sampleStatus != null && sampleStatus.contains("Failed"))
                             continue;
-                        
+
                         DataRecord [] libPrepProtocols = aliquot.getChildrenOfType("DNALibraryPrepProtocol3", user);
                         Double volume = null;
                         if (libPrepProtocols.length == 1)

@@ -64,6 +64,9 @@ public class GetRequestSamplesTask extends LimsTask {
                     sampleList.add(rs);
                 }
             }
+            if (recipe.contains("IMPACT") || recipe.contains("HemePACT")) {
+                // TODO add pooled normal to sample List if it exists
+            }
 
             RequestSampleList rsl = new RequestSampleList(requestId, sampleList);
             rsl.setRecipe(recipe);
