@@ -64,8 +64,8 @@ public class GetRequestSamplesTask extends LimsTask {
                     sampleList.add(rs);
                 }
             }
-            if (recipe.contains("IMPACT") || recipe.contains("HemePACT")) {
-                // TODO add pooled normal to sample List if it exists
+            if (isIMPACTOrHEMEPACTBeforeIMPACT505(recipe)) {
+                // TODO
             }
 
             RequestSampleList rsl = new RequestSampleList(requestId, sampleList);
@@ -85,6 +85,18 @@ public class GetRequestSamplesTask extends LimsTask {
             log.error(e.getMessage(), e);
             return null;
         }
+    }
+
+    /**
+     * Pooled normals were added to IMPACT requests up to IMPACT505 and used by the pipeline for
+     * sample pairing when the patient's normal sample was not present.
+     * @param recipe
+     * @return
+     */
+    protected static boolean isIMPACTOrHEMEPACTBeforeIMPACT505(String recipe) {
+        if ("IMPACT341,IMPACT410,IMPACT410+,IMPACT468,HemePACT_v3,HemePACT_v4".contains(recipe))
+            return true;
+        return false;
     }
 
     /**
