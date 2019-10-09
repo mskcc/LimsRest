@@ -1,0 +1,15 @@
+package org.mskcc.limsrest.util;
+
+public class IGOTools {
+
+    /**
+     * Extract the request id from an IGO id like: 06049_AA_1_2_1
+     * @param igoId
+     * @return the request ID
+     */
+    public static String requestFromIgoId(String igoId) {
+        if (igoId == null)
+            return null;
+        return igoId.replaceAll("_[0-9]+", "");
+    }
+}

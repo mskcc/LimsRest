@@ -2,7 +2,9 @@ package org.mskcc.limsrest.service;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.velox.api.datarecord.DataRecord;
+import com.velox.generic.recordmodels.RequestModel;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.sloan.cmo.recmodels.SampleModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -42,8 +44,14 @@ public class GetRequestSamplesTask extends LimsTask {
             log.info("Child samples found: " + samples.length);
 
             List<RequestSample> sampleList = new ArrayList<>();
+            String recipe = "";
             for (DataRecord sample : samples) {
                 String igoId = sample.getStringVal("SampleId", user);
+                String sampleRecipe = sample.getStringVal(SampleModel.RECIPE, user);
+                if ("Fingerprinting".equals(sampleRecipe)) // for example 07951_S_50_1, skip for pipelines for now
+                    continue;
+                else
+                    recipe = sampleRecipe;
                 String othersampleId = sample.getStringVal("OtherSampleId", user);
                 boolean igoComplete = samplesIGOComplete.contains(othersampleId);
                 boolean tumor = "Tumor".equals(sample.getStringVal("TumorOrNormal", user));
@@ -56,8 +64,12 @@ public class GetRequestSamplesTask extends LimsTask {
                     sampleList.add(rs);
                 }
             }
+            if (isIMPACTOrHEMEPACTBeforeIMPACT505(recipe)) {
+                // TODO
+            }
 
             RequestSampleList rsl = new RequestSampleList(requestId, sampleList);
+            rsl.setRecipe(recipe);
             rsl.setPiEmail(requestDataRecord.getStringVal("PIemail", user));
             rsl.setLabHeadName(requestDataRecord.getStringVal("LaboratoryHead", user));
             rsl.setLabHeadEmail(requestDataRecord.getStringVal("LabHeadEmail", user));
@@ -73,6 +85,18 @@ public class GetRequestSamplesTask extends LimsTask {
             log.error(e.getMessage(), e);
             return null;
         }
+    }
+
+    /**
+     * Pooled normals were added to IMPACT requests up to IMPACT505 and used by the pipeline for
+     * sample pairing when the patient's normal sample was not present.
+     * @param recipe
+     * @return
+     */
+    protected static boolean isIMPACTOrHEMEPACTBeforeIMPACT505(String recipe) {
+        if ("IMPACT341,IMPACT410,IMPACT410+,IMPACT468,HemePACT_v3,HemePACT_v4".contains(recipe))
+            return true;
+        return false;
     }
 
     /**
@@ -94,6 +118,7 @@ public class GetRequestSamplesTask extends LimsTask {
 
     public static class RequestSampleList {
         public String requestId;
+        public String recipe;
         public String projectManagerName;
         public String piEmail;
         public String labHeadName, labHeadEmail;
@@ -103,12 +128,16 @@ public class GetRequestSamplesTask extends LimsTask {
         public List<RequestSample> samples;
 
         public RequestSampleList(){}
+
         public RequestSampleList(String requestId){ this.requestId = requestId; }
 
         public RequestSampleList(String requestId, List<RequestSample> samples) {
             this.requestId = requestId;
             this.samples = samples;
         }
+
+        public String getRecipe() { return recipe; }
+        public void setRecipe(String recipe) { this.recipe = recipe; }
 
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         public String getRequestId() {

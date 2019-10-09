@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.concurrent.Future;
 
 @RestController
@@ -26,8 +27,8 @@ public class GetRequestSamples {
     }
 
     @GetMapping("/api/getRequestSamples")
-    public GetRequestSamplesTask.RequestSampleList getContent(@RequestParam(value = "request") String requestId, @RequestParam(value="tumorOnly", defaultValue="False") Boolean tumorOnly) {
-        log.info("Starting /getRequestSamples for requestId:" + requestId);
+    public GetRequestSamplesTask.RequestSampleList getContent(@RequestParam(value = "request") String requestId, @RequestParam(value = "tumorOnly", defaultValue = "False") Boolean tumorOnly, HttpServletRequest request) {
+        log.info("/api/getRequestSamples for request:" + requestId + " " + request.getRemoteAddr());
 
         if (!Whitelists.requestMatches(requestId)) {
             log.error("FAILURE: requestId is not using a valid format.");
