@@ -12,10 +12,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  *
@@ -82,7 +79,7 @@ public class GetSampleManifestTask extends LimsTask {
                 s.setSex(cmoInfo.getStringVal("Gender", user));
                 s.setSpecies(cmoInfo.getStringVal("Species", user));
 
-                s.setCmoSampleId(cmoInfo.getStringVal("CorrectedCMOID", user));
+                s.setCmoSampleName(cmoInfo.getStringVal("CorrectedCMOID", user));
 
                 // library concentration & volume
                 // often null in samplecmoinforecords then query KAPALibPlateSetupProtocol1.TargetMassAliq1
@@ -133,17 +130,19 @@ public class GetSampleManifestTask extends LimsTask {
                             }
                         }
 
+                        // for each flow cell ID a sample may be on multiple lanes
+                        // (currently all lanes are demuxed to same fastq file)
+                        Map<String, SampleManifest.Run> runsMap = new HashMap<>();
                         // run Mode, runId, flow Cell & Lane Number
                         List<DataRecord> reqLanes = aliquot.getDescendantsOfType("FlowCellLane", user);
                         for (DataRecord flowCellLane : reqLanes) {
-                            Long laneNum = flowCellLane.getLongVal("LaneNum", user);
+                            Integer laneNum = ((Long)flowCellLane.getLongVal("LaneNum", user)).intValue();
                             //log.info("Getting a flow cell lane");
                             List<DataRecord> flowcell = flowCellLane.getParentsOfType("FlowCell", user);
                             if (flowcell.size() > 0) {
                                 //log.info("Getting a flow cell");
                                 List<DataRecord> possibleRun = flowcell.get(0).getParentsOfType("IlluminaSeqExperiment", user);
                                 if (possibleRun.size() > 0) {
-                                    //log.info("Getting a run");
                                     DataRecord seqExperiment = possibleRun.get(0);
                                     String runMode  = seqExperiment.getStringVal("SequencingRunMode", user);
                                     String flowCellId = seqExperiment.getStringVal("FlowcellId", user);
@@ -159,12 +158,20 @@ public class GetSampleManifestTask extends LimsTask {
                                     String illuminaDate = runFolderElements[0].substring(runFolderElements[0].length()-6); // yymmdd
                                     String dateCreated = "20" + illuminaDate.substring(0,2) + "-" + illuminaDate.substring(2,4) + "-" + illuminaDate.substring(4,6);
 
-                                    List<String> fastqs = null;
-                                    // if QC was not failed query Fastq database for path to the fastqs for that run
-                                    if (!failedRuns.contains(runName))
-                                        fastqs = FastQPathFinder.search(runId, s.getInvestigatorSampleId() + "_IGO_" + s.getIgoId());
-                                    SampleManifest.Run r = new SampleManifest.Run(runMode, runId, flowCellId, laneNum.intValue(), readLength, dateCreated, fastqs);
-                                    library.runs.add(r);
+                                    SampleManifest.Run r = new SampleManifest.Run(runMode, runId, flowCellId, readLength, dateCreated);
+                                    if (runsMap.containsKey(flowCellId)) { // already created, just add new lane num to list
+                                        runsMap.get(flowCellId).addLane(laneNum);
+                                    } else { // lookup fastq paths for this run
+                                        List<String> fastqs = null;
+                                        // if QC was not failed, query Fastq database for path to the fastqs for that run
+                                        if (!failedRuns.contains(runName))
+                                            fastqs = FastQPathFinder.search(runId, s.getInvestigatorSampleId() + "_IGO_" + s.getIgoId());
+                                        r.addLane(laneNum);
+                                        r.fastqs = fastqs;
+
+                                        runsMap.put(flowCellId, r);
+                                        library.runs.add(r);
+                                    }
                                 }
                             }
                         }

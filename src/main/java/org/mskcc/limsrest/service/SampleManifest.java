@@ -1,12 +1,13 @@
 package org.mskcc.limsrest.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class SampleManifest {
     private String igoId;
 
-    private String cmoSampleId;
+    private String cmoSampleName; // aka "Corrected CMO Sample ID", but not an ID in by normal database standards
     private String cmoPatientId;
     private String investigatorSampleId;
     private String oncoTreeCode;
@@ -44,29 +45,35 @@ public class SampleManifest {
     }
 
     public static class Run {
-        public Run(String runMode, String runId, String flowCellId, Integer flowCelllane, String readLength, String runDate, List<String> fastqs) {
+        public String runMode;
+        public String runId;
+        public String flowCellId;
+        public String readLength;
+        public String runDate;
+
+        public List<Integer> flowCellLanes = new ArrayList<>();
+        public List<String> fastqs;
+
+        public Run(String runMode, String runId, String flowCellId, String readLength, String runDate) {
             this.runMode = runMode;
             this.runId = runId;
             this.flowCellId = flowCellId;
-            this.flowCellLane = flowCelllane;
             this.readLength = readLength;
             this.runDate = runDate;
             this.fastqs = fastqs;
         }
-        public String runMode;
-        public String runId;
-        public String flowCellId;
-        public Integer flowCellLane;
-        public String readLength;
-        public String runDate;
-        public List<String> fastqs;
+
+        public void addLane(Integer lane) {
+            flowCellLanes.add(lane);
+            Collections.sort(flowCellLanes);
+        }
     }
 
     public SampleManifest() {}
 
-    public String getCmoSampleId() { return cmoSampleId; }
+    public String getCmoSampleName() { return cmoSampleName; }
 
-    public void setCmoSampleId(String cmoSampleId) { this.cmoSampleId = cmoSampleId; }
+    public void setCmoSampleName(String cmoSampleName) { this.cmoSampleName = cmoSampleName; }
 
     public String getSpecies() { return species; }
 
