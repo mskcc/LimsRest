@@ -1,6 +1,7 @@
 package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.NotFound;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.SampleModel;
 import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+import java.rmi.RemoteException;
 import java.util.*;
 
 /**
@@ -44,6 +46,9 @@ public class GetSampleManifestTask extends LimsTask {
                     return new GetSampleManifest.SampleManifestResult(null, "Sample not found: " + igoId);
                 }
                 DataRecord sample = samples.get(0);
+                String recipe = sample.getStringVal(SampleModel.RECIPE, user);
+                if ("Fingerprinting".equals(recipe)) // for example 07951_S_50_1, skip for pipelines for now
+                    continue;
 
                 List<DataRecord> qcs = sample.getDescendantsOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
                 Set<String> failedRuns = new HashSet<>();
@@ -64,122 +69,111 @@ public class GetSampleManifestTask extends LimsTask {
                     cmoInfo = sampleCMOInfoRecords.get(0);
                 }
 
-                SampleManifest s = new SampleManifest();
-                s.setIgoId(igoId);
-                s.setCmoPatientId(cmoInfo.getStringVal("CmoPatientId", user));
-                s.setInvestigatorSampleId(cmoInfo.getStringVal("UserSampleID", user));
-                String tumorOrNormal = cmoInfo.getStringVal("TumorOrNormal", user);
-                s.setTumorOrNormal(tumorOrNormal);
-                if ("Tumor".equals(tumorOrNormal))
-                    s.setOncoTreeCode(cmoInfo.getStringVal("TumorType", user));
-                s.setTissueLocation(cmoInfo.getStringVal("TissueLocation", user));
-                s.setSampleOrigin(cmoInfo.getStringVal("SampleOrigin", user)); // formerly reported as Sample Type
-                s.setPreservation(cmoInfo.getStringVal("Preservation", user));
-                s.setCollectionYear(cmoInfo.getStringVal("CollectionYear", user));
-                s.setSex(cmoInfo.getStringVal("Gender", user));
-                s.setSpecies(cmoInfo.getStringVal("Species", user));
-
-                s.setCmoSampleName(cmoInfo.getStringVal("CorrectedCMOID", user));
+                SampleManifest s = getSampleLevelFields(igoId, cmoInfo);
 
                 // library concentration & volume
                 // often null in samplecmoinforecords then query KAPALibPlateSetupProtocol1.TargetMassAliq1
                 //String dmpLibraryInput = cmoInfo.getStringVal("DMPLibraryInput", user); // often null
                 //String dmpLibraryOutput = cmoInfo.getStringVal("DMPLibraryOutput", user); // LIBRARY_YIELD
+
                 List<DataRecord> aliquots = sample.getDescendantsOfType("Sample", user);
-                for (DataRecord aliquot : aliquots) {
-                    String sampleType = aliquot.getStringVal("ExemplarSampleType", user);
-                    if ("DNA Library".equals(sampleType)) {
-                        String recipe = sample.getStringVal(SampleModel.RECIPE, user);
-                        if ("Fingerprinting".equals(recipe)) // for example 07951_S_50_1, skip for pipelines for now
-                            continue;
-                        String sampleStatus = aliquot.getStringVal("ExemplarSampleStatus", user);
-                        if (sampleStatus != null && sampleStatus.contains("Failed"))
-                            continue;
 
-                        DataRecord [] libPrepProtocols = aliquot.getChildrenOfType("DNALibraryPrepProtocol3", user);
-                        Double volume = null;
-                        if (libPrepProtocols.length == 1)
-                            volume = libPrepProtocols[0].getDoubleVal("ElutionVol", user);
-                        Double concentration = aliquot.getDoubleVal("Concentration", user);
-                        String libraryIgoId = aliquot.getStringVal("SampleId", user);
-                        SampleManifest.Library library = new SampleManifest.Library(libraryIgoId, volume, concentration);
+                Map<String, DataRecord> dnaLibraries = findDNALibraries(aliquots);
 
-                        List<DataRecord> indexBarcodes = aliquot.getDescendantsOfType("IndexBarcode", user);
-                        if (indexBarcodes != null && indexBarcodes.size() > 0) {
-                            DataRecord bc = indexBarcodes.get(0);
-                            library.barcodeId = bc.getStringVal("IndexId", user);
-                            library.barcodeIndex = bc.getStringVal("IndexTag", user);
+                // for each DNA Library traverse the records grab the fields we need and paths to fastqs.
+                for (Map.Entry<String, DataRecord> aliquotEntry : dnaLibraries.entrySet()) {
+                    String libraryIgoId = aliquotEntry.getKey();
+                    DataRecord aliquot = aliquotEntry.getValue();
+
+                    if (dnaLibraries.containsKey(libraryIgoId + "_1")) { // does this library have a child library?
+                        log.info("Skipping:" + libraryIgoId);  // For example: 09641_70_1_1_1 & 09641_70_1_1_1_1
+                        continue;
+                    } // TODO if aliquot was made of this DNA Library change logic to find barcodes etc at parent level
+
+                    DataRecord[] libPrepProtocols = aliquot.getChildrenOfType("DNALibraryPrepProtocol3", user);
+                    Double volume = null;
+                    if (libPrepProtocols.length == 1)
+                        volume = libPrepProtocols[0].getDoubleVal("ElutionVol", user);
+                    Double concentration = aliquot.getDoubleVal("Concentration", user);
+
+                    SampleManifest.Library library = new SampleManifest.Library(libraryIgoId, volume, concentration);
+
+                    List<DataRecord> indexBarcodes = aliquot.getDescendantsOfType("IndexBarcode", user);
+                    if (indexBarcodes != null && indexBarcodes.size() > 0) {
+                        DataRecord bc = indexBarcodes.get(0);
+                        library.barcodeId = bc.getStringVal("IndexId", user);
+                        library.barcodeIndex = bc.getStringVal("IndexTag", user);
+                    }
+
+                    // recipe, capture input, capture name
+                    List<DataRecord> nimbleGen = aliquot.getDescendantsOfType("NimbleGenHybProtocol", user);
+                    log.info("Found nimbleGen records: " + nimbleGen.size());
+                    for (DataRecord n : nimbleGen) {
+                        if (n.getBooleanVal("Valid", user)) {
+                            String poolName = n.getStringVal("Protocol2Sample", user);
+                            String baitSet = n.getStringVal("Recipe", user); // LIMS display name "bait set"
+                            s.setBaitSet(baitSet);
+                            Object val = n.getValue("SourceMassToUse", user);
+                            if (val != null) {
+                                Double captureInput = n.getDoubleVal("SourceMassToUse", user);
+                                library.captureInputNg = captureInput.toString();
+                                library.captureName = poolName;
+                                Double captureVolume = n.getDoubleVal("VolumeToUse", user);
+                                library.captureConcentrationNm = captureVolume.toString();
+                            }
                         }
+                    }
 
-                        // recipe, capture input, capture name
-                        List<DataRecord> nimbleGen = aliquot.getDescendantsOfType("NimbleGenHybProtocol", user);
-                        log.info("Found nimbleGen records: " + nimbleGen.size());
-                        for (DataRecord n : nimbleGen) {
-                            if (n.getBooleanVal("Valid", user)) {
-                                String poolName = n.getStringVal("Protocol2Sample", user);
-                                String baitSet = n.getStringVal("Recipe", user); // LIMS display name "bait set"
-                                s.setBaitSet(baitSet);
-                                Object val = n.getValue("SourceMassToUse", user);
-                                if (val != null) {
-                                    Double captureInput = n.getDoubleVal("SourceMassToUse", user);
-                                    library.captureInputNg = captureInput.toString();
-                                    library.captureName = poolName;
-                                    Double captureVolume = n.getDoubleVal("VolumeToUse", user);
-                                    library.captureConcentrationNm = captureVolume.toString();
+                    // for each flow cell ID a sample may be on multiple lanes
+                    // (currently all lanes are demuxed to same fastq file)
+                    Map<String, SampleManifest.Run> runsMap = new HashMap<>();
+                    // run Mode, runId, flow Cell & Lane Number
+                    List<DataRecord> reqLanes = aliquot.getDescendantsOfType("FlowCellLane", user);
+                    log.info("Found lanes: " + reqLanes);
+                    for (DataRecord flowCellLane : reqLanes) {
+                        Integer laneNum = ((Long) flowCellLane.getLongVal("LaneNum", user)).intValue();
+                        log.info("Getting a flow cell lane");
+                        List<DataRecord> flowcell = flowCellLane.getParentsOfType("FlowCell", user);
+                        if (flowcell.size() > 0) {
+                            log.info("Getting a flow cell");
+                            List<DataRecord> possibleRun = flowcell.get(0).getParentsOfType("IlluminaSeqExperiment", user);
+                            if (possibleRun.size() > 0) {
+                                DataRecord seqExperiment = possibleRun.get(0);
+                                String runMode = seqExperiment.getStringVal("SequencingRunMode", user);
+                                String flowCellId = seqExperiment.getStringVal("FlowcellId", user);
+                                String readLength = seqExperiment.getStringVal("ReadLength", user); // TODO blank in LIMS prior to April 2019
+
+                                // TODO function to convert Illumna yymmdd date as yyyy-MM-dd ?
+                                // example: /ifs/pitt/161102_PITT_0089_AHFG3GBBXX/ or /ifs/lola/150814_LOLA_1298_BC7259ACXX/
+                                String run = seqExperiment.getStringVal("SequencerRunFolder", user);
+                                String[] runFolderElements = run.split("_");
+                                String runId = runFolderElements[1] + "_" + runFolderElements[2];
+                                String runName = runId + "_" + runFolderElements[3];
+                                runName = runName.replace("/", ""); // now PITT_0089_AHFG3GBBXX
+                                String illuminaDate = runFolderElements[0].substring(runFolderElements[0].length() - 6); // yymmdd
+                                String dateCreated = "20" + illuminaDate.substring(0, 2) + "-" + illuminaDate.substring(2, 4) + "-" + illuminaDate.substring(4, 6);
+
+                                SampleManifest.Run r = new SampleManifest.Run(runMode, runId, flowCellId, readLength, dateCreated);
+                                if (runsMap.containsKey(flowCellId)) { // already created, just add new lane num to list
+                                    runsMap.get(flowCellId).addLane(laneNum);
+                                } else { // lookup fastq paths for this run
+                                    List<String> fastqs = null;
+                                    // if QC was not failed, query Fastq database for path to the fastqs for that run
+                                    if (!failedRuns.contains(runName))
+                                        fastqs = FastQPathFinder.search(runId, s.getInvestigatorSampleId() + "_IGO_" + s.getIgoId());
+                                    r.addLane(laneNum);
+                                    r.fastqs = fastqs;
+
+                                    runsMap.put(flowCellId, r);
+                                    library.runs.add(r);
                                 }
                             }
                         }
+                    }
 
-                        // for each flow cell ID a sample may be on multiple lanes
-                        // (currently all lanes are demuxed to same fastq file)
-                        Map<String, SampleManifest.Run> runsMap = new HashMap<>();
-                        // run Mode, runId, flow Cell & Lane Number
-                        List<DataRecord> reqLanes = aliquot.getDescendantsOfType("FlowCellLane", user);
-                        for (DataRecord flowCellLane : reqLanes) {
-                            Integer laneNum = ((Long)flowCellLane.getLongVal("LaneNum", user)).intValue();
-                            //log.info("Getting a flow cell lane");
-                            List<DataRecord> flowcell = flowCellLane.getParentsOfType("FlowCell", user);
-                            if (flowcell.size() > 0) {
-                                //log.info("Getting a flow cell");
-                                List<DataRecord> possibleRun = flowcell.get(0).getParentsOfType("IlluminaSeqExperiment", user);
-                                if (possibleRun.size() > 0) {
-                                    DataRecord seqExperiment = possibleRun.get(0);
-                                    String runMode  = seqExperiment.getStringVal("SequencingRunMode", user);
-                                    String flowCellId = seqExperiment.getStringVal("FlowcellId", user);
-                                    String readLength = seqExperiment.getStringVal("ReadLength", user); // TODO blank in LIMS prior to April 2019
-
-                                    // TODO function to convert Illumna yymmdd date as yyyy-MM-dd ?
-                                    // example: /ifs/pitt/161102_PITT_0089_AHFG3GBBXX/ or /ifs/lola/150814_LOLA_1298_BC7259ACXX/
-                                    String run = seqExperiment.getStringVal("SequencerRunFolder", user);
-                                    String[] runFolderElements = run.split("_");
-                                    String runId = runFolderElements[1] + "_" + runFolderElements[2];
-                                    String runName = runId + "_" + runFolderElements[3];
-                                    runName = runName.replace("/", ""); // now PITT_0089_AHFG3GBBXX
-                                    String illuminaDate = runFolderElements[0].substring(runFolderElements[0].length()-6); // yymmdd
-                                    String dateCreated = "20" + illuminaDate.substring(0,2) + "-" + illuminaDate.substring(2,4) + "-" + illuminaDate.substring(4,6);
-
-                                    SampleManifest.Run r = new SampleManifest.Run(runMode, runId, flowCellId, readLength, dateCreated);
-                                    if (runsMap.containsKey(flowCellId)) { // already created, just add new lane num to list
-                                        runsMap.get(flowCellId).addLane(laneNum);
-                                    } else { // lookup fastq paths for this run
-                                        List<String> fastqs = null;
-                                        // if QC was not failed, query Fastq database for path to the fastqs for that run
-                                        if (!failedRuns.contains(runName))
-                                            fastqs = FastQPathFinder.search(runId, s.getInvestigatorSampleId() + "_IGO_" + s.getIgoId());
-                                        r.addLane(laneNum);
-                                        r.fastqs = fastqs;
-
-                                        runsMap.put(flowCellId, r);
-                                        library.runs.add(r);
-                                    }
-                                }
-                            }
-                        }
-
-                        if (reqLanes.size() > 0) { // only report this library if it made it to a sequencer/run
-                            List<SampleManifest.Library> libraries = s.getLibraries();
-                            libraries.add(library);
-                        }
+                    if (reqLanes.size() > 0) { // only report this library if it made it to a sequencer/run
+                        List<SampleManifest.Library> libraries = s.getLibraries();
+                        libraries.add(library);
                     }
                 }
 
@@ -191,6 +185,43 @@ public class GetSampleManifestTask extends LimsTask {
             log.error(e.getMessage(), e);
             return null;
         }
+    }
+
+    protected SampleManifest getSampleLevelFields(String igoId, DataRecord cmoInfo) throws NotFound, RemoteException {
+        SampleManifest s = new SampleManifest();
+        s.setIgoId(igoId);
+        s.setCmoPatientId(cmoInfo.getStringVal("CmoPatientId", user));
+        s.setInvestigatorSampleId(cmoInfo.getStringVal("UserSampleID", user));
+        String tumorOrNormal = cmoInfo.getStringVal("TumorOrNormal", user);
+        s.setTumorOrNormal(tumorOrNormal);
+        if ("Tumor".equals(tumorOrNormal))
+            s.setOncoTreeCode(cmoInfo.getStringVal("TumorType", user));
+        s.setTissueLocation(cmoInfo.getStringVal("TissueLocation", user));
+        s.setSampleOrigin(cmoInfo.getStringVal("SampleOrigin", user)); // formerly reported as Sample Type
+        s.setPreservation(cmoInfo.getStringVal("Preservation", user));
+        s.setCollectionYear(cmoInfo.getStringVal("CollectionYear", user));
+        s.setSex(cmoInfo.getStringVal("Gender", user));
+        s.setSpecies(cmoInfo.getStringVal("Species", user));
+        s.setCmoSampleName(cmoInfo.getStringVal("CorrectedCMOID", user));
+
+        return s;
+    }
+
+    private Map<String, DataRecord> findDNALibraries(List<DataRecord> aliquots) throws Exception {
+        Map<String, DataRecord> dnaLibraries = new HashMap<>();
+        for (DataRecord aliquot : aliquots) {
+            String sampleType = aliquot.getStringVal("ExemplarSampleType", user);
+            // VERY IMPORTANT, if no DNA LIBRARY NO RESULT generated
+            if ("DNA Library".equals(sampleType)) {
+                String sampleStatus = aliquot.getStringVal("ExemplarSampleStatus", user);
+                if (sampleStatus != null && sampleStatus.contains("Failed"))
+                    continue;
+
+                String libraryIgoId = aliquot.getStringVal("SampleId", user);
+                dnaLibraries.put(libraryIgoId, aliquot);
+            }
+        }
+        return dnaLibraries;
     }
 
     public static class FastQPathFinder {
