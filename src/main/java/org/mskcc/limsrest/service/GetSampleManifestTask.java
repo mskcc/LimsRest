@@ -84,11 +84,17 @@ public class GetSampleManifestTask extends LimsTask {
                 for (Map.Entry<String, DataRecord> aliquotEntry : dnaLibraries.entrySet()) {
                     String libraryIgoId = aliquotEntry.getKey();
                     DataRecord aliquot = aliquotEntry.getValue();
+                    DataRecord aliquotParent = null;
 
                     if (dnaLibraries.containsKey(libraryIgoId + "_1")) { // does this library have a child library?
                         log.info("Skipping:" + libraryIgoId);  // For example: 09641_70_1_1_1 & 09641_70_1_1_1_1
                         continue;
-                    } // TODO if aliquot was made of this DNA Library change logic to find barcodes etc at parent level
+                    }
+                    String possibleParentIgoId = libraryIgoId.substring(0,libraryIgoId.length()-2);
+                    if (dnaLibraries.containsKey(possibleParentIgoId)) {
+                        aliquotParent = dnaLibraries.get(possibleParentIgoId);
+                        // TODO review capture concentration, libraryVolume, etc in this case
+                    }
 
                     DataRecord[] libPrepProtocols = aliquot.getChildrenOfType("DNALibraryPrepProtocol3", user);
                     Double volume = null;
@@ -99,6 +105,10 @@ public class GetSampleManifestTask extends LimsTask {
                     SampleManifest.Library library = new SampleManifest.Library(libraryIgoId, volume, concentration);
 
                     List<DataRecord> indexBarcodes = aliquot.getDescendantsOfType("IndexBarcode", user);
+                    if (aliquotParent != null) {
+                        // parent DNA library may have the barcode records
+                        indexBarcodes = aliquotParent.getDescendantsOfType("IndexBarcode", user);
+                    }
                     if (indexBarcodes != null && indexBarcodes.size() > 0) {
                         DataRecord bc = indexBarcodes.get(0);
                         library.barcodeId = bc.getStringVal("IndexId", user);
@@ -215,6 +225,10 @@ public class GetSampleManifestTask extends LimsTask {
             if ("DNA Library".equals(sampleType)) {
                 String sampleStatus = aliquot.getStringVal("ExemplarSampleStatus", user);
                 if (sampleStatus != null && sampleStatus.contains("Failed"))
+                    continue;
+
+                String recipe = aliquot.getStringVal(SampleModel.RECIPE, user);
+                if ("Fingerprinting".equals(recipe)) // for example 07951_AD_1_1
                     continue;
 
                 String libraryIgoId = aliquot.getStringVal("SampleId", user);
