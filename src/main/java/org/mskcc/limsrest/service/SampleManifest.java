@@ -27,7 +27,7 @@ public class SampleManifest {
         public String barcodeId;
         public String barcodeIndex;
 
-        public String libaryIgoId;
+        public String libraryIgoId;
         public Double libraryVolume; // [uL]
         public Double libraryConcentrationNgul; // ng/uL
 
@@ -37,8 +37,8 @@ public class SampleManifest {
 
         public List<Run> runs = new ArrayList<>();
 
-        public Library(String libaryIgoId, Double libraryVolume, Double libraryConcentrationNgul) {
-            this.libaryIgoId = libaryIgoId;
+        public Library(String libraryIgoId, Double libraryVolume, Double libraryConcentrationNgul) {
+            this.libraryIgoId = libraryIgoId;
             this.libraryVolume = libraryVolume;
             this.libraryConcentrationNgul = libraryConcentrationNgul;
         }
