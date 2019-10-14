@@ -7,6 +7,7 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.SampleModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.controller.GetSampleManifest;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -49,6 +50,8 @@ public class GetRequestSamplesTask extends LimsTask {
                 String igoId = sample.getStringVal("SampleId", user);
                 String sampleRecipe = sample.getStringVal(SampleModel.RECIPE, user);
                 if ("Fingerprinting".equals(sampleRecipe)) // for example 07951_S_50_1, skip for pipelines for now
+                    continue;
+                else if (!GetSampleManifestTask.isPipelineRecipe(sampleRecipe))
                     continue;
                 else
                     recipe = sampleRecipe;

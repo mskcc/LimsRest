@@ -30,6 +30,21 @@ public class GetSampleManifestTask extends LimsTask {
         this.igoIds = igoIds;
     }
 
+    /**
+     * Any version of IMPACT, HemePact, ACCESS or Whole Exome
+     * @param recipe
+     * @return
+     */
+    public static boolean isPipelineRecipe(String recipe) {
+        if (recipe == null)
+            return false;
+        // WES = 'WholeExomeSequencing', 'AgilentCapture_51MB', 'IDT_Exome_v1_FP', 'Agilent_v4_51MB_Human'
+        if (recipe.contains("PACT") || recipe.contains("ACCESS") || recipe.contains("Exome") || recipe.contains("51MB")) {
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public Object execute(VeloxConnection conn) {
         long startTime = System.currentTimeMillis();
@@ -49,6 +64,10 @@ public class GetSampleManifestTask extends LimsTask {
                 String recipe = sample.getStringVal(SampleModel.RECIPE, user);
                 if ("Fingerprinting".equals(recipe)) // for example 07951_S_50_1, skip for pipelines for now
                     continue;
+
+                if (!isPipelineRecipe(recipe)) {
+                    continue;
+                }
 
                 List<DataRecord> qcs = sample.getDescendantsOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
                 Set<String> failedRuns = new HashSet<>();
@@ -97,12 +116,13 @@ public class GetSampleManifestTask extends LimsTask {
                     }
 
                     DataRecord[] libPrepProtocols = aliquot.getChildrenOfType("DNALibraryPrepProtocol3", user);
-                    Double volume = null;
+                    Double libraryVolume = null;
                     if (libPrepProtocols.length == 1)
-                        volume = libPrepProtocols[0].getDoubleVal("ElutionVol", user);
-                    Double concentration = aliquot.getDoubleVal("Concentration", user);
+                        libraryVolume = libPrepProtocols[0].getDoubleVal("ElutionVol", user);
+                    Double libraryConcentration = aliquot.getDoubleVal("Concentration", user);
 
-                    SampleManifest.Library library = new SampleManifest.Library(libraryIgoId, volume, concentration);
+                    SampleManifest.Library library =
+                            new SampleManifest.Library(libraryIgoId, libraryVolume, libraryConcentration);
 
                     List<DataRecord> indexBarcodes = aliquot.getDescendantsOfType("IndexBarcode", user);
                     if (aliquotParent != null) {
