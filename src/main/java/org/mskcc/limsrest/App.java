@@ -68,6 +68,18 @@ public class App extends SpringBootServletInitializer {
         return new ConnectionPoolLIMS(host, port, guid, user1, pass1, user2, pass2);
     }
 
+    @Bean(destroyMethod = "close")
+    public ConnectionLIMS connection() {
+        String host = env.getProperty("lims.host");
+        Integer port = Integer.parseInt(env.getProperty("lims.port"));
+        String guid = env.getProperty("lims.guid");
+        String user2 = env.getProperty("lims.user2");
+        String pass2 = env.getProperty("lims.pword2");
+
+        log.info("Creating LIMS connection");
+        return new ConnectionLIMS(host, port, guid, user2, pass2);
+    }
+
     @Bean
     public Docket api() {
         return new Docket(DocumentationType.SWAGGER_2)

@@ -2,7 +2,7 @@ package org.mskcc.limsrest.controller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.ConnectionPoolLIMS;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.GetSampleManifestTask;
 import org.mskcc.limsrest.service.SampleManifest;
 import org.springframework.http.HttpStatus;
@@ -15,17 +15,14 @@ import org.springframework.web.server.ResponseStatusException;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 @RestController
 @RequestMapping("/")
 public class GetSampleManifest {
     private static Log log = LogFactory.getLog(GetSampleManifest.class);
-    private final ConnectionPoolLIMS conn;
-    private final GetSampleManifestTask task = new GetSampleManifestTask();
+    private final ConnectionLIMS conn;
 
-    public GetSampleManifest(ConnectionPoolLIMS conn) {
+    public GetSampleManifest(ConnectionLIMS conn) {
         this.conn = conn;
     }
 
@@ -37,22 +34,18 @@ public class GetSampleManifest {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Maximum 10 samples per query, you sent:" + igoIds.length);
         }
         // TODO whiteList Whitelists.sampleMatches()
-        task.init(igoIds);
+        GetSampleManifestTask sampleManifest = new GetSampleManifestTask(igoIds, conn);
 
-        Future<Object> r = conn.submitTask(task);
-
-        try {
-            SampleManifestResult result = (SampleManifestResult) r.get();
-            if (result.error == null) {
-                log.info("Returning n rows: " + result.smList.size());
-                return result.smList;
-            } else {
-                log.error("Sample Manifest generation failed with error: " + result.error);
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, result.error);
-            }
-        } catch (InterruptedException | ExecutionException e) {
-            log.error("Sample manifest exception.", e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+        SampleManifestResult result = (SampleManifestResult) sampleManifest.execute();
+        if (result == null) {
+            log.error("Sample Manifest generation failed for: " + Arrays.toString(igoIds));
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+        } else if (result.error == null) {
+            log.info("Returning n rows: " + result.smList.size());
+            return result.smList;
+        } else {
+            log.error("Sample Manifest generation failed with error: " + result.error);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, result.error);
         }
     }
 

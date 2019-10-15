@@ -1,27 +1,36 @@
 package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.ConnectionLIMS;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
 
 /**
  * Query Request table for deliveries made after a given timestamp.
  */
-public class GetDeliveriesTask extends LimsTask {
+public class GetDeliveriesTask {
     private static Log log = LogFactory.getLog(GetDeliveriesTask.class);
 
     protected long timestamp;
 
-    public void init(long timestamp) {
+    private ConnectionLIMS conn;
+
+    public GetDeliveriesTask(long timestamp, ConnectionLIMS conn) {
         this.timestamp = timestamp;
+        this.conn = conn;
     }
 
-    @Override
-    public Object execute(VeloxConnection conn) {
+    public Object execute() {
         try {
+            User user = conn.getUser();
+            DataRecordManager dataRecordManager = conn.getDataRecordManager();
+
             List<DataRecord> recentDeliveries = dataRecordManager.queryDataRecords("Request", "RecentDeliveryDate > " + timestamp, user);
             List<Delivery> deliveries = new ArrayList<>();
             for (DataRecord dr : recentDeliveries) {

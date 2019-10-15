@@ -2,7 +2,7 @@ package org.mskcc.limsrest.controller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.ConnectionPoolLIMS;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.GetRequestSamplesTask;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,22 +12,20 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.concurrent.Future;
 
 @RestController
 @RequestMapping("/")
 public class GetRequestSamples {
     private final static Log log = LogFactory.getLog(GetRequestSamples.class);
 
-    private final ConnectionPoolLIMS conn;
-    private final GetRequestSamplesTask task = new GetRequestSamplesTask();
+    private final ConnectionLIMS conn;
 
-    public GetRequestSamples(ConnectionPoolLIMS conn) {
+    public GetRequestSamples(ConnectionLIMS conn) {
         this.conn = conn;
     }
 
     @GetMapping("/api/getRequestSamples")
-    public GetRequestSamplesTask.RequestSampleList getContent(@RequestParam(value = "request") String requestId, @RequestParam(value = "tumorOnly", defaultValue = "False") Boolean tumorOnly, HttpServletRequest request) {
+    public GetRequestSamplesTask.RequestSampleList getContent(@RequestParam(value = "request") String requestId, HttpServletRequest request) {
         log.info("/api/getRequestSamples for request:" + requestId + " " + request.getRemoteAddr());
 
         if (!Whitelists.requestMatches(requestId)) {
@@ -35,11 +33,10 @@ public class GetRequestSamples {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "FAILURE: requestId is not using a valid format.");
         }
 
-        task.init(requestId, tumorOnly);
-        Future<Object> result = conn.submitTask(task);
+        GetRequestSamplesTask t = new GetRequestSamplesTask(requestId, conn);
         GetRequestSamplesTask.RequestSampleList sl;
         try {
-            sl = (GetRequestSamplesTask.RequestSampleList) result.get();
+            sl = (GetRequestSamplesTask.RequestSampleList) t.execute();
         } catch (Exception e) {
             log.error(e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());

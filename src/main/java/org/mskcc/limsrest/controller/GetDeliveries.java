@@ -2,7 +2,7 @@ package org.mskcc.limsrest.controller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.ConnectionPoolLIMS;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.GetDeliveriesTask;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,7 +13,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
-import java.util.concurrent.Future;
 
 /**
  * Intended for pipeline kickoff customers to query recent deliveries they can process begin processing.
@@ -22,9 +21,9 @@ import java.util.concurrent.Future;
 @RequestMapping("/")
 public class GetDeliveries {
     private static Log log = LogFactory.getLog(GetDeliveries.class);
-    private final ConnectionPoolLIMS conn;
+    private ConnectionLIMS conn;
 
-    public GetDeliveries(ConnectionPoolLIMS conn) {
+    public GetDeliveries(ConnectionLIMS conn) {
         this.conn = conn;
     }
 
@@ -38,15 +37,8 @@ public class GetDeliveries {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid timestamp");
         }
 
-        GetDeliveriesTask task = new GetDeliveriesTask();
-        task.init(timestamp);
+        GetDeliveriesTask task = new GetDeliveriesTask(timestamp, conn);
 
-        Future<Object> result = conn.submitTask(task);
-        try {
-            return (List<GetDeliveriesTask.Delivery>) result.get();
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        return (List<GetDeliveriesTask.Delivery>) task.execute();
     }
 }

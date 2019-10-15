@@ -2,12 +2,12 @@ package org.mskcc.limsrest.service;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.velox.api.datarecord.DataRecord;
-import com.velox.generic.recordmodels.RequestModel;
-import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.user.User;
 import com.velox.sloan.cmo.recmodels.SampleModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.controller.GetSampleManifest;
+import org.mskcc.limsrest.ConnectionLIMS;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -16,28 +16,30 @@ import java.util.List;
 /**
  *
  */
-public class GetRequestSamplesTask extends LimsTask {
+public class GetRequestSamplesTask {
     private static Log log = LogFactory.getLog(GetRequestSamplesTask.class);
 
-    protected String requestId;
-    protected boolean tumorOnly;
+    private ConnectionLIMS conn;
+    private String requestId;
 
-    public void init(String requestId, boolean tumorOnly) {
+    public GetRequestSamplesTask(String requestId, ConnectionLIMS conn) {
         this.requestId = requestId;
-        this.tumorOnly = tumorOnly;
+        this.conn = conn;
     }
 
-    @Override
-    public Object execute(VeloxConnection conn) {
+    public Object execute() {
         try {
-            List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + this.requestId + "'", this.user);
+            User user = conn.getUser();
+            DataRecordManager drm = conn.getDataRecordManager();
+
+            List<DataRecord> requestList = drm.queryDataRecords("Request", "RequestId = '" + this.requestId + "'", user);
             if (requestList.size() != 1) {  // error: request ID not found or more than one found
                 log.error("Request not found:" + requestId);
                 return new RequestSampleList("NOT_FOUND");
             }
 
             // get set of all samples in that request that are "IGO Complete"
-            HashSet<String> samplesIGOComplete = getSamplesIGOComplete(requestId);
+            HashSet<String> samplesIGOComplete = getSamplesIGOComplete(requestId, user, drm);
             log.info("Samples IGO Complete: " + samplesIGOComplete.size());
 
             DataRecord requestDataRecord = requestList.get(0);
@@ -59,13 +61,9 @@ public class GetRequestSamplesTask extends LimsTask {
                 boolean igoComplete = samplesIGOComplete.contains(othersampleId);
                 boolean tumor = "Tumor".equals(sample.getStringVal("TumorOrNormal", user));
 
-                if (tumorOnly && tumor) {
-                    RequestSample rs = new RequestSample(othersampleId, igoId, igoComplete);
-                    sampleList.add(rs);
-                } else if (!tumorOnly){
-                    RequestSample rs = new RequestSample(othersampleId, igoId, igoComplete);
-                    sampleList.add(rs);
-                }
+
+                RequestSample rs = new RequestSample(othersampleId, igoId, igoComplete);
+                sampleList.add(rs);
             }
             if (isIMPACTOrHEMEPACTBeforeIMPACT505(recipe)) {
                 // TODO
@@ -82,7 +80,7 @@ public class GetRequestSamplesTask extends LimsTask {
             rsl.setInvestigatorEmail(requestDataRecord.getStringVal("Investigatoremail", user));
             rsl.setDataAnalystName(requestDataRecord.getStringVal("DataAnalyst", user));
             rsl.setDataAnalystEmail(requestDataRecord.getStringVal("DataAnalystEmail", user));
-            log.info("Result size: " + sampleList.size() + " tumors only:" + tumorOnly);
+            log.info("Result size: " + sampleList.size());
             return rsl;
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -108,9 +106,9 @@ public class GetRequestSamplesTask extends LimsTask {
      * @return
      * @throws Exception
      */
-    protected HashSet<String> getSamplesIGOComplete(String requestId) throws Exception {
+    protected HashSet<String> getSamplesIGOComplete(String requestId, User user, DataRecordManager drm) throws Exception {
         String whereClause = "PassedQC = 1 AND SeqQCStatus = 'Passed' AND Request = '" + requestId + "'";
-        List<DataRecord> listIGOComplete = dataRecordManager.queryDataRecords("SeqAnalysisSampleQC", whereClause, user);
+        List<DataRecord> listIGOComplete = drm.queryDataRecords("SeqAnalysisSampleQC", whereClause, user);
         HashSet<String> samplesIGOComplete = new HashSet<>();
         for (DataRecord r : listIGOComplete) {
             samplesIGOComplete.add(r.getStringVal("OtherSampleId", user));

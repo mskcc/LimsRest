@@ -1,12 +1,15 @@
 package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.datarecord.NotFound;
+import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.SampleModel;
 import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.controller.GetSampleManifest;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -19,15 +22,18 @@ import java.util.*;
 /**
  *
  */
-public class GetSampleManifestTask extends LimsTask {
+public class GetSampleManifestTask {
     private static Log log = LogFactory.getLog(GetSampleManifestTask.class);
 
     private FastQPathFinder fastQPathFinder;
 
+    private ConnectionLIMS conn;
+
     protected String [] igoIds;
 
-    public void init(String [] igoIds) {
+    public GetSampleManifestTask(String [] igoIds, ConnectionLIMS conn) {
         this.igoIds = igoIds;
+        this.conn = conn;
     }
 
     /**
@@ -45,15 +51,18 @@ public class GetSampleManifestTask extends LimsTask {
         return false;
     }
 
-    @Override
-    public Object execute(VeloxConnection conn) {
+    public Object execute() {
         long startTime = System.currentTimeMillis();
+
+        User user = conn.getUser();
+        DataRecordManager dataRecordManager = conn.getDataRecordManager();
+
         try {
             List<SampleManifest> smList = new ArrayList<>();
 
             for (String igoId : igoIds) {
                 log.info("Creating sample manifest for IGO ID:" + igoId);
-                List<DataRecord> sampleCMOInfoRecords = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "SampleId = '" + igoId +  "'", user);
+                List<DataRecord> sampleCMOInfoRecords = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "SampleId = '" + igoId +  "'", conn.getUser());
 
                 log.info("Searching Sample table for SampleId ='" + igoId + "'");
                 List<DataRecord> samples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + igoId + "'", user);
@@ -88,7 +97,7 @@ public class GetSampleManifestTask extends LimsTask {
                     cmoInfo = sampleCMOInfoRecords.get(0);
                 }
 
-                SampleManifest s = getSampleLevelFields(igoId, cmoInfo);
+                SampleManifest s = getSampleLevelFields(igoId, cmoInfo, user);
 
                 // library concentration & volume
                 // often null in samplecmoinforecords then query KAPALibPlateSetupProtocol1.TargetMassAliq1
@@ -97,7 +106,7 @@ public class GetSampleManifestTask extends LimsTask {
 
                 List<DataRecord> aliquots = sample.getDescendantsOfType("Sample", user);
 
-                Map<String, DataRecord> dnaLibraries = findDNALibraries(aliquots);
+                Map<String, DataRecord> dnaLibraries = findDNALibraries(aliquots, user);
 
                 // for each DNA Library traverse the records grab the fields we need and paths to fastqs.
                 for (Map.Entry<String, DataRecord> aliquotEntry : dnaLibraries.entrySet()) {
@@ -217,7 +226,7 @@ public class GetSampleManifestTask extends LimsTask {
         }
     }
 
-    protected SampleManifest getSampleLevelFields(String igoId, DataRecord cmoInfo) throws NotFound, RemoteException {
+    protected SampleManifest getSampleLevelFields(String igoId, DataRecord cmoInfo, User user) throws NotFound, RemoteException {
         SampleManifest s = new SampleManifest();
         s.setIgoId(igoId);
         s.setCmoPatientId(cmoInfo.getStringVal("CmoPatientId", user));
@@ -237,7 +246,7 @@ public class GetSampleManifestTask extends LimsTask {
         return s;
     }
 
-    private Map<String, DataRecord> findDNALibraries(List<DataRecord> aliquots) throws Exception {
+    private Map<String, DataRecord> findDNALibraries(List<DataRecord> aliquots, User user) throws Exception {
         Map<String, DataRecord> dnaLibraries = new HashMap<>();
         for (DataRecord aliquot : aliquots) {
             String sampleType = aliquot.getStringVal("ExemplarSampleType", user);
