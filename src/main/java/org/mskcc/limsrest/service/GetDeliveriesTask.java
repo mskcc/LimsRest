@@ -28,8 +28,9 @@ public class GetDeliveriesTask {
 
     public Object execute() {
         try {
-            User user = conn.getUser();
-            DataRecordManager dataRecordManager = conn.getDataRecordManager();
+            VeloxConnection vConn = conn.getConnection();
+            User user = vConn.getUser();
+            DataRecordManager dataRecordManager = vConn.getDataRecordManager();
 
             List<DataRecord> recentDeliveries = dataRecordManager.queryDataRecords("Request", "RecentDeliveryDate > " + timestamp, user);
             List<Delivery> deliveries = new ArrayList<>();

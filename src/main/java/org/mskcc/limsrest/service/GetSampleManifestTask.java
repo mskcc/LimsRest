@@ -10,7 +10,6 @@ import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
-import org.mskcc.limsrest.controller.GetSampleManifest;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +35,16 @@ public class GetSampleManifestTask {
         this.conn = conn;
     }
 
+    public static class SampleManifestResult {
+        public List<SampleManifest> smList;
+        public String error = null;
+
+        public SampleManifestResult(List<SampleManifest> smList, String error) {
+            this.smList = smList;
+            this.error = error;
+        }
+    }
+
     /**
      * Any version of IMPACT, HemePact, ACCESS or Whole Exome
      * @param recipe
@@ -51,23 +60,24 @@ public class GetSampleManifestTask {
         return false;
     }
 
-    public Object execute() {
+    public SampleManifestResult execute() {
         long startTime = System.currentTimeMillis();
 
-        User user = conn.getUser();
-        DataRecordManager dataRecordManager = conn.getDataRecordManager();
+        VeloxConnection vConn = conn.getConnection();
+        User user = vConn.getUser();
+        DataRecordManager dataRecordManager = vConn.getDataRecordManager();
 
         try {
             List<SampleManifest> smList = new ArrayList<>();
 
             for (String igoId : igoIds) {
                 log.info("Creating sample manifest for IGO ID:" + igoId);
-                List<DataRecord> sampleCMOInfoRecords = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "SampleId = '" + igoId +  "'", conn.getUser());
+                List<DataRecord> sampleCMOInfoRecords = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "SampleId = '" + igoId +  "'", user);
 
                 log.info("Searching Sample table for SampleId ='" + igoId + "'");
                 List<DataRecord> samples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + igoId + "'", user);
                 if (samples.size() == 0) { // return error
-                    return new GetSampleManifest.SampleManifestResult(null, "Sample not found: " + igoId);
+                    return new SampleManifestResult(null, "Sample not found: " + igoId);
                 }
                 DataRecord sample = samples.get(0);
                 String recipe = sample.getStringVal(SampleModel.RECIPE, user);
@@ -85,7 +95,7 @@ public class GetSampleManifestTask {
                     if ("Failed".equals(qcResult)) {
                         String run = dr.getStringVal(SeqAnalysisSampleQCModel.SEQUENCER_RUN_FOLDER, user);
                         failedRuns.add(run);
-                        System.out.println("Failed sample & run: " + run);
+                        log.info("Failed sample & run: " + run);
                     }
                 }
 
@@ -97,7 +107,7 @@ public class GetSampleManifestTask {
                     cmoInfo = sampleCMOInfoRecords.get(0);
                 }
 
-                SampleManifest s = getSampleLevelFields(igoId, cmoInfo, user);
+                SampleManifest sampleManifest = getSampleLevelFields(igoId, cmoInfo, user);
 
                 // library concentration & volume
                 // often null in samplecmoinforecords then query KAPALibPlateSetupProtocol1.TargetMassAliq1
@@ -148,10 +158,11 @@ public class GetSampleManifestTask {
                     List<DataRecord> nimbleGen = aliquot.getDescendantsOfType("NimbleGenHybProtocol", user);
                     log.info("Found nimbleGen records: " + nimbleGen.size());
                     for (DataRecord n : nimbleGen) {
-                        if (n.getBooleanVal("Valid", user)) {
+                        Object valid = n.getValue("Valid", user); // 05359_B_1 null
+                        if (valid != null && new Boolean(valid.toString())) {
                             String poolName = n.getStringVal("Protocol2Sample", user);
                             String baitSet = n.getStringVal("Recipe", user); // LIMS display name "bait set"
-                            s.setBaitSet(baitSet);
+                            sampleManifest.setBaitSet(baitSet);
                             Object val = n.getValue("SourceMassToUse", user);
                             if (val != null) {
                                 Double captureInput = n.getDoubleVal("SourceMassToUse", user);
@@ -160,6 +171,8 @@ public class GetSampleManifestTask {
                                 Double captureVolume = n.getDoubleVal("VolumeToUse", user);
                                 library.captureConcentrationNm = captureVolume.toString();
                             }
+                        } else {
+                            log.warn("Nimblegen records not valid.");
                         }
                     }
 
@@ -198,8 +211,13 @@ public class GetSampleManifestTask {
                                 } else { // lookup fastq paths for this run
                                     List<String> fastqs = null;
                                     // if QC was not failed, query Fastq database for path to the fastqs for that run
-                                    if (!failedRuns.contains(runName))
-                                        fastqs = FastQPathFinder.search(runId, s.getInvestigatorSampleId() + "_IGO_" + s.getIgoId());
+                                    if (!failedRuns.contains(runName)) { //
+                                        fastqs = FastQPathFinder.search(runId, sampleManifest.getInvestigatorSampleId() + "_IGO_" + sampleManifest.getIgoId(), true);
+                                        if (fastqs == null) { // try search again with pre-Jan 2016 naming convention, 06184_4
+                                            log.info("TODO"); // TODO
+                                            fastqs = FastQPathFinder.search(runId, sampleManifest.getInvestigatorSampleId(), false);
+                                        }
+                                    }
                                     r.addLane(laneNum);
                                     r.fastqs = fastqs;
 
@@ -211,15 +229,15 @@ public class GetSampleManifestTask {
                     }
 
                     if (reqLanes.size() > 0) { // only report this library if it made it to a sequencer/run
-                        List<SampleManifest.Library> libraries = s.getLibraries();
+                        List<SampleManifest.Library> libraries = sampleManifest.getLibraries();
                         libraries.add(library);
                     }
                 }
 
-                smList.add(s);
+                smList.add(sampleManifest);
             }
             log.info("Manifest generation time(ms):" + (System.currentTimeMillis()-startTime));
-            return new GetSampleManifest.SampleManifestResult(smList, null);
+            return new SampleManifestResult(smList, null);
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
             return null;
@@ -230,7 +248,8 @@ public class GetSampleManifestTask {
         SampleManifest s = new SampleManifest();
         s.setIgoId(igoId);
         s.setCmoPatientId(cmoInfo.getStringVal("CmoPatientId", user));
-        s.setInvestigatorSampleId(cmoInfo.getStringVal("UserSampleID", user));
+        // aka "Sample Name" in SampleCMOInfoRecords
+        s.setInvestigatorSampleId(cmoInfo.getStringVal("OtherSampleId", user));
         String tumorOrNormal = cmoInfo.getStringVal("TumorOrNormal", user);
         s.setTumorOrNormal(tumorOrNormal);
         if ("Tumor".equals(tumorOrNormal))
@@ -269,7 +288,7 @@ public class GetSampleManifestTask {
 
     public static class FastQPathFinder {
         // TODO url to properties & make interface for FastQPathFinder
-        public static List<String> search(String run, String sample_IGO_igoid) {
+        public static List<String> search(String run, String sample_IGO_igoid, boolean returnOnlyTwo) {
             String url = "http://delphi.mskcc.org:8080/ngs-stats/rundone/search/most/recent/fastqpath/" + run + "/" + sample_IGO_igoid;
             log.info("Finding fastqs in fastq DB for: " + url);
 
@@ -283,9 +302,12 @@ public class GetSampleManifestTask {
                 List<ArchivedFastq> fastqList = response.getBody();
                 log.info("Fastq files found: " + fastqList.size());
 
-                // Return only most recent R1&R2 in case of re-demux
-                if (fastqList.size() > 2)
-                    fastqList = fastqList.subList(0,2);
+                if (returnOnlyTwo) {
+                    // Return only most recent R1&R2 in case of re-demux
+                    if (fastqList.size() > 2)
+                        fastqList = fastqList.subList(0,2);
+                }
+
                 List<String> result = new ArrayList<>();
                 for (ArchivedFastq fastq : fastqList) {
                     result.add(fastq.fastq);

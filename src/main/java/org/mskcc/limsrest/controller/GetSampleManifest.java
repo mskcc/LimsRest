@@ -28,15 +28,15 @@ public class GetSampleManifest {
 
     @GetMapping("/api/getSampleManifest")
     public List<SampleManifest> getContent(@RequestParam(value="igoSampleId") String[] igoIds, HttpServletRequest request) {
-        log.info("Sample Manifest client IP:" + request.getRemoteAddr());
-        log.info("Sample Manifest IGO IDs:" + Arrays.toString(igoIds));
+        log.info("/api/getSampleManifest:" + Arrays.toString(igoIds) + " IP:" + request.getRemoteAddr());
+
         if (igoIds.length > 10) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Maximum 10 samples per query, you sent:" + igoIds.length);
         }
         // TODO whiteList Whitelists.sampleMatches()
-        GetSampleManifestTask sampleManifest = new GetSampleManifestTask(igoIds, conn);
 
-        SampleManifestResult result = (SampleManifestResult) sampleManifest.execute();
+        GetSampleManifestTask sampleManifest = new GetSampleManifestTask(igoIds, conn);
+        GetSampleManifestTask.SampleManifestResult result = sampleManifest.execute();
         if (result == null) {
             log.error("Sample Manifest generation failed for: " + Arrays.toString(igoIds));
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -46,16 +46,6 @@ public class GetSampleManifest {
         } else {
             log.error("Sample Manifest generation failed with error: " + result.error);
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, result.error);
-        }
-    }
-
-    public static class SampleManifestResult {
-        List<SampleManifest> smList;
-        String error = null;
-
-        public SampleManifestResult(List<SampleManifest> smList, String error) {
-            this.smList = smList;
-            this.error = error;
         }
     }
 }

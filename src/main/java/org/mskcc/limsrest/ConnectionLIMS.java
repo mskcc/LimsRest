@@ -1,60 +1,40 @@
 package org.mskcc.limsrest;
 
-import com.velox.api.datamgmtserver.DataMgmtServer;
-import com.velox.api.datarecord.DataRecordManager;
-import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
-import com.velox.sapioutils.client.standalone.VeloxStandaloneManagerContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public class ConnectionLIMS {
     private static Log log = LogFactory.getLog(ConnectionLIMS.class);
 
-    private final VeloxConnection conn;
-    private User user;
-    private DataRecordManager dataRecordManager;
-    private DataMgmtServer dataMgmtServer;
-    private VeloxStandaloneManagerContext managerContext;
+    private VeloxConnection conn1;
+    private VeloxConnection conn2;
+    private VeloxConnection inUse;
 
-    public ConnectionLIMS(String host, int port, String guid, String user, String pass) {
-        conn = new VeloxConnection(host, port, guid, user, pass);
-    }
-
-    protected synchronized void connect() {
-        if (conn.isConnected())
-            return;
-
+    public ConnectionLIMS(String host, int port, String guid, String user1, String pass1, String user2, String pass2) {
+        conn1 = new VeloxConnection(host, port, guid, user1, pass1);
         try {
             log.info("Opening LIMS connection.");
-            conn.open();
-            if (conn.isConnected()) {
-                user = conn.getUser();
-                dataRecordManager = conn.getDataRecordManager();
-                dataMgmtServer = conn.getDataMgmtServer();
-                managerContext = new VeloxStandaloneManagerContext(user, dataMgmtServer);
+            conn1.open();
+            if (conn1.isConnected()) {
+                log.info("LIMS connection established.");
             }
         } catch (Exception e) {
             log.error("Connection error:" + e);
+            System.exit(-1);
         }
+
+        inUse = conn1;
     }
 
-    public User getUser() {
-        if (!conn.isConnected())
-            connect();
-        return user;
-    }
-
-    public DataRecordManager getDataRecordManager() {
-        if (!conn.isConnected())
-            connect();
-        return dataRecordManager;
+    public synchronized VeloxConnection getConnection() {
+        return inUse;
     }
 
     public void close() {
-        if (conn.isConnected()) {
+        if (conn1.isConnected()) {
             try {
-                conn.close();
+                conn1.close();
             } catch (Exception e) {
             }
         }
