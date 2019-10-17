@@ -115,7 +115,8 @@ public class GetSampleManifestTask {
                 //String dmpLibraryOutput = cmoInfo.getStringVal("DMPLibraryOutput", user); // LIBRARY_YIELD
 
                 List<DataRecord> aliquots = sample.getDescendantsOfType("Sample", user);
-
+                // 07260 Request the first sample are DNA Libraries like 07260_1 so can't just search descendants to find DNA libraries
+                aliquots.add(sample);
                 Map<String, DataRecord> dnaLibraries = findDNALibraries(aliquots, user);
 
                 // for each DNA Library traverse the records grab the fields we need and paths to fastqs.
@@ -123,6 +124,7 @@ public class GetSampleManifestTask {
                     String libraryIgoId = aliquotEntry.getKey();
                     DataRecord aliquot = aliquotEntry.getValue();
                     DataRecord aliquotParent = null;
+                    log.info("Processing DNA library: " + libraryIgoId);
 
                     if (dnaLibraries.containsKey(libraryIgoId + "_1")) { // does this library have a child library?
                         log.info("Skipping:" + libraryIgoId);  // For example: 09641_70_1_1_1 & 09641_70_1_1_1_1
@@ -176,10 +178,13 @@ public class GetSampleManifestTask {
                         }
                     }
 
+                    // TODO 08390_D_73
+
                     // for each flow cell ID a sample may be on multiple lanes
                     // (currently all lanes are demuxed to same fastq file)
                     Map<String, SampleManifest.Run> runsMap = new HashMap<>();
                     // run Mode, runId, flow Cell & Lane Number
+                    // Flow Cell Lanes are far down the sample/pool hierarchy in LIMS
                     List<DataRecord> reqLanes = aliquot.getDescendantsOfType("FlowCellLane", user);
                     log.info("Found lanes: " + reqLanes);
                     for (DataRecord flowCellLane : reqLanes) {
@@ -214,15 +219,16 @@ public class GetSampleManifestTask {
                                     if (!failedRuns.contains(runName)) { //
                                         fastqs = FastQPathFinder.search(runId, sampleManifest.getInvestigatorSampleId() + "_IGO_" + sampleManifest.getIgoId(), true);
                                         if (fastqs == null) { // try search again with pre-Jan 2016 naming convention, 06184_4
-                                            log.info("TODO"); // TODO
+                                            log.info("Searching fastq database again"); // TODO maybe only search again for old samples?
                                             fastqs = FastQPathFinder.search(runId, sampleManifest.getInvestigatorSampleId(), false);
                                         }
-                                    }
-                                    r.addLane(laneNum);
-                                    r.fastqs = fastqs;
 
-                                    runsMap.put(flowCellId, r);
-                                    library.runs.add(r);
+                                        r.addLane(laneNum);
+                                        r.fastqs = fastqs;
+
+                                        runsMap.put(flowCellId, r);
+                                        library.runs.add(r);
+                                    }
                                 }
                             }
                         }
