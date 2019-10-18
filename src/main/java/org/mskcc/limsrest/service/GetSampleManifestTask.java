@@ -99,6 +99,7 @@ public class GetSampleManifestTask {
                     }
                 }
 
+
                 // 06302_R_1 has no sampleCMOInfoRecord so use the same fields at the sample level
                 DataRecord cmoInfo;  // assign the dataRecord to query either sample table or samplecmoinforecords
                 if (sampleCMOInfoRecords.size() == 0) {
@@ -119,22 +120,16 @@ public class GetSampleManifestTask {
                 aliquots.add(sample);
                 Map<String, DataRecord> dnaLibraries = findDNALibraries(aliquots, user);
 
+                log.info("DNA Libraries found: " + dnaLibraries.size());
+                if (dnaLibraries.size() == 0) {
+                    // 05500_FQ_1 was submitted as a pooled library, try to find fastqs
+                    dnaLibraries.put(igoId, sample);
+                }
                 // for each DNA Library traverse the records grab the fields we need and paths to fastqs.
                 for (Map.Entry<String, DataRecord> aliquotEntry : dnaLibraries.entrySet()) {
                     String libraryIgoId = aliquotEntry.getKey();
                     DataRecord aliquot = aliquotEntry.getValue();
-                    DataRecord aliquotParent = null;
-                    log.info("Processing DNA library: " + libraryIgoId);
-
-                    if (dnaLibraries.containsKey(libraryIgoId + "_1")) { // does this library have a child library?
-                        log.info("Skipping:" + libraryIgoId);  // For example: 09641_70_1_1_1 & 09641_70_1_1_1_1
-                        continue;
-                    }
-                    String possibleParentIgoId = libraryIgoId.substring(0,libraryIgoId.length()-2);
-                    if (dnaLibraries.containsKey(possibleParentIgoId)) {
-                        aliquotParent = dnaLibraries.get(possibleParentIgoId);
-                        // TODO review capture concentration, libraryVolume, etc in this case
-                    }
+                    log.info("Processing library: " + libraryIgoId);
 
                     DataRecord[] libPrepProtocols = aliquot.getChildrenOfType("DNALibraryPrepProtocol3", user);
                     Double libraryVolume = null;
@@ -146,7 +141,8 @@ public class GetSampleManifestTask {
                             new SampleManifest.Library(libraryIgoId, libraryVolume, libraryConcentration);
 
                     List<DataRecord> indexBarcodes = aliquot.getDescendantsOfType("IndexBarcode", user);
-                    if (aliquotParent != null) {
+                    DataRecord aliquotParent = null;
+                    if (aliquotParent != null) { // TODO
                         // parent DNA library may have the barcode records
                         indexBarcodes = aliquotParent.getDescendantsOfType("IndexBarcode", user);
                     }
@@ -178,7 +174,7 @@ public class GetSampleManifestTask {
                         }
                     }
 
-                    // TODO 08390_D_73
+                    // TODO 08390_D_73, 09483_2, 06000_FD_7 -- same run passed & failed MICHELLE_0098_BHJCFJDMXX_A1
 
                     // for each flow cell ID a sample may be on multiple lanes
                     // (currently all lanes are demuxed to same fastq file)
@@ -186,7 +182,6 @@ public class GetSampleManifestTask {
                     // run Mode, runId, flow Cell & Lane Number
                     // Flow Cell Lanes are far down the sample/pool hierarchy in LIMS
                     List<DataRecord> reqLanes = aliquot.getDescendantsOfType("FlowCellLane", user);
-                    log.info("Found lanes: " + reqLanes);
                     for (DataRecord flowCellLane : reqLanes) {
                         Integer laneNum = ((Long) flowCellLane.getLongVal("LaneNum", user)).intValue();
                         log.info("Getting a flow cell lane");
@@ -218,7 +213,7 @@ public class GetSampleManifestTask {
                                     // if QC was not failed, query Fastq database for path to the fastqs for that run
                                     if (!failedRuns.contains(runName)) { //
                                         fastqs = FastQPathFinder.search(runId, sampleManifest.getInvestigatorSampleId() + "_IGO_" + sampleManifest.getIgoId(), true);
-                                        if (fastqs == null) { // try search again with pre-Jan 2016 naming convention, 06184_4
+                                        if (fastqs == null && aliquot.getLongVal("DateCreated", user) < 1455132132000L) { // try search again with pre-Jan 2016 naming convention, 06184_4
                                             log.info("Searching fastq database again"); // TODO maybe only search again for old samples?
                                             fastqs = FastQPathFinder.search(runId, sampleManifest.getInvestigatorSampleId(), false);
                                         }
@@ -230,6 +225,8 @@ public class GetSampleManifestTask {
                                             runsMap.put(flowCellId, r);
                                             library.runs.add(r);
                                         }
+                                    } else {
+                                        log.info("Not searching fastq db for failed run: " + runName);
                                     }
                                 }
                             }
