@@ -223,11 +223,13 @@ public class GetSampleManifestTask {
                                             fastqs = FastQPathFinder.search(runId, sampleManifest.getInvestigatorSampleId(), false);
                                         }
 
-                                        r.addLane(laneNum);
-                                        r.fastqs = fastqs;
+                                        if (fastqs != null) {
+                                            r.addLane(laneNum);
+                                            r.fastqs = fastqs;
 
-                                        runsMap.put(flowCellId, r);
-                                        library.runs.add(r);
+                                            runsMap.put(flowCellId, r);
+                                            library.runs.add(r);
+                                        }
                                     }
                                 }
                             }
@@ -277,19 +279,32 @@ public class GetSampleManifestTask {
             String sampleType = aliquot.getStringVal("ExemplarSampleType", user);
             // VERY IMPORTANT, if no DNA LIBRARY NO RESULT generated
             if ("DNA Library".equals(sampleType)) {
+                String libraryIgoId = aliquot.getStringVal("SampleId", user);
+
                 String sampleStatus = aliquot.getStringVal("ExemplarSampleStatus", user);
-                if (sampleStatus != null && sampleStatus.contains("Failed"))
+                if (sampleStatus != null && sampleStatus.contains("Failed")) {
+                    log.info("Skipping failed libarary: " + libraryIgoId);
                     continue;
+                }
 
                 String recipe = aliquot.getStringVal(SampleModel.RECIPE, user);
                 if ("Fingerprinting".equals(recipe)) // for example 07951_AD_1_1
                     continue;
 
-                String libraryIgoId = aliquot.getStringVal("SampleId", user);
+                log.info("Found DNA library: " + libraryIgoId);
                 dnaLibraries.put(libraryIgoId, aliquot);
             }
         }
-        return dnaLibraries;
+
+        Map<String, DataRecord> dnaLibrariesFinal = new HashMap<>();
+        // For example: 09245_E_21_1_1_1, 09245_E_21_1_1_1_2 & Failed 09245_E_21_1_1_1_1
+        for (String libraryName : dnaLibraries.keySet()) {
+            if (!dnaLibraries.containsKey(libraryName + "_1") &&
+                    !dnaLibraries.containsKey(libraryName + "_2")) {
+                dnaLibrariesFinal.put(libraryName, dnaLibraries.get(libraryName));
+            }
+        }
+        return dnaLibrariesFinal;
     }
 
     public static class FastQPathFinder {
