@@ -24,8 +24,6 @@ import java.util.*;
 public class GetSampleManifestTask {
     private static Log log = LogFactory.getLog(GetSampleManifestTask.class);
 
-    private FastQPathFinder fastQPathFinder;
-
     private ConnectionLIMS conn;
 
     protected String [] igoIds;
@@ -89,12 +87,12 @@ public class GetSampleManifestTask {
                 }
 
                 List<DataRecord> qcs = sample.getDescendantsOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
-                Set<String> failedRuns = new HashSet<>();
+                Set<String> runFailedQC = new HashSet<>();
                 for (DataRecord dr : qcs) {
                     String qcResult = dr.getStringVal(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
                     if ("Failed".equals(qcResult)) {
                         String run = dr.getStringVal(SeqAnalysisSampleQCModel.SEQUENCER_RUN_FOLDER, user);
-                        failedRuns.add(run);
+                        runFailedQC.add(run);
                         log.info("Failed sample & run: " + run);
                     }
                 }
@@ -174,7 +172,7 @@ public class GetSampleManifestTask {
                         }
                     }
 
-                    // TODO 08390_D_73, 09483_2, 06000_FD_7 -- same run passed & failed MICHELLE_0098_BHJCFJDMXX_A1
+                    // TODO 08390_D_73, 09483_2,
 
                     // for each flow cell ID a sample may be on multiple lanes
                     // (currently all lanes are demuxed to same fastq file)
@@ -184,7 +182,7 @@ public class GetSampleManifestTask {
                     List<DataRecord> reqLanes = aliquot.getDescendantsOfType("FlowCellLane", user);
                     for (DataRecord flowCellLane : reqLanes) {
                         Integer laneNum = ((Long) flowCellLane.getLongVal("LaneNum", user)).intValue();
-                        log.info("Getting a flow cell lane");
+                        log.info("Reviewing flow cell lane: " + laneNum);
                         List<DataRecord> flowcell = flowCellLane.getParentsOfType("FlowCell", user);
                         if (flowcell.size() > 0) {
                             log.info("Getting a flow cell");
@@ -193,7 +191,8 @@ public class GetSampleManifestTask {
                                 DataRecord seqExperiment = possibleRun.get(0);
                                 String runMode = seqExperiment.getStringVal("SequencingRunMode", user);
                                 String flowCellId = seqExperiment.getStringVal("FlowcellId", user);
-                                String readLength = seqExperiment.getStringVal("ReadLength", user); // TODO blank in LIMS prior to April 2019
+                                // TODO NOTE: ReadLength blank in LIMS prior to April 2019
+                                String readLength = seqExperiment.getStringVal("ReadLength", user);
 
                                 // TODO function to convert Illumna yymmdd date as yyyy-MM-dd ?
                                 // example: /ifs/pitt/161102_PITT_0089_AHFG3GBBXX/ or /ifs/lola/150814_LOLA_1298_BC7259ACXX/
@@ -209,31 +208,28 @@ public class GetSampleManifestTask {
                                 if (runsMap.containsKey(flowCellId)) { // already created, just add new lane num to list
                                     runsMap.get(flowCellId).addLane(laneNum);
                                 } else { // lookup fastq paths for this run
-                                    List<String> fastqs = null;
-                                    // if QC was not failed, query Fastq database for path to the fastqs for that run
-                                    if (!failedRuns.contains(runName)) { //
-                                        fastqs = FastQPathFinder.search(runId, sampleManifest.getInvestigatorSampleId() + "_IGO_" + sampleManifest.getIgoId(), true);
-                                        if (fastqs == null && aliquot.getLongVal("DateCreated", user) < 1455132132000L) { // try search again with pre-Jan 2016 naming convention, 06184_4
-                                            log.info("Searching fastq database again"); // TODO maybe only search again for old samples?
-                                            fastqs = FastQPathFinder.search(runId, sampleManifest.getInvestigatorSampleId(), false);
-                                        }
+                                    String fastqName = sampleManifest.getInvestigatorSampleId() + "_IGO_" + sampleManifest.getIgoId();
+                                    List<String> fastqs = FastQPathFinder.search(runId, fastqName, true, runFailedQC);
+                                    if (fastqs == null && aliquot.getLongVal("DateCreated", user) < 1455132132000L) { // try search again with pre-Jan 2016 naming convention, 06184_4
+                                        log.info("Searching fastq database again for pre-Jan. 2016 sample.");
+                                        fastqs = FastQPathFinder.search(runId, sampleManifest.getInvestigatorSampleId(), false, runFailedQC);
+                                    }
 
-                                        if (fastqs != null) {
-                                            r.addLane(laneNum);
-                                            r.fastqs = fastqs;
+                                    if (fastqs != null) {
+                                        r.addLane(laneNum);
+                                        r.fastqs = fastqs;
 
-                                            runsMap.put(flowCellId, r);
-                                            library.runs.add(r);
-                                        }
-                                    } else {
-                                        log.info("Not searching fastq db for failed run: " + runName);
+                                        runsMap.put(flowCellId, r);
+                                        library.runs.add(r);
                                     }
                                 }
                             }
                         }
                     }
 
-                    if (reqLanes.size() > 0) { // only report this library if it made it to a sequencer/run
+                    // only report this library if it made it to a sequencer/run and has passed fastqs
+                    // for example 05257_BS_20 has a library which was sequenced then failed so skip
+                    if (library.hasFastqs()) {
                         List<SampleManifest.Library> libraries = sampleManifest.getLibraries();
                         libraries.add(library);
                     }
@@ -241,7 +237,7 @@ public class GetSampleManifestTask {
 
                 smList.add(sampleManifest);
             }
-            log.info("Manifest generation time(ms):" + (System.currentTimeMillis()-startTime));
+            log.info("Manifest generation time(ms):" + (System.currentTimeMillis() - startTime));
             return new SampleManifestResult(smList, null);
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -304,13 +300,22 @@ public class GetSampleManifestTask {
         return dnaLibrariesFinal;
     }
 
+    /**
+     * Returns null if no fastqs found.
+     */
     public static class FastQPathFinder {
         // TODO url to properties & make interface for FastQPathFinder
-        public static List<String> search(String run, String sample_IGO_igoid, boolean returnOnlyTwo) {
+        public static List<String> search(String run,
+                                          String sample_IGO_igoid,
+                                          boolean returnOnlyTwo,
+                                          Set<String> runFailedQC) {
             String url = "http://delphi.mskcc.org:8080/ngs-stats/rundone/search/most/recent/fastqpath/" + run + "/" + sample_IGO_igoid;
             log.info("Finding fastqs in fastq DB for: " + url);
 
             try {
+                // some fingerprinting samples like 08390_D_73 excluded here by searching for fastqs and failing to
+                // find any
+
                 RestTemplate restTemplate = new RestTemplate();
                 ResponseEntity<List<ArchivedFastq>> response = restTemplate.exchange(
                         url,
@@ -318,22 +323,38 @@ public class GetSampleManifestTask {
                         null,
                         new ParameterizedTypeReference<List<ArchivedFastq>>() {});
                 List<ArchivedFastq> fastqList = response.getBody();
+                if (fastqList == null) {
+                    log.info("NO fastqs found for run: " + run);
+                    return null;
+                }
                 log.info("Fastq files found: " + fastqList.size());
+
+                // 06000_FD_7 -- same run passed MICHELLE_0098_BHJCFJDMXX_A1 & failed MICHELLE_0098_BHJCFJDMXX_A2
+                // so compare only full run directory to exclude failed runs
+                List<ArchivedFastq> passedQCList = new ArrayList<>();
+                for (ArchivedFastq fastq : fastqList) {
+                    if (!runFailedQC.contains(fastq.runBaseDirectory))
+                        passedQCList.add(fastq);
+                }
 
                 if (returnOnlyTwo) {
                     // Return only most recent R1&R2 in case of re-demux
-                    if (fastqList.size() > 2)
-                        fastqList = fastqList.subList(0,2);
+                    if (passedQCList.size() > 2)
+                        passedQCList = passedQCList.subList(0,2);
                 }
 
                 List<String> result = new ArrayList<>();
-                for (ArchivedFastq fastq : fastqList) {
+                for (ArchivedFastq fastq : passedQCList) {
                     result.add(fastq.fastq);
                 }
 
+                if (result.size() == 0) {
+                    log.info("NO passed fastqs found for run: " + run);
+                    return null;
+                }
                 return result;
             } catch (Exception e) {
-                log.error("ERROR:" + e.getMessage());
+                log.error("FASTQ Search error:" + e.getMessage());
                 return null;
             }
         }

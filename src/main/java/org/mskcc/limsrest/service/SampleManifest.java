@@ -42,6 +42,14 @@ public class SampleManifest {
             this.libraryVolume = libraryVolume;
             this.libraryConcentrationNgul = libraryConcentrationNgul;
         }
+
+        public boolean hasFastqs() {
+            for (Run run : runs) {
+                if (run.fastqs != null)
+                    return true;
+            }
+            return false;
+        }
     }
 
     public static class Run {
