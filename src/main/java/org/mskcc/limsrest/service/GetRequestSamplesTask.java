@@ -9,10 +9,16 @@ import com.velox.sloan.cmo.recmodels.SampleModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+import sun.jvm.hotspot.debugger.arm.ARMThreadContext;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  *
@@ -61,17 +67,15 @@ public class GetRequestSamplesTask {
                     recipe = sampleRecipe;
                 String othersampleId = sample.getStringVal("OtherSampleId", user);
                 boolean igoComplete = samplesIGOComplete.contains(othersampleId);
-                boolean tumor = "Tumor".equals(sample.getStringVal("TumorOrNormal", user));
-
 
                 RequestSample rs = new RequestSample(othersampleId, igoId, igoComplete);
                 sampleList.add(rs);
             }
-            if (isIMPACTOrHEMEPACTBeforeIMPACT505(recipe)) {
-                // TODO
-            }
-
             RequestSampleList rsl = new RequestSampleList(requestId, sampleList);
+
+            if (isIMPACTOrHEMEPACTBeforeIMPACT505(recipe)) {
+                rsl.pooledNormals = findPooledNormals(requestId);
+            }
             rsl.setRecipe(recipe);
             rsl.setPiEmail(requestDataRecord.getStringVal("PIemail", user));
             rsl.setLabHeadName(requestDataRecord.getStringVal("LaboratoryHead", user));
@@ -118,6 +122,33 @@ public class GetRequestSamplesTask {
         return samplesIGOComplete;
     }
 
+    /*
+    Finds all pooled normals included on any run for a given request.
+     */
+    public static List<String> findPooledNormals(String request) {
+        // TODO
+        String url = "http://delphi.mskcc.org:8080/ngs-stats/rundone/getpoolednormals/" + request;
+        log.info("Finding pooled normal fastqs in fastq DB for: " + url);
+
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            ResponseEntity<List<ArchivedFastq>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<List<ArchivedFastq>>() {
+                    });
+            List<ArchivedFastq> fastqList = response.getBody();
+            List<String> fastqPaths = new ArrayList<>();
+            for (ArchivedFastq fastq : fastqList) {
+                fastqPaths.add(fastq.getFastq());
+            }
+            return fastqPaths;
+        } catch (Exception e) {
+            log.error("FASTQ Search error:" + e.getMessage());
+            return null;
+        }
+    }
 
     public static class RequestSampleList {
         public String requestId;
@@ -129,6 +160,8 @@ public class GetRequestSamplesTask {
         public String dataAnalystName, dataAnalystEmail;
 
         public List<RequestSample> samples;
+
+        public List<String> pooledNormals;
 
         public RequestSampleList(){}
 
