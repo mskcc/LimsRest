@@ -72,12 +72,21 @@ public class GetSampleManifestTask {
             }
             log.info("Manifest generation time(ms):" + (System.currentTimeMillis() - startTime));
             return new SampleManifestResult(smList, null);
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
             return null;
         }
     }
 
+    /**
+     * 06260_G_128 Currently Failing because archive has 06260_G_128_1_1
+     * @param igoId
+     * @param user
+     * @param dataRecordManager
+     * @return
+     * @throws Exception
+     */
     protected SampleManifest getSampleManifest(String igoId, User user, DataRecordManager dataRecordManager)
             throws Exception {
         log.info("Creating sample manifest for IGO ID:" + igoId);
@@ -128,6 +137,7 @@ public class GetSampleManifestTask {
         log.info("DNA Libraries found: " + dnaLibraries.size());
         if (dnaLibraries.size() == 0) {
             // 05500_FQ_1 was submitted as a pooled library, try to find fastqs
+            log.info("No DNA libraries found, searching from base IGO ID.");
             dnaLibraries.put(igoId, sample);
         }
         // for each DNA Library traverse the records grab the fields we need and paths to fastqs.
@@ -138,9 +148,13 @@ public class GetSampleManifestTask {
 
             DataRecord[] libPrepProtocols = aliquot.getChildrenOfType("DNALibraryPrepProtocol3", user);
             Double libraryVolume = null;
-            if (libPrepProtocols.length == 1)
+            if (libPrepProtocols != null && libPrepProtocols.length == 1)
                 libraryVolume = libPrepProtocols[0].getDoubleVal("ElutionVol", user);
-            Double libraryConcentration = aliquot.getDoubleVal("Concentration", user);
+            Double libraryConcentration = null;
+            Object libraryConcentrationObj = aliquot.getValue("Concentration", user);
+            if (libraryConcentrationObj != null)  // for example 06449_1 concentration is null
+                libraryConcentration = aliquot.getDoubleVal("Concentration", user);
+
 
             SampleManifest.Library library =
                     new SampleManifest.Library(libraryIgoId, libraryVolume, libraryConcentration);

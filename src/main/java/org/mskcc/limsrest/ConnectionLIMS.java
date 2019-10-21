@@ -28,6 +28,15 @@ public class ConnectionLIMS {
     }
 
     public synchronized VeloxConnection getConnection() {
+        if (!inUse.isConnected()) {
+            try {
+                boolean opened = inUse.open();
+                log.info("Attempt to re-open connection with result: " + opened);
+            } catch (Exception e) {
+                log.error("Failed to re-open connection: " + e.getMessage());
+            }
+        }
+
         return inUse;
     }
 
