@@ -77,7 +77,7 @@ public class App extends SpringBootServletInitializer {
         String pass2 = env.getProperty("lims.pword2");
 
         log.info("Creating LIMS connection");
-        return new ConnectionLIMS(host, port, guid, user2, pass2, "", "");
+        return new ConnectionLIMS(host, port, guid, user2, pass2);
     }
 
     @Bean

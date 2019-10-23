@@ -11,13 +11,13 @@ public class ConnectionLIMS {
     private VeloxConnection conn2;
     private VeloxConnection inUse;
 
-    public ConnectionLIMS(String host, int port, String guid, String user1, String pass1, String user2, String pass2) {
+    public ConnectionLIMS(String host, int port, String guid, String user1, String pass1) {
         conn1 = new VeloxConnection(host, port, guid, user1, pass1);
         try {
-            log.info("Opening LIMS connection.");
-            conn1.open();
+            log.info("Opening LIMS connection to host: " + host + guid);
+            boolean status = conn1.open();
             if (conn1.isConnected()) {
-                log.info("LIMS connection established.");
+                log.info("LIMS connection established with status: " + status);
             }
         } catch (Exception e) {
             log.error("Connection error:" + e);

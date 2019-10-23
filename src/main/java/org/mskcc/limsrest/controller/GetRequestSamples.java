@@ -33,18 +33,16 @@ public class GetRequestSamples {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "FAILURE: requestId is not using a valid format.");
         }
 
-        GetRequestSamplesTask t = new GetRequestSamplesTask(requestId, conn);
-        GetRequestSamplesTask.RequestSampleList sl;
         try {
-            sl = (GetRequestSamplesTask.RequestSampleList) t.execute();
+            GetRequestSamplesTask t = new GetRequestSamplesTask(requestId, conn);
+            GetRequestSamplesTask.RequestSampleList sl = t.execute();
+            if ("NOT_FOUND".equals(sl.requestId)) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, requestId + " Request Not Found");
+            }
+            return sl;
         } catch (Exception e) {
             log.error(e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
-
-        if ("NOT_FOUND".equals(sl.requestId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, requestId + " Request Not Found");
-        }
-        return sl;
     }
 }

@@ -216,6 +216,10 @@ public class GetSampleManifestTask {
                         // TODO function to convert Illumna yymmdd date as yyyy-MM-dd ?
                         // example: /ifs/pitt/161102_PITT_0089_AHFG3GBBXX/ or /ifs/lola/150814_LOLA_1298_BC7259ACXX/
                         String run = seqExperiment.getStringVal("SequencerRunFolder", user);
+                        if (run == null || "".equals(run)) { // 04553_I_33 has empty SequencerRunFolder
+                            log.warn("Skipping run: " + seqExperiment.getStringVal("folowCellId", user));
+                            continue;
+                        }
                         String[] runFolderElements = run.split("_");
                         String runId = runFolderElements[1] + "_" + runFolderElements[2];
                         String runName = runId + "_" + runFolderElements[3];

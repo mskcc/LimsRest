@@ -50,6 +50,30 @@ public class SampleManifest {
             }
             return false;
         }
+
+        public Integer nFastqs() {
+            Integer fastqs = 0;
+            for (Run run : runs) {
+                if (run.fastqs != null)
+                    fastqs += run.fastqs.size();
+            }
+            return fastqs;
+        }
+
+        @Override
+        public String toString() {
+            return "Library{" +
+                    "barcodeId='" + barcodeId + '\'' +
+                    ", barcodeIndex='" + barcodeIndex + '\'' +
+                    ", libraryIgoId='" + libraryIgoId + '\'' +
+                    ", libraryVolume=" + libraryVolume +
+                    ", libraryConcentrationNgul=" + libraryConcentrationNgul +
+                    ", captureConcentrationNm='" + captureConcentrationNm + '\'' +
+                    ", captureInputNg='" + captureInputNg + '\'' +
+                    ", captureName='" + captureName + '\'' +
+                    ", runs=" + runs +
+                    '}';
+        }
     }
 
     public static class Run {
@@ -74,6 +98,19 @@ public class SampleManifest {
         public void addLane(Integer lane) {
             flowCellLanes.add(lane);
             Collections.sort(flowCellLanes);
+        }
+
+        @Override
+        public String toString() {
+            return "Run{" +
+                    "runMode='" + runMode + '\'' +
+                    ", runId='" + runId + '\'' +
+                    ", flowCellId='" + flowCellId + '\'' +
+                    ", readLength='" + readLength + '\'' +
+                    ", runDate='" + runDate + '\'' +
+                    ", flowCellLanes=" + flowCellLanes +
+                    ", fastqs=" + fastqs +
+                    '}';
         }
     }
 
@@ -179,5 +216,25 @@ public class SampleManifest {
 
     public void setLibraries(List<Library> libraries) {
         this.libraries = libraries;
+    }
+
+    @Override
+    public String toString() {
+        return "SampleManifest{" +
+                "igoId='" + igoId + '\'' +
+                ", cmoSampleName='" + cmoSampleName + '\'' +
+                ", cmoPatientId='" + cmoPatientId + '\'' +
+                ", investigatorSampleId='" + investigatorSampleId + '\'' +
+                ", oncoTreeCode='" + oncoTreeCode + '\'' +
+                ", tumorOrNormal='" + tumorOrNormal + '\'' +
+                ", tissueLocation='" + tissueLocation + '\'' +
+                ", sampleOrigin='" + sampleOrigin + '\'' +
+                ", preservation='" + preservation + '\'' +
+                ", collectionYear='" + collectionYear + '\'' +
+                ", sex='" + sex + '\'' +
+                ", species='" + species + '\'' +
+                ", baitSet='" + baitSet + '\'' +
+                ", libraries=" + libraries +
+                '}';
     }
 }

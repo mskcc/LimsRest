@@ -13,12 +13,10 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
-import sun.jvm.hotspot.debugger.arm.ARMThreadContext;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  *
@@ -34,7 +32,7 @@ public class GetRequestSamplesTask {
         this.conn = conn;
     }
 
-    public Object execute() {
+    public GetRequestSamplesTask.RequestSampleList execute() {
         try {
             VeloxConnection vConn = conn.getConnection();
             User user = vConn.getUser();
