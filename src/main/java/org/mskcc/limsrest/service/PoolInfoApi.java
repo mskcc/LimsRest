@@ -5,10 +5,14 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionPoolLIMS;
 import org.mskcc.limsrest.controller.SetQcStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Future;
 
 @RestController
@@ -30,13 +34,11 @@ public class PoolInfoApi {
      *
      * @param recordId, SeqAnalysisSampleQC record Id
      * @param status - Status to set pooled sample to
-     * @param user
-     * @return
+     * @return ResponseEntity<String>
      */
     @RequestMapping("/setPooledSampleStatus")
-    public String getContent(@RequestParam(value = "record", required = true) String recordId,
-                             @RequestParam(value = "status", required = true) String status,
-                             String user) {
+    public ResponseEntity<String> getContent(@RequestParam(value = "record", required = true) String recordId,
+                                             @RequestParam(value = "status", required = true) String status) {
         log.info("Searching for record: " + recordId);
         if (recordId != null && status != null) {
             String mappedStatus = "Ready for - Pooling of Sample Libraries for Sequencing"; // Sample has differnet repool status
@@ -53,13 +55,13 @@ public class PoolInfoApi {
                     response = String.format("Failed to set status for record %s to '%s'", recordId, mappedStatus);
                 }
                 log.info(response);
-                return response;
+                return new ResponseEntity<>(response, HttpStatus.OK);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
-                return "ERROR in getPoolInformation: " + e.getMessage();
+                return new ResponseEntity<>("ERROR in getPoolInformation: " + e.getMessage(), HttpStatus.BAD_REQUEST);
             }
         } else {
-            return "Invalid Record ID/Status";
+            return new ResponseEntity<>("Invalid Record ID/Status", HttpStatus.BAD_REQUEST);
         }
     }
 }
