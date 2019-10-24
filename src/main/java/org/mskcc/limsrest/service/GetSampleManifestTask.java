@@ -2,6 +2,7 @@ package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
@@ -99,6 +100,8 @@ public class GetSampleManifestTask {
         }
         DataRecord sample = samples.get(0);
         String recipe = sample.getStringVal(SampleModel.RECIPE, user);
+        // fastq is named by sample level field not cmo record in case of a sample swap such as 07951_I_12
+        String origInvestigatorSampleId = sample.getStringVal("UserSampleID", user);
         // for example 07951_S_50_1 is Fingerprinting sample, skip for pipelines for now
         if ("Fingerprinting".equals(recipe) || !isPipelineRecipe(recipe))
             return new SampleManifest();
@@ -132,35 +135,24 @@ public class GetSampleManifestTask {
         List<DataRecord> aliquots = sample.getDescendantsOfType("Sample", user);
         // 07260 Request the first sample are DNA Libraries like 07260_1 so can't just search descendants to find DNA libraries
         aliquots.add(sample);
-        Map<String, DataRecord> dnaLibraries = findDNALibraries(aliquots, user);
+        Map<String, LibraryDataRecord> dnaLibraries = findDNALibraries(aliquots, sampleManifest.getIgoId(), user);
 
         log.info("DNA Libraries found: " + dnaLibraries.size());
         if (dnaLibraries.size() == 0) {
             // 05500_FQ_1 was submitted as a pooled library, try to find fastqs
             log.info("No DNA libraries found, searching from base IGO ID.");
-            dnaLibraries.put(igoId, sample);
+            dnaLibraries.put(igoId, new LibraryDataRecord(sample));
         }
+
         // for each DNA Library traverse the records grab the fields we need and paths to fastqs.
-        for (Map.Entry<String, DataRecord> aliquotEntry : dnaLibraries.entrySet()) {
+        for (Map.Entry<String, LibraryDataRecord> aliquotEntry : dnaLibraries.entrySet()) {
             String libraryIgoId = aliquotEntry.getKey();
-            DataRecord aliquot = aliquotEntry.getValue();
-            log.info("Processing library: " + libraryIgoId);
-
-            DataRecord[] libPrepProtocols = aliquot.getChildrenOfType("DNALibraryPrepProtocol3", user);
-            Double libraryVolume = null;
-            if (libPrepProtocols != null && libPrepProtocols.length == 1)
-                libraryVolume = libPrepProtocols[0].getDoubleVal("ElutionVol", user);
-            Double libraryConcentration = null;
-            Object libraryConcentrationObj = aliquot.getValue("Concentration", user);
-            if (libraryConcentrationObj != null)  // for example 06449_1 concentration is null
-                libraryConcentration = aliquot.getDoubleVal("Concentration", user);
-
-
-            SampleManifest.Library library =
-                    new SampleManifest.Library(libraryIgoId, libraryVolume, libraryConcentration);
+            DataRecord aliquot = aliquotEntry.getValue().record;
+            DataRecord aliquotParent = aliquotEntry.getValue().parent;
+            log.info("Processing DNA library: " + libraryIgoId);
+            SampleManifest.Library library = getLibraryFields(user, libraryIgoId, aliquot);
 
             List<DataRecord> indexBarcodes = aliquot.getDescendantsOfType("IndexBarcode", user);
-            DataRecord aliquotParent = null;
             if (aliquotParent != null) { // TODO get barcodes for WES samples
                 // parent DNA library may have the barcode records
                 indexBarcodes = aliquotParent.getDescendantsOfType("IndexBarcode", user);
@@ -199,6 +191,11 @@ public class GetSampleManifestTask {
             // run Mode, runId, flow Cell & Lane Number
             // Flow Cell Lanes are far down the sample/pool hierarchy in LIMS
             List<DataRecord> reqLanes = aliquot.getDescendantsOfType("FlowCellLane", user);
+            if (reqLanes.isEmpty()) {
+                log.info("No flow cell lane info found for: " + aliquot.getStringVal("SampleId", user));
+                if (aliquotParent != null)
+                    reqLanes = aliquotParent.getDescendantsOfType("FlowCellLane", user);
+            }
             for (DataRecord flowCellLane : reqLanes) {
                 Integer laneNum = ((Long) flowCellLane.getLongVal("LaneNum", user)).intValue();
                 log.info("Reviewing flow cell lane: " + laneNum);
@@ -231,11 +228,11 @@ public class GetSampleManifestTask {
                         if (runsMap.containsKey(flowCellId)) { // already created, just add new lane num to list
                             runsMap.get(flowCellId).addLane(laneNum);
                         } else { // lookup fastq paths for this run, currently making extra queries for 06260_N_9 KIM & others
-                            String fastqName = sampleManifest.getInvestigatorSampleId() + "_IGO_" + sampleManifest.getIgoId();
+                            String fastqName = origInvestigatorSampleId + "_IGO_" + sampleManifest.getIgoId();
                             List<String> fastqs = FastQPathFinder.search(runId, fastqName, true, runPassedQC);
                             if (fastqs == null && aliquot.getLongVal("DateCreated", user) < 1455132132000L) { // try search again with pre-Jan 2016 naming convention, 06184_4
                                 log.info("Searching fastq database again for pre-Jan. 2016 sample.");
-                                fastqs = FastQPathFinder.search(runId, sampleManifest.getInvestigatorSampleId(), false, runPassedQC);
+                                fastqs = FastQPathFinder.search(runId, origInvestigatorSampleId, false, runPassedQC);
                             }
 
                             if (fastqs != null) {
@@ -260,12 +257,28 @@ public class GetSampleManifestTask {
         return sampleManifest;
     }
 
+    private SampleManifest.Library getLibraryFields(User user, String libraryIgoId, DataRecord aliquot) throws IoError, RemoteException, NotFound {
+        DataRecord[] libPrepProtocols = aliquot.getChildrenOfType("DNALibraryPrepProtocol3", user);
+        Double libraryVolume = null;
+        if (libPrepProtocols != null && libPrepProtocols.length == 1)
+            libraryVolume = libPrepProtocols[0].getDoubleVal("ElutionVol", user);
+        Double libraryConcentration = null;
+        Object libraryConcentrationObj = aliquot.getValue("Concentration", user);
+        if (libraryConcentrationObj != null)  // for example 06449_1 concentration is null
+            libraryConcentration = aliquot.getDoubleVal("Concentration", user);
+
+        return new SampleManifest.Library(libraryIgoId, libraryVolume, libraryConcentration);
+    }
+
     protected SampleManifest getSampleLevelFields(String igoId, DataRecord cmoInfo, User user) throws NotFound, RemoteException {
         SampleManifest s = new SampleManifest();
         s.setIgoId(igoId);
         s.setCmoPatientId(cmoInfo.getStringVal("CmoPatientId", user));
         // aka "Sample Name" in SampleCMOInfoRecords
-        s.setInvestigatorSampleId(cmoInfo.getStringVal("OtherSampleId", user));
+        String sampleName = cmoInfo.getStringVal("OtherSampleId", user);
+        if (sampleName == null || "".equals(sampleName.trim())) // for example 05304_0_4 Agilent 51MB or update DB so this is not necessary?
+            sampleName = cmoInfo.getStringVal("UserSampleID", user);
+        s.setInvestigatorSampleId(sampleName);
         String tumorOrNormal = cmoInfo.getStringVal("TumorOrNormal", user);
         s.setTumorOrNormal(tumorOrNormal);
         if ("Tumor".equals(tumorOrNormal))
@@ -281,7 +294,20 @@ public class GetSampleManifestTask {
         return s;
     }
 
-    private Map<String, DataRecord> findDNALibraries(List<DataRecord> aliquots, User user) throws Exception {
+    public static class LibraryDataRecord {
+        public DataRecord record;
+        public DataRecord parent;
+
+        public LibraryDataRecord(DataRecord r) {
+            this.record = r;
+        }
+        public LibraryDataRecord(DataRecord r, DataRecord p) {
+            this.record = r;
+            this.parent = p;
+        }
+    }
+
+    private Map<String, LibraryDataRecord> findDNALibraries(List<DataRecord> aliquots, String baseIGOId, User user) throws Exception {
         Map<String, DataRecord> dnaLibraries = new HashMap<>();
         for (DataRecord aliquot : aliquots) {
             String sampleType = aliquot.getStringVal("ExemplarSampleType", user);
@@ -299,20 +325,37 @@ public class GetSampleManifestTask {
                 if ("Fingerprinting".equals(recipe)) // for example 07951_AD_1_1
                     continue;
 
-                log.info("Found DNA library: " + libraryIgoId);
-                dnaLibraries.put(libraryIgoId, aliquot);
+                if (sameRequest(baseIGOId, libraryIgoId)) {
+                    log.info("Found DNA library: " + libraryIgoId);
+                    dnaLibraries.put(libraryIgoId, aliquot);
+                } else {
+                    // 06345_B_26 has 06345_C_26, 06345_D_26 libraries for IMPACT & Custom Capture
+                    log.info("Ignoring DNA library on different request: " + libraryIgoId);
+                }
             }
         }
 
-        Map<String, DataRecord> dnaLibrariesFinal = new HashMap<>();
+        Map<String, LibraryDataRecord> dnaLibrariesFinal = new HashMap<>();
         // For example: 09245_E_21_1_1_1, 09245_E_21_1_1_1_2 & Failed 09245_E_21_1_1_1_1
         for (String libraryName : dnaLibraries.keySet()) {
             if (!dnaLibraries.containsKey(libraryName + "_1") &&
                     !dnaLibraries.containsKey(libraryName + "_2")) {
-                dnaLibrariesFinal.put(libraryName, dnaLibraries.get(libraryName));
+                // link parent child DNA libraries if they exist
+                LibraryDataRecord dr = new LibraryDataRecord(dnaLibraries.get(libraryName),
+                        dnaLibraries.get(libraryName.substring(0, libraryName.length() - 2)));
+                dnaLibrariesFinal.put(libraryName, dr);
             }
         }
         return dnaLibrariesFinal;
+    }
+
+    // compate 05500_A & 05500_B
+    public static boolean sameRequest(String id1, String id2) {
+        String [] parts1 = id1.split("_");
+        String [] parts2 = id2.split("_");
+        if (parts1[1] == null || parts2[1] == null)
+            return false;
+        return parts1[1].equals(parts2[1]);
     }
 
     /**
