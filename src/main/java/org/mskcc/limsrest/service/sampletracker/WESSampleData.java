@@ -39,12 +39,13 @@ public class WESSampleData {
     String pipeline;
     String tissueType;
     String collaborationCenter;
-    String limsRecordId;
+    String limsSampleRecordId;
+    String limsTrackerRecordId;
 
     public WESSampleData(String sampleId, String userSampleId, String cmoSampleId, String cmoPatientId, String dmpSampleId, String dmpPatientId, String mrn, String sex, String sampleType, String sampleClass, String tumorType,
                          String parentalTumorType, String tissueSite, String molecularAccessionNum, String collectionYear, String dateDmpRequest, String dmpRequestId, String igoRequestId, String dateIgoReceived, String igoCompleteDate,
                          String applicationRequested, String baitsetUsed, String sequencerType, String projectTitle, String labHead, String ccFund, String scientificPi, Boolean consentPartAStatus, Boolean consentPartCStatus,
-                         String sampleStatus, String accessLevel, String clinicalTrial, String sequencingSite, String piRequestDate, String pipeline, String tissueType, String collaborationCenter, String limsRecordId) {
+                         String sampleStatus, String accessLevel, String clinicalTrial, String sequencingSite, String piRequestDate, String pipeline, String tissueType, String collaborationCenter, String limsSampleRecordId, String limsTrackerRecordId) {
         this.sampleId = sampleId;
         this.userSampleId = userSampleId;
         this.cmoSampleId = cmoSampleId;
@@ -82,7 +83,8 @@ public class WESSampleData {
         this.pipeline = pipeline;
         this.tissueType = tissueType;
         this.collaborationCenter = collaborationCenter;
-        this.limsRecordId = limsRecordId;
+        this.limsSampleRecordId = limsSampleRecordId;
+        this.limsTrackerRecordId = limsTrackerRecordId;
     }
     public String getSampleId() {
         return sampleId;
@@ -380,11 +382,19 @@ public class WESSampleData {
         this.collaborationCenter = collaborationCenter;
     }
 
-    public String getLimsRecordId() {
-        return limsRecordId;
+    public String getLimsSampleRecordId() {
+        return limsSampleRecordId;
     }
 
-    public void setLimsRecordId(String limsRecordId) {
-        this.limsRecordId = limsRecordId;
+    public void setLimsSampleRecordId(String limsRecordId) {
+        this.limsSampleRecordId = limsRecordId;
+    }
+
+    public String getLimsTrackerRecordId() {
+        return limsTrackerRecordId;
+    }
+
+    public void setLimsTrackerRecordId(String limsRecordId) {
+        this.limsTrackerRecordId = limsTrackerRecordId;
     }
 }
