@@ -393,6 +393,8 @@ public class GetSampleManifestTask {
                 for (ArchivedFastq fastq : fastqList) {
                     if (runPassedQC.contains(fastq.runBaseDirectory))
                         passedQCList.add(fastq);
+                    else
+                        System.out.println(fastq.runBaseDirectory + ": BUT PASSED:" + Arrays.toString(runPassedQC.toArray()));
                 }
 
                 if (returnOnlyTwo) {

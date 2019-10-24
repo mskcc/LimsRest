@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -84,7 +85,8 @@ public class GetRequestSamplesTask {
             rsl.setInvestigatorEmail(requestDataRecord.getStringVal("Investigatoremail", user));
             rsl.setDataAnalystName(requestDataRecord.getStringVal("DataAnalyst", user));
             rsl.setDataAnalystEmail(requestDataRecord.getStringVal("DataAnalystEmail", user));
-            log.info("Result size: " + sampleList.size());
+            for (RequestSample s : sampleList)
+                System.out.println(s.igoSampleId);
             return rsl;
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
