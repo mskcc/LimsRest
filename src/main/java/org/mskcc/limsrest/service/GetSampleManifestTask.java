@@ -101,7 +101,7 @@ public class GetSampleManifestTask {
         DataRecord sample = samples.get(0);
         String recipe = sample.getStringVal(SampleModel.RECIPE, user);
         // fastq is named by sample level field not cmo record in case of a sample swap such as 07951_I_12
-        String origInvestigatorSampleId = sample.getStringVal("UserSampleID", user);
+        String origSampleName = sample.getStringVal("OtherSampleId", user);
         // for example 07951_S_50_1 is Fingerprinting sample, skip for pipelines for now
         if ("Fingerprinting".equals(recipe) || !isPipelineRecipe(recipe))
             return new SampleManifest();
@@ -120,6 +120,7 @@ public class GetSampleManifestTask {
         // 06302_R_1 has no sampleCMOInfoRecord so use the same fields at the sample level
         DataRecord cmoInfo;  // assign the dataRecord to query either sample table or samplecmoinforecords
         if (sampleCMOInfoRecords.size() == 0) {
+            log.info("No CMO info record found, using sample level fields.");
             cmoInfo = samples.get(0);
         } else {
             cmoInfo = sampleCMOInfoRecords.get(0);
@@ -228,11 +229,11 @@ public class GetSampleManifestTask {
                         if (runsMap.containsKey(flowCellId)) { // already created, just add new lane num to list
                             runsMap.get(flowCellId).addLane(laneNum);
                         } else { // lookup fastq paths for this run, currently making extra queries for 06260_N_9 KIM & others
-                            String fastqName = origInvestigatorSampleId + "_IGO_" + sampleManifest.getIgoId();
+                            String fastqName = origSampleName + "_IGO_" + sampleManifest.getIgoId();
                             List<String> fastqs = FastQPathFinder.search(runId, fastqName, true, runPassedQC);
                             if (fastqs == null && aliquot.getLongVal("DateCreated", user) < 1455132132000L) { // try search again with pre-Jan 2016 naming convention, 06184_4
                                 log.info("Searching fastq database again for pre-Jan. 2016 sample.");
-                                fastqs = FastQPathFinder.search(runId, origInvestigatorSampleId, false, runPassedQC);
+                                fastqs = FastQPathFinder.search(runId, origSampleName, false, runPassedQC);
                             }
 
                             if (fastqs != null) {
