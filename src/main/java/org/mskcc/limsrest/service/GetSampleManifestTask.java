@@ -395,7 +395,9 @@ public class GetSampleManifestTask {
                         passedQCList.add(fastq);
                     else {
                         // for example 08106_C_35 has fastq PITT_0214_AHVHVFBBXX_A1 BUT PASSED PITT_0214_AHVHVFBBXX
-                        if (fastq.runBaseDirectory.endsWith("_A1") || fastq.runBaseDirectory.endsWith("_A2")) {
+                        if (fastq.runBaseDirectory.endsWith("_A1") ||
+                                fastq.runBaseDirectory.endsWith("_A2") ||
+                                fastq.runBaseDirectory.endsWith("_A3")) {
                             if (runPassedQC.contains(fastq.run))
                                 passedQCList.add(fastq);
                         }
