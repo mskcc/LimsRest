@@ -388,14 +388,18 @@ public class GetSampleManifestTask {
                 }
                 log.info("Fastq files found: " + fastqList.size());
 
-                // 06000_FD_7 -- same run passed MICHELLE_0098_BHJCFJDMXX_A1 & failed MICHELLE_0098_BHJCFJDMXX_A2
                 // so compare only full run directory to exclude failed runs
                 List<ArchivedFastq> passedQCList = new ArrayList<>();
                 for (ArchivedFastq fastq : fastqList) {
                     if (runPassedQC.contains(fastq.runBaseDirectory))
                         passedQCList.add(fastq);
-                    else
-                        System.out.println(fastq.runBaseDirectory + ": BUT PASSED:" + Arrays.toString(runPassedQC.toArray()));
+                    else {
+                        // for example 08106_C_35 has fastq PITT_0214_AHVHVFBBXX_A1 BUT PASSED PITT_0214_AHVHVFBBXX
+                        if (fastq.runBaseDirectory.endsWith("_A1") || fastq.runBaseDirectory.endsWith("_A2")) {
+                            if (runPassedQC.contains(fastq.run))
+                                passedQCList.add(fastq);
+                        }
+                    }
                 }
 
                 if (returnOnlyTwo) {
