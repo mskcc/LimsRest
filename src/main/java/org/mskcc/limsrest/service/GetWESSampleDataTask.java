@@ -58,8 +58,8 @@ public class GetWESSampleDataTask extends LimsTask {
                 return null;
             }
             List<WESSampleData> resultList = new ArrayList<>();
-            JSONObject consentAList = getConsentStatus("parta");
-            JSONObject consentCList = getConsentStatus("partc");
+            JSONObject consentAList = getConsentStatusDataValues("parta");
+            JSONObject consentCList = getConsentStatusDataValues("partc");
             if (!dmpTrackerRecords.isEmpty()) {
                 for (DataRecord dmpTrackRec : dmpTrackerRecords) {
                     List<DataRecord> sampleCmoInfoRecs = new ArrayList<>();
@@ -81,7 +81,8 @@ public class GetWESSampleDataTask extends LimsTask {
                                     log.info("starting object");
                                     DataRecord request = getRelatedRequest(sample);
                                     String sampleId = sample.getStringVal("SampleId", user);
-                                    String userSampleId = sample.getStringVal("UserSampleID", user);
+                                    //String userSampleId = sample.getStringVal("UserSampleID", user);
+                                    String userSampleId = dmpTrackRec.getStringVal("i_StudySampleIdentifierInvesti", user);
                                     String cmoSampleId = cmoInfoRec.getStringVal("CorrectedCMOID", user);
                                     String cmoPatientId = cmoInfoRec.getStringVal("CmoPatientId", user);
                                     String dmpSampleId = dmpTrackRec.getStringVal("i_DMPSampleID", user);
@@ -101,15 +102,15 @@ public class GetWESSampleDataTask extends LimsTask {
                                     String collectionYear = (String) getValueFromDataRecord(cmoInfoRec, "CollectionYear", "String");
                                     String dateIgoReceived = (String) getValueFromDataRecord(request, "ReceivedDate", "Date");
                                     String igoCompleteDate = (String) getValueFromDataRecord(request, "CompletedDate", "Date");
-                                    String applicationRequested = (String) getValueFromDataRecord(dmpTrackRec, "i_SampleDownstreamApplication", "String");
+                                    String applicationRequested = (String) getValueFromDataRecord(request, "i_SampleDownstreamApplication", "String");
                                     String baitsetUsed = getWesBaitsetType(sample);
                                     String sequencerType = getSequencerTypeUsed(sample);
                                     String projectTitle = (String) getValueFromDataRecord(dmpTrackRec, "i_Studyname", "String");
                                     String labHead = (String) getValueFromDataRecord(request, "LaboratoryHead", "String");
                                     String ccFund = (String) getValueFromDataRecord(dmpTrackRec, "i_FundCostCenter", "String");
                                     String scientificPi = " ";
-                                    Boolean consentPartAStatus = consentAList.getBoolean(dmpPatientId);
-                                    Boolean consentPartCStatus = consentCList.getBoolean(dmpPatientId);
+                                    Boolean consentPartAStatus = getConsentStatus(consentAList, dmpPatientId);
+                                    Boolean consentPartCStatus = getConsentStatus(consentCList, dmpPatientId);
                                     String sampleStatus = getLatestIGOStatus(sample, request.getStringVal("RequestId", user));
                                     String accessLevel = "";
                                     String clinicalTrial = "";
@@ -160,8 +161,8 @@ public class GetWESSampleDataTask extends LimsTask {
                         String labHead = "";
                         String ccFund = (String) getValueFromDataRecord(dmpTrackRec, "i_FundCostCenter", "String");
                         String scientificPi = " ";
-                        Boolean consentPartAStatus = consentAList.getBoolean(dmpPatientId);
-                        Boolean consentPartCStatus = consentCList.getBoolean(dmpPatientId);
+                        Boolean consentPartAStatus = getConsentStatus(consentAList, dmpPatientId);
+                        Boolean consentPartCStatus = getConsentStatus(consentCList, dmpPatientId);
                         String sampleStatus = "";
                         String accessLevel = "";
                         String clinicalTrial = "";
@@ -381,7 +382,7 @@ public class GetWESSampleDataTask extends LimsTask {
        return "NA";
    }
 
-   private JSONObject getConsentStatus(String consentType) throws MalformedURLException, JSONException {
+   private JSONObject getConsentStatusDataValues(String consentType) throws MalformedURLException, JSONException {
        StringBuffer response = new StringBuffer();
        JSONObject cvrResponseData = new JSONObject() ;
        URL url = null;
@@ -408,6 +409,16 @@ public class GetWESSampleDataTask extends LimsTask {
        }
        return cvrResponseData.getJSONObject("cases");
    }
+
+   private Boolean getConsentStatus(JSONObject consentData, String patientId){
+        if (consentData.has(patientId)){
+            return (Boolean)consentData.get(patientId);
+        }
+        return false;
+   }
+
+
+
 
     /**
      * Method to get last child sample of sample passed to the method. A Sample can have children across requests,
