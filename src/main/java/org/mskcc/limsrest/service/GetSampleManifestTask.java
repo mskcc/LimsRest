@@ -109,12 +109,14 @@ public class GetSampleManifestTask {
 
         List<DataRecord> qcs = sample.getDescendantsOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
         Set<String> runPassedQC = new HashSet<>();
+        String baitSet = null;
         for (DataRecord dr : qcs) {
             String qcResult = dr.getStringVal(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
             if ("Passed".equals(qcResult)) {
                 String run = dr.getStringVal(SeqAnalysisSampleQCModel.SEQUENCER_RUN_FOLDER, user);
                 runPassedQC.add(run);
                 log.info("Passed sample & run: " + run);
+                baitSet = dr.getStringVal(SeqAnalysisSampleQCModel.BAIT_SET, user);
             }
         }
 
@@ -128,6 +130,9 @@ public class GetSampleManifestTask {
         }
 
         SampleManifest sampleManifest = getSampleLevelFields(igoId, cmoInfo, user);
+        if (baitSet == null || baitSet.isEmpty())
+            System.err.println("Missing bait set: " + igoId);
+        sampleManifest.setBaitSet(baitSet);
 
         // library concentration & volume
         // often null in samplecmoinforecords then query KAPALibPlateSetupProtocol1.TargetMassAliq1
@@ -172,8 +177,7 @@ public class GetSampleManifestTask {
                 Object valid = n.getValue("Valid", user); // 05359_B_1 null
                 if (valid != null && new Boolean(valid.toString())) {
                     String poolName = n.getStringVal("Protocol2Sample", user);
-                    String baitSet = n.getStringVal("Recipe", user); // LIMS display name "bait set"
-                    sampleManifest.setBaitSet(baitSet);
+                    String baitSetRecipe = n.getStringVal("Recipe", user); // LIMS display name "bait set"
                     Object val = n.getValue("SourceMassToUse", user);
                     if (val != null) {
                         Double captureInput = n.getDoubleVal("SourceMassToUse", user);
@@ -318,8 +322,9 @@ public class GetSampleManifestTask {
                 String libraryIgoId = aliquot.getStringVal("SampleId", user);
 
                 String sampleStatus = aliquot.getStringVal("ExemplarSampleStatus", user);
-                if (sampleStatus != null && sampleStatus.contains("Failed")) {
-                    log.info("Skipping failed libarary: " + libraryIgoId);
+                // 05684_M_2 has a returned to user library, ignore it.
+                if (sampleStatus != null && (sampleStatus.contains("Failed") || sampleStatus.contains("Returned"))) {
+                    log.info("Skipping failed or returned library: " + libraryIgoId);
                     continue;
                 }
 

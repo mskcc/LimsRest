@@ -15,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -58,7 +57,6 @@ public class GetRequestSamplesTask {
             for (DataRecord sample : samples) {
                 String igoId = sample.getStringVal("SampleId", user);
                 String sampleRecipe = sample.getStringVal(SampleModel.RECIPE, user);
-                System.out.println("IGO: " + igoId + ":" +sampleRecipe);
                 if ("Fingerprinting".equals(sampleRecipe)) // for example 07951_S_50_1, skip for pipelines for now
                     continue;
                 else if (!GetSampleManifestTask.isPipelineRecipe(sampleRecipe))
@@ -67,6 +65,10 @@ public class GetRequestSamplesTask {
                     recipe = sampleRecipe;
                 String othersampleId = sample.getStringVal("OtherSampleId", user);
                 boolean igoComplete = samplesIGOComplete.contains(othersampleId);
+                // same othersampleId as other samples but these failed, could check exemplarSampleStatus too
+                // remove if qc status lookup done by IGO ID
+                if ("07078_E_1".equals(igoId) || "07078_E_2".equals(igoId) || "07078_E_5".equals(igoId) )
+                    igoComplete = false;
 
                 RequestSample rs = new RequestSample(othersampleId, igoId, igoComplete);
                 sampleList.add(rs);
