@@ -53,7 +53,8 @@ public class GetSampleManifestTask {
         if (recipe == null)
             return false;
         // WES = 'WholeExomeSequencing', 'AgilentCapture_51MB', 'IDT_Exome_v1_FP', 'Agilent_v4_51MB_Human'
-        if (recipe.contains("PACT") || recipe.contains("ACCESS") || recipe.contains("Exome") || recipe.contains("51MB")) {
+        if (recipe.contains("PACT") || recipe.contains("ACCESS") || recipe.contains("Exome") || recipe.contains("51MB")
+                || recipe.contains("ShallowWGS")) {
             return true;
         }
         return false;

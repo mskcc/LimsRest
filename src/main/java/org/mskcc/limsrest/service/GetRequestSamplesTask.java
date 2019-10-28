@@ -58,6 +58,7 @@ public class GetRequestSamplesTask {
             for (DataRecord sample : samples) {
                 String igoId = sample.getStringVal("SampleId", user);
                 String sampleRecipe = sample.getStringVal(SampleModel.RECIPE, user);
+                System.out.println("IGO: " + igoId + ":" +sampleRecipe);
                 if ("Fingerprinting".equals(sampleRecipe)) // for example 07951_S_50_1, skip for pipelines for now
                     continue;
                 else if (!GetSampleManifestTask.isPipelineRecipe(sampleRecipe))
@@ -73,6 +74,7 @@ public class GetRequestSamplesTask {
             RequestSampleList rsl = new RequestSampleList(requestId, sampleList);
 
             if (isIMPACTOrHEMEPACTBeforeIMPACT505(recipe)) {
+                log.info("Adding pooled normals for recipe: " + recipe);
                 rsl.pooledNormals = findPooledNormals(requestId);
             }
             rsl.setRecipe(recipe);
@@ -85,8 +87,7 @@ public class GetRequestSamplesTask {
             rsl.setInvestigatorEmail(requestDataRecord.getStringVal("Investigatoremail", user));
             rsl.setDataAnalystName(requestDataRecord.getStringVal("DataAnalyst", user));
             rsl.setDataAnalystEmail(requestDataRecord.getStringVal("DataAnalystEmail", user));
-            for (RequestSample s : sampleList)
-                System.out.println(s.igoSampleId);
+
             return rsl;
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -101,6 +102,8 @@ public class GetRequestSamplesTask {
      * @return
      */
     protected static boolean isIMPACTOrHEMEPACTBeforeIMPACT505(String recipe) {
+        if (recipe.isEmpty())
+            return false;
         if ("IMPACT341,IMPACT410,IMPACT410+,IMPACT468,HemePACT_v3,HemePACT_v4".contains(recipe))
             return true;
         return false;
