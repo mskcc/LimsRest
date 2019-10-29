@@ -51,7 +51,7 @@ public class GetWESSampleDataTask extends LimsTask {
             log.info(" Starting GetWesSample task using timestamp " + timestamp);
             List<DataRecord> dmpTrackerRecords = new ArrayList<>();
             try {
-                dmpTrackerRecords = dataRecordManager.queryDataRecords("DMPSampleTracker", "DateCreated > " + Long.parseLong(timestamp) + " AND i_SampleDownstreamApplication IN ('Whole Exome Sequencing')", user);
+                dmpTrackerRecords = dataRecordManager.queryDataRecords("DMPSampleTracker", "i_SampleTypeTumororNormal='Tumor' AND DateCreated > " + Long.parseLong(timestamp) + " AND i_SampleDownstreamApplication IN ('Whole Exome Sequencing')", user);
                 log.info("Num dmpTracker Records: " + dmpTrackerRecords.size());
             } catch (Throwable e) {
                 log.error(e.getMessage(), e);
@@ -102,7 +102,7 @@ public class GetWESSampleDataTask extends LimsTask {
                                     String collectionYear = (String) getValueFromDataRecord(cmoInfoRec, "CollectionYear", "String");
                                     String dateIgoReceived = (String) getValueFromDataRecord(request, "ReceivedDate", "Date");
                                     String igoCompleteDate = (String) getValueFromDataRecord(request, "CompletedDate", "Date");
-                                    String applicationRequested = (String) getValueFromDataRecord(request, "i_SampleDownstreamApplication", "String");
+                                    String applicationRequested = (String) getValueFromDataRecord(request, "RequestName", "String");
                                     String baitsetUsed = getWesBaitsetType(sample);
                                     String sequencerType = getSequencerTypeUsed(sample);
                                     String projectTitle = (String) getValueFromDataRecord(dmpTrackRec, "i_Studyname", "String");
@@ -177,7 +177,7 @@ public class GetWESSampleDataTask extends LimsTask {
         String baitsetUsed = "";
         String sequencerType = "";
         String projectTitle = (String) getValueFromDataRecord(dmpTrackRec, "i_Studyname", "String");
-        String labHead = "";
+        String labHead = (String) getValueFromDataRecord(dmpTrackRec, "i_PrimaryInvestigator", "String");;
         String ccFund = (String) getValueFromDataRecord(dmpTrackRec, "i_FundCostCenter", "String");
         String scientificPi = " ";
         Boolean consentPartAStatus = getConsentStatus(consentAList, dmpPatientId);
