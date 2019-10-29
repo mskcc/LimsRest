@@ -300,9 +300,6 @@ public class GetWESSampleDataTask extends LimsTask {
     }
 
     private String getOncotreeType(String cancerType){
-        cancerType.replace(" ", "%20");
-        cancerType.replace("/", "%2F");
-        cancerType.replace("&", "%26");
         StringBuffer response = new StringBuffer();
         JSONArray oncotreeResponseData = null;
         String mainTumorType = "";
@@ -339,10 +336,10 @@ public class GetWESSampleDataTask extends LimsTask {
 
     private String getWesBaitsetType(DataRecord sample) throws NotFound, RemoteException {
         try {
-            if (sample.getChildrenOfType("KAPAAgilentCaptureProtocol2", user).length > 0) {
-                DataRecord kapaProtocol = sample.getChildrenOfType("KAPAAgilentCaptureProtocol2", user)[0];
-                if (kapaProtocol.getValue("AgilentCaptureBaitSet", user) !=null){
-                    return kapaProtocol.getStringVal("AgilentCaptureBaitSet", user);
+            if (sample.getChildrenOfType("SeqAnalysisSampleQC", user).length > 0) {
+                DataRecord seqAnalysisRecord = sample.getChildrenOfType("SeqAnalysisSampleQC", user)[0];
+                if (seqAnalysisRecord.getValue("BaitSet", user) !=null){
+                    return seqAnalysisRecord.getStringVal("BaitSet", user);
                 }
             }
             Stack <DataRecord> sampleStack = new Stack<>();
@@ -351,14 +348,14 @@ public class GetWESSampleDataTask extends LimsTask {
             }
             do{
                 DataRecord startSample = sampleStack.pop();
-                if (startSample.getChildrenOfType("KAPAAgilentCaptureProtocol2", user).length > 0){
-                    DataRecord kapaProtocol = startSample.getChildrenOfType("KAPAAgilentCaptureProtocol2", user)[0];
-                    if (kapaProtocol.getValue("AgilentCaptureBaitSet", user) !=null){
-                        return kapaProtocol.getStringVal("AgilentCaptureBaitSet", user);
+                if (startSample.getChildrenOfType("SeqAnalysisSampleQC", user).length > 0){
+                    DataRecord seqAnalysisRecord = startSample.getChildrenOfType("SeqAnalysisSampleQC", user)[0];
+                    if (seqAnalysisRecord.getValue("BaitSet", user) !=null){
+                        return seqAnalysisRecord.getStringVal("BaitSet", user);
                     }
                 }
-                else if(startSample.getChildrenOfType("KAPAAgilentCaptureProtocol2", user).length > 0){
-                    sampleStack.push(startSample.getChildrenOfType("KAPAAgilentCaptureProtocol2", user)[0]);
+                if(startSample.getChildrenOfType("Sample", user).length > 0){
+                    sampleStack.addAll(Arrays.asList(startSample.getChildrenOfType("Sample", user)));
                 }
             }while(!sampleStack.isEmpty());
         }catch (Exception e) {
