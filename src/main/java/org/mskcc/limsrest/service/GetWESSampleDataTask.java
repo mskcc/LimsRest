@@ -65,7 +65,7 @@ public class GetWESSampleDataTask extends LimsTask {
                     List<DataRecord> sampleCmoInfoRecs = new ArrayList<>();
                     if(dmpTrackRec.getValue("i_StudySampleIdentifierInvesti", user) != null){
                         log.info("sample cmo info query start");
-                        sampleCmoInfoRecs = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "OtherSampleId = '" + dmpTrackRec.getStringVal("i_StudySampleIdentifierInvesti", user) + "'", user);
+                        sampleCmoInfoRecs = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "TumorOrNormal='Tumor' AND OtherSampleId = '" + dmpTrackRec.getStringVal("i_StudySampleIdentifierInvesti", user) + "'", user);
                         log.info("sample cmo info query end");
                     }
                     if (sampleCmoInfoRecs.size() > 0){
@@ -73,7 +73,7 @@ public class GetWESSampleDataTask extends LimsTask {
                         for (DataRecord cmoInfoRec : sampleCmoInfoRecs){
                             Object cmoInfoOtherSampleId = cmoInfoRec.getValue("OtherSampleId", user);
                             Object tumorOrNormal = cmoInfoRec.getValue("TumorOrNormal", user);
-                            if (!StringUtils.isBlank(cmoInfoOtherSampleId.toString().replace(" ", "")) && tumorOrNormal !=null && cmoInfoOtherSampleId.toString().equals(investigatorSampleId.toString())
+                            if (!StringUtils.isBlank(cmoInfoOtherSampleId.toString().replace(" ", "")) && tumorOrNormal !=null  && "tumor".equals(String.valueOf(tumorOrNormal).toLowerCase()) && cmoInfoOtherSampleId.toString().equals(investigatorSampleId.toString())
                                 && cmoInfoRec.getParentsOfType("Sample", user).size() > 0) {
                                 log.info("cmoInfo othersampleId: " + cmoInfoOtherSampleId.toString() + " " + cmoInfoRec.getParentsOfType("Sample", user).size());
                                 DataRecord sample = cmoInfoRec.getParentsOfType("Sample", user).get(0);
