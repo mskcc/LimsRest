@@ -91,9 +91,6 @@ public class GetSampleManifestTask {
      */
     protected SampleManifest getSampleManifest(String igoId, User user, DataRecordManager dataRecordManager)
             throws Exception {
-        log.info("Creating sample manifest for IGO ID:" + igoId);
-        List<DataRecord> sampleCMOInfoRecords = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "SampleId = '" + igoId +  "'", user);
-
         log.info("Searching Sample table for SampleId ='" + igoId + "'");
         List<DataRecord> samples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + igoId + "'", user);
         if (samples.size() == 0) { // sample not found in sample table
@@ -107,6 +104,17 @@ public class GetSampleManifestTask {
         if ("Fingerprinting".equals(recipe) || !isPipelineRecipe(recipe))
             return new SampleManifest();
 
+        // 06302_R_1 has no sampleCMOInfoRecord so use the same fields at the sample level
+        List<DataRecord> sampleCMOInfoRecords = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "SampleId = '" + igoId +  "'", user);
+        DataRecord cmoInfo;  // assign the dataRecord to query either sample table or samplecmoinforecords
+        if (sampleCMOInfoRecords.size() == 0) {
+            log.info("No CMO info record found, using sample level fields.");
+            cmoInfo = samples.get(0);
+        } else {
+            cmoInfo = sampleCMOInfoRecords.get(0);
+        }
+
+        // query Picard QC records for bait set & "Passed" fastqs.
         List<DataRecord> qcs = sample.getDescendantsOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
         Set<String> runPassedQC = new HashSet<>();
         String baitSet = null;
@@ -120,24 +128,10 @@ public class GetSampleManifestTask {
             }
         }
 
-        // 06302_R_1 has no sampleCMOInfoRecord so use the same fields at the sample level
-        DataRecord cmoInfo;  // assign the dataRecord to query either sample table or samplecmoinforecords
-        if (sampleCMOInfoRecords.size() == 0) {
-            log.info("No CMO info record found, using sample level fields.");
-            cmoInfo = samples.get(0);
-        } else {
-            cmoInfo = sampleCMOInfoRecords.get(0);
-        }
-
         SampleManifest sampleManifest = getSampleLevelFields(igoId, cmoInfo, user);
         if (baitSet == null || baitSet.isEmpty())
             System.err.println("Missing bait set: " + igoId);
         sampleManifest.setBaitSet(baitSet);
-
-        // library concentration & volume
-        // often null in samplecmoinforecords then query KAPALibPlateSetupProtocol1.TargetMassAliq1
-        //String dmpLibraryInput = cmoInfo.getStringVal("DMPLibraryInput", user); // often null
-        //String dmpLibraryOutput = cmoInfo.getStringVal("DMPLibraryOutput", user); // LIBRARY_YIELD
 
         List<DataRecord> aliquots = sample.getDescendantsOfType("Sample", user);
         // 07260 Request the first sample are DNA Libraries like 07260_1 so can't just search descendants to find DNA libraries
