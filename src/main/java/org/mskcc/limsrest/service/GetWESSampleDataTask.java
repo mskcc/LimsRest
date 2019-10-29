@@ -304,7 +304,7 @@ public class GetWESSampleDataTask extends LimsTask {
         JSONArray oncotreeResponseData = null;
         String mainTumorType = "";
         try {
-            URL url = new URL("http://oncotree.mskcc.org/api/tumorTypes/search/name/" + cancerType.replace(" ", "%20") + "?exactMatch=false");
+            URL url = new URL("http://oncotree.mskcc.org/api/tumorTypes/search/name/" + cancerType.split("/")[0].replace(" ", "%20") + "?exactMatch=false");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
             BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
