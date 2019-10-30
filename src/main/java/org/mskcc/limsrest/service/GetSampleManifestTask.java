@@ -109,7 +109,7 @@ public class GetSampleManifestTask {
         List<DataRecord> sampleCMOInfoRecords = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "SampleId = '" + igoId +  "'", user);
         DataRecord cmoInfo;  // assign the dataRecord to query either sample table or samplecmoinforecords
         if (sampleCMOInfoRecords.size() == 0) {
-            log.info("No CMO info record found, using sample level fields.");
+            log.info("No CMO info record found, using sample level fields for IGO ID: " + igoId);
             cmoInfo = samples.get(0);
         } else {
             cmoInfo = sampleCMOInfoRecords.get(0);
