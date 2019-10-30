@@ -272,7 +272,7 @@ public class GetWESSampleDataTask extends LimsTask {
         StringBuffer response = new StringBuffer();
         JSONObject cvrResponseData = new JSONObject() ;
         try {
-            URL url = new URL("http://draco.mskcc.org:9890/get_cmo_metadata/" + dmpSampleId);
+            URL url = new URL("https://draco.mskcc.org:9898/get_cmo_metadata/" + dmpSampleId);
             log.info(url.toString());
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
