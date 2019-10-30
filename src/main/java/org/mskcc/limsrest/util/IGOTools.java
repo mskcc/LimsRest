@@ -12,4 +12,25 @@ public class IGOTools {
             return null;
         return igoId.replaceAll("_[0-9]+", "");
     }
+
+    public static boolean isValidIGOSampleId(String igoId) {
+        return igoId.matches("\\d\\d\\d\\d\\d(_[A-Z]*)?(_[0-9]*)+");
+    }
+
+    /**
+     * Returns the IGO ID with aliquots removed.
+     *
+     * @param igoId
+     * @return
+     */
+    public static String baseIgoSampleId(String igoId) {
+        if (igoId == null)
+            return null;
+        String request = requestFromIgoId(igoId);
+        int indexEnd = igoId.indexOf('_', request.length() + 1);
+        if (indexEnd == -1)
+            return igoId;
+        else
+            return igoId.substring(0, indexEnd);
+    }
 }

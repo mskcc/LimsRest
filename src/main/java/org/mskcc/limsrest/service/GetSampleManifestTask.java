@@ -11,6 +11,7 @@ import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
+import org.mskcc.limsrest.util.IGOTools;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -228,11 +229,10 @@ public class GetSampleManifestTask {
                         if (runsMap.containsKey(flowCellId)) { // already created, just add new lane num to list
                             runsMap.get(flowCellId).addLane(laneNum);
                         } else { // lookup fastq paths for this run, currently making extra queries for 06260_N_9 KIM & others
-                            String fastqName = origSampleName + "_IGO_" + sampleManifest.getIgoId();
-                            List<String> fastqs = FastQPathFinder.search(runId, fastqName, true, runPassedQC);
+                            List<String> fastqs = FastQPathFinder.search(runId, origSampleName, sampleManifest.getIgoId(), true, runPassedQC);
                             if (fastqs == null && aliquot.getLongVal("DateCreated", user) < 1455132132000L) { // try search again with pre-Jan 2016 naming convention, 06184_4
                                 log.info("Searching fastq database again for pre-Jan. 2016 sample.");
-                                fastqs = FastQPathFinder.search(runId, origSampleName, false, runPassedQC);
+                                fastqs = FastQPathFinder.search(runId, origSampleName, null, false, runPassedQC);
                             }
 
                             if (fastqs != null) {
@@ -365,9 +365,16 @@ public class GetSampleManifestTask {
     public static class FastQPathFinder {
         // TODO url to properties & make interface for FastQPathFinder
         public static List<String> search(String run,
-                                          String sample_IGO_igoid,
+                                          String sampleName, String igoId,
                                           boolean returnOnlyTwo,
                                           Set<String> runPassedQC) {
+
+            String sample_IGO_igoid;
+            if (igoId == null)
+                sample_IGO_igoid = sampleName;
+            else
+                sample_IGO_igoid = sampleName + "_IGO_" + IGOTools.baseIgoSampleId(igoId);
+
             String url = "http://delphi.mskcc.org:8080/ngs-stats/rundone/search/most/recent/fastqpath/" + run + "/" + sample_IGO_igoid;
             log.info("Finding fastqs in fastq DB for: " + url);
 

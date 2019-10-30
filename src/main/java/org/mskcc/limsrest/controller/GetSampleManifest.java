@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.GetSampleManifestTask;
 import org.mskcc.limsrest.service.SampleManifest;
+import org.mskcc.limsrest.util.IGOTools;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,7 +34,10 @@ public class GetSampleManifest {
         if (igoIds.length > 10) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Maximum 10 samples per query, you sent:" + igoIds.length);
         }
-        // TODO whiteList Whitelists.sampleMatches()
+        for (String igoId : igoIds) {
+            if (!IGOTools.isValidIGOSampleId(igoId))
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid IGO Sample ID: " + igoId);
+        }
 
         GetSampleManifestTask sampleManifest = new GetSampleManifestTask(igoIds, conn);
         GetSampleManifestTask.SampleManifestResult result = sampleManifest.execute();
