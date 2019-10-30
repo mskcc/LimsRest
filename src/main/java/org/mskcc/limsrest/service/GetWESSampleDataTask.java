@@ -51,7 +51,7 @@ public class GetWESSampleDataTask extends LimsTask {
             log.info(" Starting GetWesSample task using timestamp " + timestamp);
             List<DataRecord> dmpTrackerRecords = new ArrayList<>();
             try {
-                dmpTrackerRecords = dataRecordManager.queryDataRecords("DMPSampleTracker", "DateCreated > " + Long.parseLong(timestamp) + " AND i_SampleDownstreamApplication IN ('Whole Exome Sequencing')", user);
+                dmpTrackerRecords = dataRecordManager.queryDataRecords("DMPSampleTracker", "i_SampleTypeTumororNormal='Tumor' AND DateCreated > " + Long.parseLong(timestamp) + " AND i_SampleDownstreamApplication IN ('Whole Exome Sequencing')", user);
                 log.info("Num dmpTracker Records: " + dmpTrackerRecords.size());
             } catch (Throwable e) {
                 log.error(e.getMessage(), e);
@@ -65,7 +65,7 @@ public class GetWESSampleDataTask extends LimsTask {
                     List<DataRecord> sampleCmoInfoRecs = new ArrayList<>();
                     if(dmpTrackRec.getValue("i_StudySampleIdentifierInvesti", user) != null){
                         log.info("sample cmo info query start");
-                        sampleCmoInfoRecs = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "OtherSampleId = '" + dmpTrackRec.getStringVal("i_StudySampleIdentifierInvesti", user) + "'", user);
+                        sampleCmoInfoRecs = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "TumorOrNormal='Tumor' AND OtherSampleId = '" + dmpTrackRec.getStringVal("i_StudySampleIdentifierInvesti", user) + "'", user);
                         log.info("sample cmo info query end");
                     }
                     if (sampleCmoInfoRecs.size() > 0){
@@ -73,7 +73,7 @@ public class GetWESSampleDataTask extends LimsTask {
                         for (DataRecord cmoInfoRec : sampleCmoInfoRecs){
                             Object cmoInfoOtherSampleId = cmoInfoRec.getValue("OtherSampleId", user);
                             Object tumorOrNormal = cmoInfoRec.getValue("TumorOrNormal", user);
-                            if (!StringUtils.isBlank(cmoInfoOtherSampleId.toString().replace(" ", "")) && tumorOrNormal !=null && cmoInfoOtherSampleId.toString().equals(investigatorSampleId.toString())
+                            if (!StringUtils.isBlank(cmoInfoOtherSampleId.toString().replace(" ", "")) && tumorOrNormal !=null  && "tumor".equals(String.valueOf(tumorOrNormal).toLowerCase()) && cmoInfoOtherSampleId.toString().equals(investigatorSampleId.toString())
                                 && cmoInfoRec.getParentsOfType("Sample", user).size() > 0) {
                                 log.info("cmoInfo othersampleId: " + cmoInfoOtherSampleId.toString() + " " + cmoInfoRec.getParentsOfType("Sample", user).size());
                                 DataRecord sample = cmoInfoRec.getParentsOfType("Sample", user).get(0);
@@ -102,7 +102,7 @@ public class GetWESSampleDataTask extends LimsTask {
                                     String collectionYear = (String) getValueFromDataRecord(cmoInfoRec, "CollectionYear", "String");
                                     String dateIgoReceived = (String) getValueFromDataRecord(request, "ReceivedDate", "Date");
                                     String igoCompleteDate = (String) getValueFromDataRecord(request, "CompletedDate", "Date");
-                                    String applicationRequested = (String) getValueFromDataRecord(request, "i_SampleDownstreamApplication", "String");
+                                    String applicationRequested = (String) getValueFromDataRecord(request, "RequestName", "String");
                                     String baitsetUsed = getWesBaitsetType(sample);
                                     String sequencerType = getSequencerTypeUsed(sample);
                                     String projectTitle = (String) getValueFromDataRecord(dmpTrackRec, "i_Studyname", "String");
@@ -177,7 +177,7 @@ public class GetWESSampleDataTask extends LimsTask {
         String baitsetUsed = "";
         String sequencerType = "";
         String projectTitle = (String) getValueFromDataRecord(dmpTrackRec, "i_Studyname", "String");
-        String labHead = "";
+        String labHead = (String) getValueFromDataRecord(dmpTrackRec, "i_PrimaryInvestigator", "String");;
         String ccFund = (String) getValueFromDataRecord(dmpTrackRec, "i_FundCostCenter", "String");
         String scientificPi = " ";
         Boolean consentPartAStatus = getConsentStatus(consentAList, dmpPatientId);
@@ -300,14 +300,11 @@ public class GetWESSampleDataTask extends LimsTask {
     }
 
     private String getOncotreeType(String cancerType){
-        cancerType.replace(" ", "%20");
-        cancerType.replace("/", "%2F");
-        cancerType.replace("&", "%26");
         StringBuffer response = new StringBuffer();
         JSONArray oncotreeResponseData = null;
         String mainTumorType = "";
         try {
-            URL url = new URL("http://oncotree.mskcc.org/api/tumorTypes/search/name/" + cancerType.replace(" ", "%20") + "?exactMatch=false");
+            URL url = new URL("http://oncotree.mskcc.org/api/tumorTypes/search/name/" + cancerType.split("/")[0].replace(" ", "%20") + "?exactMatch=false");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
             BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
@@ -339,10 +336,10 @@ public class GetWESSampleDataTask extends LimsTask {
 
     private String getWesBaitsetType(DataRecord sample) throws NotFound, RemoteException {
         try {
-            if (sample.getChildrenOfType("KAPAAgilentCaptureProtocol2", user).length > 0) {
-                DataRecord kapaProtocol = sample.getChildrenOfType("KAPAAgilentCaptureProtocol2", user)[0];
-                if (kapaProtocol.getValue("AgilentCaptureBaitSet", user) !=null){
-                    return kapaProtocol.getStringVal("AgilentCaptureBaitSet", user);
+            if (sample.getChildrenOfType("SeqAnalysisSampleQC", user).length > 0) {
+                DataRecord seqAnalysisRecord = sample.getChildrenOfType("SeqAnalysisSampleQC", user)[0];
+                if (seqAnalysisRecord.getValue("BaitSet", user) !=null){
+                    return seqAnalysisRecord.getStringVal("BaitSet", user);
                 }
             }
             Stack <DataRecord> sampleStack = new Stack<>();
@@ -351,14 +348,14 @@ public class GetWESSampleDataTask extends LimsTask {
             }
             do{
                 DataRecord startSample = sampleStack.pop();
-                if (startSample.getChildrenOfType("KAPAAgilentCaptureProtocol2", user).length > 0){
-                    DataRecord kapaProtocol = startSample.getChildrenOfType("KAPAAgilentCaptureProtocol2", user)[0];
-                    if (kapaProtocol.getValue("AgilentCaptureBaitSet", user) !=null){
-                        return kapaProtocol.getStringVal("AgilentCaptureBaitSet", user);
+                if (startSample.getChildrenOfType("SeqAnalysisSampleQC", user).length > 0){
+                    DataRecord seqAnalysisRecord = startSample.getChildrenOfType("SeqAnalysisSampleQC", user)[0];
+                    if (seqAnalysisRecord.getValue("BaitSet", user) !=null){
+                        return seqAnalysisRecord.getStringVal("BaitSet", user);
                     }
                 }
-                else if(startSample.getChildrenOfType("KAPAAgilentCaptureProtocol2", user).length > 0){
-                    sampleStack.push(startSample.getChildrenOfType("KAPAAgilentCaptureProtocol2", user)[0]);
+                if(startSample.getChildrenOfType("Sample", user).length > 0){
+                    sampleStack.addAll(Arrays.asList(startSample.getChildrenOfType("Sample", user)));
                 }
             }while(!sampleStack.isEmpty());
         }catch (Exception e) {
