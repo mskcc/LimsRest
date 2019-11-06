@@ -59,8 +59,6 @@ public class GetRequestSamplesTask {
                 String sampleRecipe = sample.getStringVal(SampleModel.RECIPE, user);
                 if ("Fingerprinting".equals(sampleRecipe)) // for example 07951_S_50_1, skip for pipelines for now
                     continue;
-                else if (!GetSampleManifestTask.isPipelineRecipe(sampleRecipe))
-                    continue;
                 else
                     recipe = sampleRecipe;
                 String othersampleId = sample.getStringVal("OtherSampleId", user);

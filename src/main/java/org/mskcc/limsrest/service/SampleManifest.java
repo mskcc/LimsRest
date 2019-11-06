@@ -37,6 +37,8 @@ public class SampleManifest {
 
         public List<Run> runs = new ArrayList<>();
 
+        public Library() {}
+
         public Library(String libraryIgoId, Double libraryVolume, Double libraryConcentrationNgul) {
             this.libraryIgoId = libraryIgoId;
             this.libraryVolume = libraryVolume;
@@ -92,6 +94,9 @@ public class SampleManifest {
             this.flowCellId = flowCellId;
             this.readLength = readLength;
             this.runDate = runDate;
+        }
+
+        public Run(List<String> fastqs) {
             this.fastqs = fastqs;
         }
 

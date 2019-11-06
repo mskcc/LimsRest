@@ -14,6 +14,20 @@ public class ArchivedFastq {
 
     public ArchivedFastq() {}
 
+    @Override
+    public String toString() {
+        return "ArchivedFastq{" +
+                "run='" + run + '\'' +
+                ", runBaseDirectory='" + runBaseDirectory + '\'' +
+                ", project='" + project + '\'' +
+                ", sample='" + sample + '\'' +
+                ", fastq='" + fastq + '\'' +
+                ", fastqLastModified=" + fastqLastModified +
+                ", bytes=" + bytes +
+                ", lastUpdated=" + lastUpdated +
+                '}';
+    }
+
     public String getRun() {
         return run;
     }

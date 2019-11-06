@@ -102,7 +102,7 @@ public class GetSampleManifestTask {
         // fastq is named by sample level field not cmo record in case of a sample swap such as 07951_I_12
         String origSampleName = sample.getStringVal("OtherSampleId", user);
         // for example 07951_S_50_1 is Fingerprinting sample, skip for pipelines for now
-        if ("Fingerprinting".equals(recipe) || !isPipelineRecipe(recipe))
+        if ("Fingerprinting".equals(recipe))
             return new SampleManifest();
 
         // 06302_R_1 has no sampleCMOInfoRecord so use the same fields at the sample level
@@ -113,6 +113,26 @@ public class GetSampleManifestTask {
             cmoInfo = samples.get(0);
         } else {
             cmoInfo = sampleCMOInfoRecords.get(0);
+        }
+        SampleManifest sampleManifest = getSampleLevelFields(igoId, cmoInfo, user);
+
+        if (!isPipelineRecipe(recipe)) {
+            log.info("Returning fastqs only for IGO ID: " + igoId);
+            // query Picard QC records for bait set & "Failed" fastqs.
+            // (exclude failed less stringent than include only passed)
+            List<DataRecord> qcs = sample.getDescendantsOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
+            Set<String> runFailedQC = new HashSet<>();
+            String baitSet = null;
+            for (DataRecord dr : qcs) {
+                String qcResult = dr.getStringVal(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
+                if ("Failed".equals(qcResult)) {
+                    String run = dr.getStringVal(SeqAnalysisSampleQCModel.SEQUENCER_RUN_FOLDER, user);
+                    runFailedQC.add(run);
+                    log.info("Failed sample & run: " + run);
+                    baitSet = dr.getStringVal(SeqAnalysisSampleQCModel.BAIT_SET, user);
+                }
+            }
+            return fastqsOnlyManifest(sampleManifest, runFailedQC);
         }
 
         // query Picard QC records for bait set & "Passed" fastqs.
@@ -129,7 +149,6 @@ public class GetSampleManifestTask {
             }
         }
 
-        SampleManifest sampleManifest = getSampleLevelFields(igoId, cmoInfo, user);
         if (baitSet == null || baitSet.isEmpty())
             System.err.println("Missing bait set: " + igoId);
         sampleManifest.setBaitSet(baitSet);
@@ -257,6 +276,20 @@ public class GetSampleManifestTask {
         return sampleManifest;
     }
 
+    protected SampleManifest fastqsOnlyManifest(SampleManifest sampleManifest, Set<String> runFailedQC) {
+        List<String> fastqs = FastQPathFinder.search(sampleManifest.getIgoId(), runFailedQC);
+
+        SampleManifest.Run run = new SampleManifest.Run(fastqs);
+        SampleManifest.Library library = new SampleManifest.Library();
+        library.runs = new ArrayList<SampleManifest.Run>();
+        library.runs.add(run);
+        List<SampleManifest.Library> libraries = new ArrayList<>();
+        libraries.add(library);
+
+        sampleManifest.setLibraries(libraries);
+        return sampleManifest;
+    }
+
     private SampleManifest.Library getLibraryFields(User user, String libraryIgoId, DataRecord aliquot) throws IoError, RemoteException, NotFound {
         DataRecord[] libPrepProtocols = aliquot.getChildrenOfType("DNALibraryPrepProtocol3", user);
         Double libraryVolume = null;
@@ -363,12 +396,42 @@ public class GetSampleManifestTask {
      * Returns null if no fastqs found.
      */
     public static class FastQPathFinder {
+
+        public static List<String> search(String igoId, Set<String> runFailedQC) {
+            String url = "http://delphi.mskcc.org:8080/ngs-stats/rundone/fastqsbyigoid/" + igoId;
+            log.info("Finding fastqs for igoID: " + igoId);
+            try {
+                RestTemplate restTemplate = new RestTemplate();
+                ResponseEntity<List<ArchivedFastq>> response = restTemplate.exchange(
+                        url,
+                        HttpMethod.GET,
+                        null,
+                        new ParameterizedTypeReference<List<ArchivedFastq>>() {});
+                List<ArchivedFastq> fastqList = response.getBody();
+                if (fastqList == null) {
+                    log.info("NO fastqs found for Igo ID: " + igoId);
+                    return null;
+                }
+                log.info("Fastq files found: " + fastqList.size());
+                List<String> result = new ArrayList<>();
+                for (ArchivedFastq f : fastqList) {
+                    if (!runFailedQC.contains(f.runBaseDirectory))
+                        result.add(f.fastq);
+                    else
+                        log.info("Ignoring failed fastq: " + f);
+                }
+                return result;
+            } catch (Exception e) {
+                log.error("FASTQ Search error:" + e.getMessage());
+                return null;
+            }
+        }
+
         // TODO url to properties & make interface for FastQPathFinder
         public static List<String> search(String run,
                                           String sampleName, String igoId,
                                           boolean returnOnlyTwo,
                                           Set<String> runPassedQC) {
-
             String sample_IGO_igoid;
             if (igoId == null)
                 sample_IGO_igoid = sampleName;
