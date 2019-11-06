@@ -129,9 +129,10 @@ public class GetSampleManifestTask {
                     String run = dr.getStringVal(SeqAnalysisSampleQCModel.SEQUENCER_RUN_FOLDER, user);
                     runFailedQC.add(run);
                     log.info("Failed sample & run: " + run);
-                    baitSet = dr.getStringVal(SeqAnalysisSampleQCModel.BAIT_SET, user);
                 }
+                baitSet = dr.getStringVal(SeqAnalysisSampleQCModel.BAIT_SET, user);
             }
+            sampleManifest.setBaitSet(baitSet);
             return fastqsOnlyManifest(sampleManifest, runFailedQC);
         }
 
