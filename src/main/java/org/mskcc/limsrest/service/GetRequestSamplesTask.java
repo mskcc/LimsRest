@@ -82,11 +82,11 @@ public class GetRequestSamplesTask {
             rsl.setLabHeadName(requestDataRecord.getStringVal("LaboratoryHead", user));
             rsl.setLabHeadEmail(requestDataRecord.getStringVal("LabHeadEmail", user));
             rsl.setProjectManagerName(requestDataRecord.getStringVal("ProjectManager", user));
-
             rsl.setInvestigatorName(requestDataRecord.getStringVal("Investigator", user));
             rsl.setInvestigatorEmail(requestDataRecord.getStringVal("Investigatoremail", user));
             rsl.setDataAnalystName(requestDataRecord.getStringVal("DataAnalyst", user));
             rsl.setDataAnalystEmail(requestDataRecord.getStringVal("DataAnalystEmail", user));
+            rsl.setOtherContactEmails(requestDataRecord.getStringVal("MailTo", user));
 
             return rsl;
         } catch (Throwable e) {
@@ -161,6 +161,7 @@ public class GetRequestSamplesTask {
         public String labHeadName, labHeadEmail;
         public String investigatorName, investigatorEmail;
         public String dataAnalystName, dataAnalystEmail;
+        public String otherContactEmails;
 
         public List<RequestSample> samples;
 
@@ -254,6 +255,14 @@ public class GetRequestSamplesTask {
 
         public void setLabHeadEmail(String labHeadEmail) {
             this.labHeadEmail = labHeadEmail;
+        }
+
+        public String getOtherContactEmails() {
+            return otherContactEmails;
+        }
+
+        public void setOtherContactEmails(String otherContactEmails) {
+            this.otherContactEmails = otherContactEmails;
         }
     }
 
