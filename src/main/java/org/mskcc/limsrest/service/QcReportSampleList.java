@@ -1,8 +1,7 @@
 package org.mskcc.limsrest.service;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,6 +12,8 @@ public class QcReportSampleList {
     List<ReportSample> dnaReportSamples;
     List<ReportSample> rnaReportSamples;
     List<ReportSample> libraryReportSamples;
+    List<PathologySample> pathologyReportSamples;
+    List<HashMap<String, Object>> attachments;
 
     public QcReportSampleList() {
     }
@@ -23,6 +24,8 @@ public class QcReportSampleList {
         dnaReportSamples = null;
         rnaReportSamples = null;
         libraryReportSamples = null;
+        pathologyReportSamples = null;
+        attachments = null;
     }
 
     public QcReportSampleList(String requestId) {
@@ -69,10 +72,26 @@ public class QcReportSampleList {
         this.libraryReportSamples = libraryReportSamples;
     }
 
+    public List<PathologySample> getPathologyReportSamples() {
+        return pathologyReportSamples;
+    }
+
+    public void setPathologyReportSamples(List<PathologySample> pathologyReportSamples) {
+        this.pathologyReportSamples = pathologyReportSamples;
+    }
+
+    public List<HashMap<String, Object>> getAttachments() {
+        return attachments;
+    }
+
+    public void setAttachments(List<HashMap<String, Object>> attachments) {
+        this.attachments = attachments;
+    }
 
     public static class ReportSample {
 
         public String sampleId;
+        public Long recordId;
         public String otherSampleId;
         public String altId;
         public String userSampleID;
@@ -80,6 +99,7 @@ public class QcReportSampleList {
         public String preservation;
         public String recipe;
         public String igoQcRecommendation;
+        public String investigatorDecision;
         public String comments;
         public Long dateCreated;
         public Double concentration;
@@ -91,6 +111,7 @@ public class QcReportSampleList {
 
         public ReportSample(Map<String, Object> sampleFields) {
             this.sampleId = (String) sampleFields.get("SampleId");
+            this.recordId = (Long) sampleFields.get("RecordId");
             this.otherSampleId = (String) sampleFields.get("OtherSampleId");
             this.altId = (String) sampleFields.get("AltId");
             this.userSampleID = (String) sampleFields.get("UserSampleID");
@@ -101,6 +122,7 @@ public class QcReportSampleList {
             this.preservation = (String) sampleFields.get("Preservation");
             this.recipe = (String) sampleFields.get("Recipe");
             this.igoQcRecommendation = (String) sampleFields.get("IgoQcRecommendation");
+            this.investigatorDecision = (String) sampleFields.get("InvestigatorDecision");
             this.comments = (String) sampleFields.get("Comments");
             this.dateCreated = (Long) sampleFields.get("DateCreated");
         }
@@ -144,4 +166,26 @@ public class QcReportSampleList {
 
         }
     }
+
+    public static class PathologySample {
+
+        public String sampleId;
+        public Long recordId;
+        public String otherSampleId;
+        public String sampleStatus;
+
+        public PathologySample() {
+        }
+
+        public PathologySample(Map<String, Object> sampleFields) {
+
+            this.sampleId = (String) sampleFields.get("SampleId");
+            this.recordId = (Long) sampleFields.get("RecordId");
+            this.otherSampleId = (String) sampleFields.get("OtherSampleId");
+            this.sampleStatus = (String) sampleFields.get("SampleFinalQCStatus");
+        }
+
+
+    }
+
 }

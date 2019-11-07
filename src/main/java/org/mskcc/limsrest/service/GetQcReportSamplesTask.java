@@ -7,7 +7,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 
-
 import java.util.*;
 
 
@@ -18,7 +17,7 @@ import java.util.*;
  */
 public class GetQcReportSamplesTask extends LimsTask {
     private static Log log = LogFactory.getLog(GetQcReportSamplesTask.class);
-    private List<Object> otherSampleIds;
+    public List<Object> otherSampleIds;
     protected String requestId;
 
     public GetQcReportSamplesTask() {
@@ -34,17 +33,30 @@ public class GetQcReportSamplesTask extends LimsTask {
         this.requestId = requestId;
     }
 
+
     @PreAuthorize("hasRole('READ')")
     @Override
     public Object execute(VeloxConnection conn) {
 
         QcReportSampleList rsl = new QcReportSampleList(requestId, otherSampleIds);
-        log.info("Gathering Report samples for " + otherSampleIds.size() + " samples.");
+
 
         try {
+            log.info("Gathering Report samples for " + otherSampleIds.size() + " samples.");
             rsl.setDnaReportSamples(getQcSamples("QcReportDna"));
             rsl.setRnaReportSamples(getQcSamples("QcReportRna"));
             rsl.setLibraryReportSamples(getQcSamples("QcReportLibrary"));
+            rsl.setPathologyReportSamples(getPathologySamples("QcDatum"));
+
+
+            log.info("Gathering Attachments for " + requestId + ".");
+            List<HashMap<String, Object>> attachments = new ArrayList<>();
+            attachments.addAll(getAttachments(requestId, "DNA"));
+            attachments.addAll(getAttachments(requestId, "RNA"));
+            attachments.addAll(getAttachments(requestId, "Library"));
+            attachments.addAll(getAttachments(requestId, "Pool"));
+
+            rsl.setAttachments(attachments);
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
 
@@ -59,7 +71,7 @@ public class GetQcReportSamplesTask extends LimsTask {
      * @return List of ReportSamples
      * @throws Exception
      */
-    private List<ReportSample> getQcSamples(String dataType) throws Exception {
+    protected List<ReportSample> getQcSamples(String dataType) throws Exception {
         // check whether request exists in QC Report table, speeds up by ~30 %
         List<DataRecord> request = dataRecordManager.queryDataRecords(dataType, "SampleId LIKE '" + requestId + "%'", this.user);
         List<ReportSample> reportSamples = new ArrayList<>();
@@ -105,5 +117,58 @@ public class GetQcReportSamplesTask extends LimsTask {
 
     }
 
+    protected List<PathologySample> getPathologySamples(String dataType) throws Exception {
+        // check whether request exists in QC Report table, speeds up by ~30 %
+        List<DataRecord> request = dataRecordManager.queryDataRecords(dataType, "SampleId LIKE '" + requestId + "%'", this.user);
+        List<PathologySample> pathologySamples = new ArrayList<>();
 
+        if (request.isEmpty()) {
+            log.info("Request not found in " + dataType + ".");
+            return pathologySamples;
+        } else {
+            PathologySample pathologySample;
+
+            List<DataRecord> sampleList = dataRecordManager.queryDataRecords(dataType, "OtherSampleId", otherSampleIds, this.user);
+
+            for (DataRecord sampleRecord : sampleList) {
+                try {
+                    Map<String, Object> sampleFields = sampleRecord.getFields(user);
+//                  only include samples where SampleId contains RequestId
+                    if (sampleFields.get("SampleId").toString().contains(requestId) && sampleFields.get("SampleFinalQCStatus").toString().equals("Failed") && sampleFields.get("DatumType").toString().equals("Pathology Review")) {
+                        pathologySample = new PathologySample(sampleFields);
+                        pathologySamples.add(pathologySample);
+                    }
+
+
+                } catch (Throwable e) {
+                    log.error(e.getMessage(), e);
+                    return null;
+                }
+            }
+            log.info(pathologySamples.size() + " Samples found in " + dataType + ".");
+            return pathologySamples;
+        }
+
+    }
+
+    protected List<HashMap<String, Object>> getAttachments(String requestId, String type) {
+        List<HashMap<String, Object>> attachments = new ArrayList<>();
+        try {
+
+            List<DataRecord> attachmentRecords = dataRecordManager.queryDataRecords("Attachment", "FilePath = '" + requestId + "_" + type + "_QC.pdf'", this.user);
+
+            for (DataRecord record : attachmentRecords) {
+                HashMap<String, Object> attachmentInfo = new HashMap<>();
+                attachmentInfo.put("recordId", record.getDataField("RecordId", user));
+                attachmentInfo.put("fileName", record.getDataField("FilePath", user));
+                attachments.add(attachmentInfo);
+            }
+
+        } catch (Throwable e) {
+            log.error(e.getMessage(), e);
+            return null;
+        }
+        return attachments;
+
+    }
 }
