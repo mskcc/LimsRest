@@ -209,4 +209,10 @@ public class PromoteBankedTest {
                 CmoSampleInfo.TUMOR_TYPE, CmoSampleInfo.USER_SAMPLE_ID
         );
     }
+
+    @Test
+    public void selectLarger() {
+        double result = PromoteBanked.selectLarger("30-40 million");
+        assertEquals(40.0, result, 0.001);
+    }
 }
