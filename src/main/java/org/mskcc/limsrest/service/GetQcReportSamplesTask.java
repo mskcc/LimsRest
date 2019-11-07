@@ -155,7 +155,7 @@ public class GetQcReportSamplesTask extends LimsTask {
         List<HashMap<String, Object>> attachments = new ArrayList<>();
         try {
 
-            List<DataRecord> attachmentRecords = dataRecordManager.queryDataRecords("Attachment", "FilePath = '" + requestId + "_" + type + "_QC.pdf'", this.user);
+            List<DataRecord> attachmentRecords = dataRecordManager.queryDataRecords("Attachment", "FilePath REGEXP '^" + requestId + "_" + type + "_QC_*[0-9]*.pdf'", this.user);
 
             for (DataRecord record : attachmentRecords) {
                 HashMap<String, Object> attachmentInfo = new HashMap<>();
@@ -168,6 +168,7 @@ public class GetQcReportSamplesTask extends LimsTask {
             log.error(e.getMessage(), e);
             return null;
         }
+        log.info(attachments.size() + " Attachments found for " + requestId);
         return attachments;
 
     }
