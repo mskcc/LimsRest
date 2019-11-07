@@ -168,7 +168,7 @@ public class GetQcReportSamplesTask extends LimsTask {
             log.error(e.getMessage(), e);
             return null;
         }
-        log.info(attachments.size() + " Attachments found for " + requestId);
+        log.info(attachments.size() + " Attachments found for " + requestId + ", " + type);
         return attachments;
 
     }
