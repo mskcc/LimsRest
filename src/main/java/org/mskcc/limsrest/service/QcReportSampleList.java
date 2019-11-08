@@ -105,6 +105,7 @@ public class QcReportSampleList {
         public Double concentration;
         public Double volume;
         public Double totalMass;
+        public Boolean hideFromSampleQC;
 
         public ReportSample() {
         }
@@ -125,6 +126,7 @@ public class QcReportSampleList {
             this.investigatorDecision = (String) sampleFields.get("InvestigatorDecision");
             this.comments = (String) sampleFields.get("Comments");
             this.dateCreated = (Long) sampleFields.get("DateCreated");
+            this.hideFromSampleQC = (Boolean) sampleFields.get("HideFromSampleQC");
         }
 
         public static class RnaReportSample extends ReportSample {
