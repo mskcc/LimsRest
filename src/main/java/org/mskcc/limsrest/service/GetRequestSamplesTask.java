@@ -2,9 +2,17 @@ package org.mskcc.limsrest.service;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.sloan.cmo.recmodels.SampleModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.ConnectionLIMS;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -13,28 +21,31 @@ import java.util.List;
 /**
  *
  */
-public class GetRequestSamplesTask extends LimsTask {
+public class GetRequestSamplesTask {
     private static Log log = LogFactory.getLog(GetRequestSamplesTask.class);
 
-    protected String requestId;
-    protected boolean tumorOnly;
+    private ConnectionLIMS conn;
+    private String requestId;
 
-    public void init(String requestId, boolean tumorOnly) {
+    public GetRequestSamplesTask(String requestId, ConnectionLIMS conn) {
         this.requestId = requestId;
-        this.tumorOnly = tumorOnly;
+        this.conn = conn;
     }
 
-    @Override
-    public Object execute(VeloxConnection conn) {
+    public GetRequestSamplesTask.RequestSampleList execute() {
         try {
-            List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + this.requestId + "'", this.user);
+            VeloxConnection vConn = conn.getConnection();
+            User user = vConn.getUser();
+            DataRecordManager drm = vConn.getDataRecordManager();
+
+            List<DataRecord> requestList = drm.queryDataRecords("Request", "RequestId = '" + this.requestId + "'", user);
             if (requestList.size() != 1) {  // error: request ID not found or more than one found
                 log.error("Request not found:" + requestId);
                 return new RequestSampleList("NOT_FOUND");
             }
 
             // get set of all samples in that request that are "IGO Complete"
-            HashSet<String> samplesIGOComplete = getSamplesIGOComplete(requestId);
+            HashSet<String> samplesIGOComplete = getSamplesIGOComplete(requestId, user, drm);
             log.info("Samples IGO Complete: " + samplesIGOComplete.size());
 
             DataRecord requestDataRecord = requestList.get(0);
@@ -42,32 +53,41 @@ public class GetRequestSamplesTask extends LimsTask {
             log.info("Child samples found: " + samples.length);
 
             List<RequestSample> sampleList = new ArrayList<>();
+            String recipe = "";
             for (DataRecord sample : samples) {
                 String igoId = sample.getStringVal("SampleId", user);
+                String sampleRecipe = sample.getStringVal(SampleModel.RECIPE, user);
+                if ("Fingerprinting".equals(sampleRecipe)) // for example 07951_S_50_1, skip for pipelines for now
+                    continue;
+                else
+                    recipe = sampleRecipe;
                 String othersampleId = sample.getStringVal("OtherSampleId", user);
                 boolean igoComplete = samplesIGOComplete.contains(othersampleId);
-                boolean tumor = "Tumor".equals(sample.getStringVal("TumorOrNormal", user));
+                // same othersampleId as other samples but these failed, could check exemplarSampleStatus too
+                // remove if qc status lookup done by IGO ID
+                if ("07078_E_1".equals(igoId) || "07078_E_2".equals(igoId) || "07078_E_5".equals(igoId) )
+                    igoComplete = false;
 
-                if (tumorOnly && tumor) {
-                    RequestSample rs = new RequestSample(othersampleId, igoId, igoComplete);
-                    sampleList.add(rs);
-                } else if (!tumorOnly){
-                    RequestSample rs = new RequestSample(othersampleId, igoId, igoComplete);
-                    sampleList.add(rs);
-                }
+                RequestSample rs = new RequestSample(othersampleId, igoId, igoComplete);
+                sampleList.add(rs);
             }
-
             RequestSampleList rsl = new RequestSampleList(requestId, sampleList);
+
+            if (isIMPACTOrHEMEPACTBeforeIMPACT505(recipe)) {
+                log.info("Adding pooled normals for recipe: " + recipe);
+                rsl.pooledNormals = findPooledNormals(requestId);
+            }
+            rsl.setRecipe(recipe);
             rsl.setPiEmail(requestDataRecord.getStringVal("PIemail", user));
             rsl.setLabHeadName(requestDataRecord.getStringVal("LaboratoryHead", user));
             rsl.setLabHeadEmail(requestDataRecord.getStringVal("LabHeadEmail", user));
             rsl.setProjectManagerName(requestDataRecord.getStringVal("ProjectManager", user));
-
             rsl.setInvestigatorName(requestDataRecord.getStringVal("Investigator", user));
             rsl.setInvestigatorEmail(requestDataRecord.getStringVal("Investigatoremail", user));
             rsl.setDataAnalystName(requestDataRecord.getStringVal("DataAnalyst", user));
             rsl.setDataAnalystEmail(requestDataRecord.getStringVal("DataAnalystEmail", user));
-            log.info("Result size: " + sampleList.size() + " tumors only:" + tumorOnly);
+            rsl.setOtherContactEmails(requestDataRecord.getStringVal("MailTo", user));
+
             return rsl;
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -76,14 +96,28 @@ public class GetRequestSamplesTask extends LimsTask {
     }
 
     /**
+     * Pooled normals were added to IMPACT requests up to IMPACT505 and used by the pipeline for
+     * sample pairing when the patient's normal sample was not present.
+     * @param recipe
+     * @return
+     */
+    protected static boolean isIMPACTOrHEMEPACTBeforeIMPACT505(String recipe) {
+        if (recipe.isEmpty())
+            return false;
+        if ("IMPACT341,IMPACT410,IMPACT410+,IMPACT468,HemePACT_v3,HemePACT_v4".contains(recipe))
+            return true;
+        return false;
+    }
+
+    /**
      * Returns set of all samples IGO Complete by seqanalysissampleqc.othersampleid
      * @param requestId
      * @return
      * @throws Exception
      */
-    protected HashSet<String> getSamplesIGOComplete(String requestId) throws Exception {
+    protected HashSet<String> getSamplesIGOComplete(String requestId, User user, DataRecordManager drm) throws Exception {
         String whereClause = "PassedQC = 1 AND SeqQCStatus = 'Passed' AND Request = '" + requestId + "'";
-        List<DataRecord> listIGOComplete = dataRecordManager.queryDataRecords("SeqAnalysisSampleQC", whereClause, user);
+        List<DataRecord> listIGOComplete = drm.queryDataRecords("SeqAnalysisSampleQC", whereClause, user);
         HashSet<String> samplesIGOComplete = new HashSet<>();
         for (DataRecord r : listIGOComplete) {
             samplesIGOComplete.add(r.getStringVal("OtherSampleId", user));
@@ -91,24 +125,59 @@ public class GetRequestSamplesTask extends LimsTask {
         return samplesIGOComplete;
     }
 
+    /*
+    Finds all pooled normals included on any run for a given request.
+     */
+    public static List<String> findPooledNormals(String request) {
+        // TODO
+        String url = "http://delphi.mskcc.org:8080/ngs-stats/rundone/getpoolednormals/" + request;
+        log.info("Finding pooled normal fastqs in fastq DB for: " + url);
+
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            ResponseEntity<List<ArchivedFastq>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<List<ArchivedFastq>>() {
+                    });
+            List<ArchivedFastq> fastqList = response.getBody();
+            List<String> fastqPaths = new ArrayList<>();
+            for (ArchivedFastq fastq : fastqList) {
+                fastqPaths.add(fastq.getFastq());
+            }
+            return fastqPaths;
+        } catch (Exception e) {
+            log.error("FASTQ Search error:" + e.getMessage());
+            return null;
+        }
+    }
 
     public static class RequestSampleList {
         public String requestId;
+        public String recipe;
         public String projectManagerName;
         public String piEmail;
         public String labHeadName, labHeadEmail;
         public String investigatorName, investigatorEmail;
         public String dataAnalystName, dataAnalystEmail;
+        public String otherContactEmails;
 
         public List<RequestSample> samples;
 
+        public List<String> pooledNormals;
+
         public RequestSampleList(){}
+
         public RequestSampleList(String requestId){ this.requestId = requestId; }
 
         public RequestSampleList(String requestId, List<RequestSample> samples) {
             this.requestId = requestId;
             this.samples = samples;
         }
+
+        public String getRecipe() { return recipe; }
+        public void setRecipe(String recipe) { this.recipe = recipe; }
 
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         public String getRequestId() {
@@ -186,6 +255,14 @@ public class GetRequestSamplesTask extends LimsTask {
 
         public void setLabHeadEmail(String labHeadEmail) {
             this.labHeadEmail = labHeadEmail;
+        }
+
+        public String getOtherContactEmails() {
+            return otherContactEmails;
+        }
+
+        public void setOtherContactEmails(String otherContactEmails) {
+            this.otherContactEmails = otherContactEmails;
         }
     }
 

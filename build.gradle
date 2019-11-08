@@ -67,7 +67,7 @@ dependencies {
 
     compile "io.springfox:springfox-swagger-ui:2.9.2"
     compile "io.springfox:springfox-swagger2:2.9.2"
-
+    compile group: 'org.json', name: 'json', version: '20180130'
     compile "org.springframework.boot:spring-boot-starter-security:2.1.6.RELEASE"
     compile "org.springframework.boot:spring-boot-starter-tomcat:2.1.6.RELEASE"
     compile "org.springframework.boot:spring-boot-starter-web:2.1.6.RELEASE"
@@ -78,6 +78,7 @@ dependencies {
     compile ('javax.servlet:jstl:1.2')
 
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.9'
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.0'
 
     compile 'com.velox.internalproducts:veloxapi:10.6.1-b777'
     compile 'com.velox.sloan.cmo:sloancmo:2.21.1-LIMS10.6.1_b84'
