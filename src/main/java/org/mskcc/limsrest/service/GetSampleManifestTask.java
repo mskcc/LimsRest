@@ -98,23 +98,15 @@ public class GetSampleManifestTask {
             return new SampleManifest();
         }
         DataRecord sample = samples.get(0);
-        String recipe = sample.getStringVal(SampleModel.RECIPE, user);
         // fastq is named by sample level field not cmo record in case of a sample swap such as 07951_I_12
         String origSampleName = sample.getStringVal("OtherSampleId", user);
+
+        String recipe = sample.getStringVal(SampleModel.RECIPE, user);
         // for example 07951_S_50_1 is Fingerprinting sample, skip for pipelines for now
         if ("Fingerprinting".equals(recipe))
             return new SampleManifest();
 
-        // 06302_R_1 has no sampleCMOInfoRecord so use the same fields at the sample level
-        List<DataRecord> sampleCMOInfoRecords = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "SampleId = '" + igoId +  "'", user);
-        DataRecord cmoInfo;  // assign the dataRecord to query either sample table or samplecmoinforecords
-        if (sampleCMOInfoRecords.size() == 0) {
-            log.info("No CMO info record found, using sample level fields for IGO ID: " + igoId);
-            cmoInfo = samples.get(0);
-        } else {
-            cmoInfo = sampleCMOInfoRecords.get(0);
-        }
-        SampleManifest sampleManifest = getSampleLevelFields(igoId, cmoInfo, user);
+        SampleManifest sampleManifest = getSampleLevelFields(igoId, samples, sample, dataRecordManager, user);
 
         if (!isPipelineRecipe(recipe)) {
             log.info("Returning fastqs only for IGO ID: " + igoId);
@@ -275,6 +267,34 @@ public class GetSampleManifestTask {
             }
         }
         return sampleManifest;
+    }
+
+    protected SampleManifest getSampleLevelFields(String igoId, List<DataRecord> samples, DataRecord sample,
+                                                  DataRecordManager dataRecordManager, User user)
+            throws NotFound, RemoteException, IoError {
+        // try to find the CMO Sample Level record if it exists, if not use the sample level fields.
+
+        // for example sample 10049_B_1->10049_1_1 source LIMS sample ID
+        String sourceSampleID = sample.getStringVal("SourceLimsId", user);
+        String cmoInfoIgoId = getCMOSampleIGOID(sourceSampleID, igoId);
+        // 06302_R_1 has no sampleCMOInfoRecord so use the same fields at the sample level
+        log.info("Searching for CMO info record by IGO ID:" + cmoInfoIgoId);
+        List<DataRecord> sampleCMOInfoRecords = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "SampleId = '" + cmoInfoIgoId +  "'", user);
+        DataRecord cmoInfo;  // assign the dataRecord to query either sample table or samplecmoinforecords
+        if (sampleCMOInfoRecords.size() == 0) {
+            log.info("No CMO info record found, using sample level fields for IGO ID: " + igoId);
+            cmoInfo = samples.get(0);
+        } else {
+            cmoInfo = sampleCMOInfoRecords.get(0);
+        }
+        return getSampleLevelFields(igoId, cmoInfo, user);
+    }
+
+    private String getCMOSampleIGOID(String origSampleName, String igoId) {
+        if (origSampleName == null || origSampleName.isEmpty())
+            return igoId;
+        else
+            return IGOTools.baseIgoSampleId(origSampleName);
     }
 
     protected SampleManifest fastqsOnlyManifest(SampleManifest sampleManifest, Set<String> runFailedQC) {
