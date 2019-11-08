@@ -55,6 +55,7 @@ public class GetQcReportSamplesTask extends LimsTask {
             attachments.addAll(getAttachments(requestId, "RNA"));
             attachments.addAll(getAttachments(requestId, "Library"));
             attachments.addAll(getAttachments(requestId, "Pool"));
+            attachments.addAll(getAttachments(requestId, "cDNA"));
 
             rsl.setAttachments(attachments);
         } catch (Throwable e) {
