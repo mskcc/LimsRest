@@ -290,11 +290,12 @@ public class GetSampleManifestTask {
         return getSampleLevelFields(igoId, cmoInfo, user);
     }
 
-    private String getCMOSampleIGOID(String origSampleName, String igoId) {
-        if (origSampleName == null || origSampleName.isEmpty())
+    // source IGO ID field often has '0', blank or null
+    private String getCMOSampleIGOID(String sourceSampleId, String igoId) {
+        if (sourceSampleId == null || sourceSampleId.isEmpty() || sourceSampleId.equals("0"))
             return igoId;
         else
-            return IGOTools.baseIgoSampleId(origSampleName);
+            return IGOTools.baseIgoSampleId(sourceSampleId);
     }
 
     protected SampleManifest fastqsOnlyManifest(SampleManifest sampleManifest, Set<String> runFailedQC) {
