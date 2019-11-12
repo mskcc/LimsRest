@@ -274,9 +274,7 @@ public class GetSampleManifestTask {
             throws NotFound, RemoteException, IoError {
         // try to find the CMO Sample Level record if it exists, if not use the sample level fields.
 
-        // for example sample 10049_B_1->10049_1_1 source LIMS sample ID
-        String sourceSampleID = sample.getStringVal("SourceLimsId", user);
-        String cmoInfoIgoId = getCMOSampleIGOID(sourceSampleID, igoId);
+        String cmoInfoIgoId = getCMOSampleIGOID(sample, igoId, dataRecordManager, user);
         // 06302_R_1 has no sampleCMOInfoRecord so use the same fields at the sample level
         log.info("Searching for CMO info record by IGO ID:" + cmoInfoIgoId);
         List<DataRecord> sampleCMOInfoRecords = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "SampleId = '" + cmoInfoIgoId +  "'", user);
@@ -291,11 +289,19 @@ public class GetSampleManifestTask {
     }
 
     // source IGO ID field often has '0', blank or null
-    private String getCMOSampleIGOID(String sourceSampleId, String igoId) {
-        if (sourceSampleId == null || sourceSampleId.isEmpty() || sourceSampleId.equals("0"))
+    private String getCMOSampleIGOID(DataRecord sample, String igoId, DataRecordManager dataRecordManager, User user)
+            throws NotFound, RemoteException, IoError {
+        // for example sample: 10049_B_1->10049_1_1 source LIMS sample ID
+        // Also possible parent's parent has the CMO Info record: 07724_D_8->07724_B_8->07724_8
+        // or no CMO level record exists: 06230_C_5
+        String sourceSampleID = sample.getStringVal("SourceLimsId", user);
+        if (sourceSampleID == null || sourceSampleID.isEmpty() || sourceSampleID.equals("0"))
             return igoId;
-        else
-            return IGOTools.baseIgoSampleId(sourceSampleId);
+        else {
+            String baseIGOID = IGOTools.baseIgoSampleId(sourceSampleID);
+            List<DataRecord> samples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + baseIGOID + "'", user);
+            return getCMOSampleIGOID(samples.get(0), baseIGOID, dataRecordManager, user);
+        }
     }
 
     protected SampleManifest fastqsOnlyManifest(SampleManifest sampleManifest, Set<String> runFailedQC) {
@@ -369,6 +375,8 @@ public class GetSampleManifestTask {
             // VERY IMPORTANT, if no DNA LIBRARY NO RESULT generated
             if ("DNA Library".equals(sampleType)) {
                 String libraryIgoId = aliquot.getStringVal("SampleId", user);
+                if (libraryIgoId.startsWith("Pool"))
+                    continue;
 
                 String sampleStatus = aliquot.getStringVal("ExemplarSampleStatus", user);
                 // 05684_M_2 has a returned to user library, ignore it.
