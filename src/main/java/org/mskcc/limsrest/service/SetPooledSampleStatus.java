@@ -15,8 +15,8 @@ import static org.mskcc.util.VeloxConstants.SEQ_ANALYSIS_SAMPLE_QC;
 public class SetPooledSampleStatus extends LimsTask {
     private static Log log = LogFactory.getLog(ToggleSampleQcStatus.class);
 
-    long recordId;
-    String status;
+    private long recordId;
+    private String status;
 
     private QcStatusAwareProcessAssigner qcStatusAwareProcessAssigner = new QcStatusAwareProcessAssigner();
 
