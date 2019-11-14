@@ -79,7 +79,6 @@ public class ToggleSampleQcStatus extends LimsTask {
                 dataRecordManager.storeAndCommit("SeqAnalysisSampleQC updated to " + status, user);
                 log.info("SeqAnalysisSampleQC updated to:" + status + " from:" + currentStatusLIMS);
             } else {
-                // TODO - WHY IS THIS HERE? It doesn't modify the QCStatus page
                 List<DataRecord> request = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
                 if (request.size() != 1) {
                     return "Invalid Request Id";
