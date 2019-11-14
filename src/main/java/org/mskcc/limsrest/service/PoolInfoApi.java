@@ -24,7 +24,7 @@ public class PoolInfoApi {
     private final static Log log = LogFactory.getLog(SetQcStatus.class);
     private final ConnectionPoolLIMS conn;
 
-    public PoolInfoApi(ConnectionPoolLIMS conn){
+    public PoolInfoApi(ConnectionPoolLIMS conn) {
         this.conn = conn;
     }
 
@@ -33,7 +33,7 @@ public class PoolInfoApi {
      * the LIMS tree hierarchy from the input record to find the right sample
      *
      * @param recordId, SeqAnalysisSampleQC record Id
-     * @param status - Status to set pooled sample to
+     * @param status    - Status to set pooled sample to
      * @return ResponseEntity<String>
      */
     @RequestMapping("/setPooledSampleStatus")
@@ -49,7 +49,7 @@ public class PoolInfoApi {
             try {
                 Boolean success = (Boolean) result.get();
                 String response;
-                if(success){
+                if (success) {
                     response = String.format("Set status for record %s to '%s'", recordId, mappedStatus);
                 } else {
                     response = String.format("Failed to set status for record %s to '%s'", recordId, mappedStatus);
