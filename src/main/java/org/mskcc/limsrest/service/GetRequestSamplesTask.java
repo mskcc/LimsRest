@@ -5,6 +5,7 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.sloan.cmo.recmodels.RequestModel;
 import com.velox.sloan.cmo.recmodels.SampleModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -77,6 +78,10 @@ public class GetRequestSamplesTask {
                 log.info("Adding pooled normals for recipe: " + recipe);
                 rsl.pooledNormals = findPooledNormals(requestId);
             }
+            String requestName = requestDataRecord.getStringVal(RequestModel.REQUEST_NAME, user);
+            if (requestName != null && requestName.toUpperCase().contains("RNASEQ")) {
+                setRNASeqStrandedness(rsl, requestName);
+            }
             rsl.setRecipe(recipe);
             rsl.setPiEmail(requestDataRecord.getStringVal("PIemail", user));
             rsl.setLabHeadName(requestDataRecord.getStringVal("LaboratoryHead", user));
@@ -93,6 +98,20 @@ public class GetRequestSamplesTask {
             log.error(e.getMessage(), e);
             return null;
         }
+    }
+
+    protected void setRNASeqStrandedness(RequestSampleList rsl, String requestName) {
+        // this classification by requestname will not be correct for all historical requests
+        // customer has stated they already have all historical values and only need Nov. 2019-on to work
+
+        // RNASeq-SMARTerAmp is non-stranded
+        // RNASeq-TruSeqPolyA & RNASeq-TruSeqRiboDeplete is stranded-reverse
+        // ignore RNAExtraction & RNA-QC request names
+        String requestNameUpper = requestName.toUpperCase();
+        if (requestNameUpper.contains("SMARTER"))
+            rsl.setStrand("non-stranded");
+        else // as of 2019 IGO has no "stranded-forward" kits.
+            rsl.setStrand("stranded-reverse");
     }
 
     /**
@@ -162,6 +181,7 @@ public class GetRequestSamplesTask {
         public String investigatorName, investigatorEmail;
         public String dataAnalystName, dataAnalystEmail;
         public String otherContactEmails;
+        public String strand; // only for RNA
 
         public List<RequestSample> samples;
 
@@ -175,6 +195,8 @@ public class GetRequestSamplesTask {
             this.requestId = requestId;
             this.samples = samples;
         }
+        public String getStrand() { return strand; }
+        public void setStrand(String strand) { this.strand = strand; }
 
         public String getRecipe() { return recipe; }
         public void setRecipe(String recipe) { this.recipe = recipe; }
