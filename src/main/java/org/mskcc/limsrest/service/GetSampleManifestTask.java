@@ -345,6 +345,7 @@ public class GetSampleManifestTask {
         if ("Tumor".equals(tumorOrNormal))
             s.setOncoTreeCode(cmoInfo.getStringVal("TumorType", user));
         s.setTissueLocation(cmoInfo.getStringVal("TissueLocation", user));
+        s.setSpecimenType(cmoInfo.getStringVal("SpecimenType", user));
         s.setSampleOrigin(cmoInfo.getStringVal("SampleOrigin", user)); // formerly reported as Sample Type
         s.setPreservation(cmoInfo.getStringVal("Preservation", user));
         s.setCollectionYear(cmoInfo.getStringVal("CollectionYear", user));

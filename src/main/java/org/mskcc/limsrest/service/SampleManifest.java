@@ -13,6 +13,7 @@ public class SampleManifest {
     private String oncoTreeCode;
     private String tumorOrNormal;
     private String tissueLocation;
+    private String specimenType;
     private String sampleOrigin;
     private String preservation;
     private String collectionYear;
@@ -167,6 +168,10 @@ public class SampleManifest {
         this.oncoTreeCode = oncoTreeCode;
     }
 
+    public String getSpecimenType() { return specimenType; }
+
+    public void setSpecimenType(String specimenType) { this.specimenType = specimenType; }
+
     public String getTissueLocation() {
         return tissueLocation;
     }
@@ -179,9 +184,7 @@ public class SampleManifest {
         return sampleOrigin;
     }
 
-    public void setSampleOrigin(String sampleOrigin) {
-        this.sampleOrigin = sampleOrigin;
-    }
+    public void setSampleOrigin(String sampleOrigin) { this.sampleOrigin = sampleOrigin; }
 
     public String getPreservation() {
         return preservation;
