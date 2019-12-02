@@ -337,9 +337,11 @@ public class GetSampleManifestTask {
         s.setCmoPatientId(cmoInfo.getStringVal("CmoPatientId", user));
         // aka "Sample Name" in SampleCMOInfoRecords
         String sampleName = cmoInfo.getStringVal("OtherSampleId", user);
-        if (sampleName == null || "".equals(sampleName.trim())) // for example 05304_0_4 Agilent 51MB or update DB so this is not necessary?
-            sampleName = cmoInfo.getStringVal("UserSampleID", user);
-        s.setInvestigatorSampleId(sampleName);
+        if (sampleName == null || "".equals(sampleName.trim())) { // for example 05304_O_4 Agilent 51MB or update DB so this is not necessary?
+            //sampleName = cmoInfo.getStringVal("UserSampleID", user);
+        }
+        s.setSampleName(sampleName);
+        s.setInvestigatorSampleId(cmoInfo.getStringVal("UserSampleID", user));
         String tumorOrNormal = cmoInfo.getStringVal("TumorOrNormal", user);
         s.setTumorOrNormal(tumorOrNormal);
         if ("Tumor".equals(tumorOrNormal))

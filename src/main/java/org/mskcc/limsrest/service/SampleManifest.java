@@ -8,6 +8,7 @@ public class SampleManifest {
     private String igoId;
 
     private String cmoSampleName; // aka "Corrected CMO Sample ID", but not an ID in by normal database standards
+    private String sampleName;
     private String cmoPatientId;
     private String investigatorSampleId;
     private String oncoTreeCode;
@@ -121,6 +122,10 @@ public class SampleManifest {
     }
 
     public SampleManifest() {}
+
+    public void setSampleName(String sampleName) { this.sampleName = sampleName; }
+
+    public String getSampleName () { return sampleName; }
 
     public String getCmoSampleName() { return cmoSampleName; }
 
