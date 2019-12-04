@@ -9,6 +9,7 @@ public class SampleManifest {
 
     private String cmoSampleName; // aka "Corrected CMO Sample ID", but not an ID in by normal database standards
     private String sampleName;
+    private String cmoSampleClass;
     private String cmoPatientId;
     private String investigatorSampleId;
     private String oncoTreeCode;
@@ -122,6 +123,10 @@ public class SampleManifest {
     }
 
     public SampleManifest() {}
+
+    public void setCMOSampleClass(String cmoSampleClass) { this.cmoSampleClass = cmoSampleClass; }
+
+    public String getCmoSampleClass() { return cmoSampleClass; }
 
     public void setSampleName(String sampleName) { this.sampleName = sampleName; }
 
