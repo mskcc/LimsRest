@@ -1,12 +1,11 @@
 package org.mskcc.limsrest.service;
 
-import com.velox.api.datarecord.DataRecord;
-import com.velox.api.datarecord.InvalidValue;
-import com.velox.api.datarecord.IoError;
-import com.velox.api.datarecord.NotFound;
+import com.velox.api.datarecord.*;
+import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.rmi.RemoteException;
@@ -16,27 +15,29 @@ import java.util.*;
 /**
  * A queued task that takes shows all samples that need planned for Illumina runs. This endpoint will return the sample level information for individual Library samples and pooled Library samples.
  * The information is important for Pool planning for sequencing and making important pooling decisions.
- *
  */
-public class GetReadyForIllumina extends LimsTask {
+public class GetReadyForIllumina {
     private static Log log = LogFactory.getLog(GetReadyForIllumina.class);
-    private HashMap<String, List<String>> request2OutstandingSamples;
+    private ConnectionLIMS conn;
 
-    public void init(){
-        request2OutstandingSamples  = new HashMap<>();
+    public GetReadyForIllumina(ConnectionLIMS conn) {
+        this.conn = conn;
     }
 
     @PreAuthorize("hasRole('READ')")
-    @Override
-    public Object execute(VeloxConnection conn) {
+    public List<RunSummary> execute() {
         List<RunSummary> results = new LinkedList<>();
         try {
+            VeloxConnection vConn = conn.getConnection();
+            User user = vConn.getUser();
+            DataRecordManager dataRecordManager = vConn.getDataRecordManager();
+
             List<DataRecord> samplesToPool = dataRecordManager.queryDataRecords("Sample", "ExemplarSampleStatus = 'Ready for - Pooling of Sample Libraries for Sequencing'", user);
             if (samplesToPool.size()>0){
                 for (DataRecord sample: samplesToPool){
                     String sampleId = sample.getStringVal("SampleId", user);
                     if (sampleId.toLowerCase().startsWith("pool-")){
-                        List<DataRecord> parentLibrarySamplesForPool = getNearestParentLibrarySamplesForPool(sample); // if sample is pool then get all the Library samples in the pool which live as parents of the pool.
+                        List<DataRecord> parentLibrarySamplesForPool = getNearestParentLibrarySamplesForPool(sample, user); // if sample is pool then get all the Library samples in the pool which live as parents of the pool.
                         for(DataRecord librarySample : parentLibrarySamplesForPool){
                             RunSummary summary = new RunSummary("DEFAULT", "DEFAULT");
                             //set some of the pool level fields on the summary object like pool
@@ -47,11 +48,11 @@ public class GetReadyForIllumina extends LimsTask {
                                 summary.setVolume("null");
                             else
                                 summary.setVolume(sample.getValue("Volume", user).toString());
-                            results.add(createRunSummaryForSampleInPool(librarySample, summary)); //pass the summary Object with preset pool level information "createRunSummaryForSampleInPool" method to add sample level information
+                            results.add(createRunSummaryForSampleInPool(librarySample, summary, user)); //pass the summary Object with preset pool level information "createRunSummaryForSampleInPool" method to add sample level information
                         }
-                    }else{
+                    } else{
                         RunSummary summary = new RunSummary("DEFAULT", "DEFAULT"); // if sample is not pool, then it is Library sample and work with it.
-                        results.add(createRunSummaryForNonPooledSamples(sample,summary));
+                        results.add(createRunSummaryForNonPooledSamples(sample,summary, user));
                     }
                 }
             }
@@ -69,7 +70,7 @@ public class GetReadyForIllumina extends LimsTask {
      * @throws RemoteException
      * @throws NotFound
      */
-    private List<DataRecord> getNearestParentLibrarySamplesForPool(DataRecord pooledSample) throws IoError, RemoteException, NotFound {
+    private List<DataRecord> getNearestParentLibrarySamplesForPool(DataRecord pooledSample, User user) throws IoError, RemoteException, NotFound {
         List<DataRecord> parentLibrarySamplesForPool = new ArrayList<>();
         Stack<DataRecord> sampleTrackingStack = new Stack<>();
         sampleTrackingStack.add(pooledSample);
@@ -98,7 +99,7 @@ public class GetReadyForIllumina extends LimsTask {
      * @throws IoError
      * @throws RemoteException
      */
-    private DataRecord getParentSampleWithDesiredChildTypeRecord(DataRecord sample, String childDataType) throws IoError, RemoteException, NotFound {
+    private DataRecord getParentSampleWithDesiredChildTypeRecord(DataRecord sample, String childDataType, User user) throws IoError, RemoteException, NotFound {
         if (sample.getChildrenOfType(childDataType, user).length>0){
             return sample;
         }
@@ -127,8 +128,8 @@ public class GetReadyForIllumina extends LimsTask {
      * @throws RemoteException
      * @throws IoError
      */
-    private String getSampleLibraryIndexIdAndBarcode(DataRecord sample) throws NotFound, RemoteException, IoError {
-        DataRecord parentSample = getParentSampleWithDesiredChildTypeRecord(sample, "IndexBarcode");
+    private String getSampleLibraryIndexIdAndBarcode(DataRecord sample, User user) throws NotFound, RemoteException, IoError {
+        DataRecord parentSample = getParentSampleWithDesiredChildTypeRecord(sample, "IndexBarcode", user);
         if (parentSample != null && parentSample.getChildrenOfType("IndexBarcode", user)[0].getValue("IndexId", user) != null) {
             DataRecord recordWithIndexBarcodeInfo = parentSample.getChildrenOfType("IndexBarcode", user)[0];
             String indexId = recordWithIndexBarcodeInfo.getStringVal("IndexId", user);
@@ -152,8 +153,8 @@ public class GetReadyForIllumina extends LimsTask {
      * @throws InvalidValue
      */
 
-    private Double getRequestedReadsForSample(DataRecord sample) throws IoError, RemoteException, NotFound, ServerException, InvalidValue {
-        DataRecord sampleWithSeqRequirementAsChild = getParentSampleWithDesiredChildTypeRecord(sample, "SeqRequirement");
+    private Double getRequestedReadsForSample(DataRecord sample, User user) throws IoError, RemoteException, NotFound, ServerException, InvalidValue {
+        DataRecord sampleWithSeqRequirementAsChild = getParentSampleWithDesiredChildTypeRecord(sample, "SeqRequirement", user);
         if (sampleWithSeqRequirementAsChild !=null && sampleWithSeqRequirementAsChild.getChildrenOfType("SeqRequirement", user)[0].getValue("RequestedReads", user) != null) {
             DataRecord seqRequirements = sampleWithSeqRequirementAsChild.getChildrenOfType("SeqRequirement", user)[0];
             return seqRequirements.getDoubleVal("RequestedReads", user);
@@ -173,8 +174,8 @@ public class GetReadyForIllumina extends LimsTask {
      * @throws NotFound
      */
 
-    private String getPlannedSequencerForSample(DataRecord sample) throws IoError, RemoteException, NotFound {
-        DataRecord sampleWithBatchPlanningAsChild = getParentSampleWithDesiredChildTypeRecord(sample, "BatchPlanningProtocol");
+    private String getPlannedSequencerForSample(DataRecord sample, User user) throws IoError, RemoteException, NotFound {
+        DataRecord sampleWithBatchPlanningAsChild = getParentSampleWithDesiredChildTypeRecord(sample, "BatchPlanningProtocol", user);
         if (sampleWithBatchPlanningAsChild !=null && sampleWithBatchPlanningAsChild.getChildrenOfType("BatchPlanningProtocol",user)[0].getValue("SequencingRunType", user) != null){
             DataRecord batchPlanningRecord = sampleWithBatchPlanningAsChild.getChildrenOfType("BatchPlanningProtocol", user)[0]; //continue here
             return batchPlanningRecord.getStringVal("SequencingRunType", user);
@@ -194,9 +195,9 @@ public class GetReadyForIllumina extends LimsTask {
      * @throws RemoteException
      * @throws NotFound
      */
-    private String getPlannedWeekSample(DataRecord sample) throws IoError, RemoteException, NotFound {
-        DataRecord sampleWithBatchPlanningAsChild = getParentSampleWithDesiredChildTypeRecord(sample, "BatchPlanningProtocol");
-        if (sampleWithBatchPlanningAsChild != null && sampleWithBatchPlanningAsChild.getChildrenOfType("BatchPlanningProtocol", user)[0].getValue("WeekPlan", user) !=null){
+    private String getPlannedWeekSample(DataRecord sample, User user) throws IoError, RemoteException, NotFound {
+        DataRecord sampleWithBatchPlanningAsChild = getParentSampleWithDesiredChildTypeRecord(sample, "BatchPlanningProtocol", user);
+        if (sampleWithBatchPlanningAsChild != null && sampleWithBatchPlanningAsChild.getChildrenOfType("BatchPlanningProtocol", user)[0].getValue("WeekPlan", user) != null){
             DataRecord batchPlanningRecord = sampleWithBatchPlanningAsChild.getChildrenOfType("BatchPlanningProtocol", user)[0]; //continue here
             return  batchPlanningRecord.getStringVal("WeekPlan", user);
         } else {
@@ -214,8 +215,8 @@ public class GetReadyForIllumina extends LimsTask {
      * @throws RemoteException
      * @throws NotFound
      */
-    private String getSequencingRunTypeForSample(DataRecord sample) throws IoError, RemoteException, NotFound {
-        DataRecord sampleWithSeqRequirementAsChild = getParentSampleWithDesiredChildTypeRecord(sample, "SeqRequirement");
+    private String getSequencingRunTypeForSample(DataRecord sample, User user) throws IoError, RemoteException, NotFound {
+        DataRecord sampleWithSeqRequirementAsChild = getParentSampleWithDesiredChildTypeRecord(sample, "SeqRequirement", user);
         if (sampleWithSeqRequirementAsChild != null && sampleWithSeqRequirementAsChild.getChildrenOfType("SeqRequirement", user)[0].getValue("SequencingRunType", user) != null){
             DataRecord sequencingRunTypeRecord = sampleWithSeqRequirementAsChild.getChildrenOfType("SeqRequirement", user)[0]; //continue here
             return sequencingRunTypeRecord.getStringVal("SequencingRunType", user);
@@ -225,7 +226,7 @@ public class GetReadyForIllumina extends LimsTask {
         }
     }
 
-    private String getRecipeForSample(DataRecord sample) throws NotFound, RemoteException {
+    private String getRecipeForSample(DataRecord sample, User user) throws NotFound, RemoteException {
         if (sample.getValue("Recipe", user) !=null){
             return sample.getValue("Recipe",user).toString();
         }
@@ -236,13 +237,15 @@ public class GetReadyForIllumina extends LimsTask {
      * This method will create the Summary Object for the sample not part of a pool.
      * @param unpooledSample
      * @param summary
+     * @param user
      * @return Run Summary for sample.
      * @throws NotFound
      * @throws RemoteException
      * @throws IoError
      * @throws InvalidValue
      */
-    private RunSummary createRunSummaryForNonPooledSamples(DataRecord unpooledSample, RunSummary summary) throws NotFound, RemoteException, IoError, InvalidValue {
+    private RunSummary createRunSummaryForNonPooledSamples(DataRecord unpooledSample, RunSummary summary, User user)
+            throws NotFound, RemoteException, IoError, InvalidValue {
         Map<String, Object> sampleFieldValues = unpooledSample.getFields(user);
         summary.setSampleId((String) sampleFieldValues.get("SampleId"));
         summary.setOtherSampleId((String) sampleFieldValues.getOrDefault("OtherSampleId", ""));
@@ -260,20 +263,20 @@ public class GetReadyForIllumina extends LimsTask {
             summary.setVolume("null");
         else
             summary.setVolume(volume.toString());
-        summary.setRecipe(getRecipeForSample(unpooledSample));
+        summary.setRecipe(getRecipeForSample(unpooledSample, user));
         summary.setPlateId((String) sampleFieldValues.getOrDefault("RelatedRecord23", ""));
-        String indexAndBarcode = getSampleLibraryIndexIdAndBarcode(unpooledSample);
+        String indexAndBarcode = getSampleLibraryIndexIdAndBarcode(unpooledSample, user);
         if (indexAndBarcode !=null && indexAndBarcode.split(",").length==2)
             summary.setBarcodeId(indexAndBarcode.split(",")[0]);
         summary.setBarcodeSeq(indexAndBarcode.split(",")[1]);
-        summary.setReadNum(getRequestedReadsForSample(unpooledSample).toString());
-        String plannedSequencer = getPlannedSequencerForSample(unpooledSample);
+        summary.setReadNum(getRequestedReadsForSample(unpooledSample, user).toString());
+        String plannedSequencer = getPlannedSequencerForSample(unpooledSample, user);
         if (plannedSequencer != null)
             summary.setSequencer(plannedSequencer);
-        String batchWeek = getPlannedWeekSample(unpooledSample);
+        String batchWeek = getPlannedWeekSample(unpooledSample, user);
         if (batchWeek != null)
             summary.setBatch(batchWeek);
-        summary.setRunType(getSequencingRunTypeForSample(unpooledSample));
+        summary.setRunType(getSequencingRunTypeForSample(unpooledSample, user));
         return summary;
     }
 
@@ -288,7 +291,7 @@ public class GetReadyForIllumina extends LimsTask {
      * @throws IoError
      * @throws InvalidValue
      */
-    private RunSummary createRunSummaryForSampleInPool(DataRecord sampleInPool, RunSummary summary) throws RemoteException, NotFound, IoError, InvalidValue {
+    private RunSummary createRunSummaryForSampleInPool(DataRecord sampleInPool, RunSummary summary, User user) throws RemoteException, NotFound, IoError, InvalidValue {
         Map<String, Object> sampleFieldValues = sampleInPool.getFields(user);
         summary.setSampleId((String) sampleFieldValues.get("SampleId"));
         summary.setOtherSampleId((String) sampleFieldValues.getOrDefault("OtherSampleId", ""));
@@ -297,23 +300,23 @@ public class GetReadyForIllumina extends LimsTask {
         summary.setTumor((String) sampleFieldValues.getOrDefault("TumorOrNormal", ""));
         summary.setWellPos(sampleFieldValues.getOrDefault("ColPosition", "") + (String) sampleFieldValues.getOrDefault("RowPosition", ""));
         summary.setConcentrationUnits((String) sampleFieldValues.getOrDefault("ConcentrationUnits", ""));
-        summary.setRecipe(getRecipeForSample(sampleInPool));
+        summary.setRecipe(getRecipeForSample(sampleInPool, user));
         Double concentration = (Double) sampleFieldValues.get("Concentration");
         if (concentration != null)
             summary.setAltConcentration(concentration);
         summary.setPlateId((String) sampleFieldValues.getOrDefault("RelatedRecord23", ""));
-        String indexAndBarcode = getSampleLibraryIndexIdAndBarcode(sampleInPool);
+        String indexAndBarcode = getSampleLibraryIndexIdAndBarcode(sampleInPool, user);
         if (indexAndBarcode !=null && indexAndBarcode.split(",").length==2)
             summary.setBarcodeId(indexAndBarcode.split(",")[0]);
         summary.setBarcodeSeq(indexAndBarcode.split(",")[1]);
-        summary.setReadNum(getRequestedReadsForSample(sampleInPool).toString());
-        String plannedSequencer = getPlannedSequencerForSample(sampleInPool);
+        summary.setReadNum(getRequestedReadsForSample(sampleInPool, user).toString());
+        String plannedSequencer = getPlannedSequencerForSample(sampleInPool, user);
         if (plannedSequencer != null)
             summary.setSequencer(plannedSequencer);
-        String batchWeek = getPlannedWeekSample(sampleInPool);
+        String batchWeek = getPlannedWeekSample(sampleInPool, user);
         if (batchWeek != null)
             summary.setBatch(batchWeek);
-        summary.setRunType(getSequencingRunTypeForSample(sampleInPool));
+        summary.setRunType(getSequencingRunTypeForSample(sampleInPool, user));
         return summary;
     }
 }
