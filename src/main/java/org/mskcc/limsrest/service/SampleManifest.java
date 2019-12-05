@@ -8,11 +8,14 @@ public class SampleManifest {
     private String igoId;
 
     private String cmoSampleName; // aka "Corrected CMO Sample ID", but not an ID in by normal database standards
+    private String sampleName;
+    private String cmoSampleClass;
     private String cmoPatientId;
     private String investigatorSampleId;
     private String oncoTreeCode;
     private String tumorOrNormal;
     private String tissueLocation;
+    private String specimenType;
     private String sampleOrigin;
     private String preservation;
     private String collectionYear;
@@ -121,6 +124,14 @@ public class SampleManifest {
 
     public SampleManifest() {}
 
+    public void setCMOSampleClass(String cmoSampleClass) { this.cmoSampleClass = cmoSampleClass; }
+
+    public String getCmoSampleClass() { return cmoSampleClass; }
+
+    public void setSampleName(String sampleName) { this.sampleName = sampleName; }
+
+    public String getSampleName () { return sampleName; }
+
     public String getCmoSampleName() { return cmoSampleName; }
 
     public void setCmoSampleName(String cmoSampleName) { this.cmoSampleName = cmoSampleName; }
@@ -167,6 +178,10 @@ public class SampleManifest {
         this.oncoTreeCode = oncoTreeCode;
     }
 
+    public String getSpecimenType() { return specimenType; }
+
+    public void setSpecimenType(String specimenType) { this.specimenType = specimenType; }
+
     public String getTissueLocation() {
         return tissueLocation;
     }
@@ -179,9 +194,7 @@ public class SampleManifest {
         return sampleOrigin;
     }
 
-    public void setSampleOrigin(String sampleOrigin) {
-        this.sampleOrigin = sampleOrigin;
-    }
+    public void setSampleOrigin(String sampleOrigin) { this.sampleOrigin = sampleOrigin; }
 
     public String getPreservation() {
         return preservation;
