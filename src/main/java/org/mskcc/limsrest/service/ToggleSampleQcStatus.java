@@ -42,7 +42,7 @@ public class ToggleSampleQcStatus extends LimsTask {
     String fastqPath;
     String recipe;
 
-    private QcStatusAwareProcessAssigner qcStatusAwareProcessAssigner = new QcStatusAwareProcessAssigner();
+    protected QcStatusAwareProcessAssigner qcStatusAwareProcessAssigner = new QcStatusAwareProcessAssigner();
 
     public void init(long recordId, String status, String requestId, String correctedSampleId, String run, String qcType, String analyst, String note, String fastqPath, String recipe) {
         this.recordId = recordId;
