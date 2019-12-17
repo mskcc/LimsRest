@@ -1,8 +1,10 @@
 package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
+import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -10,6 +12,7 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.sampletracker.WESSampleData;
 import org.springframework.stereotype.Service;
 
@@ -35,8 +38,7 @@ import java.util.stream.Collectors;
  *
  * @author sharmaa1
  */
-@Service
-public class GetWESSampleDataTask extends LimsTask {
+public class GetWESSampleDataTask {
     private final List<String> HISEQ_2000_MACHINE_NAMES = Arrays.asList("LIZ", "LOLA");
     private final List<String> HISEQ_2500_MACHINE_NAMES = Arrays.asList("KIM", "MOMO");
     private final List<String> HISEQ_4000_MACHINE_NAMES = Arrays.asList("PITT", "JAX", "BRAD");
@@ -46,15 +48,21 @@ public class GetWESSampleDataTask extends LimsTask {
     private final List<String> VALID_RECIPES = Arrays.asList("wholeexomesequencing", "agilent_v4_51mb_human", "agilentcapture_51mb");
     private Log log = LogFactory.getLog(GetWESSampleDataTask.class);
     private String timestamp;
+    private ConnectionLIMS conn;
+    private User user;
 
-    public void init(String timestamp) {
+    public GetWESSampleDataTask(String timestamp, ConnectionLIMS conn) {
         this.timestamp = timestamp;
+        this.conn = conn;
     }
 
-    @Override
-    public Object execute(VeloxConnection conn) {
+    public List<WESSampleData> execute() {
         long start = System.currentTimeMillis();
         try {
+            VeloxConnection vConn = conn.getConnection();
+            user = vConn.getUser();
+            DataRecordManager dataRecordManager = vConn.getDataRecordManager();
+
             log.info(" Starting GetWesSample task using timestamp " + timestamp);
             List<DataRecord> dmpTrackerRecords = new ArrayList<>();
             try {
