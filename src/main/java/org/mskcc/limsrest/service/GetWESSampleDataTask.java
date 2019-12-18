@@ -98,6 +98,9 @@ public class GetWESSampleDataTask {
                                     String sampleId = sample.getStringVal("SampleId", user);
                                     //String userSampleId = sample.getStringVal("UserSampleID", user);
                                     String userSampleId = dmpTrackRec.getStringVal("i_StudySampleIdentifierInvesti", user);
+                                    String userSampleidHistorical = (String) getValueFromDataRecord(dmpTrackRec, "InvestigatorSampleIdHistorical", "String");
+                                    String duplicateSample = (String) getValueFromDataRecord(dmpTrackRec,"DuplicateSample", "String");
+                                    String wesSampleid = (String) getValueFromDataRecord(dmpTrackRec,"WesId", "String");
                                     String cmoSampleId = cmoInfoRec.getStringVal("CorrectedCMOID", user);
                                     String cmoPatientId = cmoInfoRec.getStringVal("CmoPatientId", user);
                                     String dmpSampleId = dmpTrackRec.getStringVal("i_DMPSampleID", user);
@@ -123,7 +126,7 @@ public class GetWESSampleDataTask {
                                     String projectTitle = (String) getValueFromDataRecord(dmpTrackRec, "i_Studyname", "String");
                                     String labHead = (String) getValueFromDataRecord(request, "LaboratoryHead", "String");
                                     String ccFund = (String) getValueFromDataRecord(dmpTrackRec, "i_FundCostCenter", "String");
-                                    String scientificPi = " ";
+                                    String scientificPi = "";
                                     Boolean consentPartAStatus = getConsentStatus(consentAList, dmpPatientId);
                                     Boolean consentPartCStatus = getConsentStatus(consentCList, dmpPatientId);
                                     String sampleStatus = getLatestIGOStatus(sample, request.getStringVal("RequestId", user));
@@ -137,7 +140,7 @@ public class GetWESSampleDataTask {
                                     String limsSampleRecordId = String.valueOf(sample.getLongVal("RecordId", user));
                                     String limsTrackerRecordId = String.valueOf(dmpTrackRec.getLongVal("RecordId", user));
                                     log.info("Assembled object");
-                                    resultList.add(new WESSampleData(sampleId, userSampleId, cmoSampleId, cmoPatientId, dmpSampleId, dmpPatientId, mrn, sex, sampleType, sampleClass, tumorType, parentalTumorType, tissueSite,
+                                    resultList.add(new WESSampleData(sampleId, userSampleId, userSampleidHistorical, duplicateSample, wesSampleid, cmoSampleId, cmoPatientId, dmpSampleId, dmpPatientId, mrn, sex, sampleType, sampleClass, tumorType, parentalTumorType, tissueSite,
                                             molAccessionNum, collectionYear, dateDmpRequest, dmpRequestId, igoRequestId, dateIgoReceived, igoCompleteDate, applicationRequested, baitsetUsed, sequencerType, projectTitle, labHead, ccFund, scientificPi,
                                             consentPartAStatus, consentPartCStatus, sampleStatus, accessLevel, clinicalTrial, sequencingSite, piRequestDate, pipeline, tissueType, collaborationCenter, limsSampleRecordId, limsTrackerRecordId));
                                 } else {
@@ -174,10 +177,13 @@ public class GetWESSampleDataTask {
      */
     private WESSampleData createNonIgoTrackingRecord(DataRecord dmpTrackRec, JSONObject consentAList, JSONObject consentCList) throws NotFound, IOException, KeyManagementException, NoSuchAlgorithmException {
         String sampleId = "";
-        String userSampleId = "";
+        String userSampleId = dmpTrackRec.getStringVal("i_StudySampleIdentifierInvesti", user);;
+        String userSampleidHistorical = (String) getValueFromDataRecord(dmpTrackRec, "InvestigatorSampleIdHistorical", "String");
+        String duplicateSample = (String) getValueFromDataRecord(dmpTrackRec,"DuplicateSample", "String");
+        String wesSampleid = (String) getValueFromDataRecord(dmpTrackRec,"WesId", "String");
         String cmoSampleId = "";
         String cmoPatientId = "";
-        String dmpSampleId = "";
+        String dmpSampleId = (String) getValueFromDataRecord(dmpTrackRec,"i_DMPSampleID", "String");;
         if (dmpTrackRec.getValue("i_DMPSampleID", user) != null) {
             dmpSampleId = dmpTrackRec.getStringVal("i_DMPSampleID", user);
         }
@@ -203,7 +209,7 @@ public class GetWESSampleDataTask {
         String projectTitle = (String) getValueFromDataRecord(dmpTrackRec, "i_Studyname", "String");
         String labHead = (String) getValueFromDataRecord(dmpTrackRec, "i_PrimaryInvestigator", "String");
         String ccFund = (String) getValueFromDataRecord(dmpTrackRec, "i_FundCostCenter", "String");
-        String scientificPi = " ";
+        String scientificPi = "";
         Boolean consentPartAStatus = getConsentStatus(consentAList, dmpPatientId);
         Boolean consentPartCStatus = getConsentStatus(consentCList, dmpPatientId);
         String sampleStatus = "";
@@ -217,7 +223,7 @@ public class GetWESSampleDataTask {
         String limsSampleRecordId = "";
         String limsTrackerRecordId = String.valueOf(dmpTrackRec.getLongVal("RecordId", user));
         log.info("Assembled object");
-        WESSampleData nonIgoTrackingRec = new WESSampleData(sampleId, userSampleId, cmoSampleId, cmoPatientId, dmpSampleId, dmpPatientId, mrn, sex, sampleType, sampleClass, tumorType, parentalTumorType, tissueSite,
+        WESSampleData nonIgoTrackingRec = new WESSampleData(sampleId, userSampleId, userSampleidHistorical, duplicateSample, wesSampleid, cmoSampleId, cmoPatientId, dmpSampleId, dmpPatientId, mrn, sex, sampleType, sampleClass, tumorType, parentalTumorType, tissueSite,
                 molAccessionNum, collectionYear, dateDmpRequest, dmpRequestId, igoRequestId, dateIgoReceived, igoCompleteDate, applicationRequested, baitsetUsed, sequencerType, projectTitle, labHead, ccFund, scientificPi,
                 consentPartAStatus, consentPartCStatus, sampleStatus, accessLevel, clinicalTrial, sequencingSite, piRequestDate, pipeline, tissueType, collaborationCenter, limsSampleRecordId, limsTrackerRecordId);
         return nonIgoTrackingRec;

@@ -4,6 +4,9 @@ public class WESSampleData {
 
     String sampleId;
     String userSampleId;
+    String userSampleidHistorical;
+    String duplicateSample;
+    String wesSampleid;
     String cmoSampleId;
     String cmoPatientId;
     String dmpSampleId;
@@ -42,12 +45,15 @@ public class WESSampleData {
     String limsSampleRecordId;
     String limsTrackerRecordId;
 
-    public WESSampleData(String sampleId, String userSampleId, String cmoSampleId, String cmoPatientId, String dmpSampleId, String dmpPatientId, String mrn, String sex, String sampleType, String sampleClass, String tumorType,
+    public WESSampleData(String sampleId, String userSampleId, String userSampleidHistorical, String duplicateSample, String wesSampleid, String cmoSampleId, String cmoPatientId, String dmpSampleId, String dmpPatientId, String mrn, String sex, String sampleType, String sampleClass, String tumorType,
                          String parentalTumorType, String tissueSite, String molecularAccessionNum, String collectionYear, String dateDmpRequest, String dmpRequestId, String igoRequestId, String dateIgoReceived, String igoCompleteDate,
                          String applicationRequested, String baitsetUsed, String sequencerType, String projectTitle, String labHead, String ccFund, String scientificPi, Boolean consentPartAStatus, Boolean consentPartCStatus,
                          String sampleStatus, String accessLevel, String clinicalTrial, String sequencingSite, String piRequestDate, String pipeline, String tissueType, String collaborationCenter, String limsSampleRecordId, String limsTrackerRecordId) {
         this.sampleId = sampleId;
         this.userSampleId = userSampleId;
+        this.userSampleidHistorical = userSampleidHistorical;
+        this.duplicateSample = duplicateSample;
+        this.wesSampleid = wesSampleid;
         this.cmoSampleId = cmoSampleId;
         this.cmoPatientId = cmoPatientId;
         this.dmpSampleId = dmpSampleId;
@@ -100,6 +106,30 @@ public class WESSampleData {
 
     public void setUserSampleId(String userSampleId) {
         this.userSampleId = userSampleId;
+    }
+
+    public String getUserSampleidHistorical() {
+        return userSampleidHistorical;
+    }
+
+    public void setUserSampleidHistorical(String userSampleidHistorical) {
+        this.userSampleidHistorical = userSampleidHistorical;
+    }
+
+    public String getDuplicateSample() {
+        return duplicateSample;
+    }
+
+    public void setDuplicateSample(String duplicateSample) {
+        this.duplicateSample = duplicateSample;
+    }
+
+    public String getWesSampleid() {
+        return wesSampleid;
+    }
+
+    public void setWesSampleid(String wesSampleid) {
+        this.wesSampleid = wesSampleid;
     }
 
     public String getCmoSampleId() {
