@@ -21,7 +21,7 @@ public class ConnectionLIMS {
             }
         } catch (Exception e) {
             log.error("Connection error:" + e);
-            System.exit(-1);
+            throw new RuntimeException("Failed to open LIMS connection.");
         }
 
         inUse = conn1;
