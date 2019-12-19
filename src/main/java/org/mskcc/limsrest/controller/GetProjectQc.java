@@ -2,6 +2,7 @@ package org.mskcc.limsrest.controller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.ConnectionPoolLIMS;
 import org.mskcc.limsrest.service.GetSampleQc;
 import org.mskcc.limsrest.service.RequestSummary;
@@ -19,9 +20,9 @@ import java.util.concurrent.Future;
 @RequestMapping("/")
 public class GetProjectQc {
     private static Log log = LogFactory.getLog(GetProjectQc.class);
-    private final ConnectionPoolLIMS conn;
+    private final ConnectionLIMS conn;
 
-    public GetProjectQc(ConnectionPoolLIMS conn){
+    public GetProjectQc(ConnectionLIMS conn){
         this.conn = conn;
     }
 
@@ -39,12 +40,10 @@ public class GetProjectQc {
             }
         }
 
-        GetSampleQc task = new GetSampleQc();
-        task.init(project);
-        Future<Object> result = conn.submitTask(task);
+        GetSampleQc task = new GetSampleQc(project, conn);
         List<RequestSummary> rss = new LinkedList<>();
         try {
-            rss = (List<RequestSummary>)result.get();
+            rss = task.execute();
         } catch(Exception e) {
             RequestSummary rs = new RequestSummary();
             rs.setInvestigator(e.getMessage());

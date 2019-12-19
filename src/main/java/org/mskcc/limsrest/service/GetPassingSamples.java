@@ -33,7 +33,7 @@ public class GetPassingSamples extends LimsTask {
         try {
             List<DataRecord> requestList = this.dataRecordManager.queryDataRecords("Request", "RequestId = '" + this.project + "'", this.user);
             for (DataRecord r : requestList) {
-                annotateRequestSummary(rs, r);
+                GetSampleQc.annotateRequestSummary(rs, r, this.user);
                 try {
                     String[] readme = r.getStringVal("ReadMe", this.user).split("\n");
                     for (int i = 0; i < readme.length; i++) {
