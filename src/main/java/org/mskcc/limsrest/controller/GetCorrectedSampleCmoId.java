@@ -45,7 +45,6 @@ public class GetCorrectedSampleCmoId {
 
             log.info(String.format("Starting to generate sample cmo id for sample igo id: %s", sampleIgoId));
 
-            log.info("Creating Generate sample cmo id task");
             GenerateSampleCmoIdTask task = new GenerateSampleCmoIdTask();
             task.init(sampleIgoId);
 

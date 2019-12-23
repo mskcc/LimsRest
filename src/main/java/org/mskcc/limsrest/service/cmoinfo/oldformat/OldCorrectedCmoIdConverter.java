@@ -32,9 +32,8 @@ public class OldCorrectedCmoIdConverter implements CorrectedCmoSampleViewToSampl
         String sampleClass = sampleTypeAbbreviationRetriever.getSampleTypeAbbr(correctedCmoSampleView);
         String nucleicAcid = sampleTypeAbbreviationRetriever.getNucleicAcidAbbr(correctedCmoSampleView);
 
-        PatientAwareCmoSampleId patientAwareCmoSampleId = new PatientAwareCmoSampleId(patientId, sampleClass,
-                sampleCount,
-                nucleicAcid);
+        PatientAwareCmoSampleId patientAwareCmoSampleId =
+                new PatientAwareCmoSampleId(patientId, sampleClass, sampleCount, nucleicAcid);
         return patientAwareCmoSampleId;
     }
 }

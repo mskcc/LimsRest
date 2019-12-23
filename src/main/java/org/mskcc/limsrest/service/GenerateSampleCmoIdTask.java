@@ -44,9 +44,11 @@ public class GenerateSampleCmoIdTask extends LimsTask {
     }
 
     private CorrectedCmoSampleView getCorrectedCmoSampleView(String igoId) {
+        // lookup in sample table by igoID and then find sample cmo info child info and call that
+        // "CorrectedCmoSampleView"
         try {
-            List<DataRecord> sampleRecords = dataRecordManager.queryDataRecords(VeloxConstants.SAMPLE, "SampleId = '"
-                    + igoId + "'", user);
+            List<DataRecord> sampleRecords =
+                    dataRecordManager.queryDataRecords(VeloxConstants.SAMPLE, "SampleId = '" + igoId + "'", user);
 
             if (sampleRecords.size() == 0)
                 throw new RuntimeException(String.format("No sample found with id: %s", sampleIgoId));

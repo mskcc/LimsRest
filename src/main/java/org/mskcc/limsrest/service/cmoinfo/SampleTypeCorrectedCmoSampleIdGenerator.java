@@ -39,6 +39,7 @@ import static org.mskcc.domain.sample.SpecimenType.CELLLINE;
 public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSampleIdGenerator {
     private final static Log LOGGER = LogFactory.getLog(SampleTypeCorrectedCmoSampleIdGenerator.class);
 
+    // TODO refactor or re-write with simpler implementation
     private final CmoSampleIdRetrieverFactory cmoSampleIdRetrieverFactory =
             new CmoSampleIdRetrieverFactory(
                     new FormattedCmoSampleIdRetriever(new PatientCmoSampleIdResolver(new IncrementalSampleCounterRetriever(new FormatAwareCorrectedCmoIdConverterFactory(new CspaceSampleTypeAbbreviationRetriever())),
@@ -145,8 +146,8 @@ public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSamp
 
     private void notifyAboutCorrectedCmoIdFailure(CorrectedCmoSampleView correctedCmoSampleView, String requestId,
                                                   Exception exception) {
-        String message = String.format(":-1: Corrected cmo id autogeneration failed for sample: *%s (%s)* :-1: \n " +
-                        "Cause: %s",
+        String message =
+                String.format(":-1: Corrected cmo id autogeneration failed for sample: *%s (%s)* :-1: \n Cause: %s",
                 correctedCmoSampleView.getSampleId(), correctedCmoSampleView.getId(), exception.getMessage());
 
         try {

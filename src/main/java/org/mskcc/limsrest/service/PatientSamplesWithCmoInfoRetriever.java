@@ -38,12 +38,11 @@ public class PatientSamplesWithCmoInfoRetriever implements PatientSamplesRetriev
             throws LimsException {
         CommonUtils.requireNonNullNorEmpty(patientId, "Patient id cannot be empty");
 
-        LOGGER.info(String.format("Retrieving samples for patient: %s needed to resolve CMO Sample Id counter",
-                patientId));
-
+        LOGGER.info("Retrieving samples needed for CMO Sample Id counter for patient:" + patientId);
         try {
             List<CorrectedCmoSampleView> cmoSampleViews = new ArrayList<>();
             StringBuilder error = new StringBuilder();
+            // TODO counter fails here when plugin is run and duplicate IDs are then created, see SAP-603
             for (DataRecord sampleRecord : getSampleRecords(patientId, dataRecordManager, user)) {
                 try {
                     cmoSampleViews.add(getCorrectedCmoSampleView(sampleRecord, user));
@@ -55,8 +54,7 @@ public class PatientSamplesWithCmoInfoRetriever implements PatientSamplesRetriev
             if (error.length() > 0)
                 throw new RuntimeException(error.toString());
 
-            LOGGER.info(String.format("Found %d samples for patient %s: %s", cmoSampleViews.size(), patientId,
-                    cmoSampleViews));
+            LOGGER.info(String.format("Found %d samples for patient %s: %s", cmoSampleViews.size(), patientId, cmoSampleViews));
             return cmoSampleViews;
         } catch (NotFound | RemoteException | IoError e) {
             throw new LimsException(String.format("Unable to retrieve samples for patient: %s. Cause: %s", patientId,
@@ -66,17 +64,17 @@ public class PatientSamplesWithCmoInfoRetriever implements PatientSamplesRetriev
 
     private List<DataRecord> getSampleRecords(String patientId, DataRecordManager dataRecordManager, User user)
             throws NotFound, IoError, RemoteException, LimsException {
-        List<DataRecord> samples = new ArrayList<>();
-        List<DataRecord> sampleInfoRecords = dataRecordManager.queryDataRecords(VeloxConstants
-                .SAMPLE_CMO_INFO_RECORDS, "CmoPatientId = '" + patientId + "'", user);
+        List<DataRecord> sampleInfoRecords = dataRecordManager.queryDataRecords(
+                VeloxConstants.SAMPLE_CMO_INFO_RECORDS, "CmoPatientId = '" + patientId + "'", user);
 
+        List<DataRecord> samples = new ArrayList<>();
         for (DataRecord sampleInfoRecord : sampleInfoRecords) {
             List<DataRecord> parentSamples = sampleInfoRecord.getParentsOfType(VeloxConstants.SAMPLE, user);
-
-            if (parentSamples.size() == 0)
-                throw new LimsException(String.format("No parent sample found for cmo info record for sample: %s for " +
-                                "patient: %s",
-                        sampleInfoRecord.getStringVal(VeloxConstants.SAMPLE_ID, user), patientId));
+            if (parentSamples.size() == 0) {
+                String msg = String.format("No parent sample found for cmo info record for sample: %s for patient: %s",
+                        sampleInfoRecord.getStringVal(VeloxConstants.SAMPLE_ID, user), patientId);
+                throw new LimsException(msg);
+            }
 
             samples.add(parentSamples.get(0));
         }
