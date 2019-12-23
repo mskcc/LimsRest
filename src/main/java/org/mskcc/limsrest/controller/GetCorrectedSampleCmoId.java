@@ -8,6 +8,7 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.*;
 import org.mskcc.limsrest.ConnectionPoolLIMS;
 import org.mskcc.limsrest.service.GenerateSampleCmoIdTask;
+import org.mskcc.limsrest.service.cmoinfo.SampleTypeCorrectedCmoSampleIdGenerator;
 import org.mskcc.limsrest.util.Constants;
 import org.mskcc.limsrest.util.Utils;
 import org.springframework.http.HttpHeaders;
@@ -217,11 +218,12 @@ public class GetCorrectedSampleCmoId {
         Map<String, String> cmoSampleIds = new HashMap<>();
         try {
             validate(correctedCmoSampleViews);
+            SampleTypeCorrectedCmoSampleIdGenerator x = new SampleTypeCorrectedCmoSampleIdGenerator();
             for (CorrectedCmoSampleView correctedCmoSampleView : correctedCmoSampleViews) {
                 log.info(String.format("Starting to generate sample cmo id for sample: %s", correctedCmoSampleViews.toString()));
 
                 log.info("Creating Generate sample cmo id task");
-                GenerateSampleCmoIdTask task = new GenerateSampleCmoIdTask();
+                GenerateSampleCmoIdTask task = new GenerateSampleCmoIdTask(x);
                 task.init(correctedCmoSampleView);
 
                 log.info("Getting result of Generate sample cmo id task");

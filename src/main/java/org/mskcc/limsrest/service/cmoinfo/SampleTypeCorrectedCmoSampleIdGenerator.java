@@ -8,7 +8,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.CorrectedCmoSampleView;
-import org.mskcc.limsrest.service.PatientSamplesRetriever;
 import org.mskcc.limsrest.service.PatientSamplesWithCmoInfoRetriever;
 import org.mskcc.limsrest.service.cmoinfo.cellline.CellLineCmoSampleIdFormatter;
 import org.mskcc.limsrest.service.cmoinfo.cellline.CellLineCmoSampleIdResolver;
@@ -26,8 +25,7 @@ import org.mskcc.limsrest.service.cmoinfo.retriever.IncrementalSampleCounterRetr
 import org.mskcc.limsrest.service.converter.SampleRecordToSampleConverter;
 import org.mskcc.util.CommonUtils;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.mskcc.domain.sample.SpecimenType.CELLLINE;
@@ -45,9 +43,8 @@ public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSamp
                     new FormattedCmoSampleIdRetriever(new PatientCmoSampleIdResolver(new IncrementalSampleCounterRetriever(new FormatAwareCorrectedCmoIdConverterFactory(new CspaceSampleTypeAbbreviationRetriever())),
                             new CspaceSampleTypeAbbreviationRetriever()), new PatientCmoSampleIdFormatter()),
                     new FormattedCmoSampleIdRetriever(new CellLineCmoSampleIdResolver(), new CellLineCmoSampleIdFormatter()));
-    protected PatientSamplesRetriever patientSamplesRetriever = new PatientSamplesWithCmoInfoRetriever(new SampleToCorrectedCmoIdConverter(), new SampleRecordToSampleConverter());
-
-    private final Multimap<String, CorrectedCmoSampleView> generatedSamples = HashMultimap.create();
+    protected PatientSamplesWithCmoInfoRetriever patientSamplesRetriever = new PatientSamplesWithCmoInfoRetriever(new SampleToCorrectedCmoIdConverter(), new SampleRecordToSampleConverter());
+    private Map<String, List<CorrectedCmoSampleView>> generatedSamples = new HashMap<>();
 
     public SampleTypeCorrectedCmoSampleIdGenerator() {
     }
@@ -59,12 +56,14 @@ public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSamp
         try {
             synchronized (SampleTypeCorrectedCmoSampleIdGenerator.class) {
                 String patientId = correctedCmoSampleView.getPatientId();
-                CommonUtils.requireNonNullNorEmpty(patientId, String.format("Patient id is not set for sample: %s",
-                        correctedCmoSampleView.getId()));
+                CommonUtils.requireNonNullNorEmpty(patientId, String.format("Patient id is not set for sample: %s", correctedCmoSampleView.getId()));
 
+                // get all samples for that patient in the LIMS
                 List<CorrectedCmoSampleView> cmoSampleViews = patientSamplesRetriever.retrieve(patientId, dataRecordManager, user);
-
-                cmoSampleViews.addAll(generatedSamples.get(patientId));
+                // add to that list all samples where patient ID was just generated but not yet saved to LIMS DB
+                List<CorrectedCmoSampleView> generated = generatedSamples.get(patientId);
+                if (generated != null)
+                    cmoSampleViews.addAll(generated);
                 LOGGER.info(String.format("Added %d samples for patient %s generated during current run for cmo id " +
                         "generation: %s", generatedSamples.size(), patientId, generatedSamples.values()));
                 List<CorrectedCmoSampleView> filteredViews = getFilteredCmoViews(correctedCmoSampleView, cmoSampleViews);
@@ -75,7 +74,11 @@ public class SampleTypeCorrectedCmoSampleIdGenerator implements CorrectedCmoSamp
                 if (shouldOverrideCmoId(correctedCmoSampleView, cmoSampleId))
                     correctedCmoSampleView.setCorrectedCmoId(cmoSampleId);
 
-                generatedSamples.put(patientId, correctedCmoSampleView);
+                if (generatedSamples.containsKey(patientId)) {
+                    generatedSamples.get(patientId).add(correctedCmoSampleView);
+                } else {
+                    generatedSamples.put(patientId, new ArrayList<>(Arrays.asList(correctedCmoSampleView)));
+                }
             }
             return correctedCmoSampleView.getCorrectedCmoId();
         } catch (Exception e) {

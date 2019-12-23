@@ -18,14 +18,20 @@ import java.util.List;
 public class GenerateSampleCmoIdTask extends LimsTask {
     private final static Log log = LogFactory.getLog(GenerateSampleCmoIdTask.class);
 
-    private SampleTypeCorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator = new SampleTypeCorrectedCmoSampleIdGenerator();
+    private SampleTypeCorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator;
     private final CorrectedCmoIdConverter<Sample> sampleToCorrectedCmoIdConverter = new SampleToCorrectedCmoIdConverter();
     private final SampleRecordToSampleConverter sampleRecordToSampleConverter = new SampleRecordToSampleConverter();
 
     private String sampleIgoId;
     private CorrectedCmoSampleView correctedCmoSampleView;
 
-    public GenerateSampleCmoIdTask() { }
+    public GenerateSampleCmoIdTask() {
+        this.correctedCmoSampleIdGenerator = new SampleTypeCorrectedCmoSampleIdGenerator();
+    }
+
+    public GenerateSampleCmoIdTask(SampleTypeCorrectedCmoSampleIdGenerator x) {
+        this.correctedCmoSampleIdGenerator = x;
+    }
 
     public void init(String sampleIgoId) {
         this.sampleIgoId = sampleIgoId;

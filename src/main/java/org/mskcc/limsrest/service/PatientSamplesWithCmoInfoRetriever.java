@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * PatientSamplesWithCmoInfoRetriever retrieves all samples for given patient from LIMS
  */
-public class PatientSamplesWithCmoInfoRetriever implements PatientSamplesRetriever {
+public class PatientSamplesWithCmoInfoRetriever {
     private final static Log LOGGER = LogFactory.getLog(PatientSamplesWithCmoInfoRetriever.class);
 
     private final CorrectedCmoIdConverter<Sample> sampleToCorrectedCmoIdConverter;
@@ -33,7 +33,6 @@ public class PatientSamplesWithCmoInfoRetriever implements PatientSamplesRetriev
         this.sampleRecordToSampleConverter = sampleRecordToSampleConverter;
     }
 
-    @Override
     public List<CorrectedCmoSampleView> retrieve(String patientId, DataRecordManager dataRecordManager, User user)
             throws LimsException {
         CommonUtils.requireNonNullNorEmpty(patientId, "Patient id cannot be empty");
