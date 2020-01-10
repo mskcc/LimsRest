@@ -144,12 +144,14 @@ public class QcReportSampleList {
 
         public static class DnaReportSample extends ReportSample {
             public String tumorOrNormal;
+            public Double humanPercentage;
             public String specimenType;
             public Double din;
 
             public DnaReportSample(Map<String, Object> sampleFields) {
                 super(sampleFields);
                 this.tumorOrNormal = (String) sampleFields.get("TumorOrNormal");
+                this.humanPercentage = (Double) sampleFields.get("HumanPercentage");
                 this.specimenType = (String) sampleFields.get("SpecimenType");
                 this.din = (Double) sampleFields.get("DIN");
             }
