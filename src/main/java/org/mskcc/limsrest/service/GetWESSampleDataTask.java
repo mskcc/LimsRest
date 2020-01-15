@@ -88,7 +88,7 @@ public class GetWESSampleDataTask {
                         for (DataRecord cmoInfoRec : sampleCmoInfoRecs) {
                             Object cmoInfoUserSampleId = cmoInfoRec.getValue("UserSampleID", user);
                             Object tumorOrNormal = cmoInfoRec.getValue("TumorOrNormal", user);
-                            if (!StringUtils.isBlank(cmoInfoUserSampleId.toString().replace(" ", "")) && tumorOrNormal != null && "tumor".equals(String.valueOf(tumorOrNormal).toLowerCase()) && cmoInfoUserSampleId.toString().equals(investigatorSampleId.toString())
+                            if (!StringUtils.isBlank(cmoInfoUserSampleId.toString().replace(" ", "")) && cmoInfoUserSampleId.toString().equals(investigatorSampleId.toString())
                                     && cmoInfoRec.getParentsOfType("Sample", user).size() > 0) {
                                 log.info("cmoInfo UserSampleID: " + cmoInfoUserSampleId.toString() + " " + cmoInfoRec.getParentsOfType("Sample", user).size());
                                 DataRecord sample = cmoInfoRec.getParentsOfType("Sample", user).get(0);
