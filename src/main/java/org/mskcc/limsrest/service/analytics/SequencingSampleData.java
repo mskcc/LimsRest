@@ -7,23 +7,23 @@ public class SequencingSampleData {
     String specimenType;
     String recipe;
     String tumornormal;
-    Integer requestedReads;
+    Double requestedReads;
     Integer requestedCoverage;
     String runType;
-    String readLength;
-    String sequencingMachine;
+    String sequencingMachineName;
+    String sequencingMachineType;
     Double concentrationNucleicAcid;
     Double concentrationLibrary;
-    Integer readsExamined;
-    Integer unpairedReadsExamined;
-    Integer totalReads;
+    Long readsExamined;
+    Long unpairedReadsExamined;
+    Long totalReads;
     Double pctMrnaBases;
     Double pctIntragenicBases;
     Double pctUtrBases;
     Double pctCodingBases;
     Double pctRiboBases;
-    Integer unmappedReads;
-    Integer readPairDuplicates;
+    Long unmappedReads;
+    Long readPairDuplicates;
     Double mskq;
     Double pctTarget100x;
     Double pctTarget80x;
@@ -35,44 +35,45 @@ public class SequencingSampleData {
     Double pctAdapters;
 
 
-//    public SequencingSampleData(
-//            String sampleId, String otherSampleId, String sampleType, String specimenType, String recipe, String tumornormal, Integer requestedReads, Integer requestedCoverage,
-//            String runType, String readLength, String sequencingMachine, Double concentrationNucleicAcid, Double concentrationLibrary, Integer readsExamined, Integer unpairedReadsExamined,
-//            Integer totalReads, Double pctMrnaBases, Double pctIntragenicBases, Double pctUtrBases, Double pctCodingBases, Double pctRiboBases, Integer unmappedReads, Integer readPairDuplicates,
-//            Double mskq, Double pctTarget100x, Double pctTarget80x, Double pctTarget40x, Double pctTarget30x, Double pctTarget10x, Double meanTargetCoverage,Double pctOffBait, Double pctAdapters
-//    ) {
-//        this.sampleId = sampleId;
-//        this.otherSampleId = otherSampleId;
-//        this.sampleType = sampleType;
-//        this.specimenType = specimenType;
-//        this.recipe = recipe;
-//        this.tumornormal = tumornormal;
-//        this.requestedReads = requestedReads;
-//        this.requestedCoverage = requestedCoverage;
-//        this.runType = runType;
-//        this.readLength = readLength;
-//        this.sequencingMachine = sequencingMachine;
-//        this.concentrationNucleicAcid = concentrationNucleicAcid;
-//        this.concentrationLibrary = concentrationLibrary;
-//        this.readsExamined = readsExamined;
-//        this.unpairedReadsExamined = unpairedReadsExamined;
-//        this.totalReads = totalReads;
-//        this.pctMrnaBases = pctMrnaBases;
-//        this.pctIntragenicBases = pctIntragenicBases;
-//        this.pctUtrBases = pctUtrBases;
-//        this.pctCodingBases = pctCodingBases;
-//        this.pctRiboBases = pctRiboBases;
-//        this.unmappedReads = unmappedReads;
-//        this.mskq = mskq;
-//        this.pctTarget100x = pctTarget100x;
-//        this.pctTarget80x = pctTarget80x;
-//        this.pctTarget40x = pctTarget40x;
-//        this.pctTarget30x = pctTarget30x;
-//        this.pctTarget10x = pctTarget10x;
-//        this.meanTargetCoverage = meanTargetCoverage;
-//        this.pctOffBait = pctOffBait;
-//        this.pctAdapters = pctAdapters;
-//    }
+    public SequencingSampleData(
+            String sampleId, String otherSampleId, String sampleType, String specimenType, String recipe, String tumornormal, Double requestedReads, Integer requestedCoverage,
+            String runType, String sequencingMachineName, String sequencingMachineType, Double concentrationNucleicAcid, Double concentrationLibrary, Long readsExamined, Long unpairedReadsExamined,
+            Long totalReads, Double pctMrnaBases, Double pctIntragenicBases, Double pctUtrBases, Double pctCodingBases, Double pctRiboBases, Long unmappedReads, Long readPairDuplicates,
+            Double mskq, Double pctTarget100x, Double pctTarget80x, Double pctTarget40x, Double pctTarget30x, Double pctTarget10x, Double meanTargetCoverage,Double pctOffBait, Double pctAdapters
+    ) {
+        this.sampleId = sampleId;
+        this.otherSampleId = otherSampleId;
+        this.sampleType = sampleType;
+        this.specimenType = specimenType;
+        this.recipe = recipe;
+        this.tumornormal = tumornormal;
+        this.requestedReads = requestedReads;
+        this.requestedCoverage = requestedCoverage;
+        this.runType = runType;
+        this.sequencingMachineName = sequencingMachineName;
+        this.sequencingMachineType = sequencingMachineType;
+        this.concentrationNucleicAcid = concentrationNucleicAcid;
+        this.concentrationLibrary = concentrationLibrary;
+        this.readsExamined = readsExamined;
+        this.unpairedReadsExamined = unpairedReadsExamined;
+        this.totalReads = totalReads;
+        this.pctMrnaBases = pctMrnaBases;
+        this.pctIntragenicBases = pctIntragenicBases;
+        this.pctUtrBases = pctUtrBases;
+        this.pctCodingBases = pctCodingBases;
+        this.pctRiboBases = pctRiboBases;
+        this.unmappedReads = unmappedReads;
+        this.readPairDuplicates = readPairDuplicates;
+        this.mskq = mskq;
+        this.pctTarget100x = pctTarget100x;
+        this.pctTarget80x = pctTarget80x;
+        this.pctTarget40x = pctTarget40x;
+        this.pctTarget30x = pctTarget30x;
+        this.pctTarget10x = pctTarget10x;
+        this.meanTargetCoverage = meanTargetCoverage;
+        this.pctOffBait = pctOffBait;
+        this.pctAdapters = pctAdapters;
+    }
 
     public String getSampleId() {
         return sampleId;
@@ -122,11 +123,11 @@ public class SequencingSampleData {
         this.tumornormal = tumornormal;
     }
 
-    public Integer getRequestedReads() {
+    public Double getRequestedReads() {
         return requestedReads;
     }
 
-    public void setRequestedReads(Integer requestedReads) {
+    public void setRequestedReads(Double requestedReads) {
         this.requestedReads = requestedReads;
     }
 
@@ -146,20 +147,21 @@ public class SequencingSampleData {
         this.runType = runType;
     }
 
-    public String getReadLength() {
-        return readLength;
+    public String getSequencingMachineName() {
+        return sequencingMachineName;
     }
 
-    public void setReadLength(String readLength) {
-        this.readLength = readLength;
+    public void setSequencingMachineName(String sequencingMachine) {
+        this.sequencingMachineName = sequencingMachine;
     }
 
-    public String getSequencingMachine() {
-        return sequencingMachine;
+
+    public String getSequencingMachineType() {
+        return sequencingMachineType;
     }
 
-    public void setSequencingMachine(String sequencingMachine) {
-        this.sequencingMachine = sequencingMachine;
+    public void setSequencingMachineType(String sequencingMachineType) {
+        this.sequencingMachineType = sequencingMachineType;
     }
 
     public Double getConcentrationNucleicAcid() {
@@ -178,27 +180,27 @@ public class SequencingSampleData {
         this.concentrationLibrary = concentrationLibrary;
     }
 
-    public Integer getReadsExamined() {
+    public Long getReadsExamined() {
         return readsExamined;
     }
 
-    public void setReadsExamined(Integer readsExamined) {
+    public void setReadsExamined(Long readsExamined) {
         this.readsExamined = readsExamined;
     }
 
-    public Integer getUnpairedReadsExamined() {
+    public Long getUnpairedReadsExamined() {
         return unpairedReadsExamined;
     }
 
-    public void setUnpairedReadsExamined(Integer unpairedReadsExamined) {
+    public void setUnpairedReadsExamined(Long unpairedReadsExamined) {
         this.unpairedReadsExamined = unpairedReadsExamined;
     }
 
-    public Integer getTotalReads() {
+    public Long getTotalReads() {
         return totalReads;
     }
 
-    public void setTotalReads(Integer totalReads) {
+    public void setTotalReads(Long totalReads) {
         this.totalReads = totalReads;
     }
 
@@ -242,19 +244,19 @@ public class SequencingSampleData {
         this.pctRiboBases = pctRiboBases;
     }
 
-    public Integer getUnmappedReads() {
+    public Long getUnmappedReads() {
         return unmappedReads;
     }
 
-    public void setUnmappedReads(Integer unmappedReads) {
+    public void setUnmappedReads(Long unmappedReads) {
         this.unmappedReads = unmappedReads;
     }
 
-    public Integer getReadPairDuplicates() {
+    public Long getReadPairDuplicates() {
         return readPairDuplicates;
     }
 
-    public void setReadPairDuplicates(Integer readPairDuplicates) {
+    public void setReadPairDuplicates(Long readPairDuplicates) {
         this.readPairDuplicates = readPairDuplicates;
     }
 

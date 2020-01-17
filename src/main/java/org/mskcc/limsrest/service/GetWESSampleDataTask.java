@@ -50,6 +50,7 @@ public class GetWESSampleDataTask {
     private String timestamp;
     private ConnectionLIMS conn;
     private User user;
+    private DataRecordManager dataRecordManager;
 
     public GetWESSampleDataTask(String timestamp, ConnectionLIMS conn) {
         this.timestamp = timestamp;
@@ -61,8 +62,7 @@ public class GetWESSampleDataTask {
         try {
             VeloxConnection vConn = conn.getConnection();
             user = vConn.getUser();
-            DataRecordManager dataRecordManager = vConn.getDataRecordManager();
-
+            dataRecordManager = vConn.getDataRecordManager();
             log.info(" Starting GetWesSample task using timestamp " + timestamp);
             List<DataRecord> dmpTrackerRecords = new ArrayList<>();
             try {
@@ -80,7 +80,7 @@ public class GetWESSampleDataTask {
                     List<DataRecord> sampleCmoInfoRecs = new ArrayList<>();
                     if (dmpTrackRec.getValue("i_StudySampleIdentifierInvesti", user) != null) {
                         log.info("sample cmo info query start");
-                        sampleCmoInfoRecs = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "TumorOrNormal='Tumor' AND UserSampleID = '" + dmpTrackRec.getStringVal("i_StudySampleIdentifierInvesti", user) + "'", user);
+                        sampleCmoInfoRecs = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "UserSampleID = '" + dmpTrackRec.getStringVal("i_StudySampleIdentifierInvesti", user) + "'", user);
                         log.info("sample cmo info query end");
                     }
                     if (sampleCmoInfoRecs.size() > 0) {
@@ -226,6 +226,23 @@ public class GetWESSampleDataTask {
                 molAccessionNum, collectionYear, dateDmpRequest, dmpRequestId, igoRequestId, dateIgoReceived, igoCompleteDate, applicationRequested, baitsetUsed, sequencerType, projectTitle, labHead, ccFund, scientificPi,
                 consentPartAStatus, consentPartCStatus, sampleStatus, accessLevel, clinicalTrial, sequencingSite, piRequestDate, pipeline, tissueType, collaborationCenter, limsSampleRecordId, limsTrackerRecordId);
         return nonIgoTrackingRec;
+    }
+
+    private List<DataRecord> getChildSamplesWithRequestAsParent(DataRecord sample) throws NotFound, RemoteException, IoError {
+        Object altId = sample.getValue("AltId", user);
+        List<DataRecord> sampleList = new ArrayList<>();
+        if (altId != null){
+            List<DataRecord> samplesMatchingAltId = dataRecordManager.queryDataRecords("Sample", "AltId = '" +String.valueOf(altId) + "'" , user);
+            if (samplesMatchingAltId.size()>0){
+                for (DataRecord rec : samplesMatchingAltId){
+                    Boolean sampleHasRequestAsParent = sample.getParentsOfType("Request", user).size() > 0;
+                    if (sampleHasRequestAsParent){
+                        sampleList.add(rec);
+                    }
+                }
+            }
+        }
+        return sampleList;
     }
 
     /**
