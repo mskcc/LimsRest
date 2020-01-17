@@ -33,7 +33,6 @@ public class GetAttachmentFileTask extends LimsTask {
 
         try {
             List<DataRecord> matched = dataRecordManager.queryDataRecords("Attachment", "RecordId =" + recordId, user);
-            log.info(matched.get(0).getAttachmentData(user).getClass().getName());
             String fileName = (String) matched.get(0).getDataField("FilePath", user);
             byte[] data = matched.get(0).getAttachmentData(user);
             file.put("fileName", fileName);

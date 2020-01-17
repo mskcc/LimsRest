@@ -8,6 +8,7 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 /*
@@ -40,22 +41,16 @@ public class GetQcReportSamplesTask extends LimsTask {
 
         QcReportSampleList rsl = new QcReportSampleList(requestId, otherSampleIds);
 
-
         try {
             log.info("Gathering Report samples for " + otherSampleIds.size() + " samples.");
-            rsl.setDnaReportSamples(getQcSamples("QcReportDna"));
-            rsl.setRnaReportSamples(getQcSamples("QcReportRna"));
-            rsl.setLibraryReportSamples(getQcSamples("QcReportLibrary"));
+            getQcSamples(rsl, "QcReportDna");
+            getQcSamples(rsl, "QcReportRna");
+            getQcSamples(rsl, "QcReportLibrary");
             rsl.setPathologyReportSamples(getPathologySamples("QcDatum"));
-
 
             log.info("Gathering Attachments for " + requestId + ".");
             List<HashMap<String, Object>> attachments = new ArrayList<>();
-            attachments.addAll(getAttachments(requestId, "DNA"));
-            attachments.addAll(getAttachments(requestId, "RNA"));
-            attachments.addAll(getAttachments(requestId, "Library"));
-            attachments.addAll(getAttachments(requestId, "Pool"));
-            attachments.addAll(getAttachments(requestId, "cDNA"));
+            attachments.addAll(getAttachments(requestId));
 
             rsl.setAttachments(attachments);
         } catch (Throwable e) {
@@ -72,66 +67,99 @@ public class GetQcReportSamplesTask extends LimsTask {
      * @return List of ReportSamples
      * @throws Exception
      */
-    protected List<ReportSample> getQcSamples(String dataType) throws Exception {
-        // check whether request exists in QC Report table, speeds up by ~30 %
-        List<DataRecord> request = dataRecordManager.queryDataRecords(dataType, "SampleId LIKE '" + requestId + "%'", this.user);
-        List<ReportSample> reportSamples = new ArrayList<>();
+    protected void getQcSamples(QcReportSampleList rsl, String dataType) throws Exception {
+        // only include samples where SampleId contains RequestId
+        List<DataRecord> reportSamplesByRequest = dataRecordManager.queryDataRecords(dataType, "SampleId LIKE '%" + requestId + "%'", this.user);
 
-        if (request.isEmpty()) {
+//        convert otherSampleIds to List<String>
+        List<String> otherSampleIdsInRequest = otherSampleIds.stream()
+                .map(object -> Objects.toString(object, null))
+                .collect(Collectors.toList());
+
+        int reportSamples = 0;
+        if (reportSamplesByRequest.isEmpty()) {
             log.info("Request not found in " + dataType + ".");
-            return reportSamples;
+            return;
         } else {
-            ReportSample reportSample;
+            try {
+                ReportSample reportSample;
 
-            List<DataRecord> sampleList = dataRecordManager.queryDataRecords(dataType, "OtherSampleId", otherSampleIds, this.user);
-
-            for (DataRecord sampleRecord : sampleList) {
-                try {
+                for (DataRecord sampleRecord : reportSamplesByRequest) {
                     Map<String, Object> sampleFields = sampleRecord.getFields(user);
+                    String otherSampleId = sampleFields.get("OtherSampleId").toString();
+                    String igoId = sampleFields.get("SampleId").toString();
+//                check if reportSample's otherSampleId contains at least one id from this request
+                    if (otherSampleIdsInRequest.parallelStream().anyMatch(otherSampleId::contains)) {
+//                    is the reportSample a pool?
+                        if (igoId.toLowerCase().contains("pool")) {
+//                            check if pool only contains samples from the same request
+                            boolean is_match = true;
+                            if (otherSampleId.contains(",")) {
+                                String[] poolids = otherSampleId.split(",");
+                                for (String id : poolids) {
+                                    if (!otherSampleIdsInRequest.parallelStream().anyMatch(id::contains)) {
+                                        is_match = false;
+//                                        log.info("Not a match");
+                                        break;
+                                    }
+                                }
 
-//                  only include samples where SampleId contains RequestId
-                    if (sampleFields.get("SampleId").toString().contains(requestId)) {
-                        switch (dataType) {
-                            case "QcReportDna":
-                                reportSample = new ReportSample.DnaReportSample(sampleFields);
-                                break;
-                            case "QcReportRna":
-                                reportSample = new ReportSample.RnaReportSample(sampleFields);
-                                break;
-                            case "QcReportLibrary":
-                                reportSample = new ReportSample.LibraryReportSample(sampleFields);
-                                break;
-                            default:
-                                reportSample = new ReportSample();
+                            }
+                            if (is_match) {
+                                reportSample = new ReportSample.PoolReportSample(sampleFields);
+                                rsl.poolReportSamples.add(reportSample);
+                            }
+                        //  not a pool
+                        } else {
+                            switch (dataType) {
+                                case "QcReportDna":
+                                    reportSample = new ReportSample.DnaReportSample(sampleFields);
+                                    rsl.dnaReportSamples.add(reportSample);
+                                    reportSamples += 1;
+                                    break;
+                                case "QcReportRna":
+                                    reportSample = new ReportSample.RnaReportSample(sampleFields);
+                                    rsl.rnaReportSamples.add(reportSample);
+                                    reportSamples += 1;
+                                    break;
+                                case "QcReportLibrary":
+                                    reportSample = new ReportSample.LibraryReportSample(sampleFields);
+                                    rsl.libraryReportSamples.add(reportSample);
+                                    reportSamples += 1;
+                                    break;
+                                default:
+                                    reportSample = new ReportSample();
+                            }
                         }
-                        reportSamples.add(reportSample);
+                    // report sample id does not contain any of the request's sample's ids
+                    } else {
+                        log.info("0 Samples found in " + dataType);
+                        return;
                     }
-
-                } catch (Throwable e) {
-                    log.error(e.getMessage(), e);
-                    return null;
                 }
-            }
-            log.info(reportSamples.size() + " Samples found in " + dataType + ".");
-            return reportSamples;
-        }
 
+            } catch (Throwable e) {
+                log.error(e.getMessage(), e);
+                return;
+            }
+        }
+        log.info(rsl.poolReportSamples.size() + " Pools and " + reportSamples + " Samples found in " + dataType + ".");
+        return;
     }
+
 
     protected List<PathologySample> getPathologySamples(String dataType) throws Exception {
         // check whether request exists in QC Report table, speeds up by ~30 %
-        List<DataRecord> request = dataRecordManager.queryDataRecords(dataType, "SampleId LIKE '" + requestId + "%'", this.user);
+        List<DataRecord> reportSamplesByRequest = dataRecordManager.queryDataRecords(dataType, "SampleId LIKE '" + requestId + "%'", this.user);
         List<PathologySample> pathologySamples = new ArrayList<>();
 
-        if (request.isEmpty()) {
+        if (reportSamplesByRequest.isEmpty()) {
             log.info("Request not found in " + dataType + ".");
             return pathologySamples;
         } else {
             PathologySample pathologySample;
-
-            List<DataRecord> sampleList = dataRecordManager.queryDataRecords(dataType, "OtherSampleId", otherSampleIds, this.user);
-
-            for (DataRecord sampleRecord : sampleList) {
+//            List<DataRecord> sampleList = dataRecordManager.queryDataRecords(dataType, "OtherSampleId", otherSampleIds, this.user);
+            for (DataRecord sampleRecord : reportSamplesByRequest) {
                 try {
                     Map<String, Object> sampleFields = sampleRecord.getFields(user);
 //                  only include samples where SampleId contains RequestId
@@ -140,37 +168,39 @@ public class GetQcReportSamplesTask extends LimsTask {
                         pathologySamples.add(pathologySample);
                     }
 
-
                 } catch (Throwable e) {
                     log.error(e.getMessage(), e);
                     return null;
                 }
             }
-            log.info(pathologySamples.size() + " Samples found in " + dataType + ".");
+            log.info(pathologySamples.size() + " Samples found in Pathology/" + dataType + ".");
             return pathologySamples;
         }
 
     }
 
-    protected List<HashMap<String, Object>> getAttachments(String requestId, String type) {
+    protected List<HashMap<String, Object>> getAttachments(String requestId) {
         List<HashMap<String, Object>> attachments = new ArrayList<>();
         try {
+            List<DataRecord> attachmentRequestRecords = dataRecordManager.queryDataRecords("Attachment", "FilePath LIKE '%" + requestId + "%'", this.user);
+            if (attachmentRequestRecords.size() > 0) {
+                String attachmentWhere = "FilePath LIKE '" + requestId + "_DNA_QC%.pdf' OR FilePath LIKE '" + requestId + "_RNA_QC%.pdf' OR FilePath LIKE '" + requestId + "_Library_QC%.pdf' OR FilePath LIKE '" + requestId + "_Pool_QC%.pdf' OR FilePath LIKE '" + requestId + "_cDNA_QC%.pdf'";
+                List<DataRecord> attachmentRecords = dataRecordManager.queryDataRecords("Attachment", attachmentWhere, this.user);
 
-            List<DataRecord> attachmentRecords = dataRecordManager.queryDataRecords("Attachment", "FilePath REGEXP '^" + requestId + "_" + type + "_QC_*[0-9]*.pdf'", this.user);
-
-            for (DataRecord record : attachmentRecords) {
-                HashMap<String, Object> attachmentInfo = new HashMap<>();
-                attachmentInfo.put("recordId", record.getDataField("RecordId", user));
-                attachmentInfo.put("fileName", record.getDataField("FilePath", user));
-                attachments.add(attachmentInfo);
+                for (DataRecord record : attachmentRecords) {
+                    HashMap<String, Object> attachmentInfo = new HashMap<>();
+                    attachmentInfo.put("recordId", record.getDataField("RecordId", user));
+                    attachmentInfo.put("fileName", record.getDataField("FilePath", user));
+                    attachments.add(attachmentInfo);
+                }
             }
-
+            log.info(attachmentRequestRecords.size() + " Attachments and " + attachments.size() + " correctly named Attachments found for " + requestId + ".");
+            return attachments;
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
             return null;
         }
-        log.info(attachments.size() + " Attachments found for " + requestId + ", " + type);
-        return attachments;
+
 
     }
 }
