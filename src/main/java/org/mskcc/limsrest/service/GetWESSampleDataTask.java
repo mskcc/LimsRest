@@ -229,20 +229,35 @@ public class GetWESSampleDataTask {
     }
 
 
+    /**
+     * Method to get all the child Samples directly under request as child and having a valid Whole Exome recipe.
+     * @param sample
+     * @return
+     * @throws NotFound
+     * @throws RemoteException
+     * @throws IoError
+     */
     private List<DataRecord> getChildSamplesWithRequestAsParent(DataRecord sample) throws NotFound, RemoteException, IoError {
         Object altId = sample.getValue("AltId", user);
+        List<DataRecord> descendantSamples = sample.getDescendantsOfType("Sample", user);
+        log.info("Total Descendant Samples: " + descendantSamples.size());
         List<DataRecord> sampleList = new ArrayList<>();
-        if (altId != null){
-            List<DataRecord> samplesMatchingAltId = dataRecordManager.queryDataRecords("Sample", "AltId = '" +String.valueOf(altId) + "'" , user);
-            if (samplesMatchingAltId.size()>0){
-                for (DataRecord rec : samplesMatchingAltId){
-                    Boolean sampleHasRequestAsParent = sample.getParentsOfType("Request", user).size() > 0;
+        if (sample.getParentsOfType("Request", user).size()>0){
+            sampleList.add(sample);
+        }
+//        if (altId != null){
+//            List<DataRecord> samplesMatchingAltId = dataRecordManager.queryDataRecords("Sample", "AltId = '" +String.valueOf(altId) + "'" , user);
+//            log.info("sample list matching altid size: " + samplesMatchingAltId.size());
+            if (descendantSamples.size()>0){
+                for (DataRecord rec : descendantSamples){
+//                    log.info(rec.getStringVal("SampleId", user));
+                    Boolean sampleHasRequestAsParent = rec.getParentsOfType("Request", user).size() > 0;
                     if (sampleHasRequestAsParent){
                         sampleList.add(rec);
                     }
                 }
             }
-        }
+//        }
         return sampleList;
     }
     /**
