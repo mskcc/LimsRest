@@ -45,7 +45,6 @@ public class GetAttachmentFile {
 
         try {
             file = (HashMap<String, Object>) result.get();
-            log.info(file.getClass().getName());
         } catch (Exception e) {
             log.error(e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
