@@ -1,6 +1,7 @@
 package org.mskcc.limsrest.service;
 
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,11 +10,12 @@ import java.util.Map;
 public class QcReportSampleList {
     public String requestId;
     public List<Object> requestSampleIds;
-    List<ReportSample> dnaReportSamples;
-    List<ReportSample> rnaReportSamples;
-    List<ReportSample> libraryReportSamples;
-    List<PathologySample> pathologyReportSamples;
-    List<HashMap<String, Object>> attachments;
+    public List<ReportSample> dnaReportSamples;
+    public List<ReportSample> rnaReportSamples;
+    public List<ReportSample> libraryReportSamples;
+    public List<ReportSample> poolReportSamples;
+    public List<PathologySample> pathologyReportSamples;
+    public List<HashMap<String, Object>> attachments;
 
     public QcReportSampleList() {
     }
@@ -21,11 +23,12 @@ public class QcReportSampleList {
     public QcReportSampleList(String requestId, List<Object> requestSampleIds) {
         this.requestId = requestId;
         this.requestSampleIds = requestSampleIds;
-        dnaReportSamples = null;
-        rnaReportSamples = null;
-        libraryReportSamples = null;
-        pathologyReportSamples = null;
-        attachments = null;
+        dnaReportSamples = new ArrayList<>();;
+        rnaReportSamples = new ArrayList<>();;
+        libraryReportSamples = new ArrayList<>();;
+        poolReportSamples = new ArrayList<>();;
+        pathologyReportSamples = new ArrayList<>();;
+        attachments = new ArrayList<>();;
     }
 
     public QcReportSampleList(String requestId) {
@@ -163,6 +166,17 @@ public class QcReportSampleList {
             public Double avgSize;
 
             public LibraryReportSample(Map<String, Object> sampleFields) {
+                super(sampleFields);
+                this.tumorOrNormal = (String) sampleFields.get("TumorOrNormal");
+                this.avgSize = (Double) sampleFields.get("AvgSize");
+            }
+
+        }
+        public static class PoolReportSample extends ReportSample {
+            public String tumorOrNormal;
+            public Double avgSize;
+
+            public PoolReportSample(Map<String, Object> sampleFields) {
                 super(sampleFields);
                 this.tumorOrNormal = (String) sampleFields.get("TumorOrNormal");
                 this.avgSize = (Double) sampleFields.get("AvgSize");
