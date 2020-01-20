@@ -8,6 +8,7 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 
@@ -83,7 +84,6 @@ public class GetQcReportSamplesTask extends LimsTask {
         } else {
             try {
                 ReportSample reportSample;
-
                 for (DataRecord sampleRecord : reportSamplesByRequest) {
                     Map<String, Object> sampleFields = sampleRecord.getFields(user);
                     String otherSampleId = sampleFields.get("OtherSampleId").toString();
@@ -99,17 +99,15 @@ public class GetQcReportSamplesTask extends LimsTask {
                                 for (String id : poolids) {
                                     if (!otherSampleIdsInRequest.parallelStream().anyMatch(id::contains)) {
                                         is_match = false;
-//                                        log.info("Not a match");
                                         break;
                                     }
                                 }
-
                             }
                             if (is_match) {
                                 reportSample = new ReportSample.PoolReportSample(sampleFields);
                                 rsl.poolReportSamples.add(reportSample);
                             }
-                        //  not a pool
+                            //  not a pool
                         } else {
                             switch (dataType) {
                                 case "QcReportDna":
@@ -131,13 +129,25 @@ public class GetQcReportSamplesTask extends LimsTask {
                                     reportSample = new ReportSample();
                             }
                         }
-                    // report sample id does not contain any of the request's sample's ids
+//                    if report sample id does not contain any of the request's sample's ids, it might be a DLP Pool
+                    } else if (sampleFields.get("Recipe").toString().equals("DLP") && igoId.toLowerCase().contains("pool")) {
+//                      DLP pools are made by attaching chipId to requestiD, moving this out of the loop could speed things up
+                        List<DataRecord> dlpSamples = dataRecordManager.queryDataRecords("DLPLibraryPreparationProtocol1", "SampleId LIKE '%" + requestId + "%'", this.user);
+                        if (dlpSamples.size() > 0) {
+                            for (DataRecord dlpSample : dlpSamples) {
+                                Map<String, Object> dlpFields = dlpSample.getFields(user);
+                                String chipId = dlpFields.get("ChipID").toString();
+                                if (otherSampleId.contains(chipId)) {
+                                    reportSample = new ReportSample.PoolReportSample(sampleFields);
+                                    rsl.poolReportSamples.add(reportSample);
+                                }
+                            }
+                        }
                     } else {
                         log.info("0 Samples found in " + dataType);
                         return;
                     }
                 }
-
             } catch (Throwable e) {
                 log.error(e.getMessage(), e);
                 return;
@@ -149,7 +159,7 @@ public class GetQcReportSamplesTask extends LimsTask {
 
 
     protected List<PathologySample> getPathologySamples(String dataType) throws Exception {
-        // check whether request exists in QC Report table, speeds up by ~30 %
+//      check whether request exists in QC Report table, speeds up by ~30 %
         List<DataRecord> reportSamplesByRequest = dataRecordManager.queryDataRecords(dataType, "SampleId LIKE '" + requestId + "%'", this.user);
         List<PathologySample> pathologySamples = new ArrayList<>();
 
@@ -158,7 +168,7 @@ public class GetQcReportSamplesTask extends LimsTask {
             return pathologySamples;
         } else {
             PathologySample pathologySample;
-//            List<DataRecord> sampleList = dataRecordManager.queryDataRecords(dataType, "OtherSampleId", otherSampleIds, this.user);
+//          List<DataRecord> sampleList = dataRecordManager.queryDataRecords(dataType, "OtherSampleId", otherSampleIds, this.user);
             for (DataRecord sampleRecord : reportSamplesByRequest) {
                 try {
                     Map<String, Object> sampleFields = sampleRecord.getFields(user);
@@ -167,7 +177,6 @@ public class GetQcReportSamplesTask extends LimsTask {
                         pathologySample = new PathologySample(sampleFields);
                         pathologySamples.add(pathologySample);
                     }
-
                 } catch (Throwable e) {
                     log.error(e.getMessage(), e);
                     return null;
@@ -176,7 +185,6 @@ public class GetQcReportSamplesTask extends LimsTask {
             log.info(pathologySamples.size() + " Samples found in Pathology/" + dataType + ".");
             return pathologySamples;
         }
-
     }
 
     protected List<HashMap<String, Object>> getAttachments(String requestId) {
@@ -184,14 +192,17 @@ public class GetQcReportSamplesTask extends LimsTask {
         try {
             List<DataRecord> attachmentRequestRecords = dataRecordManager.queryDataRecords("Attachment", "FilePath LIKE '%" + requestId + "%'", this.user);
             if (attachmentRequestRecords.size() > 0) {
-                String attachmentWhere = "FilePath LIKE '" + requestId + "_DNA_QC%.pdf' OR FilePath LIKE '" + requestId + "_RNA_QC%.pdf' OR FilePath LIKE '" + requestId + "_Library_QC%.pdf' OR FilePath LIKE '" + requestId + "_Pool_QC%.pdf' OR FilePath LIKE '" + requestId + "_cDNA_QC%.pdf'";
-                List<DataRecord> attachmentRecords = dataRecordManager.queryDataRecords("Attachment", attachmentWhere, this.user);
-
-                for (DataRecord record : attachmentRecords) {
-                    HashMap<String, Object> attachmentInfo = new HashMap<>();
-                    attachmentInfo.put("recordId", record.getDataField("RecordId", user));
-                    attachmentInfo.put("fileName", record.getDataField("FilePath", user));
-                    attachments.add(attachmentInfo);
+                String attachmentPattern = requestId + "_(DNA_QC|RNA_QC|Library_QC|Pool_QC|cDNA_QC)_*\\d*\\.pdf";
+                Pattern pattern = Pattern.compile(attachmentPattern, Pattern.CASE_INSENSITIVE);
+                for (DataRecord record : attachmentRequestRecords) {
+                    String fileName = record.getDataField("FilePath", user).toString();
+                    log.info(fileName);
+                    if (pattern.matcher(fileName).matches()) {
+                        HashMap<String, Object> attachmentInfo = new HashMap<>();
+                        attachmentInfo.put("recordId", record.getDataField("RecordId", user));
+                        attachmentInfo.put("fileName", record.getDataField("FilePath", user));
+                        attachments.add(attachmentInfo);
+                    }
                 }
             }
             log.info(attachmentRequestRecords.size() + " Attachments and " + attachments.size() + " correctly named Attachments found for " + requestId + ".");
@@ -200,7 +211,5 @@ public class GetQcReportSamplesTask extends LimsTask {
             log.error(e.getMessage(), e);
             return null;
         }
-
-
     }
 }
