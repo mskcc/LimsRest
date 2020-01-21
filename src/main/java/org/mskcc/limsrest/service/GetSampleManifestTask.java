@@ -509,8 +509,8 @@ public class GetSampleManifestTask {
                 }
 
                 if (returnOnlyTwo) {
-                    // Return only most recent R1&R2 in case of re-demux
-                    if (passedQCList.size() > 2)
+                    // Return only most recent R1&R2 in case of re-demux but return all fastqs if demux fastqs are by lane
+                    if (passedQCList.size() > 2 && !sameRunDifferentLane(passedQCList))
                         passedQCList = passedQCList.subList(0,2);
                 }
 
@@ -529,5 +529,28 @@ public class GetSampleManifestTask {
                 return null;
             }
         }
+    }
+
+    /*
+      If fastqs were demuxed by lane we should return all fastqs, ie: L005 & L006 fastqs should be included from this run in in Oct. 2016
+        '/ifs/archive/GCL/hiseq/FASTQ/JAX_0039_BHCKCHBBXX/Project_06208_C/Sample_P-1234567-T01-WES_IGO_06208_C_80/P-1234567-T01-WES_IGO_06208_C_80_S25_L005_R1_001.fastq.gz'
+        '/ifs/archive/GCL/hiseq/FASTQ/JAX_0039_BHCKCHBBXX/Project_06208_C/Sample_P-1234567-T01-WES_IGO_06208_C_80/P-1234567-T01-WES_IGO_06208_C_80_S25_L005_R2_001.fastq.gz'
+        '/ifs/archive/GCL/hiseq/FASTQ/JAX_0039_BHCKCHBBXX/Project_06208_C/Sample_P-1234567-T01-WES_IGO_06208_C_80/P-1234567-T01-WES_IGO_06208_C_80_S25_L006_R1_001.fastq.gz'
+        '/ifs/archive/GCL/hiseq/FASTQ/JAX_0039_BHCKCHBBXX/Project_06208_C/Sample_P-1234567-T01-WES_IGO_06208_C_80/P-1234567-T01-WES_IGO_06208_C_80_S25_L006_R2_001.fastq.gz'
+
+        BUT only return the most recent "_A2" run fastqs for this run:
+
+        /ifs/archive/GCL/hiseq/FASTQ/A00227_0011_BH2YHKDMXX_A2/Project_93017_F/Sample_P-8765432-T01-WES_IGO_93017_F_74/P-8765432-T01-WES_IGO_93017_F_74_S11_R2_001.fastq.gz
+         */
+    protected static boolean sameRunDifferentLane(List<ArchivedFastq> passedQCList) {
+        Set<String> samples = new HashSet<>();
+        for (ArchivedFastq fastqEntry : passedQCList) {
+            String [] parts = fastqEntry.fastq.split("/");
+            String sampleOnly = parts[parts.length - 1];
+            if (samples.contains(sampleOnly))
+                return false;
+            samples.add(sampleOnly);
+        }
+        return true;
     }
 }
