@@ -71,6 +71,7 @@ public class GetQcReportSamplesTask extends LimsTask {
     protected void getQcSamples(QcReportSampleList rsl, String dataType) throws Exception {
         // only include samples where SampleId contains RequestId
         List<DataRecord> reportSamplesByRequest = dataRecordManager.queryDataRecords(dataType, "SampleId LIKE '%" + requestId + "%'", this.user);
+//        fetch chip ids for DLP pool samples, done here to avoid loop issues
 
 //        convert otherSampleIds to List<String>
         List<String> otherSampleIdsInRequest = otherSampleIds.stream()
@@ -82,6 +83,7 @@ public class GetQcReportSamplesTask extends LimsTask {
             log.info("Request not found in " + dataType + ".");
             return;
         } else {
+            List<String> chipIds = getChipIds(requestId);
             try {
                 ReportSample reportSample;
                 for (DataRecord sampleRecord : reportSamplesByRequest) {
@@ -131,17 +133,11 @@ public class GetQcReportSamplesTask extends LimsTask {
                         }
 //                    if report sample id does not contain any of the request's sample's ids, it might be a DLP Pool
                     } else if (sampleFields.get("Recipe").toString().equals("DLP") && igoId.toLowerCase().contains("pool")) {
-//                      DLP pools are made by attaching chipId to requestiD, moving this out of the loop could speed things up
-                        List<DataRecord> dlpSamples = dataRecordManager.queryDataRecords("DLPLibraryPreparationProtocol1", "SampleId LIKE '%" + requestId + "%'", this.user);
-                        if (dlpSamples.size() > 0) {
-                            for (DataRecord dlpSample : dlpSamples) {
-                                Map<String, Object> dlpFields = dlpSample.getFields(user);
-                                String chipId = dlpFields.get("ChipID").toString();
-                                if (otherSampleId.contains(chipId)) {
-                                    reportSample = new ReportSample.PoolReportSample(sampleFields);
-                                    rsl.poolReportSamples.add(reportSample);
-                                }
-                            }
+//                check if reportSample's otherSampleId contains at least one chipId from this DLP request
+                        if (chipIds.parallelStream().anyMatch(otherSampleId::contains)) {
+                            reportSample = new ReportSample.PoolReportSample(sampleFields);
+                            rsl.poolReportSamples.add(reportSample);
+//
                         }
                     } else {
                         log.info("0 Samples found in " + dataType);
@@ -196,7 +192,6 @@ public class GetQcReportSamplesTask extends LimsTask {
                 Pattern pattern = Pattern.compile(attachmentPattern, Pattern.CASE_INSENSITIVE);
                 for (DataRecord record : attachmentRequestRecords) {
                     String fileName = record.getDataField("FilePath", user).toString();
-                    log.info(fileName);
                     if (pattern.matcher(fileName).matches()) {
                         HashMap<String, Object> attachmentInfo = new HashMap<>();
                         attachmentInfo.put("recordId", record.getDataField("RecordId", user));
@@ -211,5 +206,18 @@ public class GetQcReportSamplesTask extends LimsTask {
             log.error(e.getMessage(), e);
             return null;
         }
+    }
+
+    protected List<String> getChipIds(String requestId) throws Exception {
+        List<DataRecord> dlpSamples = dataRecordManager.queryDataRecords("DLPLibraryPreparationProtocol1", "SampleId LIKE '%" + requestId + "%'", this.user);
+        List<String> chipIds = new ArrayList<>();
+        for (DataRecord dlpSample : dlpSamples) {
+            Map<String, Object> dlpFields = dlpSample.getFields(user);
+            String chipId = dlpFields.get("ChipID").toString();
+            if (!chipId.isEmpty()) {
+                chipIds.add(chipId);
+            }
+        }
+        return chipIds;
     }
 }
