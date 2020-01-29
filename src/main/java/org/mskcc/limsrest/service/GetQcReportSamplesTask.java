@@ -61,28 +61,19 @@ public class GetQcReportSamplesTask extends LimsTask {
         return rsl;
     }
 
-    /**
-     * Returns samples in QC Table based on RequestId and otherSampleId
-     *
-     * @param dataType LIMS table
-     * @return List of ReportSamples
-     * @throws Exception
-     */
     protected void getQcSamples(QcReportSampleList rsl, String dataType) throws Exception {
-        // only include samples where SampleId contains RequestId
+//      only include samples where SampleId contains RequestId
         List<DataRecord> reportSamplesByRequest = dataRecordManager.queryDataRecords(dataType, "SampleId LIKE '%" + requestId + "%'", this.user);
-//        fetch chip ids for DLP pool samples, done here to avoid loop issues
-
 //        convert otherSampleIds to List<String>
         List<String> otherSampleIdsInRequest = otherSampleIds.stream()
                 .map(object -> Objects.toString(object, null))
                 .collect(Collectors.toList());
-
         int reportSamples = 0;
         if (reportSamplesByRequest.isEmpty()) {
             log.info("Request not found in " + dataType + ".");
             return;
         } else {
+//        fetch chip ids for DLP pool samples, done here to avoid loop issues
             List<String> chipIds = getChipIds(requestId);
             try {
                 ReportSample reportSample;
@@ -109,26 +100,33 @@ public class GetQcReportSamplesTask extends LimsTask {
                                 reportSample = new ReportSample.PoolReportSample(sampleFields);
                                 rsl.poolReportSamples.add(reportSample);
                             }
-                            //  not a pool
+//                        not a pool
                         } else {
-                            switch (dataType) {
-                                case "QcReportDna":
-                                    reportSample = new ReportSample.DnaReportSample(sampleFields);
-                                    rsl.dnaReportSamples.add(reportSample);
-                                    reportSamples += 1;
-                                    break;
-                                case "QcReportRna":
-                                    reportSample = new ReportSample.RnaReportSample(sampleFields);
-                                    rsl.rnaReportSamples.add(reportSample);
-                                    reportSamples += 1;
-                                    break;
-                                case "QcReportLibrary":
-                                    reportSample = new ReportSample.LibraryReportSample(sampleFields);
-                                    rsl.libraryReportSamples.add(reportSample);
-                                    reportSamples += 1;
-                                    break;
-                                default:
-                                    reportSample = new ReportSample();
+//                            reject if igo id has anything but a number after the request ID
+//                            (to avoid 10626_B samples showing up for 10626 which would happen if both requests contain
+//                            the same investigator sample ids. Future fix: Add request id to report tables.
+                            String igoIdPattern = requestId.toLowerCase() + "_\\d.*";
+                            Pattern pattern = Pattern.compile(igoIdPattern, Pattern.CASE_INSENSITIVE);
+                            if (pattern.matcher(igoId).matches()) {
+                                switch (dataType) {
+                                    case "QcReportDna":
+                                        reportSample = new ReportSample.DnaReportSample(sampleFields);
+                                        rsl.dnaReportSamples.add(reportSample);
+                                        reportSamples += 1;
+                                        break;
+                                    case "QcReportRna":
+                                        reportSample = new ReportSample.RnaReportSample(sampleFields);
+                                        rsl.rnaReportSamples.add(reportSample);
+                                        reportSamples += 1;
+                                        break;
+                                    case "QcReportLibrary":
+                                        reportSample = new ReportSample.LibraryReportSample(sampleFields);
+                                        rsl.libraryReportSamples.add(reportSample);
+                                        reportSamples += 1;
+                                        break;
+                                    default:
+                                        reportSample = new ReportSample();
+                                }
                             }
                         }
 //                    if report sample id does not contain any of the request's sample's ids, it might be a DLP Pool
@@ -137,11 +135,9 @@ public class GetQcReportSamplesTask extends LimsTask {
                         if (chipIds.parallelStream().anyMatch(otherSampleId::contains)) {
                             reportSample = new ReportSample.PoolReportSample(sampleFields);
                             rsl.poolReportSamples.add(reportSample);
-//
                         }
                     } else {
                         log.info("0 Samples found in " + dataType);
-                        return;
                     }
                 }
             } catch (Throwable e) {
