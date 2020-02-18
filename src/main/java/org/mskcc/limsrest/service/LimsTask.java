@@ -65,96 +65,6 @@ public abstract class LimsTask implements VeloxExecutable<Object>, Callable<Obje
         }
     }
 
-    public SampleQcSummary annotateQcSummary(DataRecord qc) {
-        SampleQcSummary qcSummary = new SampleQcSummary();
-        try {
-            Map<String, Object> qcFields = qc.getFields(user);
-
-            String qcStatus = (String) qcFields.get("SeqQCStatus");
-            log.info("Building QC record with status: " + qcStatus);
-            //qcFields.forEach((key, value) -> System.out.println(key + ":" + value));
-
-            Boolean passedQc = (Boolean) qcFields.getOrDefault("PassedQc", Boolean.FALSE);
-            if (passedQc == null)
-                passedQc = Boolean.FALSE;
-            if (passedQc && "Passed".equals(qcStatus))
-                qcSummary.setQcStatus(QcStatus.IGO_COMPLETE.getText());
-            else
-                qcSummary.setQcStatus(qcStatus);
-
-            runAndCatchNpe(() -> qcSummary.setRecordId((Long) qcFields.get("RecordId")));
-            runAndCatchNpe(() -> qcSummary.setSampleName((String) qcFields.get("OtherSampleId")));
-            runAndCatchNpe(() -> qcSummary.setBaitSet((String) qcFields.get("BaitSet")));
-            runAndCatchNpe(() -> qcSummary.setMskq((Double) qcFields.get("Mskq")));
-            runAndCatchNpe(() -> qcSummary.setMeanTargetCoverage((Double) qcFields.get("MeanTargetCoverage")));
-            runAndCatchNpe(() -> qcSummary.setMEAN_COVERAGE((Double) qcFields.get("MeanCoverage")));
-            runAndCatchNpe(() -> qcSummary.setPercentAdapters((Double) qcFields.get("PercentAdapters")));
-            runAndCatchNpe(() -> qcSummary.setPercentDuplication((Double) qcFields.get("PercentDuplication")));
-            runAndCatchNpe(() -> qcSummary.setPercentOffBait((Double) qcFields.get("PercentOffBait")));
-            runAndCatchNpe(() -> qcSummary.setPCT_EXC_MAPQ((Double) qcFields.get("PercentExcMapQ")));
-            runAndCatchNpe(() -> qcSummary.setPCT_EXC_DUPE((Double) qcFields.get("PercentExcDupe")));
-            runAndCatchNpe(() -> qcSummary.setPCT_EXC_BASEQ((Double) qcFields.get("PercentExcBaseQ")));
-            runAndCatchNpe(() -> qcSummary.setPCT_EXC_TOTAL((Double) qcFields.get("PercentExcTotal")));
-            runAndCatchNpe(() -> qcSummary.setPercentTarget10x((Double) qcFields.get("PercentTarget10X")));
-            runAndCatchNpe(() -> qcSummary.setPercentTarget30x((Double) qcFields.get("PercentTarget30X")));
-            runAndCatchNpe(() -> qcSummary.setPercentTarget40x((Double) qcFields.get("PercentTarget40X")));
-            runAndCatchNpe(() -> qcSummary.setPercentTarget80x((Double) qcFields.get("PercentTarget80X")));
-            runAndCatchNpe(() -> qcSummary.setPercentTarget100x((Double) qcFields.get("PercentTarget100X")));
-            runAndCatchNpe(() -> qcSummary.setReadsDuped((Long) qcFields.get("ReadPairDupes")));
-            runAndCatchNpe(() -> qcSummary.setReadsExamined((Long) qcFields.get("ReadsExamined")));
-            runAndCatchNpe(() -> qcSummary.setTotalReads((Long) qcFields.get("TotalReads")));
-            runAndCatchNpe(() -> qcSummary.setUnmapped((Long) qcFields.get("UnmappedDupes")));
-            runAndCatchNpe(() -> qcSummary.setUnpairedReadsExamined((Long) qcFields.get("UnpairedReads")));
-            runAndCatchNpe(() -> qcSummary.setZeroCoveragePercent((Double) qcFields.get("ZeroCoveragePercent")));
-            runAndCatchNpe(() -> qcSummary.setRun((String) qcFields.get("SequencerRunFolder")));
-            runAndCatchNpe(() -> qcSummary.setReviewed((Boolean) qcFields.get("Reviewed")));
-            runAndCatchNpe(() -> qcSummary.setPercentRibosomalBases((Double) qcFields.get("PercentRibosomalBases")));
-            runAndCatchNpe(() -> qcSummary.setPercentCodingBases((Double) qcFields.get("PercentCodingBases")));
-            runAndCatchNpe(() -> qcSummary.setPercentUtrBases((Double) qcFields.get("PercentUtrBases")));
-            runAndCatchNpe(() -> qcSummary.setPercentIntronicBases((Double) qcFields.get("PercentIntronicBases")));
-            runAndCatchNpe(() -> qcSummary.setPercentIntergenicBases((Double) qcFields.get("PercentIntergenicBases")));
-            runAndCatchNpe(() -> qcSummary.setPercentMrnaBases((Double) qcFields.get("PercentMrnaBases")));
-        } catch (Throwable e) {
-            log.info(e.getMessage(), e);
-            qcSummary.setSampleName(Messages.ERROR_IN + " Annotation:" + e.getMessage());
-        }
-        return qcSummary;
-    }
-
-    public void annotateRequestSummary(RequestSummary rs, DataRecord request) {
-        try {
-            Map<String, Object> requestFields = request.getFields(user);
-            annotateRequestSummary(rs, requestFields);
-        } catch (Throwable e) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            log.info(e.getMessage());
-            log.info(sw.toString());
-            rs.setInvestigator(Messages.ERROR_IN + " Annotation:" + e.getMessage());
-        }
-    }
-
-    public void annotateRequestSummary(RequestSummary rs, Map<String, Object> requestFields) {
-        try {
-            runAndCatchNpe(() -> rs.setPi((String) requestFields.get("LaboratoryHead")));
-            runAndCatchNpe(() -> rs.setInvestigator((String) requestFields.get("Investigator")));
-            runAndCatchNpe(() -> rs.setPiEmail((String) requestFields.get("LabHeadEmail")));
-            runAndCatchNpe(() -> rs.setInvestigatorEmail((String) requestFields.get("Investigatoremail")));
-            runAndCatchNpe(() -> rs.setAutorunnable((Boolean) requestFields.get("BicAutorunnable")));
-            runAndCatchNpe(() -> rs.setAnalysisRequested((Boolean) requestFields.get("BICAnalysis")));
-            runAndCatchNpe(() -> rs.setCmoProject((String) requestFields.get("CMOProjectID")));
-            runAndCatchNpe(() -> rs.setProjectManager((String) requestFields.get("ProjectManager")));
-        } catch (Throwable e) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            log.info(e.getMessage());
-            log.info(sw.toString());
-            rs.setInvestigator("Annotation failed:" + e.getMessage());
-        }
-    }
-
     public void annotateRequestDetailed(RequestDetailed requestDetailed, DataRecord request) {
         try {
             Map<String, Object> requestFields = request.getFields(user);
@@ -255,38 +165,6 @@ public abstract class LimsTask implements VeloxExecutable<Object>, Callable<Obje
                     ("CMOMeetingDiscussion")));
         } catch (Throwable e) {
             projectSummary.setCmoProjectId("Annotation failed: " + e.getMessage());
-        }
-    }
-
-    public void annotateSampleSummary(SampleSummary ss, DataRecord sample) {
-        try {
-            Map<String, Object> sampleFields = sample.getFields(user);
-            annotateSampleSummary(ss, sampleFields);
-        } catch (Throwable e) {
-            ss.addCmoId("Annotation failed:" + e.getMessage());
-        }
-    }
-
-    public void annotateSampleSummary(SampleSummary ss, Map<String, Object> sampleFields) {
-        try {
-            ss.setRecordId((Long) sampleFields.get("RecordId"));
-            ss.setSpecies((String) sampleFields.get("Species"));
-            runAndCatchNpe(() -> ss.setRecipe((String) sampleFields.get("Recipe")));
-            runAndCatchNpe(() -> ss.setTumorOrNormal((String) sampleFields.get("TumorOrNormal")));
-            runAndCatchNpe(() -> ss.setTumorType((String) sampleFields.get("TumorType")));
-            runAndCatchNpe(() -> ss.setGender((String) sampleFields.get("Gender")));
-            ss.addRequest((String) sampleFields.get("RequestId"));
-            ss.addBaseId((String) sampleFields.get("SampleId"));
-            ss.addCmoId((String) sampleFields.get("OtherSampleId"));
-            runAndCatchNpe(() -> ss.addExpName((String) sampleFields.get("UserSampleID")));
-            runAndCatchNpe(() -> ss.setSpecimenType((String) sampleFields.get("SpecimenType")));
-            runAndCatchNpe(() -> ss.addConcentration((Double) sampleFields.get("Concentration")));
-            runAndCatchNpe(() -> ss.addConcentrationUnits((String) sampleFields.get("ConcentrationUnits")));
-            runAndCatchNpe(() -> ss.addVolume((Double) sampleFields.get("Volume")));
-            runAndCatchNpe(() -> ss.setPlatform((String) sampleFields.get("Platform")));
-            ss.setDropOffDate((Long) sampleFields.get("DateCreated"));
-        } catch (Throwable e) {
-            ss.addCmoId("Annotation failed:" + e.getMessage());
         }
     }
 

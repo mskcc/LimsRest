@@ -1,9 +1,14 @@
 package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.ConnectionLIMS;
+import org.mskcc.limsrest.service.assignedprocess.QcStatus;
+import org.mskcc.limsrest.util.Messages;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -11,35 +16,44 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class GetSampleQc extends LimsTask {
+import static org.mskcc.limsrest.util.Utils.runAndCatchNpe;
+
+public class GetSampleQc {
     private static Log log = LogFactory.getLog(GetSampleQc.class);
     protected String[] projectList;
+    private ConnectionLIMS conn;
 
     @Value("${delphiRestUrl}")
     private String delphiRestUrl;
 
-    public void init(String[] project) {
+    public GetSampleQc(String[] project, ConnectionLIMS conn) {
         this.projectList = project;
+        this.conn = conn;
     }
 
-    @Override
     @PreAuthorize("hasRole('READ')")
-    public Object execute(VeloxConnection conn) {
+    public List<RequestSummary> execute() {
         List<RequestSummary> rss = new LinkedList<>();
         try {
+            VeloxConnection vConn = conn.getConnection();
+            User user = vConn.getUser();
+            DataRecordManager dataRecordManager = vConn.getDataRecordManager();
+
             String projects = Stream.of(projectList).collect(Collectors.joining("','", "'", "'"));
             log.info("Project " + projects);
-            List<DataRecord> requestList = this.dataRecordManager.queryDataRecords("Request", "RequestId in (" + projects + ")", this.user);
+            List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId in (" + projects + ")", user);
             HashMap<String, String>  alt2base = new HashMap<>(); // AltId->SampleId
             for (DataRecord r : requestList) {
                 DataRecord[] baseSamples = r.getChildrenOfType("Sample", user);
                 for (DataRecord bs : baseSamples){
                     try {
-                        alt2base.put(bs.getStringVal("AltId", this.user), bs.getStringVal("SampleId", this.user));
+                        alt2base.put(bs.getStringVal("AltId", user), bs.getStringVal("SampleId", user));
                     } catch (NullPointerException npe){
                         log.info("Problem trying to populate base id mapping");
                     }
@@ -48,50 +62,50 @@ public class GetSampleQc extends LimsTask {
                 String project = r.getStringVal("RequestId", user);
                 RequestSummary rs = new RequestSummary(project);
                 HashSet<String> runSet = new HashSet<>();
-                annotateRequestSummary(rs, r); // fill in all data at request level except sample number
+                annotateRequestSummary(rs, r, user); // fill in all data at request level except sample number
                 rs.setSampleNumber((new Short(r.getShortVal("SampleNumber", user))).intValue());
 
                 List<DataRecord> qcRecords;
-                qcRecords = this.dataRecordManager.queryDataRecords("SeqAnalysisSampleQC", "Request = '" + project + "'", this.user);
+                qcRecords = dataRecordManager.queryDataRecords("SeqAnalysisSampleQC", "Request = '" + project + "'", user);
                 if (qcRecords.size() == 0){
-                    qcRecords = r.getDescendantsOfType("SeqAnalysisSampleQC", this.user);
+                    qcRecords = r.getDescendantsOfType("SeqAnalysisSampleQC", user);
                 }
                 for (DataRecord qc : qcRecords) {
                     log.info("Getting QC Site records for sample.");
                     SampleSummary ss = new SampleSummary();
-                    DataRecord parentSample = qc.getParentsOfType("Sample", this.user).get(0);
-                    SampleQcSummary qcSummary = annotateQcSummary(qc);
+                    DataRecord parentSample = qc.getParentsOfType("Sample", user).get(0);
+                    SampleQcSummary qcSummary = annotateQcSummary(qc, user);
                     if (parentSample != null) {
-                        annotateSampleSummary(ss, parentSample);
+                        annotateSampleSummary(ss, parentSample, user);
                         try {
-                            if (!parentSample.getStringVal("AltId", this.user).equals("")){
-                                ss.addBaseId(alt2base.get(parentSample.getStringVal("AltId", this.user)));
-                                log.info(parentSample.getStringVal("AltId", this.user));
-                                log.info(alt2base.get(parentSample.getStringVal("AltId", this.user)));
+                            if (!parentSample.getStringVal("AltId", user).equals("")){
+                                ss.addBaseId(alt2base.get(parentSample.getStringVal("AltId", user)));
+                                log.info(parentSample.getStringVal("AltId", user));
+                                log.info(alt2base.get(parentSample.getStringVal("AltId", user)));
                             } else{
                                 DataRecord searchSample = parentSample;
                                 boolean canSearch = true;
-                                while (searchSample.getParentsOfType("Request", this.user).size() == 0 && canSearch){
-                                    List<DataRecord> searchParents = searchSample.getParentsOfType("Sample", this.user);
+                                while (searchSample.getParentsOfType("Request", user).size() == 0 && canSearch){
+                                    List<DataRecord> searchParents = searchSample.getParentsOfType("Sample", user);
                                     if(searchParents.size() == 0){
                                         canSearch = false;
                                     } else{
                                         searchSample = searchParents.get(0);
                                     }
                                 }
-                                ss.addBaseId(searchSample.getStringVal("SampleId", this.user));
+                                ss.addBaseId(searchSample.getStringVal("SampleId", user));
                             }
                         } catch (Exception e){
                             log.info("Problem trying to access base id mapping");
                         }
-                        DataRecord[] childSamples = parentSample.getChildrenOfType("Sample", this.user);
+                        DataRecord[] childSamples = parentSample.getChildrenOfType("Sample", user);
                         if (childSamples.length > 0){
-                            ss.setInitialPool(childSamples[0].getStringVal("SampleId", this.user));
+                            ss.setInitialPool(childSamples[0].getStringVal("SampleId", user));
                         }
-                        DataRecord[] qcData = parentSample.getChildrenOfType("QCDatum", this.user);
+                        DataRecord[] qcData = parentSample.getChildrenOfType("QCDatum", user);
                         long created = -1;
                         for (DataRecord datum : qcData){
-                            Map<String, Object> qcFields = datum.getFields(this.user);
+                            Map<String, Object> qcFields = datum.getFields(user);
                             if (qcFields.containsKey("MapToSample") && (boolean)qcFields.get("MapToSample") && (long)qcFields.get("DateCreated") > created){
                                 qcSummary.setQcControl((Double)qcFields.get("CalculatedConcentration"));
                                 qcSummary.setQcUnits((String)qcFields.get("ConcentrationUnits"));
@@ -102,32 +116,32 @@ public class GetSampleQc extends LimsTask {
                                 qcSummary.setQuantUnits((String)qcFields.get("ConcentrationUnits"));
                             }
                         }
-                        DataRecord[] requirements = parentSample.getChildrenOfType("SeqRequirement", this.user);
-                        List<DataRecord> searchParents = parentSample.getAncestorsOfType("Sample", this.user);
+                        DataRecord[] requirements = parentSample.getChildrenOfType("SeqRequirement", user);
+                        List<DataRecord> searchParents = parentSample.getAncestorsOfType("Sample", user);
                         created = -1;
                         double mass = 0.00000;
                         for (DataRecord protoParent : searchParents){
-                            DataRecord[] kProtocols = protoParent.getChildrenOfType("KAPALibPlateSetupProtocol1", this.user);
-                            DataRecord[] rProtocols = protoParent.getChildrenOfType("TruSeqRNAProtocol", this.user);
-                            DataRecord[] depProtocols = protoParent.getChildrenOfType("TruSeqRiboDepleteProtocol", this.user);
+                            DataRecord[] kProtocols = protoParent.getChildrenOfType("KAPALibPlateSetupProtocol1", user);
+                            DataRecord[] rProtocols = protoParent.getChildrenOfType("TruSeqRNAProtocol", user);
+                            DataRecord[] depProtocols = protoParent.getChildrenOfType("TruSeqRiboDepleteProtocol", user);
                             for (DataRecord protocol : kProtocols){
-                                long protoCreate = protocol.getDateVal("DateCreated", this.user);
+                                long protoCreate = protocol.getDateVal("DateCreated", user);
                                 if (protoCreate  > created){
-                                    mass = protocol.getDoubleVal("TargetMassAliq1", this.user);
+                                    mass = protocol.getDoubleVal("TargetMassAliq1", user);
                                     created = protoCreate;
                                 }
                             }
                             for (DataRecord protocol : rProtocols){
-                                long protoCreate = protocol.getDateVal("DateCreated", this.user);
+                                long protoCreate = protocol.getDateVal("DateCreated", user);
                                 if (protoCreate  > created){
-                                    mass = protocol.getDoubleVal("Aliq1TargetMass", this.user);
+                                    mass = protocol.getDoubleVal("Aliq1TargetMass", user);
                                     created = protoCreate;
                                 }
                             }
                             for (DataRecord protocol : depProtocols){
-                                long protoCreate = protocol.getDateVal("DateCreated", this.user);
+                                long protoCreate = protocol.getDateVal("DateCreated", user);
                                 if (protoCreate  > created){
-                                    mass = protocol.getDoubleVal("Aliq1TargetMass", this.user);
+                                    mass = protocol.getDoubleVal("Aliq1TargetMass", user);
                                     created = protoCreate;
                                 }
                             }
@@ -141,8 +155,8 @@ public class GetSampleQc extends LimsTask {
                         Set<DataRecord> visited = new HashSet<>();
                         while ((requirements.length == 0) &&  !queue.isEmpty()) {
                             DataRecord current = queue.removeFirst();
-                            requirements = current.getChildrenOfType("SeqRequirement", this.user);
-                            List<DataRecord> parents = current.getParentsOfType("Sample", this.user);
+                            requirements = current.getChildrenOfType("SeqRequirement", user);
+                            List<DataRecord> parents = current.getParentsOfType("Sample", user);
                             for (DataRecord parent : parents){
                                 if (!visited.contains(parent)){
                                     visited.add(parent);
@@ -152,12 +166,12 @@ public class GetSampleQc extends LimsTask {
                         }
                         if (requirements.length > 0){
                             try {
-                                ss.setRequestedReadNumber((long)requirements[0].getDoubleVal("RequestedReads", this.user));
+                                ss.setRequestedReadNumber((long)requirements[0].getDoubleVal("RequestedReads", user));
                             } catch(NullPointerException npe){
                                 ss.setRequestedReadNumber(0);
                             }
                             try {
-                                ss.setCoverageTarget(requirements[0].getIntegerVal("CoverageTarget", this.user));
+                                ss.setCoverageTarget(requirements[0].getIntegerVal("CoverageTarget", user));
                             } catch (NullPointerException npe){
                                 ss.setCoverageTarget(0);
                             }
@@ -166,13 +180,13 @@ public class GetSampleQc extends LimsTask {
                         // calculate yield trying to find a Protocol Record to get elution volume and use corresponding sample's concentration to multiply for yield
                         // Jira IGOWEB-1250 - concentration calculation is not 100% correct for all cases but nobody has explained what needs to change
                         try {
-                            DataRecord[] protocols = parentSample.getChildrenOfType("DNALibraryPrepProtocol2", this.user);
+                            DataRecord[] protocols = parentSample.getChildrenOfType("DNALibraryPrepProtocol2", user);
                             if (protocols.length > 0){
-                                ss.setYield(protocols[0].getDoubleVal("ElutionVol", this.user) * parentSample.getDoubleVal("Concentration", this.user));
+                                ss.setYield(protocols[0].getDoubleVal("ElutionVol", user) * parentSample.getDoubleVal("Concentration", user));
                             } else{
-                                DataRecord[] assignments = parentSample.getChildrenOfType("MolarConcentrationAssignment", this.user);
+                                DataRecord[] assignments = parentSample.getChildrenOfType("MolarConcentrationAssignment", user);
                                 if(assignments.length > 0){
-                                    ss.setYield(assignments[0].getDoubleVal("Concentration", this.user));
+                                    ss.setYield(assignments[0].getDoubleVal("Concentration", user));
                                 }
                             }
                         } catch (NullPointerException e){
@@ -240,6 +254,128 @@ public class GetSampleQc extends LimsTask {
 
                 rs.addSample(ss);
             }
+        }
+    }
+
+    public static SampleQcSummary annotateQcSummary(DataRecord qc, User user) {
+        SampleQcSummary qcSummary = new SampleQcSummary();
+        try {
+            Map<String, Object> qcFields = qc.getFields(user);
+
+            String qcStatus = (String) qcFields.get("SeqQCStatus");
+            log.info("Building QC record with status: " + qcStatus);
+            //qcFields.forEach((key, value) -> System.out.println(key + ":" + value));
+
+            Boolean passedQc = (Boolean) qcFields.getOrDefault("PassedQc", Boolean.FALSE);
+            if (passedQc == null)
+                passedQc = Boolean.FALSE;
+            if (passedQc && "Passed".equals(qcStatus))
+                qcSummary.setQcStatus(QcStatus.IGO_COMPLETE.getText());
+            else
+                qcSummary.setQcStatus(qcStatus);
+
+            runAndCatchNpe(() -> qcSummary.setRecordId((Long) qcFields.get("RecordId")));
+            runAndCatchNpe(() -> qcSummary.setSampleName((String) qcFields.get("OtherSampleId")));
+            runAndCatchNpe(() -> qcSummary.setBaitSet((String) qcFields.get("BaitSet")));
+            runAndCatchNpe(() -> qcSummary.setMskq((Double) qcFields.get("Mskq")));
+            runAndCatchNpe(() -> qcSummary.setMeanTargetCoverage((Double) qcFields.get("MeanTargetCoverage")));
+            runAndCatchNpe(() -> qcSummary.setMEAN_COVERAGE((Double) qcFields.get("MeanCoverage")));
+            runAndCatchNpe(() -> qcSummary.setPercentAdapters((Double) qcFields.get("PercentAdapters")));
+            runAndCatchNpe(() -> qcSummary.setPercentDuplication((Double) qcFields.get("PercentDuplication")));
+            runAndCatchNpe(() -> qcSummary.setPercentOffBait((Double) qcFields.get("PercentOffBait")));
+            runAndCatchNpe(() -> qcSummary.setPCT_EXC_MAPQ((Double) qcFields.get("PercentExcMapQ")));
+            runAndCatchNpe(() -> qcSummary.setPCT_EXC_DUPE((Double) qcFields.get("PercentExcDupe")));
+            runAndCatchNpe(() -> qcSummary.setPCT_EXC_BASEQ((Double) qcFields.get("PercentExcBaseQ")));
+            runAndCatchNpe(() -> qcSummary.setPCT_EXC_TOTAL((Double) qcFields.get("PercentExcTotal")));
+            runAndCatchNpe(() -> qcSummary.setPercentTarget10x((Double) qcFields.get("PercentTarget10X")));
+            runAndCatchNpe(() -> qcSummary.setPercentTarget30x((Double) qcFields.get("PercentTarget30X")));
+            runAndCatchNpe(() -> qcSummary.setPercentTarget40x((Double) qcFields.get("PercentTarget40X")));
+            runAndCatchNpe(() -> qcSummary.setPercentTarget80x((Double) qcFields.get("PercentTarget80X")));
+            runAndCatchNpe(() -> qcSummary.setPercentTarget100x((Double) qcFields.get("PercentTarget100X")));
+            runAndCatchNpe(() -> qcSummary.setReadsDuped((Long) qcFields.get("ReadPairDupes")));
+            runAndCatchNpe(() -> qcSummary.setReadsExamined((Long) qcFields.get("ReadsExamined")));
+            runAndCatchNpe(() -> qcSummary.setTotalReads((Long) qcFields.get("TotalReads")));
+            runAndCatchNpe(() -> qcSummary.setUnmapped((Long) qcFields.get("UnmappedDupes")));
+            runAndCatchNpe(() -> qcSummary.setUnpairedReadsExamined((Long) qcFields.get("UnpairedReads")));
+            runAndCatchNpe(() -> qcSummary.setZeroCoveragePercent((Double) qcFields.get("ZeroCoveragePercent")));
+            runAndCatchNpe(() -> qcSummary.setRun((String) qcFields.get("SequencerRunFolder")));
+            runAndCatchNpe(() -> qcSummary.setReviewed((Boolean) qcFields.get("Reviewed")));
+            runAndCatchNpe(() -> qcSummary.setPercentRibosomalBases((Double) qcFields.get("PercentRibosomalBases")));
+            runAndCatchNpe(() -> qcSummary.setPercentCodingBases((Double) qcFields.get("PercentCodingBases")));
+            runAndCatchNpe(() -> qcSummary.setPercentUtrBases((Double) qcFields.get("PercentUtrBases")));
+            runAndCatchNpe(() -> qcSummary.setPercentIntronicBases((Double) qcFields.get("PercentIntronicBases")));
+            runAndCatchNpe(() -> qcSummary.setPercentIntergenicBases((Double) qcFields.get("PercentIntergenicBases")));
+            runAndCatchNpe(() -> qcSummary.setPercentMrnaBases((Double) qcFields.get("PercentMrnaBases")));
+        } catch (Throwable e) {
+            log.info(e.getMessage(), e);
+            qcSummary.setSampleName(Messages.ERROR_IN + " Annotation:" + e.getMessage());
+        }
+        return qcSummary;
+    }
+
+    public static void annotateRequestSummary(RequestSummary rs, DataRecord request, User user) {
+        try {
+            Map<String, Object> requestFields = request.getFields(user);
+            annotateRequestSummary(rs, requestFields);
+        } catch (Throwable e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            log.info(e.getMessage());
+            log.info(sw.toString());
+            rs.setInvestigator(Messages.ERROR_IN + " Annotation:" + e.getMessage());
+        }
+    }
+
+    public static void annotateRequestSummary(RequestSummary rs, Map<String, Object> requestFields) {
+        try {
+            runAndCatchNpe(() -> rs.setPi((String) requestFields.get("LaboratoryHead")));
+            runAndCatchNpe(() -> rs.setInvestigator((String) requestFields.get("Investigator")));
+            runAndCatchNpe(() -> rs.setPiEmail((String) requestFields.get("LabHeadEmail")));
+            runAndCatchNpe(() -> rs.setInvestigatorEmail((String) requestFields.get("Investigatoremail")));
+            runAndCatchNpe(() -> rs.setAutorunnable((Boolean) requestFields.get("BicAutorunnable")));
+            runAndCatchNpe(() -> rs.setAnalysisRequested((Boolean) requestFields.get("BICAnalysis")));
+            runAndCatchNpe(() -> rs.setCmoProject((String) requestFields.get("CMOProjectID")));
+            runAndCatchNpe(() -> rs.setProjectManager((String) requestFields.get("ProjectManager")));
+        } catch (Throwable e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            log.info(e.getMessage());
+            log.info(sw.toString());
+            rs.setInvestigator("Annotation failed:" + e.getMessage());
+        }
+    }
+
+    public static void annotateSampleSummary(SampleSummary ss, DataRecord sample, User user) {
+        try {
+            Map<String, Object> sampleFields = sample.getFields(user);
+            annotateSampleSummary(ss, sampleFields);
+        } catch (Throwable e) {
+            ss.addCmoId("Annotation failed:" + e.getMessage());
+        }
+    }
+
+    public static void annotateSampleSummary(SampleSummary ss, Map<String, Object> sampleFields) {
+        try {
+            ss.setRecordId((Long) sampleFields.get("RecordId"));
+            ss.setSpecies((String) sampleFields.get("Species"));
+            runAndCatchNpe(() -> ss.setRecipe((String) sampleFields.get("Recipe")));
+            runAndCatchNpe(() -> ss.setTumorOrNormal((String) sampleFields.get("TumorOrNormal")));
+            runAndCatchNpe(() -> ss.setTumorType((String) sampleFields.get("TumorType")));
+            runAndCatchNpe(() -> ss.setGender((String) sampleFields.get("Gender")));
+            ss.addRequest((String) sampleFields.get("RequestId"));
+            ss.addBaseId((String) sampleFields.get("SampleId"));
+            ss.addCmoId((String) sampleFields.get("OtherSampleId"));
+            runAndCatchNpe(() -> ss.addExpName((String) sampleFields.get("UserSampleID")));
+            runAndCatchNpe(() -> ss.setSpecimenType((String) sampleFields.get("SpecimenType")));
+            runAndCatchNpe(() -> ss.addConcentration((Double) sampleFields.get("Concentration")));
+            runAndCatchNpe(() -> ss.addConcentrationUnits((String) sampleFields.get("ConcentrationUnits")));
+            runAndCatchNpe(() -> ss.addVolume((Double) sampleFields.get("Volume")));
+            runAndCatchNpe(() -> ss.setPlatform((String) sampleFields.get("Platform")));
+            ss.setDropOffDate((Long) sampleFields.get("DateCreated"));
+        } catch (Throwable e) {
+            ss.addCmoId("Annotation failed:" + e.getMessage());
         }
     }
 }

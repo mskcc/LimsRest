@@ -20,10 +20,13 @@ public class SampleRecordToSampleConverter {
         Map<String, Object> fields = sampleRecord.getFields(user);
         String sampleId = (String) fields.get(VeloxConstants.SAMPLE_ID);
 
-        DataRecord[] sampleInfoRecords = sampleRecord.getChildrenOfType(VeloxConstants.SAMPLE_CMO_INFO_RECORDS,
-                user);
+        DataRecord[] sampleInfoRecords = sampleRecord.getChildrenOfType(VeloxConstants.SAMPLE_CMO_INFO_RECORDS, user);
 
-        validateSampleInfoRecords(sampleId, sampleInfoRecords);
+        if (sampleInfoRecords.length == 0)
+            throw new RuntimeException(String.format("Sample Cmo Info not present for sample: %s", sampleId));
+        if (sampleInfoRecords.length > 1)
+            throw new RuntimeException(String.format("Multiple Sample Cmo Info records found for sample: %s",
+                    sampleId));
 
         Sample sample = new Sample(sampleId);
         sample.setCmoSampleInfo(getCmoSampleInfo(sampleInfoRecords[0], user));
@@ -32,14 +35,6 @@ public class SampleRecordToSampleConverter {
         LOGGER.debug(String.format("Retrieved sample: %s", sample.getFields()));
 
         return sample;
-    }
-
-    private void validateSampleInfoRecords(String sampleId, DataRecord[] sampleInfoRecords) {
-        if (sampleInfoRecords.length == 0)
-            throw new RuntimeException(String.format("Sample Cmo Info not present for sample: %s", sampleId));
-        if (sampleInfoRecords.length > 1)
-            throw new RuntimeException(String.format("Multiple Sample Cmo Info records found for sample: %s",
-                    sampleId));
     }
 
     private CmoSampleInfo getCmoSampleInfo(DataRecord sampleInfoRecord, User user) throws RemoteException {

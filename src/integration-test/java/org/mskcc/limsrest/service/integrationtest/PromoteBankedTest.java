@@ -16,7 +16,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mskcc.domain.Recipe;
 import org.mskcc.domain.sample.*;
-import org.mskcc.limsrest.service.PatientSamplesRetriever;
 import org.mskcc.limsrest.service.PatientSamplesWithCmoInfoRetriever;
 import org.mskcc.limsrest.service.PromoteBanked;
 import org.mskcc.limsrest.service.cmoinfo.CorrectedCmoSampleIdGenerator;
@@ -871,7 +870,7 @@ public class PromoteBankedTest {
                 (patientCmoSampleRetriever, cellLineCmoSampleRetriever);
 
         SampleRecordToSampleConverter sampleRecordToSampleConverter = new SampleRecordToSampleConverter();
-        PatientSamplesRetriever patientSamplesRetriever = new PatientSamplesWithCmoInfoRetriever
+        PatientSamplesWithCmoInfoRetriever patientSamplesRetriever = new PatientSamplesWithCmoInfoRetriever
                 (sampleToCorrectedCmoIdConv, sampleRecordToSampleConverter);
 
         return new SampleTypeCorrectedCmoSampleIdGenerator();

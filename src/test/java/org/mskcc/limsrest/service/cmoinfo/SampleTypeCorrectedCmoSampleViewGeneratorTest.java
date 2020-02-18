@@ -7,7 +7,7 @@ import org.junit.Test;
 import org.mskcc.domain.sample.CorrectedCmoSampleView;
 import org.mskcc.domain.sample.NucleicAcid;
 import org.mskcc.domain.sample.SpecimenType;
-import org.mskcc.limsrest.service.PatientSamplesRetriever;
+import org.mskcc.limsrest.service.PatientSamplesWithCmoInfoRetriever;
 import org.mskcc.limsrest.service.cmoinfo.cellline.CellLineCmoSampleIdFormatter;
 import org.mskcc.limsrest.service.cmoinfo.cellline.CellLineCmoSampleIdResolver;
 import org.mskcc.limsrest.service.cmoinfo.converter.CorrectedCmoIdConverterFactory;
@@ -29,7 +29,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class SampleTypeCorrectedCmoSampleViewGeneratorTest {
-    private final PatientSamplesRetriever samplesRetriever = mock(PatientSamplesRetriever.class);
+    private final PatientSamplesWithCmoInfoRetriever samplesRetriever = mock(PatientSamplesWithCmoInfoRetriever.class);
 
     private SampleTypeCorrectedCmoSampleIdGenerator sampleTypeCorrectedCmoSampleIdGenerator;
     private DataRecordManager drm = mock(DataRecordManager.class);

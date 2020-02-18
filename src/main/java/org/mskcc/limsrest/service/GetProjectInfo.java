@@ -27,14 +27,14 @@ public class GetProjectInfo extends LimsTask {
         try {
             List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + project + "'", user);
             for (DataRecord r : requestList) {
-                annotateRequestSummary(rs, r);
+                GetSampleQc.annotateRequestSummary(rs, r, user);
                 List<DataRecord> qcs = r.getDescendantsOfType("SeqAnalysisSampleQC", user);
                 for (DataRecord qc : qcs) {
                     SampleSummary ss = new SampleSummary();
                     DataRecord parentSample = qc.getParentsOfType("Sample", user).get(0); //will only have one parent sample
-                    SampleQcSummary qcSummary = annotateQcSummary(qc);
+                    SampleQcSummary qcSummary = GetSampleQc.annotateQcSummary(qc, user);
                     if (parentSample != null) {
-                        annotateSampleSummary(ss, parentSample);
+                        GetSampleQc.annotateSampleSummary(ss, parentSample, user);
                         //try and get the requested number of reads
                         DataRecord[] requirements = parentSample.getChildrenOfType("SeqRequirement", user);
                         DataRecord ancestorSample = parentSample;

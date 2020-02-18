@@ -8,8 +8,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 /***
  * PatientAwareCmoSampleId is a class which stores data needed to create CMO Sample Id for non-Cell line samples used
- * subsequently by Project
- * Managers.
+ * subsequently by Project Managers.
  */
 public class PatientAwareCmoSampleId implements CmoSampleId {
     private final String patientId;

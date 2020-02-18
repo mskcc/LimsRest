@@ -2,7 +2,7 @@ package org.mskcc.limsrest.controller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.ConnectionPoolLIMS;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.GetHiseq;
 import org.mskcc.limsrest.service.GetReadyForIllumina;
 import org.mskcc.limsrest.service.RunSummary;
@@ -14,23 +14,24 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.Future;
 
 @RestController
 @RequestMapping("/")
 public class Report {
     private final static Log log = LogFactory.getLog(Report.class);
-    private final ConnectionPoolLIMS conn;
+    private ConnectionLIMS conn;
    
-    public Report(ConnectionPoolLIMS conn){
+    public Report(ConnectionLIMS conn){
         this.conn = conn;
     }
 
     @GetMapping("/getHiseq")
-    public LinkedList<RunSummary> getContent(@RequestParam(value = "run", required = false) String run, @RequestParam(value = "project", required = false) String[] projs) {
+    public List<RunSummary> getContent(@RequestParam(value = "run", required = false) String run, @RequestParam(value = "project", required = false) String[] projs) {
         RunSummary rs = new RunSummary("BLANK_RUN", "BLANK_REQUEST");
-        LinkedList<RunSummary> runSums = new LinkedList<>();
-        GetHiseq task = new GetHiseq();
+        List<RunSummary> runSums = new LinkedList<>();
+        GetHiseq task;
         if (run != null) {
             if (!Whitelists.textMatches(run)) {
                 runSums.add(rs);
@@ -38,7 +39,7 @@ public class Report {
                 return runSums;
             }
             log.info("Starting get Hiseq for run " + run);
-            task.init(run);
+            task = new GetHiseq(run, conn);
         } else if (projs != null) {
             for (int i = 0; i < projs.length; i++) {
                 if (!Whitelists.requestMatches(projs[i])) {
@@ -48,15 +49,14 @@ public class Report {
                 }
             }
             log.info("Starting get Hiseq for projects");
-            task.init(projs);
+            task = new GetHiseq(projs, conn);
         } else {
             log.info("Starting get Hiseq with no provided data");
             runSums.add(rs);
             return runSums;
         }
-        Future<Object> result = conn.submitTask(task);
         try {
-            runSums = (LinkedList<RunSummary>) result.get();
+            runSums = task.execute();
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
@@ -68,19 +68,17 @@ public class Report {
     }
 
     @GetMapping("/getHiseqList")
-    public LinkedList<RunSummary> getContent() {
+    public List<RunSummary> getContent() {
         log.info("Starting get Hiseq List");
-        GetHiseq task = new GetHiseq();
-        task.init("");
-        Future<Object> result = conn.submitTask(task);
-        RunSummary rs = new RunSummary("BLANK_RUN", "BLANK_REQUEST");
-        LinkedList<RunSummary> runSums = new LinkedList<>();
+        GetHiseq task = new GetHiseq("", conn);
+        List<RunSummary> runSums = new LinkedList<>();
         try {
-            runSums = (LinkedList<RunSummary>) result.get();
+            runSums = task.execute();
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
+            RunSummary rs = new RunSummary("BLANK_RUN", "BLANK_REQUEST");
             rs.setInvestigator(e.getMessage() + " TRACE: " + sw.toString());
             runSums.add(rs);
         }
@@ -88,19 +86,17 @@ public class Report {
     }
 
     @GetMapping("/planRuns")
-    public LinkedList<RunSummary> getPlan(@RequestParam(value = "user") String user) {
+    public List<RunSummary> getPlan(@RequestParam(value = "user") String user) {
         log.info("Starting plan Runs for user " + user);
-        GetReadyForIllumina illuminaTask = new GetReadyForIllumina();
-        illuminaTask.init();
-        Future<Object> result = conn.submitTask(illuminaTask);
-        RunSummary rs = new RunSummary("BLANK_RUN", "BLANK_REQUEST");
-        LinkedList<RunSummary> runSums = new LinkedList<>();
+        GetReadyForIllumina illuminaTask = new GetReadyForIllumina(conn);
+        List<RunSummary> runSums = new LinkedList<>();
         try {
-            runSums = (LinkedList<RunSummary>) result.get();
+            runSums = illuminaTask.execute();
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
+            RunSummary rs = new RunSummary("BLANK_RUN", "BLANK_REQUEST");
             rs.setInvestigator(e.getMessage() + " TRACE: " + sw.toString());
             runSums.add(rs);
         }

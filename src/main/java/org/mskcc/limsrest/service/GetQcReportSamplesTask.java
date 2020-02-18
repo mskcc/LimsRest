@@ -8,6 +8,8 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 
 /*
@@ -40,22 +42,16 @@ public class GetQcReportSamplesTask extends LimsTask {
 
         QcReportSampleList rsl = new QcReportSampleList(requestId, otherSampleIds);
 
-
         try {
             log.info("Gathering Report samples for " + otherSampleIds.size() + " samples.");
-            rsl.setDnaReportSamples(getQcSamples("QcReportDna"));
-            rsl.setRnaReportSamples(getQcSamples("QcReportRna"));
-            rsl.setLibraryReportSamples(getQcSamples("QcReportLibrary"));
+            getQcSamples(rsl, "QcReportDna");
+            getQcSamples(rsl, "QcReportRna");
+            getQcSamples(rsl, "QcReportLibrary");
             rsl.setPathologyReportSamples(getPathologySamples("QcDatum"));
-
 
             log.info("Gathering Attachments for " + requestId + ".");
             List<HashMap<String, Object>> attachments = new ArrayList<>();
-            attachments.addAll(getAttachments(requestId, "DNA"));
-            attachments.addAll(getAttachments(requestId, "RNA"));
-            attachments.addAll(getAttachments(requestId, "Library"));
-            attachments.addAll(getAttachments(requestId, "Pool"));
-            attachments.addAll(getAttachments(requestId, "cDNA"));
+            attachments.addAll(getAttachments(requestId));
 
             rsl.setAttachments(attachments);
         } catch (Throwable e) {
@@ -65,73 +61,107 @@ public class GetQcReportSamplesTask extends LimsTask {
         return rsl;
     }
 
-    /**
-     * Returns samples in QC Table based on RequestId and otherSampleId
-     *
-     * @param dataType LIMS table
-     * @return List of ReportSamples
-     * @throws Exception
-     */
-    protected List<ReportSample> getQcSamples(String dataType) throws Exception {
-        // check whether request exists in QC Report table, speeds up by ~30 %
-        List<DataRecord> request = dataRecordManager.queryDataRecords(dataType, "SampleId LIKE '" + requestId + "%'", this.user);
-        List<ReportSample> reportSamples = new ArrayList<>();
-
-        if (request.isEmpty()) {
+    protected void getQcSamples(QcReportSampleList rsl, String dataType) throws Exception {
+//      only include samples where SampleId contains RequestId
+        List<DataRecord> reportSamplesByRequest = dataRecordManager.queryDataRecords(dataType, "SampleId LIKE '%" + requestId + "%'", this.user);
+//        convert otherSampleIds to List<String>
+        List<String> otherSampleIdsInRequest = otherSampleIds.stream()
+                .map(object -> Objects.toString(object, null))
+                .collect(Collectors.toList());
+        int reportSamples = 0;
+        if (reportSamplesByRequest.isEmpty()) {
             log.info("Request not found in " + dataType + ".");
-            return reportSamples;
+            return;
         } else {
-            ReportSample reportSample;
-
-            List<DataRecord> sampleList = dataRecordManager.queryDataRecords(dataType, "OtherSampleId", otherSampleIds, this.user);
-
-            for (DataRecord sampleRecord : sampleList) {
-                try {
+//        fetch chip ids for DLP pool samples, done here to avoid loop issues
+            List<String> chipIds = getChipIds(requestId);
+            try {
+                ReportSample reportSample;
+                for (DataRecord sampleRecord : reportSamplesByRequest) {
                     Map<String, Object> sampleFields = sampleRecord.getFields(user);
-
-//                  only include samples where SampleId contains RequestId
-                    if (sampleFields.get("SampleId").toString().contains(requestId)) {
-                        switch (dataType) {
-                            case "QcReportDna":
-                                reportSample = new ReportSample.DnaReportSample(sampleFields);
-                                break;
-                            case "QcReportRna":
-                                reportSample = new ReportSample.RnaReportSample(sampleFields);
-                                break;
-                            case "QcReportLibrary":
-                                reportSample = new ReportSample.LibraryReportSample(sampleFields);
-                                break;
-                            default:
-                                reportSample = new ReportSample();
+                    String otherSampleId = sampleFields.get("OtherSampleId").toString();
+                    String igoId = sampleFields.get("SampleId").toString();
+//                check if reportSample's otherSampleId contains at least one id from this request
+                    if (otherSampleIdsInRequest.parallelStream().anyMatch(otherSampleId::contains)) {
+//                    is the reportSample a pool?
+                        if (igoId.toLowerCase().contains("pool")) {
+//                            check if pool only contains samples from the same request
+                            boolean is_match = true;
+                            if (otherSampleId.contains(",")) {
+                                String[] poolids = otherSampleId.split(",");
+                                for (String id : poolids) {
+                                    if (!otherSampleIdsInRequest.parallelStream().anyMatch(id::contains)) {
+                                        is_match = false;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (is_match) {
+                                reportSample = new ReportSample.PoolReportSample(sampleFields);
+                                rsl.poolReportSamples.add(reportSample);
+                            }
+//                        not a pool
+                        } else {
+//                            reject if igo id has anything but a number after the request ID
+//                            (to avoid 10626_B samples showing up for 10626 which would happen if both requests contain
+//                            the same investigator sample ids. Future fix: Add request id to report tables.
+                            String igoIdPattern = requestId.toLowerCase() + "_\\d.*";
+                            Pattern pattern = Pattern.compile(igoIdPattern, Pattern.CASE_INSENSITIVE);
+                            if (pattern.matcher(igoId).matches()) {
+                                switch (dataType) {
+                                    case "QcReportDna":
+                                        reportSample = new ReportSample.DnaReportSample(sampleFields);
+                                        rsl.dnaReportSamples.add(reportSample);
+                                        reportSamples += 1;
+                                        break;
+                                    case "QcReportRna":
+                                        reportSample = new ReportSample.RnaReportSample(sampleFields);
+                                        rsl.rnaReportSamples.add(reportSample);
+                                        reportSamples += 1;
+                                        break;
+                                    case "QcReportLibrary":
+                                        reportSample = new ReportSample.LibraryReportSample(sampleFields);
+                                        rsl.libraryReportSamples.add(reportSample);
+                                        reportSamples += 1;
+                                        break;
+                                    default:
+                                        reportSample = new ReportSample();
+                                }
+                            }
                         }
-                        reportSamples.add(reportSample);
+//                    if report sample id does not contain any of the request's sample's ids, it might be a DLP Pool
+                    } else if (sampleFields.get("Recipe").toString().equals("DLP") && igoId.toLowerCase().contains("pool")) {
+//                check if reportSample's otherSampleId contains at least one chipId from this DLP request
+                        if (chipIds.parallelStream().anyMatch(otherSampleId::contains)) {
+                            reportSample = new ReportSample.PoolReportSample(sampleFields);
+                            rsl.poolReportSamples.add(reportSample);
+                        }
+                    } else {
+                        log.info("0 Samples found in " + dataType);
                     }
-
-                } catch (Throwable e) {
-                    log.error(e.getMessage(), e);
-                    return null;
                 }
+            } catch (Throwable e) {
+                log.error(e.getMessage(), e);
+                return;
             }
-            log.info(reportSamples.size() + " Samples found in " + dataType + ".");
-            return reportSamples;
         }
-
+        log.info(rsl.poolReportSamples.size() + " Pools and " + reportSamples + " Samples found in " + dataType + ".");
+        return;
     }
 
+
     protected List<PathologySample> getPathologySamples(String dataType) throws Exception {
-        // check whether request exists in QC Report table, speeds up by ~30 %
-        List<DataRecord> request = dataRecordManager.queryDataRecords(dataType, "SampleId LIKE '" + requestId + "%'", this.user);
+//      check whether request exists in QC Report table, speeds up by ~30 %
+        List<DataRecord> reportSamplesByRequest = dataRecordManager.queryDataRecords(dataType, "SampleId LIKE '" + requestId + "%'", this.user);
         List<PathologySample> pathologySamples = new ArrayList<>();
 
-        if (request.isEmpty()) {
+        if (reportSamplesByRequest.isEmpty()) {
             log.info("Request not found in " + dataType + ".");
             return pathologySamples;
         } else {
             PathologySample pathologySample;
-
-            List<DataRecord> sampleList = dataRecordManager.queryDataRecords(dataType, "OtherSampleId", otherSampleIds, this.user);
-
-            for (DataRecord sampleRecord : sampleList) {
+//          List<DataRecord> sampleList = dataRecordManager.queryDataRecords(dataType, "OtherSampleId", otherSampleIds, this.user);
+            for (DataRecord sampleRecord : reportSamplesByRequest) {
                 try {
                     Map<String, Object> sampleFields = sampleRecord.getFields(user);
 //                  only include samples where SampleId contains RequestId
@@ -139,38 +169,51 @@ public class GetQcReportSamplesTask extends LimsTask {
                         pathologySample = new PathologySample(sampleFields);
                         pathologySamples.add(pathologySample);
                     }
-
-
                 } catch (Throwable e) {
                     log.error(e.getMessage(), e);
                     return null;
                 }
             }
-            log.info(pathologySamples.size() + " Samples found in " + dataType + ".");
+            log.info(pathologySamples.size() + " Samples found in Pathology/" + dataType + ".");
             return pathologySamples;
         }
-
     }
 
-    protected List<HashMap<String, Object>> getAttachments(String requestId, String type) {
+    protected List<HashMap<String, Object>> getAttachments(String requestId) {
         List<HashMap<String, Object>> attachments = new ArrayList<>();
         try {
-
-            List<DataRecord> attachmentRecords = dataRecordManager.queryDataRecords("Attachment", "FilePath REGEXP '^" + requestId + "_" + type + "_QC_*[0-9]*.pdf'", this.user);
-
-            for (DataRecord record : attachmentRecords) {
-                HashMap<String, Object> attachmentInfo = new HashMap<>();
-                attachmentInfo.put("recordId", record.getDataField("RecordId", user));
-                attachmentInfo.put("fileName", record.getDataField("FilePath", user));
-                attachments.add(attachmentInfo);
+            List<DataRecord> attachmentRequestRecords = dataRecordManager.queryDataRecords("Attachment", "FilePath LIKE '%" + requestId + "%'", this.user);
+            if (attachmentRequestRecords.size() > 0) {
+                String attachmentPattern = requestId + "_(DNA_QC|RNA_QC|Library_QC|Pool_QC|cDNA_QC)_*\\d*\\.pdf";
+                Pattern pattern = Pattern.compile(attachmentPattern, Pattern.CASE_INSENSITIVE);
+                for (DataRecord record : attachmentRequestRecords) {
+                    String fileName = record.getDataField("FilePath", user).toString();
+                    if (pattern.matcher(fileName).matches()) {
+                        HashMap<String, Object> attachmentInfo = new HashMap<>();
+                        attachmentInfo.put("recordId", record.getDataField("RecordId", user));
+                        attachmentInfo.put("fileName", record.getDataField("FilePath", user));
+                        attachments.add(attachmentInfo);
+                    }
+                }
             }
-
+            log.info(attachmentRequestRecords.size() + " Attachments and " + attachments.size() + " correctly named Attachments found for " + requestId + ".");
+            return attachments;
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
             return null;
         }
-        log.info(attachments.size() + " Attachments found for " + requestId + ", " + type);
-        return attachments;
+    }
 
+    protected List<String> getChipIds(String requestId) throws Exception {
+        List<DataRecord> dlpSamples = dataRecordManager.queryDataRecords("DLPLibraryPreparationProtocol1", "SampleId LIKE '%" + requestId + "%'", this.user);
+        List<String> chipIds = new ArrayList<>();
+        for (DataRecord dlpSample : dlpSamples) {
+            Map<String, Object> dlpFields = dlpSample.getFields(user);
+            String chipId = dlpFields.get("ChipID").toString();
+            if (!chipId.isEmpty()) {
+                chipIds.add(chipId);
+            }
+        }
+        return chipIds;
     }
 }
