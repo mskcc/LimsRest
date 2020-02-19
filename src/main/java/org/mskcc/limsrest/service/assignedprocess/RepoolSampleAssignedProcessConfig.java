@@ -3,10 +3,10 @@ package org.mskcc.limsrest.service.assignedprocess;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.user.User;
 
-public class RepoolSampleAssignedAssignedProcessConfig implements AssignedProcessConfig {
+public class RepoolSampleAssignedProcessConfig implements AssignedProcessConfig {
     private final DataRecord sample;
 
-    public RepoolSampleAssignedAssignedProcessConfig(DataRecord sample) {
+    public RepoolSampleAssignedProcessConfig(DataRecord sample) {
         this.sample = sample;
     }
 

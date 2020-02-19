@@ -25,9 +25,9 @@ public class QcStatusAwareProcessAssigner {
                 QcParentSampleRetriever qcParentSampleRetriever = new QcParentSampleRetriever();
                 DataRecord parentSample = qcParentSampleRetriever.retrieve(sample, user);
 
-                return new RepoolSampleAssignedAssignedProcessConfig(parentSample);
+                return new RepoolSampleAssignedProcessConfig(parentSample);
             case REPOOL_SAMPLE_CUSTOM_CAPTURE:
-                return new RepoolSampleAssignedAssignedProcessConfig(sample);
+                return new RepoolSampleAssignedProcessConfig(sample);
             default:
                 throw new RuntimeException(String.format("Not supported qc status: %s", qcStatus));
         }

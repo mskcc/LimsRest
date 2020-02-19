@@ -4,7 +4,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionPoolLIMS;
 import org.mskcc.limsrest.service.ToggleSampleQcStatus;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,8 +16,8 @@ import java.util.concurrent.Future;
 public class SetQcStatus {
     private final static Log log = LogFactory.getLog(SetQcStatus.class);
     private final ConnectionPoolLIMS conn;
-   
-    public SetQcStatus(ConnectionPoolLIMS conn){
+
+    public SetQcStatus(ConnectionPoolLIMS conn) {
         this.conn = conn;
     }
 

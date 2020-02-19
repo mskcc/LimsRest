@@ -11,7 +11,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.service.assignedprocess.QcStatus;
 import org.mskcc.limsrest.service.assignedprocess.QcStatusAwareProcessAssigner;
-
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.rmi.RemoteException;
@@ -28,17 +27,15 @@ public class ToggleSampleQcStatus extends LimsTask {
     private static Log log = LogFactory.getLog(ToggleSampleQcStatus.class);
 
     // Recipes that are custom capture
-    private static String[] CUSTOM_REPOOL_PROJECTS = new String[] {
+    private static String[] CUSTOM_REPOOL_PROJECTS = new String[]{
             "hemepact",
             "impact",
             "msk-access"
     };
-
+    protected QcStatusAwareProcessAssigner qcStatusAwareProcessAssigner = new QcStatusAwareProcessAssigner();
     boolean isSeqAnalysisSampleqc = true; // which LIMS table to update
-
     long recordId;
     String status;
-
     String requestId;
     String sampleId;
     String correctedSampleId;
@@ -48,7 +45,17 @@ public class ToggleSampleQcStatus extends LimsTask {
     String fastqPath;
     String recipe;
 
-    protected QcStatusAwareProcessAssigner qcStatusAwareProcessAssigner = new QcStatusAwareProcessAssigner();
+    protected static void setSeqAnalysisSampleQcStatus(DataRecord seqQc, QcStatus qcStatus, String status, User user)
+            throws IoError, InvalidValue, NotFound, RemoteException {
+        if (qcStatus == QcStatus.IGO_COMPLETE) {
+            seqQc.setDataField("PassedQc", Boolean.TRUE, user);
+            seqQc.setDataField("SeqQCStatus", QcStatus.PASSED.getText(), user);
+            seqQc.setDataField("DateIgoComplete", System.currentTimeMillis(), user);
+        } else {
+            seqQc.setDataField("SeqQCStatus", status, user);
+            seqQc.setDataField("PassedQc", Boolean.FALSE, user);
+        }
+    }
 
     public void init(long recordId, String status, String requestId, String correctedSampleId, String run, String qcType, String analyst, String note, String fastqPath, String recipe) {
         this.recordId = recordId;
@@ -84,10 +91,9 @@ public class ToggleSampleQcStatus extends LimsTask {
                 QcStatus qcStatus = QcStatus.fromString(status);
                 setSeqAnalysisSampleQcStatus(seqQc, qcStatus, status, user);
 
-                if (qcStatus == QcStatus.RESEQUENCE_POOL){
+                if (qcStatus == QcStatus.RESEQUENCE_POOL) {
                     qcStatusAwareProcessAssigner.assign(dataRecordManager, user, seqQc, qcStatus);
-                }
-                else if(qcStatus == QcStatus.REPOOL_SAMPLE){
+                } else if (qcStatus == QcStatus.REPOOL_SAMPLE) {
                     assignRepoolProcess(seqQc, qcStatus);
                 }
                 dataRecordManager.storeAndCommit("SeqAnalysisSampleQC updated to " + status, null, user);
@@ -115,7 +121,8 @@ public class ToggleSampleQcStatus extends LimsTask {
                                 matchedSample = childSamples[i];
                             }
                         }
-                    } catch (NullPointerException npe){}
+                    } catch (NullPointerException npe) {
+                    }
                 }
                 if (matchedSample == null) {
                     return "Invalid corrected sample id";
@@ -135,11 +142,13 @@ public class ToggleSampleQcStatus extends LimsTask {
                                 String oldNote = "";
                                 try {
                                     oldNote = pqc.getStringVal("Note", user);
-                                } catch (NullPointerException npe){}
+                                } catch (NullPointerException npe) {
+                                }
                                 pqc.setDataField("Note", oldNote + "\n" + note, user);
                             }
                         }
-                    } catch (NullPointerException npe){}
+                    } catch (NullPointerException npe) {
+                    }
                 }
                 if (matchCount == 0) {
                     return "ERROR: Failed to match a triplet with project, sample id and run id" + requestId + "," + sampleId + "," + run;
@@ -167,9 +176,9 @@ public class ToggleSampleQcStatus extends LimsTask {
      * @throws ServerException
      * @throws RemoteException
      */
-    private void assignRepoolProcess(DataRecord seqQc, QcStatus qcStatus) throws ServerException, RemoteException{
-        for(String type : CUSTOM_REPOOL_PROJECTS){
-            if(this.recipe.toLowerCase().contains(type)){
+    private void assignRepoolProcess(DataRecord seqQc, QcStatus qcStatus) {
+        for (String type : CUSTOM_REPOOL_PROJECTS) {
+            if (this.recipe.toLowerCase().contains(type)) {
                 assignCustomCaptureRepoolProcess(seqQc, QcStatus.REPOOL_SAMPLE_CUSTOM_CAPTURE);
                 return;
             }
@@ -180,14 +189,14 @@ public class ToggleSampleQcStatus extends LimsTask {
 
     /**
      * Searches for record w/ 'PoolingSampleLibProtocol' and assigns process to that record.
-     *      - Input DataRecord MUST be a customCapture Sample record.
+     * - Input DataRecord MUST be a customCapture Sample record.
      *
      * @param seqQc
      * @param qcStatus
      */
     private void assignCustomCaptureRepoolProcess(DataRecord seqQc, QcStatus qcStatus) {
         DataRecord[] childSamples = getParentsOfType(seqQc, SAMPLE);
-        if (childSamples.length > 0){
+        if (childSamples.length > 0) {
             log.info(String.format("Found record %s. Searching for child sample with 'PoolingSampleLibProtocol'", recordId));
             DataRecord record;
             while (childSamples.length > 0) {
@@ -255,17 +264,5 @@ public class ToggleSampleQcStatus extends LimsTask {
                     e.getMessage()));
         }
         return new DataRecord[0];
-    }
-
-    protected static void setSeqAnalysisSampleQcStatus(DataRecord seqQc, QcStatus qcStatus, String status, User user)
-            throws IoError, InvalidValue, NotFound, RemoteException {
-        if (qcStatus == QcStatus.IGO_COMPLETE) {
-            seqQc.setDataField("PassedQc", Boolean.TRUE, user);
-            seqQc.setDataField("SeqQCStatus", QcStatus.PASSED.getText(), user);
-            seqQc.setDataField("DateIgoComplete", System.currentTimeMillis(), user);
-        } else {
-            seqQc.setDataField("SeqQCStatus", status, user);
-            seqQc.setDataField("PassedQc", Boolean.FALSE, user);
-        }
     }
 }

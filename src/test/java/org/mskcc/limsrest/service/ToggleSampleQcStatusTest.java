@@ -13,7 +13,7 @@ import org.mskcc.limsrest.service.assignedprocess.QcStatusAwareProcessAssigner;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.mskcc.util.VeloxConstants.SAMPLE;
 
 public class ToggleSampleQcStatusTest {
@@ -75,7 +75,7 @@ public class ToggleSampleQcStatusTest {
         /* DATA RECORD MOCKS/SPIES */
         List<DataRecord> sampleParents = new ArrayList<>();
         sampleParents.add(sampleRecord);
-        DataRecord[] poolingProtocolChildren = new DataRecord[] { poolingProtocolRecord };
+        DataRecord[] poolingProtocolChildren = new DataRecord[]{poolingProtocolRecord};
         Mockito.when(sampleRecord.getChildrenOfType("PoolingSampleLibProtocol", userMock)).thenReturn(poolingProtocolChildren);
         Mockito.when(seqQcRecord.getParentsOfType(Mockito.eq(SAMPLE), Mockito.any(User.class))).thenReturn(sampleParents);
 
