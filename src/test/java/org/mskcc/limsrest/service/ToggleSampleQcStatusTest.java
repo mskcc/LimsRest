@@ -4,6 +4,7 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.sloan.cmo.recmodels.PoolingSampleLibProtocolModel;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mskcc.limsrest.MockDataRecord;
@@ -76,7 +77,7 @@ public class ToggleSampleQcStatusTest {
         List<DataRecord> sampleParents = new ArrayList<>();
         sampleParents.add(sampleRecord);
         DataRecord[] poolingProtocolChildren = new DataRecord[]{poolingProtocolRecord};
-        Mockito.when(sampleRecord.getChildrenOfType("PoolingSampleLibProtocol", userMock)).thenReturn(poolingProtocolChildren);
+        Mockito.when(sampleRecord.getChildrenOfType(PoolingSampleLibProtocolModel.DATA_TYPE_NAME, userMock)).thenReturn(poolingProtocolChildren);
         Mockito.when(seqQcRecord.getParentsOfType(Mockito.eq(SAMPLE), Mockito.any(User.class))).thenReturn(sampleParents);
 
         /* INITIALIZE TASK */

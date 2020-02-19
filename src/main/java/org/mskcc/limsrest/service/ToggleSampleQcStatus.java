@@ -7,6 +7,7 @@ import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
 import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.sloan.cmo.recmodels.PoolingSampleLibProtocolModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.service.assignedprocess.QcStatus;
@@ -221,8 +222,7 @@ public class ToggleSampleQcStatus extends LimsTask {
      * @return boolean
      */
     private boolean isRecordForRepooling(DataRecord record) {
-        // TOOD - use com.velox.sloan.cmo.recmodels's code generator
-        DataRecord[] poolingSampleLibProtocol = getChildrenOfType(record, "PoolingSampleLibProtocol");
+        DataRecord[] poolingSampleLibProtocol = getChildrenOfType(record, PoolingSampleLibProtocolModel.DATA_TYPE_NAME);
         return poolingSampleLibProtocol.length > 0;
     }
 
