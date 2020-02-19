@@ -13,7 +13,6 @@ import org.mskcc.limsrest.service.assignedprocess.QcStatus;
 import org.mskcc.limsrest.service.assignedprocess.QcStatusAwareProcessAssigner;
 
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 
 import java.rmi.RemoteException;
 import java.util.List;
@@ -27,6 +26,13 @@ import static org.mskcc.util.VeloxConstants.SAMPLE;
  */
 public class ToggleSampleQcStatus extends LimsTask {
     private static Log log = LogFactory.getLog(ToggleSampleQcStatus.class);
+
+    // Recipes that are custom capture
+    private static String[] CUSTOM_REPOOL_PROJECTS = new String[] {
+            "hemepact",
+            "impact",
+            "msk-access"
+    };
 
     boolean isSeqAnalysisSampleqc = true; // which LIMS table to update
 
@@ -153,8 +159,8 @@ public class ToggleSampleQcStatus extends LimsTask {
     }
 
     /**
-     * Assigns process to correct sample record. Dependent upon recipe as customCapture recipes (e.g. "hemepact",
-     * "impact", & "msk-access") will need to locate the correct sample to assign the process.
+     * Assigns process to correct sample record. Dependent upon whether recipe is a customCapture recipes, which are
+     * is defined in this class. Custom capture recipes will need to assign processes to specific samples
      *
      * @param seqQc
      * @param qcStatus
@@ -162,11 +168,9 @@ public class ToggleSampleQcStatus extends LimsTask {
      * @throws RemoteException
      */
     private void assignRepoolProcess(DataRecord seqQc, QcStatus qcStatus) throws ServerException, RemoteException{
-        // If recipe is CustomCapture, assign the rePool process to the custom-capture sample record
-        String[] customRepool = new String[] {"hemepact", "impact", "msk-access"};
-        for(String type : customRepool){
+        for(String type : CUSTOM_REPOOL_PROJECTS){
             if(this.recipe.toLowerCase().contains(type)){
-                assignCustomCaptureRepoolProcess(seqQc, qcStatus);
+                assignCustomCaptureRepoolProcess(seqQc, QcStatus.REPOOL_SAMPLE_CUSTOM_CAPTURE);
                 return;
             }
         }

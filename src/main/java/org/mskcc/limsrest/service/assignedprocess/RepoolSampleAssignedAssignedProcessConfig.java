@@ -5,14 +5,13 @@ import com.velox.api.user.User;
 
 public class RepoolSampleAssignedAssignedProcessConfig implements AssignedProcessConfig {
     private final DataRecord sample;
-    private final QcParentSampleRetriever qcParentSampleRetriever = new QcParentSampleRetriever();
 
-    public RepoolSampleAssignedAssignedProcessConfig(DataRecord qc, User user) throws Exception {
-        sample = qcParentSampleRetriever.retrieve(qc, user);
+    public RepoolSampleAssignedAssignedProcessConfig(DataRecord sample) {
+        this.sample = sample;
     }
 
     @Override
-    public DataRecord getSample() throws Exception {
+    public DataRecord getSample() {
         return sample;
     }
 

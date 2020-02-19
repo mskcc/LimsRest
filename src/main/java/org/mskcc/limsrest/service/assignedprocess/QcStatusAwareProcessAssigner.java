@@ -16,15 +16,18 @@ import java.util.Map;
 public class QcStatusAwareProcessAssigner {
     private final static Log log = LogFactory.getLog(QcStatusAwareProcessAssigner.class);
 
-    public QcStatusAwareProcessAssigner() {
-    }
-
-    public static AssignedProcessConfig getProcessAssignerConfig(QcStatus qcStatus, DataRecord qc, User user) throws Exception {
+    public static AssignedProcessConfig getProcessAssignerConfig(QcStatus qcStatus, DataRecord sample, User user) throws Exception {
         switch (qcStatus) {
             case RESEQUENCE_POOL:
-                return new ResequencePoolAssignedProcessConfig(qc, user);
+                return new ResequencePoolAssignedProcessConfig(sample, user);
             case REPOOL_SAMPLE:
-                return new RepoolSampleAssignedAssignedProcessConfig(qc, user);
+                // Grab the parent of the sample
+                QcParentSampleRetriever qcParentSampleRetriever = new QcParentSampleRetriever();
+                DataRecord parentSample = qcParentSampleRetriever.retrieve(sample, user);
+
+                return new RepoolSampleAssignedAssignedProcessConfig(parentSample);
+            case REPOOL_SAMPLE_CUSTOM_CAPTURE:
+                return new RepoolSampleAssignedAssignedProcessConfig(sample);
             default:
                 throw new RuntimeException(String.format("Not supported qc status: %s", qcStatus));
         }
