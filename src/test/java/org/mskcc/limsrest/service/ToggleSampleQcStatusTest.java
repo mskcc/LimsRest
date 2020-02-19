@@ -20,10 +20,9 @@ import static org.mskcc.util.VeloxConstants.SAMPLE;
 public class ToggleSampleQcStatusTest {
 
     @Test
-    public void regularRepoolTest() throws Exception {
+    public void customCaptureRepoolTest() throws Exception {
         /**
-         * A recipe that is not custom capture should have the repool process assigned to the input sample, seqQcRecord.
-         * It should NOT be assigned to the sampleRecord
+         * A custom Capture recipe will send its input sample, the seqQcRecord, to  QcStatusAwareProcessAssigner
          *      sampleRecord -"is [SAMPLE] Parent Of"-> seqQcRecord
          */
         String recipe = "other";
@@ -55,10 +54,9 @@ public class ToggleSampleQcStatusTest {
     }
 
     @Test
-    public void customCaptureRepoolTest() throws Exception {
+    public void standardCaptureRepoolTest() throws Exception {
         /**
-         * A recipe that is not custom capture should have the repool process assigned to the input sample, seqQcRecord.
-         * It should NOT be assigned to the sampleRecord
+         * A Standard Capture Recipe should send its child sample w/ the pooling protocol to be assigned the process
          *      sampleRecord - "is [SAMPLE] Parent Of"-> seqQcRecord
          *      sampleRecord - "is [SAMPLE] Parent Of"-> poolingProtocolRecord
          */

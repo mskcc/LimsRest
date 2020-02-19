@@ -27,12 +27,9 @@ import static org.mskcc.util.VeloxConstants.SAMPLE;
 public class ToggleSampleQcStatus extends LimsTask {
     private static Log log = LogFactory.getLog(ToggleSampleQcStatus.class);
 
-    // Recipes that are custom capture
-    private static String[] CUSTOM_REPOOL_PROJECTS = new String[]{
-            "hemepact",
-            "impact",
-            "msk-access"
-    };
+    // Standard capture recipes
+    private static String[] STANDARD_CAPTURE_PROJECTS = new String[]{"hemepact", "impact", "msk-access"};
+
     protected QcStatusAwareProcessAssigner qcStatusAwareProcessAssigner = new QcStatusAwareProcessAssigner();
     boolean isSeqAnalysisSampleqc = true; // which LIMS table to update
     long recordId;
@@ -169,8 +166,8 @@ public class ToggleSampleQcStatus extends LimsTask {
     }
 
     /**
-     * Assigns process to correct sample record. Dependent upon whether recipe is a customCapture recipes, which are
-     * is defined in this class. Custom capture recipes will need to assign processes to specific samples
+     * Assigns process to correct sample record. Dependent upon whether recipe is a standard capture, defined in
+     * @STANDARD_CAPTURE_PROJECTS, or custom capture.
      *
      * @param seqQc
      * @param qcStatus
@@ -178,24 +175,28 @@ public class ToggleSampleQcStatus extends LimsTask {
      * @throws RemoteException
      */
     private void assignRepoolProcess(DataRecord seqQc, QcStatus qcStatus) {
-        for (String type : CUSTOM_REPOOL_PROJECTS) {
+        for (String type : STANDARD_CAPTURE_PROJECTS) {
             if (this.recipe.toLowerCase().contains(type)) {
-                assignCustomCaptureRepoolProcess(seqQc, QcStatus.REPOOL_SAMPLE_CUSTOM_CAPTURE);
+                log.info(String.format("Repooling %s as a Standard Capture Project", this.recipe));
+                repoolByPoolingProtocol(seqQc, QcStatus.REPOOL_SAMPLE_STANDARD_CAPTURE);
                 return;
             }
         }
-        // Otherwise, assign the process on the input sample record
+        log.info(String.format("Repooling %s as a Custom Capture Project", this.recipe));
         qcStatusAwareProcessAssigner.assign(dataRecordManager, user, seqQc, qcStatus);
     }
 
     /**
-     * Searches for record w/ 'PoolingSampleLibProtocol' and assigns process to that record.
-     * - Input DataRecord MUST be a customCapture Sample record.
+     * Searches for record w/ 'PoolingSampleLibProtocol' and assigns process based on that record.
+     * - Typically the case for a record w/ a standard repool recipe, defined in @STANDARD_CAPTURE_PROJECTS
+     * - Default is to repool the sample child of the record sent in the request
+     *
+     * - TODO: See if this should apply to all projects
      *
      * @param seqQc
      * @param qcStatus
      */
-    private void assignCustomCaptureRepoolProcess(DataRecord seqQc, QcStatus qcStatus) {
+    private void repoolByPoolingProtocol(DataRecord seqQc, QcStatus qcStatus) {
         DataRecord[] childSamples = getParentsOfType(seqQc, SAMPLE);
         if (childSamples.length > 0) {
             log.info(String.format("Found record %s. Searching for child sample with 'PoolingSampleLibProtocol'", recordId));
