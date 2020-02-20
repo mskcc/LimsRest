@@ -31,8 +31,7 @@ public class SetQcStatus {
                              @RequestParam(value = "analyst", required = false) String analyst,
                              @RequestParam(value = "note", required = false) String note,
                              @RequestParam(value = "fastqPath", required = false) String fastqPath,
-                             @RequestParam(value = "user", defaultValue = "") String user,
-                             @RequestParam(value = "recipe", defaultValue = "") String recipe) {
+                             @RequestParam(value = "user", defaultValue = "") String user) {
         // often called by QC site with just 2 args - recordId & status
         log.info("Starting to seq Qc status to:" + status + " for service" + user);
         if (!Whitelists.requestMatches(request)) {
@@ -56,7 +55,7 @@ public class SetQcStatus {
         if (recordId != null) {
             long record = Long.parseLong(recordId);
             ToggleSampleQcStatus task = new ToggleSampleQcStatus();
-            task.init(record, status, request, sample, run, qcType, analyst, note, fastqPath, recipe);
+            task.init(record, status, request, sample, run, qcType, analyst, note, fastqPath);
             Future<Object> result = conn.submitTask(task);
             try {
                 return "NewStatus:" + result.get();

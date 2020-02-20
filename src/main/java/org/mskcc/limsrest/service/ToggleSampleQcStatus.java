@@ -38,7 +38,6 @@ public class ToggleSampleQcStatus extends LimsTask {
     String analyst;
     String note;
     String fastqPath;
-    String recipe;
 
     protected static void setSeqAnalysisSampleQcStatus(DataRecord seqQc, QcStatus qcStatus, String status, User user)
             throws IoError, InvalidValue, NotFound, RemoteException {
@@ -52,7 +51,7 @@ public class ToggleSampleQcStatus extends LimsTask {
         }
     }
 
-    public void init(long recordId, String status, String requestId, String correctedSampleId, String run, String qcType, String analyst, String note, String fastqPath, String recipe) {
+    public void init(long recordId, String status, String requestId, String correctedSampleId, String run, String qcType, String analyst, String note, String fastqPath) {
         this.recordId = recordId;
         this.status = status;
         this.requestId = requestId;
@@ -61,7 +60,6 @@ public class ToggleSampleQcStatus extends LimsTask {
         this.analyst = analyst;
         this.note = note;
         this.fastqPath = fastqPath;
-        this.recipe = recipe;
         if ("Post".equals(qcType)) {
             isSeqAnalysisSampleqc = false;
         }
