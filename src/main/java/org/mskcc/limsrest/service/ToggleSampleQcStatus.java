@@ -5,7 +5,6 @@ import com.velox.api.datarecord.InvalidValue;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
-import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.PoolingSampleLibProtocolModel;
 import org.apache.commons.logging.Log;
@@ -25,11 +24,9 @@ import static org.mskcc.util.VeloxConstants.SAMPLE;
  * @author Aaron Gabow
  */
 public class ToggleSampleQcStatus extends LimsTask {
+    // Pooling protocol that is used to identify sample that should be re-pooled
+    private final static String POOLING_PROTOCOL = PoolingSampleLibProtocolModel.DATA_TYPE_NAME;
     private static Log log = LogFactory.getLog(ToggleSampleQcStatus.class);
-
-    // Standard capture recipes
-    private static String[] STANDARD_CAPTURE_PROJECTS = new String[]{"hemepact", "impact", "msk-access"};
-
     protected QcStatusAwareProcessAssigner qcStatusAwareProcessAssigner = new QcStatusAwareProcessAssigner();
     boolean isSeqAnalysisSampleqc = true; // which LIMS table to update
     long recordId;
@@ -92,7 +89,7 @@ public class ToggleSampleQcStatus extends LimsTask {
                 if (qcStatus == QcStatus.RESEQUENCE_POOL) {
                     qcStatusAwareProcessAssigner.assign(dataRecordManager, user, seqQc, qcStatus);
                 } else if (qcStatus == QcStatus.REPOOL_SAMPLE) {
-                    assignRepoolProcess(seqQc, qcStatus);
+                    repoolByPoolingProtocol(seqQc, qcStatus);
                 }
                 dataRecordManager.storeAndCommit("SeqAnalysisSampleQC updated to " + status, null, user);
 
@@ -166,32 +163,10 @@ public class ToggleSampleQcStatus extends LimsTask {
     }
 
     /**
-     * Assigns process to correct sample record. Dependent upon whether recipe is a standard capture, defined in
-     * @STANDARD_CAPTURE_PROJECTS, or custom capture.
-     *
-     * @param seqQc
-     * @param qcStatus
-     * @throws ServerException
-     * @throws RemoteException
-     */
-    private void assignRepoolProcess(DataRecord seqQc, QcStatus qcStatus) {
-        for (String type : STANDARD_CAPTURE_PROJECTS) {
-            if (this.recipe.toLowerCase().contains(type)) {
-                log.info(String.format("Repooling %s as a Standard Capture Project", this.recipe));
-                repoolByPoolingProtocol(seqQc, QcStatus.REPOOL_SAMPLE_STANDARD_CAPTURE);
-                return;
-            }
-        }
-        log.info(String.format("Repooling %s as a Custom Capture Project", this.recipe));
-        qcStatusAwareProcessAssigner.assign(dataRecordManager, user, seqQc, qcStatus);
-    }
-
-    /**
-     * Searches for record w/ 'PoolingSampleLibProtocol' and assigns process based on that record.
-     * - Typically the case for a record w/ a standard repool recipe, defined in @STANDARD_CAPTURE_PROJECTS
-     * - Default is to repool the sample child of the record sent in the request
-     *
-     * - TODO: See if this should apply to all projects
+     * Searches for record w/ @POOLING_PROTOCOL and assigns process based on that record. Samples with both Statuses
+     * of "Ready for - Pooling of Sample Libraries by Volume" & "Ready for - Pooling of Sample Libraries for Sequencing"
+     * should have this attached protocol.
+     *      NOTE - Repooling by Volume OR Mass should do so by setting status to "PRE_SEQUENCING_POOLING_OF_LIBRARIES"
      *
      * @param seqQc
      * @param qcStatus
@@ -199,31 +174,33 @@ public class ToggleSampleQcStatus extends LimsTask {
     private void repoolByPoolingProtocol(DataRecord seqQc, QcStatus qcStatus) {
         DataRecord[] childSamples = getParentsOfType(seqQc, SAMPLE);
         if (childSamples != null && childSamples.length > 0) {
-            log.info(String.format("Found record %s. Searching for child sample with 'PoolingSampleLibProtocol'", recordId));
+            log.info(String.format("Found record %s. Searching for child sample with Protocol: %s",
+                    recordId, POOLING_PROTOCOL));
             DataRecord record;
             while (childSamples != null && childSamples.length > 0) {
                 record = childSamples[0];
                 if (isRecordForRepooling(record)) {
                     String pooledSampleRecord = Long.toString(record.getRecordId());
-                    log.info(String.format("Found sample, %s, with 'PoolingSampleLibProtocol'", pooledSampleRecord));
+                    log.info(String.format("Found sample, %s, with Protocol: %s", pooledSampleRecord, POOLING_PROTOCOL));
                     qcStatusAwareProcessAssigner.assign(dataRecordManager, user, record, qcStatus);
                     return;
                 }
                 childSamples = getChildrenOfType(record, SAMPLE);
             }
         }
-        log.error(String.format("Failed to assign Repool Process for %s", recordId));
+        log.error(String.format("Failed to assign Repool Process for %s. No associated sample with %s",
+                recordId, POOLING_PROTOCOL));
     }
 
     /**
      * Determines if the Sample DataRecord is the one that should have its status set. This is determiend by whether
-     * record has a child type with a 'PoolingSampleLibProtocol' set
+     * record has a child type with @POOLING_PROTOCOL
      *
      * @param record
      * @return boolean
      */
     private boolean isRecordForRepooling(DataRecord record) {
-        DataRecord[] poolingSampleLibProtocol = getChildrenOfType(record, PoolingSampleLibProtocolModel.DATA_TYPE_NAME);
+        DataRecord[] poolingSampleLibProtocol = getChildrenOfType(record, POOLING_PROTOCOL);
         return poolingSampleLibProtocol.length > 0;
     }
 

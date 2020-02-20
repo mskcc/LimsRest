@@ -7,7 +7,6 @@ public enum QcStatus {
     IGO_COMPLETE("IGO-Complete"),
     RECAPTURE_SAMPLE("Recapture-Sample"),
     REPOOL_SAMPLE("Repool-Sample"),
-    REPOOL_SAMPLE_STANDARD_CAPTURE("Repool-Sample-Standard-Capture"),
     REQUIRED_ADDITIONAL_READS("Required-Additional-Reads"),
     RESEQUENCE_POOL("Resequence-Pool"),
     UNDER_REVIEW("Under-Review");

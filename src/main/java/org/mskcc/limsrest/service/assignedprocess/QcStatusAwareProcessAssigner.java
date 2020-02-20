@@ -21,12 +21,6 @@ public class QcStatusAwareProcessAssigner {
             case RESEQUENCE_POOL:
                 return new ResequencePoolAssignedProcessConfig(sample, user);
             case REPOOL_SAMPLE:
-                // Grab the parent of the sample
-                QcParentSampleRetriever qcParentSampleRetriever = new QcParentSampleRetriever();
-                DataRecord parentSample = qcParentSampleRetriever.retrieve(sample, user);
-
-                return new RepoolSampleAssignedProcessConfig(parentSample);
-            case REPOOL_SAMPLE_STANDARD_CAPTURE:
                 return new RepoolSampleAssignedProcessConfig(sample);
             default:
                 throw new RuntimeException(String.format("Not supported qc status: %s", qcStatus));
@@ -106,7 +100,7 @@ public class QcStatusAwareProcessAssigner {
             log.warn(String.format("There is no parent batch for sample %s to remove from", igoId));
         } else {
             log.info(String.format("Number of parent batches for sample %s: %d.", igoId, batches.size()));
-            for (DataRecord batch: batches) {
+            for (DataRecord batch : batches) {
                 String batchName = batch.getStringVal(DT_Batch.BATCH_NAME, user);
                 log.info(String.format("Removing child sample %s from batch %s", igoId, batchName));
                 batch.removeChild(sampleRecord, null, user);
