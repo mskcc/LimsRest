@@ -169,7 +169,7 @@ public class ToggleSampleQcStatus extends LimsTask {
      * Searches for record w/ @POOLING_PROTOCOL and assigns process based on that record. Samples with both Statuses
      * of "Ready for - Pooling of Sample Libraries by Volume" & "Ready for - Pooling of Sample Libraries for Sequencing"
      * should have this attached protocol.
-     * NOTE - Repooling by Volume OR Mass should do so by setting status to "PRE_SEQUENCING_POOLING_OF_LIBRARIES"
+     *      NOTE - Repooling by Volume OR Mass should do so by setting status to "PRE_SEQUENCING_POOLING_OF_LIBRARIES"
      *
      * @param seqQc
      * @param qcStatus
