@@ -115,6 +115,7 @@ public class ToggleSampleQcStatus extends LimsTask {
                             }
                         }
                     } catch (NullPointerException npe) {
+                        log.warn(String.format("Failed to find Matched Sample. Error: %s", npe.getMessage()));
                     }
                 }
                 if (matchedSample == null) {
@@ -136,11 +137,15 @@ public class ToggleSampleQcStatus extends LimsTask {
                                 try {
                                     oldNote = pqc.getStringVal("Note", user);
                                 } catch (NullPointerException npe) {
+                                    log.warn(String.format("Failed to parse out note from PostSeqAnalysisQC record",
+                                            npe.getMessage()));
                                 }
                                 pqc.setDataField("Note", oldNote + "\n" + note, user);
                             }
                         }
                     } catch (NullPointerException npe) {
+                        log.warn(String.format("Failed to parse data from PostSeqAnalysisQC record",
+                                npe.getMessage()));
                     }
                 }
                 if (matchCount == 0) {
@@ -164,7 +169,7 @@ public class ToggleSampleQcStatus extends LimsTask {
      * Searches for record w/ @POOLING_PROTOCOL and assigns process based on that record. Samples with both Statuses
      * of "Ready for - Pooling of Sample Libraries by Volume" & "Ready for - Pooling of Sample Libraries for Sequencing"
      * should have this attached protocol.
-     *      NOTE - Repooling by Volume OR Mass should do so by setting status to "PRE_SEQUENCING_POOLING_OF_LIBRARIES"
+     * NOTE - Repooling by Volume OR Mass should do so by setting status to "PRE_SEQUENCING_POOLING_OF_LIBRARIES"
      *
      * @param seqQc
      * @param qcStatus
