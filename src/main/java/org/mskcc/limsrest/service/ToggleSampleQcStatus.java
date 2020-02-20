@@ -198,10 +198,10 @@ public class ToggleSampleQcStatus extends LimsTask {
      */
     private void repoolByPoolingProtocol(DataRecord seqQc, QcStatus qcStatus) {
         DataRecord[] childSamples = getParentsOfType(seqQc, SAMPLE);
-        if (childSamples.length > 0) {
+        if (childSamples != null && childSamples.length > 0) {
             log.info(String.format("Found record %s. Searching for child sample with 'PoolingSampleLibProtocol'", recordId));
             DataRecord record;
-            while (childSamples.length > 0) {
+            while (childSamples != null && childSamples.length > 0) {
                 record = childSamples[0];
                 if (isRecordForRepooling(record)) {
                     String pooledSampleRecord = Long.toString(record.getRecordId());
