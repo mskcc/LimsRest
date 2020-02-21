@@ -9,8 +9,7 @@ public class RequestTrackerModel {
     private String projectId;
     private Set<String> recipes;
     private String status;                      // Overall status of the project
-    private List<Map<String, String>> steps;    // Steps in the process
-
+    private List<Map<String, Object>> steps;    // Steps in the process
     private String trackerType = "LIMS";
 
 
@@ -18,19 +17,44 @@ public class RequestTrackerModel {
         this.info = sampleInfo;
         this.projectId = projectId;
 
-        populateProjectMetadata();
+        populateProjectMetadata(sampleInfo);
     }
 
-    private void populateProjectMetadata() {
-        List<String> recipes = this.info.stream()
+    private void populateProjectMetadata(List<Map<String, String>> sampleInfo) {
+        List<String> recipes = sampleInfo.stream()
                                          .map(entry -> entry.get("Recipe"))
                                          .collect(Collectors.toList());
         this.recipes = new HashSet(recipes);
+        this.steps = getSteps(sampleInfo);
+        // TODO
+        this.status = "Pending";
+    }
 
-        // Calculate Overall status
+    /**
+     * Calculates the steps in a project based ont he sample's "ExemplarSampleStatus"
+     *
+     * @return
+     */
+    private List<Map<String, Object>> getSteps(List<Map<String, String>> sampleInfo) {
+        Map<String, Map<String,Object>> stepMap = new HashMap<>();
+        String status;
+        Map<String,Object> step;
+        for(Map<String, String> sample : sampleInfo){
+            status = sample.get("ExemplarSampleStatus");
+            if(stepMap.containsKey((status))){
+                step = stepMap.get(status);
+                Integer currentCount = (Integer) step.get("NumSamples");
+                step.put("NumSamples", currentCount + 1);
+            } else {
+                Map<String, Object> newStep = new HashMap<>();
+                newStep.put("NumSamples", 1);
+                newStep.put("Status", "working");
+                newStep.put("status", status);
+                stepMap.put(status, newStep);
+            }
+        }
 
-        // Calculate Overall step
-
+        return new ArrayList<Map<String, Object>> (stepMap.values());
     }
 
     public Map<String, Object> toMap() {
@@ -39,8 +63,10 @@ public class RequestTrackerModel {
         map.put("date",  LocalDateTime.now());
         map.put("projectId", this.projectId);
 
-        map.put("sampleInfo", this.info);
+        map.put("info", this.info);
         map.put("recipes", this.recipes);
+        map.put("steps", this.steps);
+        map.put("status", this.status);
         return map;
     }
 }
