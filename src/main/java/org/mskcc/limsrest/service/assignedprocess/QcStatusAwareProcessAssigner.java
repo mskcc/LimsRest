@@ -16,15 +16,12 @@ import java.util.Map;
 public class QcStatusAwareProcessAssigner {
     private final static Log log = LogFactory.getLog(QcStatusAwareProcessAssigner.class);
 
-    public QcStatusAwareProcessAssigner() {
-    }
-
-    public static AssignedProcessConfig getProcessAssignerConfig(QcStatus qcStatus, DataRecord qc, User user) throws Exception {
+    public static AssignedProcessConfig getProcessAssignerConfig(QcStatus qcStatus, DataRecord sample, User user) throws Exception {
         switch (qcStatus) {
             case RESEQUENCE_POOL:
-                return new ResequencePoolAssignedProcessConfig(qc, user);
+                return new ResequencePoolAssignedProcessConfig(sample, user);
             case REPOOL_SAMPLE:
-                return new RepoolSampleAssignedAssignedProcessConfig(qc, user);
+                return new RepoolSampleAssignedProcessConfig(sample);
             default:
                 throw new RuntimeException(String.format("Not supported qc status: %s", qcStatus));
         }
@@ -103,7 +100,7 @@ public class QcStatusAwareProcessAssigner {
             log.warn(String.format("There is no parent batch for sample %s to remove from", igoId));
         } else {
             log.info(String.format("Number of parent batches for sample %s: %d.", igoId, batches.size()));
-            for (DataRecord batch: batches) {
+            for (DataRecord batch : batches) {
                 String batchName = batch.getStringVal(DT_Batch.BATCH_NAME, user);
                 log.info(String.format("Removing child sample %s from batch %s", igoId, batchName));
                 batch.removeChild(sampleRecord, null, user);
