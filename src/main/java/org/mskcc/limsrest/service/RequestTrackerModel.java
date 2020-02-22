@@ -5,28 +5,22 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class RequestTrackerModel {
-    private List<Map<String, String>> info;
+    private List<Map<String, Object>> info;
     private String projectId;
-    private Set<String> recipes;
     private String status;                      // Overall status of the project
     private List<Map<String, Object>> steps;    // Steps in the process
     private String trackerType = "LIMS";
 
 
-    public RequestTrackerModel(List<Map<String, String>> sampleInfo, String projectId){
-        this.info = sampleInfo;
+    public RequestTrackerModel(List<Map<String, Object>> trackingInfo, String projectId){
+        this.info = trackingInfo;
         this.projectId = projectId;
 
-        populateProjectMetadata(sampleInfo);
+        // populateProjectMetadata(sampleInfo);
     }
 
     private void populateProjectMetadata(List<Map<String, String>> sampleInfo) {
-        List<String> recipes = sampleInfo.stream()
-                                         .map(entry -> entry.get("Recipe"))
-                                         .collect(Collectors.toList());
-        this.recipes = new HashSet(recipes);
         this.steps = getSteps(sampleInfo);
-        // TODO
         this.status = "Pending";
     }
 
@@ -64,7 +58,6 @@ public class RequestTrackerModel {
         map.put("projectId", this.projectId);
 
         map.put("info", this.info);
-        map.put("recipes", this.recipes);
         map.put("steps", this.steps);
         map.put("status", this.status);
         return map;
