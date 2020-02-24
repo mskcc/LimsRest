@@ -21,6 +21,7 @@ public class GetRequestTrackingTask {
     private String requestId;
 
     private static String[] FIELDS = new String[] {"ExemplarSampleStatus", "Recipe"};
+    private static String[] DATE_FIELDS = new String[] {"DateCreated", "DateModified"};
 
     public GetRequestTrackingTask(String requestId, ConnectionLIMS conn) {
         this.requestId = requestId;
@@ -92,6 +93,13 @@ public class GetRequestTrackingTask {
             for(String key : FIELDS){
                 try {
                     sampleInfo.put(key, record.getStringVal(key, user));
+                } catch (NotFound | RemoteException e){
+                    log.warn(String.format("Unable to extract key: %s, from record: %d", key, record.getRecordId()));
+                }
+            }
+            for(String key : DATE_FIELDS){
+                try {
+                    sampleInfo.put(key, Long.toString(record.getLongVal(key, user)));
                 } catch (NotFound | RemoteException e){
                     log.warn(String.format("Unable to extract key: %s, from record: %d", key, record.getRecordId()));
                 }
