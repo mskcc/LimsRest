@@ -115,6 +115,7 @@ public class ToggleSampleQcStatus extends LimsTask {
                             }
                         }
                     } catch (NullPointerException npe) {
+                        log.warn(String.format("Failed to find Matched Sample. Error: %s", npe.getMessage()));
                     }
                 }
                 if (matchedSample == null) {
@@ -136,11 +137,15 @@ public class ToggleSampleQcStatus extends LimsTask {
                                 try {
                                     oldNote = pqc.getStringVal("Note", user);
                                 } catch (NullPointerException npe) {
+                                    log.warn(String.format("Failed to parse out note from PostSeqAnalysisQC record",
+                                            npe.getMessage()));
                                 }
                                 pqc.setDataField("Note", oldNote + "\n" + note, user);
                             }
                         }
                     } catch (NullPointerException npe) {
+                        log.warn(String.format("Failed to parse data from PostSeqAnalysisQC record",
+                                npe.getMessage()));
                     }
                 }
                 if (matchCount == 0) {
