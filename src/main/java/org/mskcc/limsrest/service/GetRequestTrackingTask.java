@@ -217,7 +217,7 @@ public class GetRequestTrackingTask {
 
             for(Map.Entry<String, Step> entry : steps.entrySet()){
                 Step step = entry.getValue();
-                if(step.completedSamples == step.totalSamples){
+                if(step.completedSamples == step.totalSamples || step.step.toLowerCase().contains("completed - illumina sequencing")){
                     step.complete = true;
                 } else {
                     step.complete = false;
@@ -270,7 +270,7 @@ public class GetRequestTrackingTask {
             List<DataRecord> requestRecord = drm.queryDataRecords("Request", "RequestId = '" + this.requestId + "'", user);
             if (requestRecord.size() != 1) {  // error: request ID not found or more than one found
                 log.error("Request not found:" + requestId);
-                return new RequestTrackerModel(null, requestId); // SampleTrackingList();
+                return new RequestTrackerModel(null, requestId, false); // SampleTrackingList();
             }
 
             // Immediate samples of the request. These samples represent the overall progress of each project sample
@@ -304,7 +304,12 @@ public class GetRequestTrackingTask {
                                                         .map(tracker -> tracker.toApiEntry())
                                                         .collect(Collectors.toList());
 
-            return new RequestTrackerModel(projectSamples, this.requestId);
+            List<Map<String, Object>> pendingSamples = sampleTrackingMap.values().stream()
+                    .map(tracker -> tracker.toApiEntry())
+                    .filter(entry -> ! (Boolean) entry.get("complete"))
+                    .collect(Collectors.toList());
+
+            return new RequestTrackerModel(projectSamples, this.requestId, pendingSamples.size() == 0);
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
             return null;

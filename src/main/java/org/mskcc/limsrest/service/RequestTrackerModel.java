@@ -12,9 +12,10 @@ public class RequestTrackerModel {
     private String trackerType = "LIMS";
 
 
-    public RequestTrackerModel(List<Map<String, Object>> trackingInfo, String projectId){
+    public RequestTrackerModel(List<Map<String, Object>> trackingInfo, String projectId, boolean complete){
         this.info = trackingInfo;
         this.projectId = projectId;
+        this.status = Boolean.toString(complete);
 
         // populateProjectMetadata(sampleInfo);
     }
@@ -59,7 +60,7 @@ public class RequestTrackerModel {
 
         map.put("info", this.info);
         // map.put("steps", this.steps);
-        // map.put("status", this);
+        map.put("status", this.status);
 
         return map;
     }
