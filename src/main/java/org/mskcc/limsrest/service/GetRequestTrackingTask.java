@@ -132,6 +132,7 @@ public class GetRequestTrackingTask {
     private class SampleTracker {
         Long sampleId;
         List<List<Map<String, String>>> samplePaths;
+
         public SampleTracker(Long sampleId){
             this.sampleId = sampleId;
             this.samplePaths = new ArrayList<>();
@@ -139,10 +140,119 @@ public class GetRequestTrackingTask {
         public void addPath(List<Map<String, String>> path){
             this.samplePaths.add(path);
         }
+
+        /**
+         * Returns all paths that have a size greater than the input index
+         *
+         * @param paths
+         * @param idx
+         * @return
+         */
+        private List<List<Map<String, String>>> getRemainingPaths(List<List<Map<String, String>>> paths, int idx){
+            List<List<Map<String, String>>> remainingPaths = new ArrayList<>();
+            for(List<Map<String, String>> path : paths){
+                if(path.size() > idx){
+                    remainingPaths.add(path);
+                }
+            }
+            return remainingPaths;
+        }
+
+        private class Step {
+            public String step;
+            public boolean complete;
+            public int totalSamples;
+            public int completedSamples;
+            public Set<String> nextSteps;       // Exemplar statuses
+
+            public Step(String step){
+                this.step = step;
+                this.complete = false;
+                this.totalSamples = 0;
+                this.completedSamples = 0;
+                nextSteps = new HashSet<>();
+            }
+
+            public Map<String, Object> jsonify(){
+                Map<String, Object> json = new HashMap<>();
+                json.put("step", this.step);
+                json.put("complete", this.complete);
+                json.put("totalSamples", this.totalSamples);
+                json.put("completedSamples", this.completedSamples);
+                json.put("next", this.nextSteps);
+                return json;
+            }
+        }
+
+        private Map<String, Step> processPaths(List<List<Map<String, String>>> paths){
+            int idx = 0;
+            List<List<Map<String, String>>> remainingPaths = getRemainingPaths(paths, 0);
+
+            // Status -> StepTracker
+            Map<String, Step> steps = new HashMap<>();
+
+            while(remainingPaths.size() > 0){
+                for(List<Map<String, String>> path : remainingPaths){
+                    Map<String, String> step = path.get(idx);
+                    String status = step.get("ExemplarSampleStatus");
+                    Step stepTracker;
+                    if(steps.containsKey(status)){
+                        stepTracker = steps.get(status);
+                    } else {
+                        stepTracker = new Step(status);
+                        steps.put(status, stepTracker);
+                    }
+                    stepTracker.totalSamples += 1;
+
+                    int nextIdx = idx+1;
+                    // Check if there's a next step
+                    if(path.size() > nextIdx){
+                        stepTracker.completedSamples += 1;  // If there's a next step, this step has been completed
+                        stepTracker.nextSteps.add(path.get(nextIdx).get("ExemplarSampleStatus"));
+                    }
+                }
+
+                remainingPaths = getRemainingPaths(remainingPaths, ++idx);
+            }
+
+            for(Map.Entry<String, Step> entry : steps.entrySet()){
+                Step step = entry.getValue();
+                if(step.completedSamples == step.totalSamples){
+                    step.complete = true;
+                } else {
+                    step.complete = false;
+                }
+            }
+
+            return steps;
+        }
+
+        private List<Map<String,Object>> jsonifySampleSteps(Map<String, Step> steps){
+            List<Map<String,Object>> jsonSteps = steps.values().stream().map(step -> step.jsonify()).collect(Collectors.toList());
+            return jsonSteps;
+        }
+
         public Map<String, Object> toApiEntry(){
             Map<String, Object> apiEntry = new HashMap<>();
             apiEntry.put("sampleId", this.sampleId);
             apiEntry.put("samplePaths", this.samplePaths);
+
+            Map<String, Step> processedPaths = processPaths(this.samplePaths);
+            List<String> completedSteps = processedPaths.values()
+                    .stream()
+                    .filter(step -> step.complete)
+                    .map(step -> step.step)
+                    .collect(Collectors.toList());
+            List<String> pendingSteps = processedPaths.values()
+                    .stream()
+                    .filter(step -> !step.complete)
+                    .map(step -> step.step)
+                    .collect(Collectors.toList());
+
+            apiEntry.put("steps", jsonifySampleSteps(processedPaths));
+            apiEntry.put("complete", pendingSteps.size() == 0);
+            apiEntry.put("pendingSteps", pendingSteps);
+            apiEntry.put("completedSteps", completedSteps);
 
             // TODO - Add Status/Steps for each one
 

@@ -58,8 +58,9 @@ public class RequestTrackerModel {
         map.put("projectId", this.projectId);
 
         map.put("info", this.info);
-        map.put("steps", this.steps);
-        map.put("status", this.status);
+        // map.put("steps", this.steps);
+        // map.put("status", this);
+
         return map;
     }
 }
