@@ -4,7 +4,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.NucleicAcid;
 import org.mskcc.limsrest.service.PatientSamplesWithCmoInfoRetriever;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
+import java.util.Map;
 import java.util.Optional;
 
 public class Utils {
@@ -34,5 +37,10 @@ public class Utils {
 
             return Optional.empty();
         }
+    }
+
+    public static <T> ResponseEntity<T> getResponseEntity(T input, HttpStatus status)  {
+        ResponseEntity<T> resp = new ResponseEntity<T>(input, status);
+        return resp;
     }
 }

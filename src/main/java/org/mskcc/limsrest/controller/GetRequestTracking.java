@@ -6,6 +6,7 @@ import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.GetRequestTrackingTask;
 import org.mskcc.limsrest.service.RequestTrackerModel;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -13,8 +14,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.mskcc.limsrest.util.Utils.getResponseEntity;
 
 @RestController
 @RequestMapping("/")
@@ -28,7 +32,7 @@ public class GetRequestTracking {
     }
 
     @GetMapping("/getRequestTracking")
-    public Map<String, Object> getContent(@RequestParam(value = "request") String requestId, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> getContent(@RequestParam(value = "request") String requestId, HttpServletRequest request) {
         log.info("/getRequestTracking for request:" + requestId + " " + request.getRemoteAddr());
 
         if (!Whitelists.requestMatches(requestId)) {
@@ -38,7 +42,8 @@ public class GetRequestTracking {
 
         try {
             GetRequestTrackingTask t = new GetRequestTrackingTask(requestId, conn);
-            return t.execute().toMap();
+            Map<String, Object> requestTracker = t.execute();
+            return getResponseEntity(requestTracker, HttpStatus.OK);
         } catch (Exception e) {
             log.error(e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
