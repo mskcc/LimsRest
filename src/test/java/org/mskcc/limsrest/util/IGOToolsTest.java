@@ -10,7 +10,7 @@ public class IGOToolsTest {
     public void requestIdFromIgoId() {
         assertEquals("06049_A", IGOTools.requestFromIgoId("06049_A"));
         assertEquals("06049_AA", IGOTools.requestFromIgoId("06049_AA_3_2_1"));
-        assertEquals("06049", IGOTools.requestFromIgoId("06049"));
+        assertEquals("06049", IGOTools.requestFromIgoId("06049_1_1"));
         assertEquals("06049_O", IGOTools.requestFromIgoId("06049_O_28"));
         assertEquals("05022_I", IGOTools.requestFromIgoId("05022_I_1"));
     }

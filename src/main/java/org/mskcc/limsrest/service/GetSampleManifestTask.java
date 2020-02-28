@@ -510,8 +510,10 @@ public class GetSampleManifestTask {
 
                 if (returnOnlyTwo) {
                     // Return only most recent R1&R2 in case of re-demux but return all fastqs if demux fastqs are by lane
-                    if (passedQCList.size() > 2 && !sameRunDifferentLane(passedQCList))
-                        passedQCList = passedQCList.subList(0,2);
+                    if (passedQCList.size() > 2 && hasRedemux(fastqList)) {
+                        log.info("Cutting response to not include prior redemuxes.");
+                        passedQCList = passedQCList.subList(0, 2);
+                    }
                 }
 
                 List<String> result = new ArrayList<>();
@@ -541,16 +543,19 @@ public class GetSampleManifestTask {
         BUT only return the most recent "_A2" run fastqs for this run:
 
         /ifs/archive/GCL/hiseq/FASTQ/A00227_0011_BH2YHKDMXX_A2/Project_93017_F/Sample_P-8765432-T01-WES_IGO_93017_F_74/P-8765432-T01-WES_IGO_93017_F_74_S11_R2_001.fastq.gz
+        not this fastq
+           /ifs/archive/GCL/hiseq/FASTQ/A00227_0011_BH2YHKDMXX/Project_93017_F/Sample_P-0020689-T01-WES_IGO_93017_F_74/P-0020689-T01-WES_IGO_93017_F_74_S88_R1_001.fastq.gz
          */
-    protected static boolean sameRunDifferentLane(List<ArchivedFastq> passedQCList) {
+    protected static boolean hasRedemux(List<ArchivedFastq> passedQCList) {
         Set<String> samples = new HashSet<>();
         for (ArchivedFastq fastqEntry : passedQCList) {
             String [] parts = fastqEntry.fastq.split("/");
             String sampleOnly = parts[parts.length - 1];
+            sampleOnly = sampleOnly.replaceAll("_S([0-9]{1,2})_", "");
             if (samples.contains(sampleOnly))
-                return false;
+                return true;
             samples.add(sampleOnly);
         }
-        return true;
+        return false;
     }
 }
