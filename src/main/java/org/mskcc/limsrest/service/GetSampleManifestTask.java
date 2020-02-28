@@ -545,13 +545,16 @@ public class GetSampleManifestTask {
         /ifs/archive/GCL/hiseq/FASTQ/A00227_0011_BH2YHKDMXX_A2/Project_93017_F/Sample_P-8765432-T01-WES_IGO_93017_F_74/P-8765432-T01-WES_IGO_93017_F_74_S11_R2_001.fastq.gz
         not this fastq
            /ifs/archive/GCL/hiseq/FASTQ/A00227_0011_BH2YHKDMXX/Project_93017_F/Sample_P-0020689-T01-WES_IGO_93017_F_74/P-0020689-T01-WES_IGO_93017_F_74_S88_R1_001.fastq.gz
+
+         Illumina sample sheet S** number will likely change when redemuxed:
+           https://support.illumina.com/help/BaseSpace_OLH_009008/Content/Source/Informatics/BS/NamingConvention_FASTQ-files-swBS.htm
          */
     protected static boolean hasRedemux(List<ArchivedFastq> passedQCList) {
         Set<String> samples = new HashSet<>();
         for (ArchivedFastq fastqEntry : passedQCList) {
             String [] parts = fastqEntry.fastq.split("/");
             String sampleOnly = parts[parts.length - 1];
-            sampleOnly = sampleOnly.replaceAll("_S([0-9]{1,2})_", "");
+            sampleOnly = sampleOnly.replaceAll("_S([0-9]{1,3})_", "");
             if (samples.contains(sampleOnly))
                 return true;
             samples.add(sampleOnly);

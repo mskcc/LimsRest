@@ -55,4 +55,16 @@ public class GetSampleManifestTaskTest {
 
         assertTrue(GetSampleManifestTask.hasRedemux(passedQCList));
     }
+
+    @Test
+    public void sameRunRedemuxManySamples() {
+        List<ArchivedFastq> passedQCList = new ArrayList<>();
+        ArchivedFastq a = new ArchivedFastq();
+        a.setFastq("/ifs/archive/GCL/hiseq/FASTQ/JAX_0420_AHGK5CBBXY_A1/Project_10673/Sample_P-0034230-N01-WES_IGO_10673_1/P-0034230-N01-WES_IGO_10673_1_S6_R1_001.fastq.gz");
+        ArchivedFastq b = new ArchivedFastq();
+        b.setFastq(  "/ifs/archive/GCL/hiseq/FASTQ/JAX_0420_AHGK5CBBXY/Project_10673/Sample_P-0034230-N01-WES_IGO_10673_1/P-0034230-N01-WES_IGO_10673_1_S323_R1_001.fastq.gz");
+        passedQCList.add(a);passedQCList.add(b);
+
+        assertTrue(GetSampleManifestTask.hasRedemux(passedQCList));
+    }
 }
