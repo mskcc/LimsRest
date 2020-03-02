@@ -6,6 +6,7 @@ import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.sloan.cmo.recmodels.KAPALibPlateSetupProtocol1Model;
 import com.velox.sloan.cmo.recmodels.SampleModel;
 import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.logging.Log;
@@ -158,13 +159,15 @@ public class GetSampleManifestTask {
             dnaLibraries.put(igoId, new LibraryDataRecord(sample));
         }
 
+        Double dnaInputNg = findDNAInputForLibraryForMSKACCESS(sample, user);
+
         // for each DNA Library traverse the records grab the fields we need and paths to fastqs.
         for (Map.Entry<String, LibraryDataRecord> aliquotEntry : dnaLibraries.entrySet()) {
             String libraryIgoId = aliquotEntry.getKey();
             DataRecord aliquot = aliquotEntry.getValue().record;
             DataRecord aliquotParent = aliquotEntry.getValue().parent;
             log.info("Processing DNA library: " + libraryIgoId);
-            SampleManifest.Library library = getLibraryFields(user, libraryIgoId, aliquot);
+            SampleManifest.Library library = getLibraryFields(user, libraryIgoId, aliquot, dnaInputNg);
 
             List<DataRecord> indexBarcodes = aliquot.getDescendantsOfType("IndexBarcode", user);
             if (aliquotParent != null) { // TODO get barcodes for WES samples
@@ -269,6 +272,25 @@ public class GetSampleManifestTask {
         return sampleManifest;
     }
 
+    /*
+     * The ACCESS team has requested DNA input for library.
+     */
+    protected Double findDNAInputForLibraryForMSKACCESS(DataRecord sample, User user) {
+        try {
+            String recipe = sample.getStringVal(SampleModel.RECIPE, user);
+            if (recipe.contains("ACCESS") ){
+                log.info("Searching for DNA Library Input Mass (ng).");
+                DataRecord [] records = sample.getChildrenOfType(KAPALibPlateSetupProtocol1Model.DATA_TYPE_NAME, user);
+                DataRecord record = records[records.length - 1];
+                return record.getDoubleVal(KAPALibPlateSetupProtocol1Model.TARGET_MASS_ALIQ_1, user);
+            }
+            return null;
+        } catch (Exception e) {
+            log.error(e);
+            return null;
+        }
+    }
+
     protected SampleManifest getSampleLevelFields(String igoId, List<DataRecord> samples, DataRecord sample,
                                                   DataRecordManager dataRecordManager, User user)
             throws NotFound, RemoteException, IoError {
@@ -318,7 +340,7 @@ public class GetSampleManifestTask {
         return sampleManifest;
     }
 
-    private SampleManifest.Library getLibraryFields(User user, String libraryIgoId, DataRecord aliquot) throws IoError, RemoteException, NotFound {
+    private SampleManifest.Library getLibraryFields(User user, String libraryIgoId, DataRecord aliquot, Double dnaInputNg) throws IoError, RemoteException, NotFound {
         DataRecord[] libPrepProtocols = aliquot.getChildrenOfType("DNALibraryPrepProtocol3", user);
         Double libraryVolume = null;
         if (libPrepProtocols != null && libPrepProtocols.length == 1)
@@ -328,7 +350,7 @@ public class GetSampleManifestTask {
         if (libraryConcentrationObj != null)  // for example 06449_1 concentration is null
             libraryConcentration = aliquot.getDoubleVal("Concentration", user);
 
-        return new SampleManifest.Library(libraryIgoId, libraryVolume, libraryConcentration);
+        return new SampleManifest.Library(libraryIgoId, libraryVolume, libraryConcentration, dnaInputNg);
     }
 
     protected SampleManifest getSampleLevelFields(String igoId, DataRecord cmoInfo, User user) throws NotFound, RemoteException {

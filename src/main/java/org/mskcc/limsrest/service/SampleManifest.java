@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Sample Level information which describe metadate and wetlab information reported to pipelines.
+ * <BR>
+ * Samples can have libraries, libraries can have runs, runs have fastqs.
+ */
 public class SampleManifest {
     private String igoId;
 
@@ -34,6 +39,8 @@ public class SampleManifest {
         public Double libraryVolume; // [uL]
         public Double libraryConcentrationNgul; // ng/uL
 
+        public Double dnaInputNg;
+
         public String captureConcentrationNm;
         public String captureInputNg;
         public String captureName;
@@ -42,10 +49,11 @@ public class SampleManifest {
 
         public Library() {}
 
-        public Library(String libraryIgoId, Double libraryVolume, Double libraryConcentrationNgul) {
+        public Library(String libraryIgoId, Double libraryVolume, Double libraryConcentrationNgul, Double dnaInputNg) {
             this.libraryIgoId = libraryIgoId;
             this.libraryVolume = libraryVolume;
             this.libraryConcentrationNgul = libraryConcentrationNgul;
+            this.dnaInputNg = dnaInputNg;
         }
 
         public boolean hasFastqs() {
@@ -73,6 +81,7 @@ public class SampleManifest {
                     ", libraryIgoId='" + libraryIgoId + '\'' +
                     ", libraryVolume=" + libraryVolume +
                     ", libraryConcentrationNgul=" + libraryConcentrationNgul +
+                    ", dnaInputNg=" + dnaInputNg +
                     ", captureConcentrationNm='" + captureConcentrationNm + '\'' +
                     ", captureInputNg='" + captureInputNg + '\'' +
                     ", captureName='" + captureName + '\'' +
