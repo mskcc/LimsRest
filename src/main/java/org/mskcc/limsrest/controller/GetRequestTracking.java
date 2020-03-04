@@ -32,7 +32,9 @@ public class GetRequestTracking {
     }
 
     @GetMapping("/getRequestTracking")
-    public ResponseEntity<Map<String, Object>> getContent(@RequestParam(value = "request") String requestId, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> getContent(@RequestParam(value = "request") String requestId,
+                                                          @RequestParam(value = "serviceId") String serviceId,
+                                                          HttpServletRequest request) {
         log.info("/getRequestTracking for request:" + requestId + " " + request.getRemoteAddr());
 
         if (!Whitelists.requestMatches(requestId)) {
@@ -41,7 +43,7 @@ public class GetRequestTracking {
         }
 
         try {
-            GetRequestTrackingTask t = new GetRequestTrackingTask(requestId, conn);
+            GetRequestTrackingTask t = new GetRequestTrackingTask(requestId, serviceId, conn);
             Map<String, Object> requestTracker = t.execute();
             return getResponseEntity(requestTracker, HttpStatus.OK);
         } catch (Exception e) {
