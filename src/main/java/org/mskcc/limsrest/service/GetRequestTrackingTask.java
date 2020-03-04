@@ -58,8 +58,17 @@ public class GetRequestTrackingTask {
         List<Map<String, Object>> steps = new ArrayList<>();
         long startTime;
         long updateTime;
+        Long deliveryDate;
+        Long receivedDate;
 
-        public RequestTracker(List<SampleTracker> sampleTrackers) {
+        private boolean isIgoComplete() {
+            return this.deliveryDate != null;
+        }
+
+        public RequestTracker(List<SampleTracker> sampleTrackers, Long deliveryDate, Long receivedDate) {
+            this.deliveryDate = deliveryDate;
+            this.receivedDate = receivedDate;
+
             this.samples = sampleTrackers.stream()
                     .map(tracker -> tracker.toApiResponse())
                     .collect(Collectors.toList());
@@ -132,10 +141,12 @@ public class GetRequestTrackingTask {
                     return 0;
                 }
 
-                Long diff = s1Start - s2Start;
-
-                return diff.intValue();
+                return s1Start < s2Start ? -1 : s1Start > s2Start ? 1 : 0;
             });
+
+            for(int i = 0; i< steps.size(); i++){
+                steps.get(i).put("order", i);
+            }
 
             return steps;
         }
@@ -156,6 +167,9 @@ public class GetRequestTrackingTask {
             apiResponse.put("steps", this.steps);
             apiResponse.put("startTime", this.startTime);
             apiResponse.put("updateTime", this.updateTime);
+            apiResponse.put("igoComplete", isIgoComplete());
+            apiResponse.put("deliveryDate", this.deliveryDate);
+            apiResponse.put("receivedDate", this.receivedDate);
 
             return apiResponse;
         }
@@ -339,14 +353,26 @@ public class GetRequestTrackingTask {
             VeloxConnection vConn = conn.getConnection();
             User user = vConn.getUser();
             DataRecordManager drm = vConn.getDataRecordManager();
-            List<DataRecord> requestRecord = drm.queryDataRecords("Request", "RequestId = '" + this.requestId + "'", user);
-            if (requestRecord.size() != 1) {  // error: request ID not found or more than one found
+            List<DataRecord> requestRecordList = drm.queryDataRecords("Request", "RequestId = '" + this.requestId + "'", user);
+            if (requestRecordList.size() != 1) {  // error: request ID not found or more than one found
                 log.error("Request not found:" + requestId);
                 return new HashMap<>();
             }
 
+            // Get all relevant Request information
+            DataRecord requestRecord = requestRecordList.get(0);
+            Long receivedDate = null;
+            Long deliveryDate = null;
+            // TODO - exception is thrown if these do not exist
+            try {
+                receivedDate = requestRecord.getLongVal("ReceivedDate", user);
+                deliveryDate = requestRecord.getLongVal("RecentDeliveryDate", user);
+            } catch (NullPointerException e){
+                // This is an expected exception
+            }
+
             // Immediate samples of the request. These samples represent the overall progress of each project sample
-            DataRecord[] samples = requestRecord.get(0).getChildrenOfType("Sample", user);
+            DataRecord[] samples = requestRecord.getChildrenOfType("Sample", user);
             List<SampleTracker> sampleTrackers = Stream.of(samples)
                     .map(sample -> new SampleTracker(sample, user))
                     .collect(Collectors.toList());
@@ -368,7 +394,7 @@ public class GetRequestTrackingTask {
                 }
             }
 
-            RequestTracker requestTracker = new RequestTracker(sampleTrackers);
+            RequestTracker requestTracker = new RequestTracker(sampleTrackers, deliveryDate, receivedDate);
             return requestTracker.toApiResponse();
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
