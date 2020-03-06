@@ -262,7 +262,7 @@ public class GetRequestTrackingTask {
 
 
             Map<String, Request> requestMap = new HashMap<>();
-            for(String requestId : requestIds){
+            for(String requestId : requestIds) {
                 requestMap.putIfAbsent(requestId, new Request(requestId, serviceId));
                 Request request = requestMap.get(requestId);
 
@@ -279,12 +279,12 @@ public class GetRequestTrackingTask {
                 try {
                     request.setReceivedDate(requestRecord.getLongVal("ReceivedDate", user));
                     Long recentDeliveryDate = requestRecord.getLongVal("RecentDeliveryDate", user);
-                    if(recentDeliveryDate != null){
+                    if (recentDeliveryDate != null) {
                         // Projects are considered IGO-Complete if they have a delivery date
                         request.setDeliveryDate(recentDeliveryDate);
                         request.setIgoComplete(true);
                     }
-                } catch (NullPointerException e){
+                } catch (NullPointerException e) {
                     // This is an expected exception when DataRecord fields have not been set
                 }
 
@@ -292,7 +292,7 @@ public class GetRequestTrackingTask {
                 DataRecord[] samples = requestRecord.getChildrenOfType("Sample", user);
 
                 // Find paths & calculate stages for each sample in the request
-                for(DataRecord record : samples){
+                for (DataRecord record : samples) {
                     SampleTracker tracker = new SampleTracker(record, user);
 
                     Sample parentSample = new Sample(record, user);
@@ -306,10 +306,10 @@ public class GetRequestTrackingTask {
 
                     // Find all paths from leaf to parent nodes
                     List<List<Sample>> paths = new ArrayList<>();
-                    for(Sample curr : leafSamples){
+                    for (Sample curr : leafSamples) {
                         List<Sample> path = new ArrayList<>();
 
-                        while(curr != null){
+                        while (curr != null) {
                             curr.enrichSample();        // Add extra data fields to sample
                             // Samples are complete because they have a sample after teh
                             curr.setComplete(Boolean.TRUE);
@@ -327,7 +327,7 @@ public class GetRequestTrackingTask {
                     tracker.setPaths(paths);
 
                     // Determine stages of the sampleTracker
-                    for(List<Sample> path : paths){
+                    for (List<Sample> path : paths) {
                         tracker.setStages(calculateSampleStage(path));
                         // tracker.calculateSampleStage(path);
                     }
@@ -341,127 +341,13 @@ public class GetRequestTrackingTask {
 
 
                 Map<String, Map<String, Object>> apiResponse = new HashMap<>();
-                for(Map.Entry<String, Request> entry : requestMap.entrySet()){
+                for (Map.Entry<String, Request> entry : requestMap.entrySet()) {
                     apiResponse.put(entry.getKey(), entry.getValue().toApiResponse());
                 }
 
                 return apiResponse;
 
-                /*
-                // Do a BFS using a reference to the sampleTrackers
-                List<Pair<DataRecord, SampleTracker>> queue = sampleTrackers.stream()
-                        .map(tracker -> (Pair<DataRecord, SampleTracker>) new Pair(tracker.getRecord(), tracker))
-                        .collect(Collectors.toList());
-                while(queue.size() > 0){
-                    Pair<DataRecord, SampleTracker> node = queue.remove(0);
-                    SampleTracker tracker = node.getValue();
-                    DataRecord parent = node.getKey();
-
-                    DataRecord[] children = parent.getChildren(user);
-
-                    // TODO - This should only be for an admin view
-                    // Add all child Records for the parent to the sampleTracker
-                    List<Long> childRecordIds = Arrays.stream(children)
-                            .map(record -> record.getRecordId())
-                            .collect(Collectors.toList());
-                    tracker.addChildrenToRecord(parent.getRecordId(), childRecordIds);
-
-                    for(DataRecord record : children){
-                        tracker.addSample(record);
-                        Pair<DataRecord, SampleTracker> child = new Pair<>(record, tracker);
-                        queue.add(child);
-                    }
-                }
-
-                RequestTracker requestTracker = new RequestTracker(sampleTrackers);
-                Map<String, Object> trackerResponse = requestTracker.toApiResponse();
-
-                Map<String, Object> stagesMap = new HashMap<>();
-                trackerResponse.put("stages", stagesMap);
-
-                stagesMap.put("submitted", submittedStage);
-
-
-                sampleQcStages.put(requestId, getSampleQcStages());
-                libraryPrepStages.put(requestId, getLibraryPrepStages());
-                sequencingStages.put(requestId, getSequencingStages());
-                dataQcStages.put(requestId, getDataQcStages());
-                igoCompleteStages.put(requestId, getIgoCompleteStages());
-                 */
             }
-
-
-            // TODO - MAYBE? Allow for just requestID to be sent
-
-            /*
-            // Only get Submitted Stage if a serviceId is provided
-            // ServiceIds -(1:many)-> IGO Request ID
-            Map<String, Object> submittedStage = new HashMap<>();
-            List<String> requestIds = new ArrayList<>(Arrays.asList(this.requestId));
-            if(this.serviceId != null){
-
-                Set<String> uniqueRequestIds = bankedSampleRecords.stream()
-                        .map(record -> getRecordStringValue(record, "RequestId", user))
-                        .collect(Collectors.toSet());
-                requestIds = new ArrayList<>(uniqueRequestIds);
-            }
-             */
-
-
-
-            /*
-            List<DataRecord> requestRecordList = drm.queryDataRecords("Request", "RequestId = '" + this.requestId + "'", user);
-            if (requestRecordList.size() != 1) {  // error: request ID not found or more than one found
-                log.error("Request not found:" + requestId);
-                return new HashMap<>();
-            }
-
-            // Get all relevant Request information
-            DataRecord requestRecord = requestRecordList.get(0);
-            Long receivedDate = null;
-            Long deliveryDate = null;
-            // TODO - exception is thrown if these do not exist
-            try {
-                receivedDate = requestRecord.getLongVal("ReceivedDate", user);
-                deliveryDate = requestRecord.getLongVal("RecentDeliveryDate", user);
-            } catch (NullPointerException e){
-                // This is an expected exception
-            }
-
-            // Immediate samples of the request. These samples represent the overall progress of each project sample
-            DataRecord[] samples = requestRecord.getChildrenOfType("Sample", user);
-            List<SampleTracker> sampleTrackers = Stream.of(samples)
-                    .map(sample -> new SampleTracker(sample, user))
-                    .collect(Collectors.toList());
-
-            // Do a BFS using a reference to the sampleTrackers
-            List<Pair<DataRecord, SampleTracker>> queue = sampleTrackers.stream()
-                    .map(tracker -> (Pair<DataRecord, SampleTracker>) new Pair(tracker.getRecord(), tracker))
-                    .collect(Collectors.toList());
-            while(queue.size() > 0){
-                Pair<DataRecord, SampleTracker> node = queue.remove(0);
-                SampleTracker tracker = node.getValue();
-                DataRecord parent = node.getKey();
-
-                DataRecord[] children = parent.getChildren(user);
-                for(DataRecord record : children){
-                    tracker.addSample(record);
-                    Pair<DataRecord, SampleTracker> child = new Pair<>(record, tracker);
-                    queue.add(child);
-                }
-            }
-
-            RequestTracker requestTracker = new RequestTracker(sampleTrackers, deliveryDate, receivedDate);
-            Map<String, Object> trackerResponse = requestTracker.toApiResponse();
-
-            Map<String, Object> stagesMap = new HashMap<>();
-            trackerResponse.put("stages", stagesMap);
-
-            stagesMap.put("submitted", submittedStage);
-
-            return trackerResponse;
-             */
-
             return new HashMap<>();
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
