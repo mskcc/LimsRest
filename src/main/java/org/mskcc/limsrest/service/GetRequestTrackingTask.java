@@ -198,43 +198,43 @@ public class GetRequestTrackingTask {
      *
      * @param path
      */
-    public Map<String, Stage> calculateSampleStage(List<Sample> path) {
+    public Map<String, Stage> calculateSampleStage(List<? extends Tracker> path) {
         Map<String, Stage> stageMap = new HashMap<>();
         if(path.size() == 0) return stageMap;
 
-        ListIterator<Sample> itr = path.listIterator(path.size()); // path.iterator();
-        Sample sample = itr.previous();
+        ListIterator<? extends Tracker> itr = path.listIterator(path.size()); // path.iterator();
+        Tracker tracker = itr.previous();
 
-        String stageName = sample.getStage();
-        Long startTime = sample.getStartTime();
-        Long updateTime = sample.getUpdateTime();
-        Stage stage = new Stage(stageName, sample.getSize(), 0, startTime, updateTime);
+        String stageName = tracker.getStage();
+        Long startTime = tracker.getStartTime();
+        Long updateTime = tracker.getUpdateTime();
+        Stage stage = new Stage(stageName, tracker.getSize(), 0, startTime, updateTime);
 
         // Stage can only be set to incomplete if it is the last Stage and doesn't have a complete status
-        stage.setComplete(sample.getComplete());
+        stage.setComplete(tracker.getComplete());
         stageMap.put(stageName, stage);
         while (itr.hasPrevious()) {
-            sample = itr.previous();
+            tracker = itr.previous();
 
-            stageName = sample.getStage();
-            startTime = sample.getStartTime();
-            updateTime = sample.getUpdateTime();
+            stageName = tracker.getStage();
+            startTime = tracker.getStartTime();
+            updateTime = tracker.getUpdateTime();
 
             if(stageMap.containsKey(stageName)){
                 stage = stageMap.get(stageName);
 
                 // Update the start & end times of the stage
-                stage.addStartingSample(sample.getSize());
-                stage.addEndingSample(sample.getSize());
+                stage.addStartingSample(tracker.getSize());
+                stage.addEndingSample(tracker.getSize());
                 if (stage.getStartTime() > startTime) {
                     stage.setStartTime(startTime);
                 }
-                if (stage.getEndTime() < updateTime) {
-                    stage.setEndTime(updateTime);
+                if (stage.getUpdateTime() < updateTime) {
+                    stage.setUpdateTime(updateTime);
                 }
             } else {
                 // Add a new stage, which must be complete if it preceded another entry
-                stageMap.put(stageName, new Stage(stageName, sample.getSize(), sample.getSize(), startTime, updateTime));
+                stageMap.put(stageName, new Stage(stageName, tracker.getSize(), tracker.getSize(), startTime, updateTime));
                 stage.setComplete(Boolean.TRUE);
             }
         }
@@ -320,7 +320,7 @@ public class GetRequestTrackingTask {
                         // Reset the leaf-node complete status based off of its status
                         Sample leaf = path.get(0);
                         leaf.setComplete(isCompletedStatus(leaf.getStatus()));
-                        
+
                         Collections.reverse(path); // Get path samples in order from parent to their leaf samples
                         paths.add(path);
                     }

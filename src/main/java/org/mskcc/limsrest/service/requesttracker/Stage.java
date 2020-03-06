@@ -5,12 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Stage {
+public class Stage extends Tracker {
     String stage;
     int startingSamples;
     int endingSamples;
-    Long startTime;
-    Long endTime;
 
     public Boolean getComplete() {
         return complete;
@@ -18,43 +16,18 @@ public class Stage {
 
     Boolean complete;
     List<Step> steps;
-    public Stage(String stage, int startingSamples, int endingSamples, Long startTime, Long endTime) {
+    public Stage(String stage, int startingSamples, int endingSamples, Long startTime, Long updateTime) {
         this.stage = stage;
         this.startingSamples = startingSamples;
         this.endingSamples = endingSamples;
         this.startTime = startTime;
-        this.endTime = endTime;
-        this.complete = Boolean.TRUE;       // Stage will be complete until found to not be complete
+        this.updateTime = updateTime;
 
         steps = new ArrayList<>();
     }
 
     public String getStage() {
         return stage;
-    }
-
-    public int getStartingSamples() {
-        return startingSamples;
-    }
-
-    public Long getStartTime() {
-        return startTime;
-    }
-
-    public void setStartTime(Long startTime) {
-        this.startTime = startTime;
-    }
-
-    public Long getEndTime() {
-        return endTime;
-    }
-
-    public void setEndTime(Long endTime) {
-        this.endTime = endTime;
-    }
-
-    public void setComplete(Boolean complete) {
-        this.complete = complete;
     }
 
     public void addStartingSample(Integer count) {
@@ -75,7 +48,7 @@ public class Stage {
         apiMap.put("startingSamples", this.startingSamples);
         apiMap.put("endingSamples", this.endingSamples);
         apiMap.put("startTime", this.startTime);
-        apiMap.put("endTime", this.endTime);
+        apiMap.put("updateTime", this.updateTime);
         apiMap.put("complete", this.complete);
 
         return apiMap;

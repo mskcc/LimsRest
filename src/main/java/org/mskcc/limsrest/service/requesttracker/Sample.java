@@ -13,18 +13,14 @@ import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.getS
 import static org.mskcc.limsrest.util.DataRecordAccess.getRecordLongValue;
 import static org.mskcc.limsrest.util.DataRecordAccess.getRecordStringValue;
 
-public class Sample {
+public class Sample extends Tracker {
     Long recordId;
     String status;
     Set<Long> children;
     Sample parent;
     DataRecord record;
     String stage;
-    Integer size;       // How many records
-    Boolean complete;
     private User user;
-    private Long startTime;
-    private Long updateTime;
 
     public Sample(DataRecord record, User user) {
         this.recordId = record.getRecordId();
@@ -32,34 +28,6 @@ public class Sample {
         this.parent = null;
         this.user = user;
         this.size = 1;
-    }
-
-    public Boolean getComplete() {
-        return complete;
-    }
-
-    public void setComplete(Boolean complete) {
-        this.complete = complete;
-    }
-
-    public Integer getSize() {
-        return size;
-    }
-
-    public Long getStartTime() {
-        return startTime;
-    }
-
-    public Long getUpdateTime() {
-        return updateTime;
-    }
-
-    public String getStage() {
-        return stage;
-    }
-
-    public void setStage(String stage) {
-        this.stage = stage;
     }
 
     /**

@@ -93,7 +93,7 @@ public class SampleTracker {
     stage.setStartTime(startTime);
     }
     if (stage.endTime < updateTime) {
-    stage.setEndTime(updateTime);
+    stage.setUpdateTime(updateTime);
     }
     stage.addStartingSample();
 
