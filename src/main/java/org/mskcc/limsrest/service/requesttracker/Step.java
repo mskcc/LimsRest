@@ -19,7 +19,6 @@ import static org.mskcc.limsrest.util.DataRecordAccess.getRecordStringValue;
 
 public class Step {
     private static Log log = LogFactory.getLog(RequestTracker.class);
-
     public String step;
     public boolean complete;
     public int totalSamples;
@@ -27,7 +26,7 @@ public class Step {
     public long startTime;
     public long updateTime;
     public Set<String> nextSteps;       // Exemplar statuses
-    private User user;
+    private User user;                  // optional - needed for some lookups
 
     public Step(String step, User user) {
         this.step = step;
@@ -36,6 +35,30 @@ public class Step {
         this.completedSamples = 0;
         this.nextSteps = new HashSet<>();
         this.user = user;
+    }
+
+    public void setStep(String step) {
+        this.step = step;
+    }
+
+    public void setComplete(boolean complete) {
+        this.complete = complete;
+    }
+
+    public void setCompletedSamples(int completedSamples) {
+        this.completedSamples = completedSamples;
+    }
+
+    public void setTotalSamples(int totalSamples) {
+        this.totalSamples = totalSamples;
+    }
+
+    public void setStartTime(long startTime) {
+        this.startTime = startTime;
+    }
+
+    public void setUpdateTime(long updateTime) {
+        this.updateTime = updateTime;
     }
 
     // Records sample passing through step

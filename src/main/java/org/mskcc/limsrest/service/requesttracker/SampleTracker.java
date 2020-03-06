@@ -4,12 +4,12 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.api.user.User;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.service.GetRequestTrackingTask;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.mskcc.limsrest.util.DataRecordAccess.getRecordStringValue;
 
@@ -20,20 +20,95 @@ public class SampleTracker {
     DataRecord record;
     boolean complete;
     Map<String, Step> stepMap;
+    Map<Long, Sample> sampleGraph;
+    Boolean failed;
     private User user;
+    private List<List<Sample>> paths;
+    private Map<String, Stage> stages;
 
     public SampleTracker(DataRecord record, User user) {
         this.record = record;
         this.sampleId = record.getRecordId();
-        this.stepMap = new HashMap<>();
         this.user = user;
         this.complete = true;       // The sample is considered complete until a record is added that is not done
+
+        this.sampleGraph = new HashMap<>();
+        this.stepMap = new HashMap<>();
+        this.stages = new HashMap<>();
         addSample(record);
     }
 
-    public DataRecord getRecord(){
+    public Map<String, Stage> getStages() {
+        return stages;
+    }
+
+    public void setStages(Map<String, Stage> stages) {
+        this.stages = stages;
+    }
+
+    public void setFailed(Boolean failed) {
+        this.failed = failed;
+    }
+
+    public void setPaths(List<List<Sample>> paths) {
+        this.paths = paths;
+    }
+
+    public void addPath(List<Sample> path) {
+        this.paths.add(path);
+    }
+
+    public DataRecord getRecord() {
         return this.record;
     }
+
+    public void addChildrenToRecord(Long recordId, List<Long> childRecords) {
+        this.sampleGraph.get(recordId).addChildren(childRecords);
+    }
+
+    /**
+     * Calculate the stage the overall sample is at based on the route one path
+     *
+     * @param path
+
+    public void calculateSampleStage(List<Sample> path) {
+    String stageName;
+    Long startTime;
+    Long updateTime;
+
+
+    Iterator<Sample> itr = path.iterator();
+    Sample sample = itr.next();
+    Stage stage;
+    while (sample != null) {
+    stageName = sample.getStage();
+    startTime = sample.getStartTime();
+    updateTime = sample.getUpdateTime();
+
+    stages.putIfAbsent(stageName, new Stage(stageName, 0, 0, startTime, updateTime));
+    stage = stages.get(stageName);
+
+    // Update the start & end times of the stage
+    if (stage.startTime > startTime) {
+    stage.setStartTime(startTime);
+    }
+    if (stage.endTime < updateTime) {
+    stage.setEndTime(updateTime);
+    }
+    stage.addStartingSample();
+
+    sample = itr.next();
+    if (sample != null && sample.getStage() != stageName) {
+    // Next stage is different so the sample has completed this stage
+    stage.addEndingSample();
+    } else if (sample == null) {
+    // No more samples left, so the Stage is incomplete
+    // TODO - Add logic to determine if status is in end-state
+    stage.setComplete(Boolean.FALSE);
+    }
+    }
+    }
+     */
 
     /**
      * Record a sample
@@ -42,7 +117,13 @@ public class SampleTracker {
      */
     public void addSample(DataRecord record) {
         String recordStatus = getRecordStringValue(record, "ExemplarSampleStatus", this.user);
-        if (recordStatus == null) return;
+        Long recordId = record.getRecordId();
+
+        sampleGraph.putIfAbsent(recordId, new Sample(record, this.user));
+
+        // Determine if sample is still pending
+        boolean failed = recordStatus.toLowerCase().contains("failed");
+
 
         Step step;
         if (stepMap.containsKey(recordStatus)) {
@@ -83,7 +164,20 @@ public class SampleTracker {
 
         apiMap.put("sampleId", this.sampleId);
         apiMap.put("status", complete == true ? "Complete" : "Pending");
+
+        List<Map<String, Object>> sampleTree = this.sampleGraph.values().stream()
+                .map(sample -> sample.toApiResponse())
+                .collect(Collectors.toList());
+
+        apiMap.put("sampleTree", sampleTree);
         apiMap.put("steps", stepMap);
+
+        apiMap.put("paths", this.paths.stream().map(path -> path.stream()
+                .map(sample -> sample.toApiResponse())).collect(Collectors.toList()));
+
+        apiMap.put("stages", this.stages.values().stream().map(
+                stage -> stage.toApiResponse()
+        ).collect(Collectors.toList()));
 
         return apiMap;
     }

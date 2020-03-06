@@ -11,24 +11,17 @@ public class RequestTracker {
     private static Log log = LogFactory.getLog(RequestTracker.class);
 
     List<Map<String, Object>> samples;
-    boolean isComplete;
     List<Map<String, Object>> steps = new ArrayList<>();
     long startTime;
     long updateTime;
-    Long deliveryDate;
-    Long receivedDate;
 
     private static String START_TIME = "startTime";
     private static String UPDATE_TIME = "updateTime";
 
-    public RequestTracker(List<SampleTracker> sampleTrackers, Long deliveryDate, Long receivedDate) {
-        this.deliveryDate = deliveryDate;
-        this.receivedDate = receivedDate;
-
+    public RequestTracker(List<SampleTracker> sampleTrackers) {
         this.samples = sampleTrackers.stream()
                 .map(tracker -> tracker.toApiResponse())
                 .collect(Collectors.toList());
-        this.isComplete = isProjectComplete(sampleTrackers);
         this.steps = aggregateSampleSteps(sampleTrackers);
 
         Optional<Long> projectStartTime = this.steps.stream()
@@ -44,10 +37,6 @@ public class RequestTracker {
         if (updateTime.isPresent()) {
             this.updateTime = updateTime.get();
         }
-    }
-
-    private boolean isIgoComplete() {
-        return this.deliveryDate != null;
     }
 
     private List<Map<String, Object>> aggregateSampleSteps(List<SampleTracker> sampleTrackers) {
@@ -123,13 +112,13 @@ public class RequestTracker {
         Map<String, Object> apiResponse = new HashMap<>();
 
         apiResponse.put("samples", this.samples);
-        apiResponse.put("isComplete", this.isComplete);
+        // apiResponse.put("isComplete", this.isComplete);
         apiResponse.put("steps", this.steps);
         apiResponse.put("startTime", this.startTime);
         apiResponse.put("updateTime", this.updateTime);
-        apiResponse.put("igoComplete", isIgoComplete());
-        apiResponse.put("deliveryDate", this.deliveryDate);
-        apiResponse.put("receivedDate", this.receivedDate);
+        // apiResponse.put("igoComplete", isIgoComplete());
+        // apiResponse.put("deliveryDate", this.deliveryDate);
+        // apiResponse.put("receivedDate", this.receivedDate);
 
         return apiResponse;
     }

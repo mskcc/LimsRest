@@ -45,4 +45,13 @@ public class DataRecordAccess {
         }
         return null;
     }
+
+    public static Boolean getRecordBooleanValue(DataRecord record, String key, User user){
+        try {
+            return record.getBooleanVal(key, user);
+        } catch (NotFound | RemoteException | NullPointerException e){
+            log.error(String.format("Failed to get key %s from Sample Record: %d", key, record.getRecordId()));
+        }
+        return null;
+    }
 }

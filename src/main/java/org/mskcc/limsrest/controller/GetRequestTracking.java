@@ -32,7 +32,7 @@ public class GetRequestTracking {
     }
 
     @GetMapping("/getRequestTracking")
-    public ResponseEntity<Map<String, Object>> getContent(@RequestParam(value = "request") String requestId,
+    public ResponseEntity<Map<String, Map<String, Object>>> getContent(@RequestParam(value = "request") String requestId,
                                                           @RequestParam(value = "serviceId") String serviceId,
                                                           HttpServletRequest request) {
         log.info("/getRequestTracking for request:" + requestId + " " + request.getRemoteAddr());
@@ -44,7 +44,7 @@ public class GetRequestTracking {
 
         try {
             GetRequestTrackingTask t = new GetRequestTrackingTask(requestId, serviceId, conn);
-            Map<String, Object> requestTracker = t.execute();
+            Map<String, Map<String, Object>>  requestTracker = t.execute();
             return getResponseEntity(requestTracker, HttpStatus.OK);
         } catch (Exception e) {
             log.error(e);
