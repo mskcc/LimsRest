@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Sample Level information which describe metadate and wetlab information reported to pipelines.
+ * Sample Level information which describe metadata and wetlab information reported to pipelines.
  * <BR>
  * Samples can have libraries, libraries can have runs, runs have fastqs.
  */
@@ -29,7 +29,34 @@ public class SampleManifest {
 
     private String baitSet;
 
+    private List<QcReport> qcReports = new ArrayList<>();
+
     private List<Library> libraries = new ArrayList<>();
+
+
+    public enum QcReportType {
+        DNA, RNA, LIBRARY;
+    }
+
+    /*
+     * The IGO qc reports (DNA, RNA, Library) are returned with pipeline data and meant for the analyst reviewing
+     * the data to better interpret the pipeline results.
+     */
+    public static class QcReport {
+        public QcReport() {}
+
+        public QcReport(QcReportType qcReportType, String IGORecommendation, String comments, String investigatorDecision) {
+            this.qcReportType = qcReportType;
+            this.IGORecommendation = IGORecommendation;
+            this.comments = comments;
+            this.investigatorDecision = investigatorDecision;
+        }
+
+        public QcReportType qcReportType;
+        public String IGORecommendation;
+        public String comments;
+        public String investigatorDecision;
+    }
 
     public static class Library {
         public String barcodeId;
@@ -133,6 +160,10 @@ public class SampleManifest {
 
     public SampleManifest() {}
 
+    public List<QcReport> getQcReports() { return qcReports; }
+
+    public void setQcReports(List<QcReport> qcReports) { this.qcReports = qcReports; }
+
     public void setCMOSampleClass(String cmoSampleClass) { this.cmoSampleClass = cmoSampleClass; }
 
     public String getCmoSampleClass() { return cmoSampleClass; }
@@ -229,9 +260,7 @@ public class SampleManifest {
         this.sex = sex;
     }
 
-    public String getBaitSet() {
-        return baitSet;
-    }
+    public String getBaitSet() { return baitSet; }
 
     public void setBaitSet(String baitSet) {
         this.baitSet = baitSet;

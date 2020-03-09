@@ -129,6 +129,8 @@ public class GetSampleManifestTask {
             return fastqsOnlyManifest(sampleManifest, runFailedQC);
         }
 
+        addIGOQcRecommendations(sampleManifest, sample, user);
+
         // query Picard QC records for bait set & "Passed" fastqs.
         List<DataRecord> qcs = sample.getDescendantsOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
         Set<String> runPassedQC = new HashSet<>();
@@ -270,6 +272,22 @@ public class GetSampleManifestTask {
             }
         }
         return sampleManifest;
+    }
+
+    protected void addIGOQcRecommendations(SampleManifest sampleManifest, DataRecord sample, User user) {
+        try {
+            List<DataRecord> qcRecords = sample.getDescendantsOfType("QcReportDna", user);
+            if (qcRecords.size() > 0) {
+                DataRecord qcRecord = qcRecords.get(0);
+                String igoQcRecommendation = qcRecord.getStringVal("IgoQcRecommendation", user);
+                String comments = qcRecord.getStringVal("Comments", user);
+                String id = qcRecord.getStringVal("InvestigatorDecision", user);
+                SampleManifest.QcReport r = new SampleManifest.QcReport(SampleManifest.QcReportType.DNA, igoQcRecommendation, comments, id);
+                sampleManifest.getQcReports().add(r);
+            }
+        } catch (RemoteException | NotFound e) {
+            e.printStackTrace();
+        }
     }
 
     /*
