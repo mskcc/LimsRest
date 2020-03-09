@@ -202,6 +202,7 @@ public class GetRequestTrackingTask {
         Map<String, Stage> stageMap = new HashMap<>();
         if(path.size() == 0) return stageMap;
 
+        // Iterate backwards -
         ListIterator<? extends Tracker> itr = path.listIterator(path.size()); // path.iterator();
         Tracker tracker = itr.previous();
 
@@ -260,11 +261,11 @@ public class GetRequestTrackingTask {
             Map<String, Stage> dataQcStages = new HashMap<>();
             Map<String, Stage> igoCompleteStages = new HashMap<>();
 
-
             Map<String, Request> requestMap = new HashMap<>();
             for(String requestId : requestIds) {
                 requestMap.putIfAbsent(requestId, new Request(requestId, serviceId));
                 Request request = requestMap.get(requestId);
+                request.addStage("submitted", submittedStages.get(requestId));
 
                 List<DataRecord> requestRecordList = drm.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
                 if (requestRecordList.size() != 1) {  // error: request ID not found or more than one found
@@ -311,7 +312,7 @@ public class GetRequestTrackingTask {
 
                         while (curr != null) {
                             curr.enrichSample();        // Add extra data fields to sample
-                            // Samples are complete because they have a sample after teh
+                            // Samples are complete because they have a sample after them
                             curr.setComplete(Boolean.TRUE);
                             path.add(curr);
                             curr = curr.getParent();
@@ -326,29 +327,38 @@ public class GetRequestTrackingTask {
                     }
                     tracker.setPaths(paths);
 
-                    // Determine stages of the sampleTracker
+                    // Determine stages of the sampleTracker based on the paths for that sample
                     for (List<Sample> path : paths) {
-                        tracker.setStages(calculateSampleStage(path));
-                        // tracker.calculateSampleStage(path);
+                        Map<String, Stage> pathStages = calculateSampleStage(path);
+                        for(Map.Entry<String, Stage> pathStage : pathStages.entrySet()){
+                            request.addStage(pathStage.getKey(), pathStage.getValue());
+                        }
                     }
 
                     request.addSampleTracker(tracker);
                 }
 
                 // Aggregate sample stage information into the request level
+                List<SampleTracker> sampleTrackers = request.getSamples();
+                List<Stage> requestStages = sampleTrackers.stream()
+                        .flatMap(tracker -> tracker.getStages().values().stream())
+                        .collect(Collectors.toList());
 
+                Map<String, Stage> requestStagesMap = calculateSampleStage(requestStages);
 
-
-
-                Map<String, Map<String, Object>> apiResponse = new HashMap<>();
-                for (Map.Entry<String, Request> entry : requestMap.entrySet()) {
-                    apiResponse.put(entry.getKey(), entry.getValue().toApiResponse());
+                // Determine stages of the sampleTracker
+                for (Map.Entry<String, Stage> requestStage : requestStagesMap.entrySet()) {
+                    request.addStage(requestStage.getKey(), requestStage.getValue());
                 }
-
-                return apiResponse;
-
             }
-            return new HashMap<>();
+
+            // JSONIY
+            Map<String, Map<String, Object>> apiResponse = new HashMap<>();
+            for (Map.Entry<String, Request> entry : requestMap.entrySet()) {
+                apiResponse.put(entry.getKey(), entry.getValue().toApiResponse());
+            }
+
+            return apiResponse;
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
             return null;
@@ -356,16 +366,7 @@ public class GetRequestTrackingTask {
     }
 
     /*
-    private Stage getIgoCompleteStages() {
-    }
-
     private Stage getDataQcStages() {
-    }
-
-    private Stage getSequencingStages() {
-    }
-
-    private Stage getLibraryPrepStages() {
     }
 
     private Stage getSampleQcStages() {
