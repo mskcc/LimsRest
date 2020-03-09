@@ -42,7 +42,7 @@ public class Sample extends Tracker {
         this.startTime = getRecordLongValue(record, "DateCreated", this.user);
         this.updateTime = getRecordLongValue(record, "DateModified", this.user);
         this.status = status;
-        this.stage = stage;
+        setStage(stage);
     }
 
     public Long getRecordId() {
