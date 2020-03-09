@@ -276,6 +276,7 @@ public class GetSampleManifestTask {
 
     protected void addIGOQcRecommendations(SampleManifest sampleManifest, DataRecord sample, User user) {
         try {
+            log.info("Searching for QcReportDna report");
             List<DataRecord> qcRecords = sample.getDescendantsOfType("QcReportDna", user);
             if (qcRecords.size() > 0) {
                 DataRecord qcRecord = qcRecords.get(0);
@@ -285,7 +286,19 @@ public class GetSampleManifestTask {
                 SampleManifest.QcReport r = new SampleManifest.QcReport(SampleManifest.QcReportType.DNA, igoQcRecommendation, comments, id);
                 sampleManifest.getQcReports().add(r);
             }
+
+            log.info("Searching for QcReportLibrary");
+            List<DataRecord> qcRecordsLib = sample.getDescendantsOfType("QcReportLibrary", user);
+            if (qcRecordsLib.size() > 0) {
+                DataRecord qcRecord = qcRecordsLib.get(0);
+                String igoQcRecommendation = qcRecord.getStringVal("IgoQcRecommendation", user);
+                String comments = qcRecord.getStringVal("Comments", user);
+                String id = qcRecord.getStringVal("InvestigatorDecision", user);
+                SampleManifest.QcReport r = new SampleManifest.QcReport(SampleManifest.QcReportType.LIBRARY, igoQcRecommendation, comments, id);
+                sampleManifest.getQcReports().add(r);
+            }
         } catch (RemoteException | NotFound e) {
+            log.error("Failed to complete QC record searches.");
             e.printStackTrace();
         }
     }
