@@ -10,16 +10,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.requesttracker.*;
-import org.mskcc.limsrest.util.Pair;
 
 import java.rmi.RemoteException;
-import java.security.Key;
 import java.util.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.isCompletedStatus;
+import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.*;
 import static org.mskcc.limsrest.util.DataRecordAccess.getRecordBooleanValue;
 import static org.mskcc.limsrest.util.DataRecordAccess.getRecordStringValue;
 
@@ -62,7 +58,7 @@ public class GetRequestTrackingTask {
      *     ...
      * }
      */
-    private Map<String, Stage> getSubmittedStages(String serviceId, User user, DataRecordManager drm) {
+    private Map<String, SampleStageTracker> getSubmittedStages(String serviceId, User user, DataRecordManager drm) {
         List<DataRecord> bankedSampleRecords = getBankedSampleRecords(serviceId, user, drm);
 
         // Validate serviceId
@@ -89,7 +85,7 @@ public class GetRequestTrackingTask {
             }
         }
 
-        Map<String, Stage> stageMap = new HashMap<>();
+        Map<String, SampleStageTracker> stageMap = new HashMap<>();
         Map<String, Integer> sampleCountMap;
         int inputSampleCount;
         int promotedSampleCount;
@@ -99,7 +95,11 @@ public class GetRequestTrackingTask {
             promotedSampleCount = sampleCountMap.get("Promoted");
             inputSampleCount = sampleCountMap.get("Total");
 
-            Stage requestStage = new Stage("submitted", inputSampleCount, promotedSampleCount, null, null);
+            SampleStageTracker requestStage = new SampleStageTracker("submitted", inputSampleCount, promotedSampleCount, null, null);
+            if(inputSampleCount == promotedSampleCount){
+                // Request is complete if all samples have been promoted
+                requestStage.setComplete(Boolean.TRUE);
+            }
             stageMap.put(requestId, requestStage);
 
             Step receivedStep = new Step("received", null);
@@ -116,38 +116,6 @@ public class GetRequestTrackingTask {
             requestStage.addStep(promotedStep);
         }
 
-        /*
-        Set<String> uniqueRequestIds = bankedSampleRecords.stream()
-                .map(record ->
-                .collect(Collectors.toSet());
-        List<String> requestIds = new ArrayList<>(uniqueRequestIds);
-
-        Integer bankedCount =  bankedSampleRecords.size();
-        Integer promotedCount = promotedRecords.size();
-
-        Map<String, Object> receivedStep = new HashMap<>();
-        receivedStep.put("step", "Received");
-        receivedStep.put("complete", Boolean.TRUE);
-        receivedStep.put("totalSamples", bankedCount);
-        receivedStep.put("completedSamples", bankedCount);
-
-        Map<String, Object> promotedStep = new HashMap<>();
-        promotedStep.put("step", "Promoted");
-        promotedStep.put("complete", bankedCount == promotedCount); // Complete if all promoted
-        promotedStep.put("totalSamples", bankedCount);
-        promotedStep.put("completedSamples", promotedCount);
-
-        List<Map<String, Object>> steps = new ArrayList<>();
-        steps.add(receivedStep);
-        steps.add(promotedStep);
-
-        Map<String, Object> stage = new HashMap<>();
-        stage.put("stage", "Submitted");
-        stage.put("serviceId", serviceId);
-        stage.put("inputCount", bankedCount);
-        stage.put("outputCount", promotedCount);
-        stage.put("steps", steps);
-        */
         return stageMap;
     }
 
@@ -163,7 +131,7 @@ public class GetRequestTrackingTask {
      * @param user
      * @return
      */
-    private List<Sample> findValidLeafSamples(Sample sample, List<Sample> paths, User user){
+    private List<AliquotStageTracker> findValidLeafSamples(AliquotStageTracker sample, List<AliquotStageTracker> paths, User user){
         DataRecord[] children = new DataRecord[0];
 
         DataRecord record = sample.getRecord();
@@ -180,11 +148,7 @@ public class GetRequestTrackingTask {
             return paths;
         } else {
             for(DataRecord childRecord : children){
-                Sample childSample = new Sample(childRecord, user);
-                /*
-                Sample childSample = new Sample(child.getRecordId(), getRecordStringValue(child, "ExemplarSampleStatus", user));
-                childSample.setRecord(child);
-                 */
+                AliquotStageTracker childSample = new AliquotStageTracker(childRecord, user);
                 childSample.setParent(sample);
                 paths.addAll(findValidLeafSamples(childSample, new ArrayList<>(), user));
             }
@@ -198,48 +162,43 @@ public class GetRequestTrackingTask {
      *
      * @param path
      */
-    public Map<String, Stage> calculateSampleStage(List<? extends Tracker> path) {
-        Map<String, Stage> stageMap = new HashMap<>();
+    public Map<String, SampleStageTracker> calculateStages(List<? extends StageTracker> path, boolean aggregate) {
+        Integer sampleSize = 1; // A sample will have a size of 1
+
+        Map<String, SampleStageTracker> stageMap = new HashMap<>();
         if(path.size() == 0) return stageMap;
 
-        // Iterate backwards -
-        ListIterator<? extends Tracker> itr = path.listIterator(path.size()); // path.iterator();
-        Tracker tracker = itr.previous();
-
-        String stageName = tracker.getStage();
-        Long startTime = tracker.getStartTime();
-        Long updateTime = tracker.getUpdateTime();
-        Stage stage = new Stage(stageName, tracker.getSize(), 0, startTime, updateTime);
-
-        // Stage can only be set to incomplete if it is the last Stage and doesn't have a complete status
-        stage.setComplete(tracker.getComplete());
-        stageMap.put(stageName, stage);
-        while (itr.hasPrevious()) {
-            tracker = itr.previous();
-
-            stageName = tracker.getStage();
-            startTime = tracker.getStartTime();
-            updateTime = tracker.getUpdateTime();
-
+        Iterator<? extends StageTracker> itr = path.iterator();
+        StageTracker stageTracker;
+        String stageName;
+        SampleStageTracker stage;
+        while (itr.hasNext()) {
+            stageTracker = itr.next();
+            stageName = stageTracker.getStage();
             if(stageMap.containsKey(stageName)){
                 stage = stageMap.get(stageName);
-
-                // Update the start & end times of the stage
-                stage.addStartingSample(tracker.getSize());
-                stage.addEndingSample(tracker.getSize());
-                if (stage.getStartTime() > startTime) {
-                    stage.setStartTime(startTime);
+                if(aggregate){
+                    stage.addStartingSample(sampleSize);
                 }
-                if (stage.getUpdateTime() < updateTime) {
-                    stage.setUpdateTime(updateTime);
-                }
+                stage.updateStage(stageTracker);
             } else {
-                // Add a new stage, which must be complete if it preceded another entry
-                stageMap.put(stageName, new Stage(stageName, tracker.getSize(), tracker.getSize(), startTime, updateTime));
-                stage.setComplete(Boolean.TRUE);
+                stage = new SampleStageTracker(stageName, sampleSize, 0, stageTracker.getStartTime(), stageTracker.getUpdateTime());
+                stageMap.put(stageName, stage);
             }
         }
 
+        stageMap.forEach((String k, SampleStageTracker v) -> {
+            String nextStage = getNextStage(v.getStage());
+            SampleStageTracker tracker = stageMap.get(nextStage);
+            if(tracker != null){
+                v.addEndingSample(tracker.getSize());
+                if(v.getEndingSamples() == v.getSize()){
+                    v.setComplete(Boolean.TRUE);
+                } else {
+                    v.setComplete(Boolean.FALSE);
+                }
+            }
+        });
         return stageMap;
     }
 
@@ -252,14 +211,8 @@ public class GetRequestTrackingTask {
 
             // Find all RequestIds for a serviceId and grab Stage Information from those requestIds
             // ServiceIds -(1:many)-> IGO Request ID
-            Map<String, Stage> submittedStages = getSubmittedStages(this.serviceId, user, drm);
+            Map<String, SampleStageTracker> submittedStages = getSubmittedStages(this.serviceId, user, drm);
             List<String> requestIds = new ArrayList<>(submittedStages.keySet());
-
-            Map<String, Stage> sampleQcStages = new HashMap<>();
-            Map<String, Stage> libraryPrepStages = new HashMap<>();
-            Map<String, Stage> sequencingStages = new HashMap<>();
-            Map<String, Stage> dataQcStages = new HashMap<>();
-            Map<String, Stage> igoCompleteStages = new HashMap<>();
 
             Map<String, Request> requestMap = new HashMap<>();
             for(String requestId : requestIds) {
@@ -272,11 +225,8 @@ public class GetRequestTrackingTask {
                     log.error(String.format("Request not found: %s. Returning incomplete information", requestId));
                 }
 
-
                 DataRecord requestRecord = requestRecordList.get(0);
-
                 // TODO - Get all relevant Request information
-
                 try {
                     request.setReceivedDate(requestRecord.getLongVal("ReceivedDate", user));
                     Long recentDeliveryDate = requestRecord.getLongVal("RecentDeliveryDate", user);
@@ -296,22 +246,27 @@ public class GetRequestTrackingTask {
                 for (DataRecord record : samples) {
                     SampleTracker tracker = new SampleTracker(record, user);
 
-                    Sample parentSample = new Sample(record, user);
-
-                    parentSample.setRecord(record);
                     // Finds all non-failed leaf samples
-                    List<Sample> leafSamples = findValidLeafSamples(parentSample, new ArrayList<>(), user);
+                    AliquotStageTracker parentSample = new AliquotStageTracker(record, user);
+                    parentSample.setRecord(record);
+                    List<AliquotStageTracker> leafSamples = findValidLeafSamples(parentSample, new ArrayList<>(), user);
 
                     // If there are no leaf-samples, the sample has failed
                     tracker.setFailed(leafSamples.size() == 0);
 
                     // Find all paths from leaf to parent nodes
-                    List<List<Sample>> paths = new ArrayList<>();
-                    for (Sample curr : leafSamples) {
-                        List<Sample> path = new ArrayList<>();
+                    List<List<AliquotStageTracker>> paths = new ArrayList<>();
+                    for (AliquotStageTracker curr : leafSamples) {
+                        List<AliquotStageTracker> path = new ArrayList<>();
 
                         while (curr != null) {
                             curr.enrichSample();        // Add extra data fields to sample
+
+                            // If this is unknown, use the last element of the path
+                            if(curr.getStage() == STAGE_UNKNOWN && path.size() > 0){
+                                curr.setStage(path.get(path.size()-1).getStage());
+                            }
+
                             // Samples are complete because they have a sample after them
                             curr.setComplete(Boolean.TRUE);
                             path.add(curr);
@@ -319,7 +274,7 @@ public class GetRequestTrackingTask {
                         }
 
                         // Reset the leaf-node complete status based off of its status
-                        Sample leaf = path.get(0);
+                        AliquotStageTracker leaf = path.get(0);
                         leaf.setComplete(isCompletedStatus(leaf.getStatus()));
 
                         Collections.reverse(path); // Get path samples in order from parent to their leaf samples
@@ -328,11 +283,9 @@ public class GetRequestTrackingTask {
                     tracker.setPaths(paths);
 
                     // Determine stages of the sampleTracker based on the paths for that sample
-                    for (List<Sample> path : paths) {
-                        Map<String, Stage> pathStages = calculateSampleStage(path);
-                        for(Map.Entry<String, Stage> pathStage : pathStages.entrySet()){
-                            request.addStage(pathStage.getKey(), pathStage.getValue());
-                        }
+                    for (List<AliquotStageTracker> path : paths) {
+                        Map<String, SampleStageTracker> aliquotStages = calculateStages(path, false);
+                        tracker.addStage(aliquotStages);
                     }
 
                     request.addSampleTracker(tracker);
@@ -340,14 +293,13 @@ public class GetRequestTrackingTask {
 
                 // Aggregate sample stage information into the request level
                 List<SampleTracker> sampleTrackers = request.getSamples();
-                List<Stage> requestStages = sampleTrackers.stream()
+                List<SampleStageTracker> requestStages = sampleTrackers.stream()
                         .flatMap(tracker -> tracker.getStages().values().stream())
                         .collect(Collectors.toList());
-
-                Map<String, Stage> requestStagesMap = calculateSampleStage(requestStages);
+                Map<String, SampleStageTracker> requestStagesMap = calculateStages(requestStages, true);
 
                 // Determine stages of the sampleTracker
-                for (Map.Entry<String, Stage> requestStage : requestStagesMap.entrySet()) {
+                for (Map.Entry<String, SampleStageTracker> requestStage : requestStagesMap.entrySet()) {
                     request.addStage(requestStage.getKey(), requestStage.getValue());
                 }
             }

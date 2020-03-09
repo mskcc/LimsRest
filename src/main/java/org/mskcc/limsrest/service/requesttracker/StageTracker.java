@@ -1,14 +1,17 @@
 package org.mskcc.limsrest.service.requesttracker;
 
-public class Tracker {
+import java.util.HashMap;
+import java.util.Map;
+
+public class StageTracker {
     protected String stage;
     protected Integer size;           // How many records
     protected Boolean complete;
     protected Long startTime;
     protected Long updateTime;
 
-    public Tracker() {
-        this.complete = Boolean.TRUE;       // Stage will be complete until found to not be complete
+    public StageTracker() {
+        this.complete = Boolean.FALSE;
     }
 
     public String getStage() {
@@ -49,5 +52,16 @@ public class Tracker {
 
     public void setUpdateTime(Long updateTime) {
         this.updateTime = updateTime;
+    }
+
+    public Map<String, Object> toApiResponse() {
+        Map<String, Object> apiMap = new HashMap<>();
+        apiMap.put("totalSamples", this.size);
+        apiMap.put("stage", this.stage);
+        apiMap.put("complete", this.complete);
+        apiMap.put("startTime", this.startTime);
+        apiMap.put("updateTime", this.updateTime);
+
+        return apiMap;
     }
 }

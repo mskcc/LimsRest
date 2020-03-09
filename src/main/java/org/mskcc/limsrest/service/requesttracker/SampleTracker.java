@@ -20,11 +20,11 @@ public class SampleTracker {
     DataRecord record;
     boolean complete;
     Map<String, Step> stepMap;
-    Map<Long, Sample> sampleGraph;
+    Map<Long, AliquotStageTracker> sampleGraph;
     Boolean failed;
     private User user;
-    private List<List<Sample>> paths;
-    private Map<String, Stage> stages;
+    private List<List<AliquotStageTracker>> paths;
+    private Map<String, SampleStageTracker> stages;
 
     public SampleTracker(DataRecord record, User user) {
         this.record = record;
@@ -38,23 +38,41 @@ public class SampleTracker {
         addSample(record);
     }
 
-    public Map<String, Stage> getStages() {
+    public Map<String, SampleStageTracker> getStages() {
         return stages;
     }
 
-    public void setStages(Map<String, Stage> stages) {
+    public void setStages(Map<String, SampleStageTracker> stages) {
         this.stages = stages;
+    }
+
+    /**
+     * Merges stages
+     *
+     * @param stages
+     */
+    public void addStage(Map<String, SampleStageTracker> stages){
+        stages.forEach(
+                (updateName, v) ->
+                    this.stages.merge(
+                            updateName, v, (SampleStageTracker currentStage, SampleStageTracker updateStage) -> {
+                                currentStage.updateStage(updateStage);
+                                return currentStage;
+                            }
+                    )
+
+        );
     }
 
     public void setFailed(Boolean failed) {
         this.failed = failed;
     }
 
-    public void setPaths(List<List<Sample>> paths) {
+    public void setPaths(List<List<AliquotStageTracker>> paths) {
         this.paths = paths;
     }
 
-    public void addPath(List<Sample> path) {
+    public void addPath(List<AliquotStageTracker> path) {
         this.paths.add(path);
     }
 
@@ -119,7 +137,7 @@ public class SampleTracker {
         String recordStatus = getRecordStringValue(record, "ExemplarSampleStatus", this.user);
         Long recordId = record.getRecordId();
 
-        sampleGraph.putIfAbsent(recordId, new Sample(record, this.user));
+        sampleGraph.putIfAbsent(recordId, new AliquotStageTracker(record, this.user));
 
         // Determine if sample is still pending
         boolean failed = recordStatus.toLowerCase().contains("failed");
@@ -169,8 +187,8 @@ public class SampleTracker {
                 .map(sample -> sample.toApiResponse())
                 .collect(Collectors.toList());
 
-        apiMap.put("sampleTree", sampleTree);
-        apiMap.put("steps", stepMap);
+        // apiMap.put("sampleTree", sampleTree);
+        // apiMap.put("steps", stepMap);
 
         apiMap.put("paths", this.paths.stream().map(path -> path.stream()
                 .map(sample -> sample.toApiResponse())).collect(Collectors.toList()));

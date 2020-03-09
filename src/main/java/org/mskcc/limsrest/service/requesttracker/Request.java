@@ -2,7 +2,6 @@ package org.mskcc.limsrest.service.requesttracker;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.service.GetRequestTrackingTask;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,22 +20,22 @@ public class Request {
     private String nameOfLaboratoryHead;
     private String nameOfInvestigator;
 
-    public Map<String, Stage> getStages() {
+    public Map<String, SampleStageTracker> getStages() {
         return stages;
     }
 
-    public void setStages(Map<String, Stage> stages) {
+    public void setStages(Map<String, SampleStageTracker> stages) {
         this.stages = stages;
     }
 
-    public void addStage(String stageName, Stage stage){
+    public void addStage(String stageName, SampleStageTracker stage){
         if(this.stages.containsKey(stageName)){
             log.warn(String.format("Overriding stage: %s recorded for record: %s", stageName, this.requestId));
         }
         this.stages.put(stageName, stage);
     }
 
-    private Map<String, Stage> stages;
+    private Map<String, SampleStageTracker> stages;
     private List<SampleTracker> samples;
 
     public Request(String requestId, String bankedSampleId) {
@@ -62,10 +61,10 @@ public class Request {
      * Calculates the stages from its internal state of stages
      */
     public void calculateStages() {
-        Map<String, Stage> stages;
+        Map<String, SampleStageTracker> stages;
         for (SampleTracker tracker : samples) {
             stages = tracker.getStages();
-            for (Map.Entry<String, Stage> entry : stages.entrySet()) {
+            for (Map.Entry<String, SampleStageTracker> entry : stages.entrySet()) {
 
             }
         }
