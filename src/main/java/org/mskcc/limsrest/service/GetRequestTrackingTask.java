@@ -215,7 +215,7 @@ public class GetRequestTrackingTask {
     }
 
     // TODO - Maybe accept a String[] fields array that is all the fields that should be pulled from a sample
-    public Map<String, Map<String, Object>>  execute() {
+    public Map<String, Object> execute() {
         try {
             VeloxConnection vConn = conn.getConnection();
             User user = vConn.getUser();
@@ -229,7 +229,7 @@ public class GetRequestTrackingTask {
             if(this.serviceId != null && !this.serviceId.equals("")){
                 // Find all RequestIds for a serviceId and grab Stage Information from those requestIds
                 // ServiceIds -(1:many)-> IGO Request ID
-                 submittedStages = getSubmittedStages(this.serviceId, user, drm);
+                submittedStages = getSubmittedStages(this.serviceId, user, drm);
                 requestIds = new ArrayList<>(submittedStages.keySet());
             }
 
@@ -337,10 +337,14 @@ public class GetRequestTrackingTask {
             }
 
             // JSONIY
-            Map<String, Map<String, Object>> apiResponse = new HashMap<>();
+            Map<String, Map<String, Object>> apiRequestResponse = new HashMap<>();
             for (Map.Entry<String, Request> entry : requestMap.entrySet()) {
-                apiResponse.put(entry.getKey(), entry.getValue().toApiResponse());
+                apiRequestResponse.put(entry.getKey(), entry.getValue().toApiResponse());
             }
+
+            Map<String, Object> apiResponse = new HashMap<>();
+            apiResponse.put("requests", apiRequestResponse);
+            apiResponse.put("serviceId", this.serviceId);
 
             return apiResponse;
         } catch (Throwable e) {
