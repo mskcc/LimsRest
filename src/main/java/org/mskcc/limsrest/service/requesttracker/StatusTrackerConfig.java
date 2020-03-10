@@ -34,7 +34,8 @@ public class StatusTrackerConfig {
     private static final Set<String> LIBRARY_PREP_STATUSES = new HashSet<>(Arrays.asList(
             "Completed - Generic Normalization Plate Setup",
             "Completed - Generic Library Preparation",
-            "Completed - Pooling of Sample Libraries by Volume"
+            "Completed - Pooling of Sample Libraries by Volume",
+            "Received"
     ));
 
     private static final Set<String> SEQUENCING_STATUSES = new HashSet<>(Arrays.asList(
