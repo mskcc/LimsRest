@@ -64,5 +64,33 @@ public class StatusTrackerConfig {
     public static String getNextStage(String status){
         return nextStageMap.get(status);
     }
+
+    /**
+     * Returns the position of the stage. Returns out-of-bounds index if not present
+     *
+     * @param status
+     * @return
+     */
+    public static int getStageOrder(String status) {
+        for(int i = 0; i<stageOrder.length; i++){
+            if(status.equals(stageOrder[i])) return i;
+        }
+        return stageOrder.length;
+    }
+
+    /**
+     * Comparator used to sort statuses based on their order
+     */
+    public static class StageComp implements Comparator<String>{
+        @Override
+        public int compare(String s1, String s2) {
+            int p1 = getStageOrder(s1);
+            int p2 = getStageOrder(s2);
+
+            return p1 - p2;
+            // return (p1 < p2) ? -1 : (p2 > p1) ? 1 : 0;
+        }
+    }
+
 }
 

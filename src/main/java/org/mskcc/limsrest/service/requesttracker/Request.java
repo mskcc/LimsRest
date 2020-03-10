@@ -3,10 +3,7 @@ package org.mskcc.limsrest.service.requesttracker;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Request {
@@ -16,6 +13,11 @@ public class Request {
     private String bankedSampleId;
     private long deliveryDate;
     private long receivedDate;
+
+    public boolean isIgoComplete() {
+        return igoComplete;
+    }
+
     private boolean igoComplete;
     private String nameOfLaboratoryHead;
     private String nameOfInvestigator;
@@ -40,9 +42,9 @@ public class Request {
 
     public Request(String requestId, String bankedSampleId) {
         this.requestId = requestId;
-        this.igoComplete = false;
+        this.igoComplete = true;        // Request is complete until a sample is added that is not
         this.samples = new ArrayList<>();
-        this.stages = new HashMap<>();
+        this.stages = new TreeMap<>(new StatusTrackerConfig.StageComp());
     }
 
     public List<SampleTracker> getSamples() {
@@ -53,7 +55,13 @@ public class Request {
         this.samples = samples;
     }
 
+    /**
+     * Adds sample and updates complete status of the overall request
+     *
+     * @param tracker
+     */
     public void addSampleTracker(SampleTracker tracker) {
+        this.igoComplete = tracker.isComplete() && this.igoComplete;
         this.samples.add(tracker);
     }
 
@@ -90,7 +98,7 @@ public class Request {
         // apiResponse.put("steps", this.steps);
         // apiResponse.put("startTime", this.startTime);
         // apiResponse.put("updateTime", this.updateTime);
-        // apiResponse.put("igoComplete", isIgoComplete());
+        apiResponse.put("igoComplete", this.igoComplete);
         // apiResponse.put("deliveryDate", this.deliveryDate);
         apiResponse.put("receivedDate", this.receivedDate);
         apiResponse.put("samples", this.samples.stream().map(tracker -> tracker.toApiResponse()).collect(Collectors.toList()));

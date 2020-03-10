@@ -25,7 +25,6 @@ public class SampleTracker {
     private User user;
     private List<List<AliquotStageTracker>> paths;
     private Map<String, SampleStageTracker> stages;
-
     public SampleTracker(DataRecord record, User user) {
         this.record = record;
         this.sampleId = record.getRecordId();
@@ -35,7 +34,15 @@ public class SampleTracker {
         this.sampleGraph = new HashMap<>();
         this.stepMap = new HashMap<>();
         this.stages = new HashMap<>();
-        addSample(record);
+        // addSample(record);
+    }
+
+    public boolean isComplete() {
+        return complete;
+    }
+
+    public void setComplete(boolean complete) {
+        this.complete = complete;
     }
 
     public Map<String, SampleStageTracker> getStages() {
@@ -51,15 +58,15 @@ public class SampleTracker {
      *
      * @param stages
      */
-    public void addStage(Map<String, SampleStageTracker> stages){
+    public void addStage(Map<String, SampleStageTracker> stages) {
         stages.forEach(
                 (updateName, v) ->
-                    this.stages.merge(
-                            updateName, v, (SampleStageTracker currentStage, SampleStageTracker updateStage) -> {
-                                currentStage.updateStage(updateStage);
-                                return currentStage;
-                            }
-                    )
+                        this.stages.merge(
+                                updateName, v, (SampleStageTracker currentStage, SampleStageTracker updateStage) -> {
+                                    currentStage.updateStage(updateStage);
+                                    return currentStage;
+                                }
+                        )
 
         );
     }

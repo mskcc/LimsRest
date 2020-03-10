@@ -165,7 +165,7 @@ public class GetRequestTrackingTask {
     public Map<String, SampleStageTracker> calculateStages(List<? extends StageTracker> path, boolean aggregate) {
         Integer sampleSize = 1; // A sample will have a size of 1
 
-        Map<String, SampleStageTracker> stageMap = new HashMap<>();
+        Map<String, SampleStageTracker> stageMap = new TreeMap<>(new StatusTrackerConfig.StageComp());
         if(path.size() == 0) return stageMap;
 
         Iterator<? extends StageTracker> itr = path.iterator();
@@ -286,6 +286,13 @@ public class GetRequestTrackingTask {
                     for (List<AliquotStageTracker> path : paths) {
                         Map<String, SampleStageTracker> aliquotStages = calculateStages(path, false);
                         tracker.addStage(aliquotStages);
+                    }
+
+                    Optional<Boolean> isComplete = tracker.getStages().values().stream().map(stage -> stage.getComplete()).reduce(Boolean::logicalAnd);
+                    if(isComplete.isPresent()){
+                        tracker.setComplete(isComplete.get());
+                    } else {
+                        tracker.setComplete(Boolean.FALSE);
                     }
 
                     request.addSampleTracker(tracker);
