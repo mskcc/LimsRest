@@ -16,8 +16,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.*;
-import static org.mskcc.limsrest.util.DataRecordAccess.getRecordBooleanValue;
-import static org.mskcc.limsrest.util.DataRecordAccess.getRecordStringValue;
+import static org.mskcc.limsrest.util.DataRecordAccess.*;
 
 public class GetRequestTrackingTask {
     private static Log log = LogFactory.getLog(GetRequestTrackingTask.class);
@@ -28,6 +27,20 @@ public class GetRequestTrackingTask {
 
     private static String[] FIELDS = new String[] {"ExemplarSampleStatus", "Recipe"};
     private static String[] DATE_FIELDS = new String[] {"DateCreated", "DateModified"};
+
+    // LIMS fields for the request metadata - separated by string & long value types
+    private static String[] requestDataLongFields = new String[] { "RecentDeliveryDate", "ReceivedDate" };
+    private static String[] requestDataStringFields = new String[] {
+            "LaboratoryHead",
+            "IlabRequest",
+            "GroupLeader",
+            "TATFromInProcessing",
+            "TATFromReceiving",
+            "ProjectManager",
+            "LabHeadEmail",
+            "Investigator"
+    };
+
 
     public GetRequestTrackingTask(String requestId, String serviceId, ConnectionLIMS conn) {
         this.requestId = requestId;
@@ -60,7 +73,6 @@ public class GetRequestTrackingTask {
      */
     private Map<String, SampleStageTracker> getSubmittedStages(String serviceId, User user, DataRecordManager drm) {
         List<DataRecord> bankedSampleRecords = getBankedSampleRecords(serviceId, user, drm);
-
         // Validate serviceId
         if(bankedSampleRecords.isEmpty()){
             throw new IllegalArgumentException(String.format("Invalid serviceID: %s", this.serviceId));
@@ -226,17 +238,19 @@ public class GetRequestTrackingTask {
                 }
 
                 DataRecord requestRecord = requestRecordList.get(0);
-                // TODO - Get all relevant Request information
-                try {
-                    request.setReceivedDate(requestRecord.getLongVal("ReceivedDate", user));
-                    Long recentDeliveryDate = requestRecord.getLongVal("RecentDeliveryDate", user);
-                    if (recentDeliveryDate != null) {
-                        // Projects are considered IGO-Complete if they have a delivery date
-                        request.setDeliveryDate(recentDeliveryDate);
-                        request.setIgoComplete(true);
-                    }
-                } catch (NullPointerException e) {
-                    // This is an expected exception when DataRecord fields have not been set
+
+                Map<String, Object> requestMetaData = new HashMap<>();
+                for(String field : requestDataStringFields){
+                    requestMetaData.put(field, getRecordStringValue(requestRecord, field, user));
+                }
+                for(String field : requestDataLongFields){
+                    requestMetaData.put(field, getRecordLongValue(requestRecord, field, user));
+                }
+                request.setMetaData(requestMetaData);
+
+                if (getRecordLongValue(requestRecord, "RecentDeliveryDate", user) != null) {
+                    // Projects are considered IGO-Complete if they have a delivery date
+                    request.setIgoComplete(true);
                 }
 
                 // Immediate samples of the request. These samples represent the overall progress of each project sample
@@ -323,13 +337,4 @@ public class GetRequestTrackingTask {
             return null;
         }
     }
-
-    /*
-    private Stage getDataQcStages() {
-    }
-
-    private Stage getSampleQcStages() {
-    }
-
-     */
 }
