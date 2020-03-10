@@ -18,6 +18,11 @@ public class SampleTracker {
 
     Long sampleId;
     DataRecord record;
+
+    public boolean isComplete() {
+        return complete;
+    }
+
     boolean complete;
     Map<String, Step> stepMap;
     Map<Long, AliquotStageTracker> sampleGraph;
@@ -25,6 +30,7 @@ public class SampleTracker {
     private User user;
     private List<List<AliquotStageTracker>> paths;
     private Map<String, SampleStageTracker> stages;
+
     public SampleTracker(DataRecord record, User user) {
         this.record = record;
         this.sampleId = record.getRecordId();
@@ -34,11 +40,6 @@ public class SampleTracker {
         this.sampleGraph = new HashMap<>();
         this.stepMap = new HashMap<>();
         this.stages = new HashMap<>();
-        // addSample(record);
-    }
-
-    public boolean isComplete() {
-        return complete;
     }
 
     public void setComplete(boolean complete) {
@@ -89,77 +90,6 @@ public class SampleTracker {
 
     public void addChildrenToRecord(Long recordId, List<Long> childRecords) {
         this.sampleGraph.get(recordId).addChildren(childRecords);
-    }
-
-    /**
-     * Calculate the stage the overall sample is at based on the route one path
-     *
-     * @param path
-
-    public void calculateSampleStage(List<Sample> path) {
-    String stageName;
-    Long startTime;
-    Long updateTime;
-
-
-    Iterator<Sample> itr = path.iterator();
-    Sample sample = itr.next();
-    Stage stage;
-    while (sample != null) {
-    stageName = sample.getStage();
-    startTime = sample.getStartTime();
-    updateTime = sample.getUpdateTime();
-
-    stages.putIfAbsent(stageName, new Stage(stageName, 0, 0, startTime, updateTime));
-    stage = stages.get(stageName);
-
-    // Update the start & end times of the stage
-    if (stage.startTime > startTime) {
-    stage.setStartTime(startTime);
-    }
-    if (stage.endTime < updateTime) {
-    stage.setUpdateTime(updateTime);
-    }
-    stage.addStartingSample();
-
-    sample = itr.next();
-    if (sample != null && sample.getStage() != stageName) {
-    // Next stage is different so the sample has completed this stage
-    stage.addEndingSample();
-    } else if (sample == null) {
-    // No more samples left, so the Stage is incomplete
-    // TODO - Add logic to determine if status is in end-state
-    stage.setComplete(Boolean.FALSE);
-    }
-    }
-    }
-     */
-
-    /**
-     * Record a sample
-     *
-     * @param record
-     */
-    public void addSample(DataRecord record) {
-        String recordStatus = getRecordStringValue(record, "ExemplarSampleStatus", this.user);
-        Long recordId = record.getRecordId();
-
-        sampleGraph.putIfAbsent(recordId, new AliquotStageTracker(record, this.user));
-
-        // Determine if sample is still pending
-        boolean failed = recordStatus.toLowerCase().contains("failed");
-
-
-        Step step;
-        if (stepMap.containsKey(recordStatus)) {
-            step = stepMap.get(recordStatus);
-        } else {
-            step = new Step(recordStatus, this.user);
-            stepMap.put(recordStatus, step);
-        }
-        step.recordSample(record, recordStatus);
-
-        this.complete = this.complete && step.complete;
     }
 
     /**
