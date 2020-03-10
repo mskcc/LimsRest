@@ -221,16 +221,27 @@ public class GetRequestTrackingTask {
             User user = vConn.getUser();
             DataRecordManager drm = vConn.getDataRecordManager();
 
-            // Find all RequestIds for a serviceId and grab Stage Information from those requestIds
-            // ServiceIds -(1:many)-> IGO Request ID
-            Map<String, SampleStageTracker> submittedStages = getSubmittedStages(this.serviceId, user, drm);
-            List<String> requestIds = new ArrayList<>(submittedStages.keySet());
+            // If no service-id is submitted, then return the information for the single request Id. Use default values
+            List<String> requestIds = new ArrayList<>(Arrays.asList(this.requestId));
+            Map<String, SampleStageTracker> submittedStages = new HashMap<>();
+
+            // If serviceId is provided, retrieve submitted samples
+            if(this.serviceId != null && !this.serviceId.equals("")){
+                // Find all RequestIds for a serviceId and grab Stage Information from those requestIds
+                // ServiceIds -(1:many)-> IGO Request ID
+                 submittedStages = getSubmittedStages(this.serviceId, user, drm);
+                requestIds = new ArrayList<>(submittedStages.keySet());
+            }
+
 
             Map<String, Request> requestMap = new HashMap<>();
             for(String requestId : requestIds) {
                 requestMap.putIfAbsent(requestId, new Request(requestId, serviceId));
                 Request request = requestMap.get(requestId);
-                request.addStage("submitted", submittedStages.get(requestId));
+
+                if(submittedStages.containsKey(requestId)){
+                    request.addStage("submitted", submittedStages.get(requestId));
+                }
 
                 List<DataRecord> requestRecordList = drm.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
                 if (requestRecordList.size() != 1) {  // error: request ID not found or more than one found
