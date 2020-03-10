@@ -83,6 +83,11 @@ public class GetRequestTrackingTask {
         String requestId;
         for(DataRecord record : bankedSampleRecords){
             requestId = getRecordStringValue(record, "RequestId", user);
+
+            if(requestId.equals("")){
+                requestId = "Not Promoted";
+            }
+
             wasPromoted = getRecordBooleanValue(record, "Promoted", user);
 
             // Grab/Create the entry for the given request
@@ -245,7 +250,8 @@ public class GetRequestTrackingTask {
 
                 List<DataRecord> requestRecordList = drm.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
                 if (requestRecordList.size() != 1) {  // error: request ID not found or more than one found
-                    log.error(String.format("Request not found: %s. Returning incomplete information", requestId));
+                    log.error(String.format("Request %s not found for serviceId %s. Returning incomplete information", requestId, this.serviceId));
+                    continue;
                 }
 
                 DataRecord requestRecord = requestRecordList.get(0);
