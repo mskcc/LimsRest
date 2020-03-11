@@ -31,15 +31,36 @@ public class StatusTrackerConfig {
         nextStageMap.put(stageOrder[stageOrder.length-1], null);
     }
 
+    private static final Set<String> SAMPLE_QC_STATUSES = new HashSet<>(Arrays.asList(
+            "Completed - Library/Pool Quality Control"
+    ));
+
     private static final Set<String> LIBRARY_PREP_STATUSES = new HashSet<>(Arrays.asList(
             "Completed - Generic Normalization Plate Setup",
             "Completed - Generic Library Preparation",
             "Completed - Pooling of Sample Libraries by Volume",
+            "In Process - KAPA Library Preparation",
+            "In Process - Capture - Hybridization",
+            "Completed - MSK Access Normalization Plate Setup",
+            "Ready for - MSK Access Capture - Hybridization",
+            "Ready for - Pooling of Sample Libraries by Volume",
+            "Completed - Library Clean Up/Size Selection",
+            "Completed - Normalization Plate Setup",
+            "Completed - KAPA Library Preparation",
+            "Ready for - Normalization Plate Setup",
+            "Completed - Archer Library Preparation Experiment",
+            "Completed - Capture from KAPA Library",
+            "In Process - Pooling of Sample Libraries for Sequencing",
+            "Completed - Capture - Hybridization",
+            "Completed - MSK Access Capture - Hybridization",
+            "Ready for - Library/Pool Quality Control",
+            "Ready for - Digital Droplet PCR",      // ???
             "Received"
     ));
 
     private static final Set<String> SEQUENCING_STATUSES = new HashSet<>(Arrays.asList(
             "Ready for - Pooling of Sample Libraries for Sequencing",
+            "Completed - Pooling of Sample Libraries for Sequencing",
             "In Process - Illumina Sequencing",
             "Completed - Illumina Sequencing"
     ));
@@ -59,6 +80,7 @@ public class StatusTrackerConfig {
     public static String getStageForStatus(String status) {
         if(LIBRARY_PREP_STATUSES.contains(status)) return STAGE_LIBRARY_PREP;
         else if(SEQUENCING_STATUSES.contains(status)) return STAGE_SEQUENCING;
+        else if(SAMPLE_QC_STATUSES.contains(status)) return STAGE_SAMPLE_QC;
         else return STAGE_UNKNOWN;
     }
 
