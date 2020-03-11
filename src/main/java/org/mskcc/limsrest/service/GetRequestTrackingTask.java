@@ -232,10 +232,12 @@ public class GetRequestTrackingTask {
 
             Request request = new Request(requestId, serviceId);
 
-            // TODO - Place in thread as this can be executed independently
-            SampleStageTracker submittedStage = getBankedSampleStage(serviceId, user, drm);
-            request.addStage("submitted", submittedStage);
-
+            if(serviceId == null || serviceId.equals("")){
+                // TODO - Why is this the case (QA: "06302_W")
+                // TODO - Place in thread as this can be executed independently
+                SampleStageTracker submittedStage = getBankedSampleStage(serviceId, user, drm);
+                request.addStage("submitted", submittedStage);
+            }
 
             List<DataRecord> requestRecordList = drm.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
             if (requestRecordList.size() != 1) {  // error: request ID not found or more than one found
@@ -270,23 +272,24 @@ public class GetRequestTrackingTask {
                 parentSample.setRecord(record);
                 List<AliquotStageTracker> leafSamples = findValidLeafSamples(parentSample, new ArrayList<>(), user);
 
-                // If there are no leaf-samples, the sample has failed
-                tracker.setFailed(leafSamples.size() == 0);
+                // Tracker is failed until it finds a leaf node that is not failed
+                tracker.setFailed(Boolean.FALSE);
 
                 // Find all paths from leaf to parent nodes
                 List<List<AliquotStageTracker>> paths = new ArrayList<>();
+                // TODO - rename curr
                 for (AliquotStageTracker curr : leafSamples) {
                     List<AliquotStageTracker> path = new ArrayList<>();
 
                     while (curr != null) {
-                        curr.enrichSample();        // Add extra data fields to sample
+                        curr.enrichSample(path);        // Add extra data fields to sample
 
-                        // If this is unknown, use the last element of the path
-                        if(curr.getStage() == STAGE_UNKNOWN && path.size() > 0){
-                            curr.setStage(path.get(path.size()-1).getStage());
-                        }
 
-                        // Samples are complete because they have a sample after them
+
+                        // If there is one non-failed sample, the sample isn't failed
+                        tracker.setFailed(curr.getFailed() && tracker.getFailed());
+
+                        // Set all to complete - only the last Aliquot may not be complete
                         curr.setComplete(Boolean.TRUE);
                         path.add(curr);
                         curr = curr.getParent();
@@ -295,6 +298,10 @@ public class GetRequestTrackingTask {
                     // Reset the leaf-node complete status based off of its status
                     AliquotStageTracker leaf = path.get(0);
                     leaf.setComplete(isCompletedStatus(leaf.getStatus()));
+                    // If the leaf node is failed, set the stage based off of the parent
+                    if(leaf.getFailed()){
+                        leaf.setStage(leaf.getParent().getStage());
+                    }
 
                     Collections.reverse(path); // Get path samples in order from parent to their leaf samples
                     paths.add(path);

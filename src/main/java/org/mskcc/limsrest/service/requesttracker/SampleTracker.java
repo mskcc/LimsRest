@@ -11,18 +11,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.mskcc.limsrest.util.DataRecordAccess.getRecordStringValue;
-
 public class SampleTracker {
     private static Log log = LogFactory.getLog(SampleTracker.class);
 
     Long sampleId;
     DataRecord record;
-
-    public boolean isComplete() {
-        return complete;
-    }
-
     boolean complete;
     Map<String, Step> stepMap;
     Map<Long, AliquotStageTracker> sampleGraph;
@@ -30,7 +23,6 @@ public class SampleTracker {
     private User user;
     private List<List<AliquotStageTracker>> paths;
     private Map<String, SampleStageTracker> stages;
-
     public SampleTracker(DataRecord record, User user) {
         this.record = record;
         this.sampleId = record.getRecordId();
@@ -42,8 +34,20 @@ public class SampleTracker {
         this.stages = new HashMap<>();
     }
 
+    public boolean isComplete() {
+        return complete;
+    }
+
     public void setComplete(boolean complete) {
         this.complete = complete;
+    }
+
+    public Boolean getFailed() {
+        return failed;
+    }
+
+    public void setFailed(Boolean failed) {
+        this.failed = failed;
     }
 
     public Map<String, SampleStageTracker> getStages() {
@@ -70,10 +74,6 @@ public class SampleTracker {
                         )
 
         );
-    }
-
-    public void setFailed(Boolean failed) {
-        this.failed = failed;
     }
 
     public void setPaths(List<List<AliquotStageTracker>> paths) {
@@ -118,18 +118,9 @@ public class SampleTracker {
         Map<String, Object> apiMap = new HashMap<>();
 
         apiMap.put("sampleId", this.sampleId);
-        apiMap.put("status", complete == true ? "Complete" : "Pending");
-
-        List<Map<String, Object>> sampleTree = this.sampleGraph.values().stream()
-                .map(sample -> sample.toApiResponse())
-                .collect(Collectors.toList());
-
-        // apiMap.put("sampleTree", sampleTree);
-        // apiMap.put("steps", stepMap);
-
+        apiMap.put("status", this.failed ? "Failed" : this.complete == true ? "Complete" : "Pending");
         apiMap.put("paths", this.paths.stream().map(path -> path.stream()
                 .map(sample -> sample.toApiResponse())).collect(Collectors.toList()));
-
         apiMap.put("stages", this.stages.values().stream().map(
                 stage -> stage.toApiResponse()
         ).collect(Collectors.toList()));

@@ -11,6 +11,7 @@ public class StatusTrackerConfig {
     public static final String STAGE_DATA_QC = "dataQc";
     public static final String STAGE_IGO_COMPLETE = "igoComplete";
     public static final String STAGE_UNKNOWN = "unknown";
+    public static final String STAGE_FAILED = "failed";
 
     /**
      * Add the order of stages here and then the ordering map will be statically initialzed
@@ -30,6 +31,11 @@ public class StatusTrackerConfig {
         }
         nextStageMap.put(stageOrder[stageOrder.length-1], null);
     }
+
+    private static final Set<String> FAILED_STATUSES = new HashSet<>(Arrays.asList(
+            "Failed - Completed",
+            "Failed - Pending User Decision"
+    ));
 
     private static final Set<String> SAMPLE_QC_STATUSES = new HashSet<>(Arrays.asList(
             "Completed - Library/Pool Quality Control"
@@ -75,6 +81,15 @@ public class StatusTrackerConfig {
      */
     public static final boolean isCompletedStatus(String status){
         return status.equals("Completed - Illumina Sequencing");
+    }
+
+    /**
+     * Returns whether the input status is a failed one
+     * @param status
+     * @return
+     */
+    public static Boolean isFailedStatus(String status) {
+        return FAILED_STATUSES.contains(status);
     }
 
     public static String getStageForStatus(String status) {
