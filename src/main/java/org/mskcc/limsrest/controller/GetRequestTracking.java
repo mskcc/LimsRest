@@ -32,21 +32,18 @@ public class GetRequestTracking {
     }
 
     @GetMapping("/getRequestTracking")
-    public ResponseEntity<Map<String, Object>> getContent(@RequestParam(value = "request", required = false) String requestId,
-                                                          @RequestParam(value = "serviceId") String serviceId,
+    public ResponseEntity<Map<String, Object>> getContent(@RequestParam(value = "request") String requestId,
                                                           HttpServletRequest request) {
         log.info("/getRequestTracking for request:" + requestId + " " + request.getRemoteAddr());
 
         // TODO - Do whitelist checking on request & serviceId
-        /*
         if (!Whitelists.requestMatches(requestId)) {
             log.error("FAILURE: requestId is not using a valid format.");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "FAILURE: requestId is not using a valid format.");
         }
-         */
 
         try {
-            GetRequestTrackingTask t = new GetRequestTrackingTask(requestId, serviceId, conn);
+            GetRequestTrackingTask t = new GetRequestTrackingTask(requestId, conn);
             Map<String, Object> requestTracker = t.execute();
             return getResponseEntity(requestTracker, HttpStatus.OK);
         } catch (Exception e) {
