@@ -328,7 +328,12 @@ public class GetRequestTrackingTask {
                     tracker.addStage(aliquotStages);
                 }
 
-                Optional<Boolean> isComplete = tracker.getStages().values().stream().map(stage -> stage.getComplete()).reduce(Boolean::logicalAnd);
+                // Sample is complete if calculated stages are all complete
+                Optional<Boolean> isComplete = tracker.getStages()
+                        .values()
+                        .stream()
+                        .map(stage -> stage.getComplete())
+                        .reduce(Boolean::logicalAnd);
                 if(isComplete.isPresent()){
                     tracker.setComplete(isComplete.get());
                 } else {
