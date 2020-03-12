@@ -49,13 +49,12 @@ public class SampleStageTracker extends StageTracker {
         steps.add(step);
     }
 
-    public void updateStage(StageTracker stageTracker) {
-        // Integer size = tracker.getSize();
-
-        // Update the start & end times of the stage
-        // addStartingSample(size);
-        // setSize(getSize()+size);
-
+    /**
+     * Updates Sample times when merging with another sample
+     *
+     * @param stageTracker
+     */
+    public void updateStageTimes(StageTracker stageTracker) {
         Long startTime = stageTracker.getStartTime();
         Long updateTime = stageTracker.getUpdateTime();
         if (this.startTime > startTime) {

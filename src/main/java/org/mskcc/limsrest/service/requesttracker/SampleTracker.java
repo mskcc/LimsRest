@@ -61,7 +61,7 @@ public class SampleTracker {
                 (updateName, v) ->
                         this.stages.merge(
                                 updateName, v, (SampleStageTracker currentStage, SampleStageTracker updateStage) -> {
-                                    currentStage.updateStage(updateStage);
+                                    currentStage.updateStageTimes(updateStage);
                                     return currentStage;
                                 }
                         )

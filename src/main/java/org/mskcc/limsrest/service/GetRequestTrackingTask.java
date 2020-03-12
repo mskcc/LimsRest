@@ -27,9 +27,6 @@ public class GetRequestTrackingTask {
 
     private static Integer SAMPLE_COUNT = 1;
 
-    private static String[] FIELDS = new String[] {"ExemplarSampleStatus", "Recipe"};
-    private static String[] DATE_FIELDS = new String[] {"DateCreated", "DateModified"};
-
     // LIMS fields for the request metadata - separated by string & long value types
     private static String[] requestDataLongFields = new String[] { "RecentDeliveryDate", "ReceivedDate" };
     private static String[] requestDataStringFields = new String[] {
@@ -47,22 +44,6 @@ public class GetRequestTrackingTask {
     public GetRequestTrackingTask(String requestId, ConnectionLIMS conn) {
         this.requestId = requestId;
         this.conn = conn;
-    }
-
-    private List<DataRecord> getBankedSampleRecords(String serviceId, User user, DataRecordManager drm){
-        String query = String.format("ServiceId = '%s'", serviceId);
-        List<DataRecord> bankedList = new ArrayList<>();
-        try {
-             bankedList = drm.queryDataRecords("BankedSample", query, user);
-        } catch (NotFound | IoError | RemoteException e){
-            log.info(String.format("Could not find BankedSample record for %s", serviceId));
-            return null;
-        }
-        return bankedList;
-    }
-
-    private boolean sampleFailed(String status){
-        return status.toLowerCase().contains("failed");
     }
 
     /**
@@ -116,7 +97,7 @@ public class GetRequestTrackingTask {
             stageName = stageTracker.getStage();
             if(stageMap.containsKey(stageName)){
                 stage = stageMap.get(stageName);
-                stage.updateStage(stageTracker);
+                stage.updateStageTimes(stageTracker);
                 stage.addStartingSample(SAMPLE_COUNT);
                 if(stageTracker.getComplete()){
                     stage.addEndingSample(SAMPLE_COUNT);
@@ -156,7 +137,7 @@ public class GetRequestTrackingTask {
                 Long updateTime = node.getUpdateTime();
 
                 if(stagesMap.containsKey(stageName)){
-                    stagesMap.get(stageName).updateStage(node);
+                    stagesMap.get(stageName).updateStageTimes(node);
                 } else {
                     stagesMap.put(stageName, new SampleStageTracker(stageName, SAMPLE_COUNT, 0, startTime, updateTime));
                 }

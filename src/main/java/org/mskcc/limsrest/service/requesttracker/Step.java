@@ -18,7 +18,7 @@ import static org.mskcc.limsrest.util.DataRecordAccess.getRecordLongValue;
 import static org.mskcc.limsrest.util.DataRecordAccess.getRecordStringValue;
 
 public class Step {
-    private static Log log = LogFactory.getLog(RequestTracker.class);
+    private static Log log = LogFactory.getLog(Step.class);
     public String step;
     public boolean complete;
     public int totalSamples;

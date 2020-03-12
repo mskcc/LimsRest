@@ -5,12 +5,11 @@ import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.service.requesttracker.RequestTracker;
 
 import java.rmi.RemoteException;
 
 public class DataRecordAccess {
-    private static Log log = LogFactory.getLog(RequestTracker.class);
+    private static Log log = LogFactory.getLog(DataRecordAccess.class);
 
     /**
      * Safely retrieves a String value from a dataRecord
