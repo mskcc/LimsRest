@@ -4,17 +4,24 @@ import java.util.*;
 
 // Temporary mapping of statuse to their buckets
 public class StatusTrackerConfig {
+    // VALID STAGES
     public static final String STAGE_SUBMITTED = "submitted";
     public static final String STAGE_SAMPLE_QC = "sampleQc";
     public static final String STAGE_LIBRARY_PREP = "libraryPrep";
     public static final String STAGE_SEQUENCING = "sequencing";
     public static final String STAGE_DATA_QC = "dataQc";
     public static final String STAGE_IGO_COMPLETE = "igoComplete";
+
+    // INVALID STAGES
     public static final String STAGE_UNKNOWN = "unknown";
-    public static final String STAGE_FAILED = "failed";
+    public static final String STAGE_AWAITING_PROCESSING = "awaitingProcessing";
+
+    // Special Statuses
+    public static final String STATUS_AWAITING_PROCESSING = "Awaiting Processing";  // Stage cannot be determined
+
 
     /**
-     * Add the order of stages here and then the ordering map will be statically initialzed
+     * Add the order of valid stages here and then the ordering map will be statically initialzed
      */
     private static String[] stageOrder = new String[]{
             STAGE_SUBMITTED,
@@ -84,6 +91,16 @@ public class StatusTrackerConfig {
     }
 
     /**
+     * Returns whether the input stage is valid
+     *
+     * @param stage
+     * @return
+     */
+    public static boolean isValidStage(String stage) {
+        return nextStageMap.containsKey((stage));
+    }
+
+    /**
      * Returns whether the input status is a failed one
      * @param status
      * @return
@@ -92,11 +109,15 @@ public class StatusTrackerConfig {
         return FAILED_STATUSES.contains(status);
     }
 
-    public static String getStageForStatus(String status) {
+    public static String getStageForStatus(String status) throws IllegalArgumentException {
         if(LIBRARY_PREP_STATUSES.contains(status)) return STAGE_LIBRARY_PREP;
         else if(SEQUENCING_STATUSES.contains(status)) return STAGE_SEQUENCING;
         else if(SAMPLE_QC_STATUSES.contains(status)) return STAGE_SAMPLE_QC;
-        else return STAGE_UNKNOWN;
+        else if(STATUS_AWAITING_PROCESSING.equals(status)) return STAGE_AWAITING_PROCESSING;
+        // Failed statuses need to be assigned stages based on preceeding/succeeding samples
+        else if(FAILED_STATUSES.contains(status)) return STAGE_UNKNOWN;
+
+        throw new IllegalArgumentException();
     }
 
     public static String getNextStage(String status){

@@ -49,20 +49,44 @@ public class AliquotStageTracker extends StageTracker {
     }
 
     /**
+     * Samples w/ ambiguous statuses like "Awaiting Processing" will need to take stage assignment from the most
+     * progressed connected sample, i.e. take stage name from child if present, parent if not
+     *
+     * E.g.
+     *      Path: "libraryPrep" -> AP_sample  -> "sequencing"   Output: AP_sample.stage = "sequencing"
+     *      Path: "libraryPrep" -> AP_sample                    Output: AP_sample.stage = "libraryPrep"
+     */
+    public void assignStageToAmbiguousSamples() {
+        if(isValidStage(this.stage)) return;
+
+        if (this.child != null && this.child.getStage() != null) {
+            // First try to assign stage from child sample
+            this.stage = this.child.getStage();
+        } else if (this.parent != null && this.parent.getStage() != null) {
+            // If child stage value isn't present, take rom the parent
+            this.stage = this.parent.getStage();
+        } else {
+            log.error(String.format("Could not determine stage for Sample Record: %s. Leaving stage as %s",
+                    this.recordId, this.stage));
+        }
+    }
+
+    /**
      * Add values for all sample fields that require a database call
      */
     public void enrichSample() {
         if (this.record == null || this.user == null) return;
 
         String status = getRecordStringValue(this.record, "ExemplarSampleStatus", this.user);
-        String stage = getStageForStatus(status);
+        String stage = STAGE_UNKNOWN;
+        try {
+            stage = getStageForStatus(status);
+        } catch(IllegalArgumentException e) {
+            log.error(String.format("Unable to identify stage for Sample Record %d w/ status '%s'", this.recordId, status));
+        }
 
         if (isFailedStatus(status)) {
             this.failed = Boolean.TRUE;
-        }
-        if (stage.equals(STAGE_UNKNOWN) && this.child != null) {
-            // The stage is set to the stage of the child sample
-            stage = this.child.getStage();
         }
 
         this.status = status;

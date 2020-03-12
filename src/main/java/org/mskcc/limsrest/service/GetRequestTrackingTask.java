@@ -89,6 +89,7 @@ public class GetRequestTrackingTask {
             for(DataRecord childRecord : children){
                 AliquotStageTracker childSample = new AliquotStageTracker(childRecord, user);
                 childSample.setParent(sample);
+                childSample.enrichSample();
                 paths.addAll(findValidLeafSamples(childSample, new ArrayList<>(), user));
             }
         }
@@ -232,15 +233,9 @@ public class GetRequestTrackingTask {
      * @param leaf - Tracker that is the leaf of a path
      */
     private void enrichLeafSample(AliquotStageTracker leaf){
-        leaf.enrichSample();
-
         leaf.setComplete(isCompletedStatus(leaf.getStatus()));
-
         if(leaf.getFailed()){
             // If the leaf node is failed, set the stage based off of the parent
-            leaf.setStage(leaf.getParent().getStage());
-        } else if(leaf.getStage().equals(STAGE_UNKNOWN)){
-            // If the leaf's stage is unknown set the parent stage
             leaf.setStage(leaf.getParent().getStage());
         }
     }
@@ -295,6 +290,7 @@ public class GetRequestTrackingTask {
                 // Finds all non-failed leaf samples
                 AliquotStageTracker parentSample = new AliquotStageTracker(record, user);
                 parentSample.setRecord(record);
+                parentSample.enrichSample();
                 List<AliquotStageTracker> leafSamples = findValidLeafSamples(parentSample, new ArrayList<>(), user);
 
                 // Tracker is failed until it finds a leaf node that is not failed
@@ -302,29 +298,23 @@ public class GetRequestTrackingTask {
 
                 // Find all paths from leaf to parent nodes
                 List<List<AliquotStageTracker>> paths = new ArrayList<>();
-                AliquotStageTracker parent;
-                for (AliquotStageTracker child : leafSamples) {
+                for (AliquotStageTracker node : leafSamples) {
                     List<AliquotStageTracker> path = new ArrayList<>();
-
-                    // Leaf sample will be processed after creating the path
-                    path.add(child);
-                    child = child.getParent();
-
-                    while (child != null) {
-                        child.enrichSample();
-                        child.setComplete(Boolean.TRUE); // All non-leaf samples are complete -
-                        path.add(child);
-                        parent = child.getParent();
-                        if(parent != null){
-                            // Root is reached when parent is null
-                            parent.setChild(child);
-                        }
-                        child = parent;
+                    node = traverseAndLinkPath(node, path);
+                    while (node != null) {
+                        // All non-leaf samples are complete (workflow advanced w/ child sample)
+                        node.setComplete(Boolean.TRUE);
+                        node = traverseAndLinkPath(node, path);
                     }
+                    for(AliquotStageTracker n : path){
+                        n.assignStageToAmbiguousSamples();
+                    }
+                    // Leaf nodes are treated differently
+                    node = path.get(0);
+                    enrichLeafSample(node);
 
-                    child = path.get(0);
-                    enrichLeafSample(child);
-                    tracker.setFailed(child.getFailed() && tracker.getFailed());
+                    // Sample will be failed unless there is at least one path w/ a non-failed leaf sample
+                    tracker.setFailed(node.getFailed() && tracker.getFailed());
 
                     // Get path samples in order from parent to their leaf samples
                     Collections.reverse(path);
@@ -332,7 +322,7 @@ public class GetRequestTrackingTask {
                 }
                 tracker.setPaths(paths);
 
-                // Determine stages of the sampleTracker based on the paths for that sample
+                // Calculate status of stages in the sample
                 for (List<AliquotStageTracker> path : paths) {
                     Map<String, SampleStageTracker> aliquotStages = calculateStages(path, false);
                     tracker.addStage(aliquotStages);
@@ -370,5 +360,24 @@ public class GetRequestTrackingTask {
             log.error(e.getMessage(), e);
             return null;
         }
+    }
+
+    /**
+     * Appends to path of samples, that should be the current path from a leaf node to its root.
+     * Adds a link to the child from node that is traversed to.
+     *
+     * @param child
+     * @param path
+     * @return
+     */
+    private AliquotStageTracker traverseAndLinkPath(AliquotStageTracker child, List<AliquotStageTracker> path) {
+        AliquotStageTracker parent = child.getParent();
+        if(parent != null){
+            // Root is reached when parent is null
+            parent.setChild(child);
+        }
+        path.add(child);
+
+        return parent;
     }
 }
