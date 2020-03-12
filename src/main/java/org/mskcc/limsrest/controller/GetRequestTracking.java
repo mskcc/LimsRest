@@ -4,7 +4,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.GetRequestTrackingTask;
-import org.mskcc.limsrest.service.RequestTrackerModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,8 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.mskcc.limsrest.util.Utils.getResponseEntity;
@@ -36,7 +33,6 @@ public class GetRequestTracking {
                                                           HttpServletRequest request) {
         log.info("/getRequestTracking for request:" + requestId + " " + request.getRemoteAddr());
 
-        // TODO - Do whitelist checking on request & serviceId
         if (!Whitelists.requestMatches(requestId)) {
             log.error("FAILURE: requestId is not using a valid format.");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "FAILURE: requestId is not using a valid format.");

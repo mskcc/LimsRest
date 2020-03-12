@@ -11,6 +11,7 @@ public class SampleStageTracker extends StageTracker {
     private static Log log = LogFactory.getLog(SampleStageTracker.class);
     Integer endingSamples;
     List<Step> steps;
+
     public SampleStageTracker(String stage, Integer startingSamples, Integer endingSamples, Long startTime, Long updateTime) {
         setStage(stage);
         setSize(startingSamples);   // The stage has a size equal to the number of samples it contains

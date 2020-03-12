@@ -19,10 +19,10 @@ public class DataRecordAccess {
      * @param user
      * @return
      */
-    public static String getRecordStringValue(DataRecord record, String key, User user){
+    public static String getRecordStringValue(DataRecord record, String key, User user) {
         try {
             return record.getStringVal(key, user);
-        } catch (NotFound | RemoteException e){
+        } catch (NotFound | RemoteException e) {
             log.error(String.format("Failed to get key %s from Data Record: %d", key, record.getRecordId()));
         }
         return "";
@@ -36,19 +36,19 @@ public class DataRecordAccess {
      * @param user
      * @return
      */
-    public static Long getRecordLongValue(DataRecord record, String key, User user){
+    public static Long getRecordLongValue(DataRecord record, String key, User user) {
         try {
             return record.getLongVal(key, user);
-        } catch (NotFound | RemoteException | NullPointerException e){
+        } catch (NotFound | RemoteException | NullPointerException e) {
             log.error(String.format("Failed to get key %s from Sample Record: %d", key, record.getRecordId()));
         }
         return null;
     }
 
-    public static Boolean getRecordBooleanValue(DataRecord record, String key, User user){
+    public static Boolean getRecordBooleanValue(DataRecord record, String key, User user) {
         try {
             return record.getBooleanVal(key, user);
-        } catch (NotFound | RemoteException | NullPointerException e){
+        } catch (NotFound | RemoteException | NullPointerException e) {
             log.error(String.format("Failed to get key %s from Sample Record: %d", key, record.getRecordId()));
         }
         return null;

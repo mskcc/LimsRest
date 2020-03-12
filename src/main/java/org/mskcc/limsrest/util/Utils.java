@@ -7,7 +7,6 @@ import org.mskcc.limsrest.service.PatientSamplesWithCmoInfoRetriever;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.util.Map;
 import java.util.Optional;
 
 public class Utils {
@@ -39,7 +38,7 @@ public class Utils {
         }
     }
 
-    public static <T> ResponseEntity<T> getResponseEntity(T input, HttpStatus status)  {
+    public static <T> ResponseEntity<T> getResponseEntity(T input, HttpStatus status) {
         ResponseEntity<T> resp = new ResponseEntity<T>(input, status);
         return resp;
     }

@@ -22,6 +22,7 @@ public class AliquotStageTracker extends StageTracker {
     DataRecord record;
     Boolean failed;
     private User user;
+
     public AliquotStageTracker(DataRecord record, User user) {
         setSize(0);
 
@@ -51,13 +52,13 @@ public class AliquotStageTracker extends StageTracker {
     /**
      * Samples w/ ambiguous statuses like "Awaiting Processing" will need to take stage assignment from the most
      * progressed connected sample, i.e. take stage name from child if present, parent if not
-     *
+     * <p>
      * E.g.
-     *      Path: "libraryPrep" -> AP_sample  -> "sequencing"   Output: AP_sample.stage = "sequencing"
-     *      Path: "libraryPrep" -> AP_sample                    Output: AP_sample.stage = "libraryPrep"
+     * Path: "libraryPrep" -> AP_sample  -> "sequencing"   Output: AP_sample.stage = "sequencing"
+     * Path: "libraryPrep" -> AP_sample                    Output: AP_sample.stage = "libraryPrep"
      */
     public void assignStageToAmbiguousSamples() {
-        if(isValidStage(this.stage)) return;
+        if (isValidStage(this.stage)) return;
 
         if (this.child != null && this.child.getStage() != null) {
             // First try to assign stage from child sample
@@ -81,7 +82,7 @@ public class AliquotStageTracker extends StageTracker {
         String stage = STAGE_UNKNOWN;
         try {
             stage = getStageForStatus(status);
-        } catch(IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             log.error(String.format("Unable to identify stage for Sample Record %d w/ status '%s'", this.recordId, status));
         }
 

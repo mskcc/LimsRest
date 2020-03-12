@@ -18,36 +18,13 @@ public class StatusTrackerConfig {
 
     // Special Statuses
     public static final String STATUS_AWAITING_PROCESSING = "Awaiting Processing";  // Stage cannot be determined
-
-
-    /**
-     * Add the order of valid stages here and then the ordering map will be statically initialzed
-     */
-    private static String[] stageOrder = new String[]{
-            STAGE_SUBMITTED,
-            STAGE_SAMPLE_QC,
-            STAGE_LIBRARY_PREP,
-            STAGE_SEQUENCING,
-            STAGE_IGO_COMPLETE
-    };
-    private static Map<String, String> nextStageMap;
-    static {
-        nextStageMap = new HashMap<>();
-        for(int i = 0; i<stageOrder.length-1; i++){
-            nextStageMap.put(stageOrder[i], stageOrder[i+1]);
-        }
-        nextStageMap.put(stageOrder[stageOrder.length-1], null);
-    }
-
     private static final Set<String> FAILED_STATUSES = new HashSet<>(Arrays.asList(
             "Failed - Completed",
             "Failed - Pending User Decision"
     ));
-
     private static final Set<String> SAMPLE_QC_STATUSES = new HashSet<>(Arrays.asList(
             "Completed - Library/Pool Quality Control"
     ));
-
     private static final Set<String> LIBRARY_PREP_STATUSES = new HashSet<>(Arrays.asList(
             "Completed - Generic Normalization Plate Setup",
             "Completed - Generic Library Preparation",
@@ -70,23 +47,41 @@ public class StatusTrackerConfig {
             "Ready for - Digital Droplet PCR",      // ???
             "Received"
     ));
-
     private static final Set<String> SEQUENCING_STATUSES = new HashSet<>(Arrays.asList(
             "Ready for - Pooling of Sample Libraries for Sequencing",
             "Completed - Pooling of Sample Libraries for Sequencing",
             "In Process - Illumina Sequencing",
             "Completed - Illumina Sequencing"
     ));
+    /**
+     * Add the order of valid stages here and then the ordering map will be statically initialzed
+     */
+    private static String[] stageOrder = new String[]{
+            STAGE_SUBMITTED,
+            STAGE_SAMPLE_QC,
+            STAGE_LIBRARY_PREP,
+            STAGE_SEQUENCING,
+            STAGE_IGO_COMPLETE
+    };
+    private static Map<String, String> nextStageMap;
+
+    static {
+        nextStageMap = new HashMap<>();
+        for (int i = 0; i < stageOrder.length - 1; i++) {
+            nextStageMap.put(stageOrder[i], stageOrder[i + 1]);
+        }
+        nextStageMap.put(stageOrder[stageOrder.length - 1], null);
+    }
 
     /**
      * Returns whether a status is a complete one
-     *
-     *  TODO - Posible that this won't work if the workflow doesn't end w/ sequencing
+     * <p>
+     * TODO - Posible that this won't work if the workflow doesn't end w/ sequencing
      *
      * @param status
      * @return
      */
-    public static final boolean isCompletedStatus(String status){
+    public static final boolean isCompletedStatus(String status) {
         return status.equals("Completed - Illumina Sequencing");
     }
 
@@ -102,6 +97,7 @@ public class StatusTrackerConfig {
 
     /**
      * Returns whether the input status is a failed one
+     *
      * @param status
      * @return
      */
@@ -110,17 +106,17 @@ public class StatusTrackerConfig {
     }
 
     public static String getStageForStatus(String status) throws IllegalArgumentException {
-        if(LIBRARY_PREP_STATUSES.contains(status)) return STAGE_LIBRARY_PREP;
-        else if(SEQUENCING_STATUSES.contains(status)) return STAGE_SEQUENCING;
-        else if(SAMPLE_QC_STATUSES.contains(status)) return STAGE_SAMPLE_QC;
-        else if(STATUS_AWAITING_PROCESSING.equals(status)) return STAGE_AWAITING_PROCESSING;
-        // Failed statuses need to be assigned stages based on preceeding/succeeding samples
-        else if(FAILED_STATUSES.contains(status)) return STAGE_UNKNOWN;
+        if (LIBRARY_PREP_STATUSES.contains(status)) return STAGE_LIBRARY_PREP;
+        else if (SEQUENCING_STATUSES.contains(status)) return STAGE_SEQUENCING;
+        else if (SAMPLE_QC_STATUSES.contains(status)) return STAGE_SAMPLE_QC;
+        else if (STATUS_AWAITING_PROCESSING.equals(status)) return STAGE_AWAITING_PROCESSING;
+            // Failed statuses need to be assigned stages based on preceeding/succeeding samples
+        else if (FAILED_STATUSES.contains(status)) return STAGE_UNKNOWN;
 
         throw new IllegalArgumentException();
     }
 
-    public static String getNextStage(String status){
+    public static String getNextStage(String status) {
         return nextStageMap.get(status);
     }
 
@@ -132,8 +128,8 @@ public class StatusTrackerConfig {
      */
     public static int getStageOrder(String status) {
         // if(status == null) return stageOrder.length;
-        for(int i = 0; i<stageOrder.length; i++){
-            if(status.equals(stageOrder[i])) return i;
+        for (int i = 0; i < stageOrder.length; i++) {
+            if (status.equals(stageOrder[i])) return i;
         }
         return stageOrder.length;
     }
@@ -141,7 +137,7 @@ public class StatusTrackerConfig {
     /**
      * Comparator used to sort statuses based on their order
      */
-    public static class StageComp implements Comparator<String>{
+    public static class StageComp implements Comparator<String> {
         @Override
         public int compare(String s1, String s2) {
             int p1 = getStageOrder(s1);
