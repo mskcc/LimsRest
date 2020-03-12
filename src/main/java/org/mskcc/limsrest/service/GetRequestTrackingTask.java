@@ -8,6 +8,7 @@ import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.domain.sample.Sample;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.requesttracker.*;
 
@@ -23,6 +24,8 @@ public class GetRequestTrackingTask {
 
     private ConnectionLIMS conn;
     private String requestId;
+
+    private static Integer SAMPLE_COUNT = 1;
 
     private static String[] FIELDS = new String[] {"ExemplarSampleStatus", "Recipe"};
     private static String[] DATE_FIELDS = new String[] {"DateCreated", "DateModified"};
@@ -100,48 +103,74 @@ public class GetRequestTrackingTask {
     /**
      * Calculates the stage the overall sample is at based on the least advanced path
      *
-     * @param path - Path of Aliquot/Sample trackers
-     * @param aggregate - Should the size of each sample in the path be aggregated (Aliquots: False, Samples: True)
+     * @param path - List of Aliquot/Sample trackers
      * @return
      */
-    public Map<String, SampleStageTracker> calculateStages(List<? extends StageTracker> path, boolean aggregate) {
-        Integer sampleSize = 1; // A sample will have a size of 1
-
+    public Map<String, SampleStageTracker> aggregateStages(List<? extends StageTracker> path) {
         Map<String, SampleStageTracker> stageMap = new TreeMap<>(new StatusTrackerConfig.StageComp());
         if(path.size() == 0) return stageMap;
 
-        Iterator<? extends StageTracker> itr = path.iterator();
-        StageTracker stageTracker;
         String stageName;
         SampleStageTracker stage;
-        while (itr.hasNext()) {
-            stageTracker = itr.next();
+        for(StageTracker stageTracker : path){
             stageName = stageTracker.getStage();
             if(stageMap.containsKey(stageName)){
                 stage = stageMap.get(stageName);
-                if(aggregate){
-                    stage.addStartingSample(sampleSize);
-                }
                 stage.updateStage(stageTracker);
+                stage.addStartingSample(SAMPLE_COUNT);
+                if(stageTracker.getComplete()){
+                    stage.addEndingSample(SAMPLE_COUNT);
+                }
             } else {
-                stage = new SampleStageTracker(stageName, sampleSize, 0, stageTracker.getStartTime(), stageTracker.getUpdateTime());
+                Integer endingCount = stageTracker.getComplete() ? SAMPLE_COUNT : 0;
+                stage = new SampleStageTracker(stageName, SAMPLE_COUNT, endingCount, stageTracker.getStartTime(), stageTracker.getUpdateTime());
                 stageMap.put(stageName, stage);
             }
         }
 
-        stageMap.forEach((String k, SampleStageTracker v) -> {
-            String nextStage = getNextStage(v.getStage());
-            SampleStageTracker tracker = stageMap.get(nextStage);
-            if(tracker != null){
-                v.addEndingSample(tracker.getSize());
-                if(v.getEndingSamples() == v.getSize()){
-                    v.setComplete(Boolean.TRUE);
+        // Calculate completion status of stage based on whether endingSamples equals total size
+        stageMap.values().forEach(
+            tracker -> {
+                tracker.setComplete(tracker.getEndingSamples() == tracker.getSize());
+            }
+        );
+
+        return stageMap;
+    }
+
+    /**
+     * Calculates the Stages along the path of a sample. A path may contain multiple entries for a certain stage
+     *
+     * @param path
+     * @return
+     */
+    private Map<String, SampleStageTracker> calculatePathStages(List<AliquotStageTracker> path){
+        Map<String, SampleStageTracker> stagesMap = new HashMap<>();
+
+        if(path.size() > 0){
+            String currStage = path.get(0).getStage();
+            SampleStageTracker currentStage;
+            for(AliquotStageTracker node : path){
+                String stageName = node.getStage();
+                Long startTime = node.getStartTime();
+                Long updateTime = node.getUpdateTime();
+
+                if(stagesMap.containsKey(stageName)){
+                    stagesMap.get(stageName).updateStage(node);
                 } else {
-                    v.setComplete(Boolean.FALSE);
+                    stagesMap.put(stageName, new SampleStageTracker(stageName, SAMPLE_COUNT, 0, startTime, updateTime));
+                }
+
+                if(stageName != currStage){
+                    currentStage = stagesMap.get(currStage);
+                    currentStage.addEndingSample(SAMPLE_COUNT);
+                    currentStage.setComplete(Boolean.TRUE);
+                    currStage = stageName;
                 }
             }
-        });
-        return stageMap;
+        }
+
+        return stagesMap;
     }
 
     private SampleStageTracker getBankedSampleStage(String serviceId, User user, DataRecordManager drm){
@@ -322,10 +351,9 @@ public class GetRequestTrackingTask {
                 }
                 tracker.setPaths(paths);
 
-                // Calculate status of stages in the sample
+                // Calculate stages of the map
                 for (List<AliquotStageTracker> path : paths) {
-                    Map<String, SampleStageTracker> aliquotStages = calculateStages(path, false);
-                    tracker.addStage(aliquotStages);
+                    tracker.addStage(calculatePathStages(path));
                 }
 
                 // Sample is complete if calculated stages are all complete
@@ -348,7 +376,7 @@ public class GetRequestTrackingTask {
             List<SampleStageTracker> requestStages = sampleTrackers.stream()
                     .flatMap(tracker -> tracker.getStages().values().stream())
                     .collect(Collectors.toList());
-            Map<String, SampleStageTracker> requestStagesMap = calculateStages(requestStages, true);
+            Map<String, SampleStageTracker> requestStagesMap = aggregateStages(requestStages);
 
             // Determine stages of the sampleTracker
             for (Map.Entry<String, SampleStageTracker> requestStage : requestStagesMap.entrySet()) {
