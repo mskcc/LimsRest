@@ -131,6 +131,7 @@ public class StatusTrackerConfig {
      * @return
      */
     public static int getStageOrder(String status) {
+        // if(status == null) return stageOrder.length;
         for(int i = 0; i<stageOrder.length; i++){
             if(status.equals(stageOrder[i])) return i;
         }
