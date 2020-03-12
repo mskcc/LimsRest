@@ -97,9 +97,11 @@ public class GetRequestTrackingTask {
     }
 
     /**
-     * Calculate the stage the overall sample is at based on the route one path
+     * Calculates the stage the overall sample is at based on the least advanced path
      *
-     * @param path
+     * @param path - Path of Aliquot/Sample trackers
+     * @param aggregate - Should the size of each sample in the path be aggregated (Aliquots: False, Samples: True)
+     * @return
      */
     public Map<String, SampleStageTracker> calculateStages(List<? extends StageTracker> path, boolean aggregate) {
         Integer sampleSize = 1; // A sample will have a size of 1
@@ -221,6 +223,28 @@ public class GetRequestTrackingTask {
         return new ArrayList<String>(serviceIds).get(0);
     }
 
+    /**
+     * Calculates the leaf status & stage, which is dependent on determination of the sample's path.
+     *  Special logic for:
+     *      - Failed Status
+     *      - Stage
+     *      - Status
+     * @param leaf - Tracker that is the leaf of a path
+     */
+    private void enrichLeafSample(AliquotStageTracker leaf){
+        leaf.enrichSample();
+
+        leaf.setComplete(isCompletedStatus(leaf.getStatus()));
+
+        if(leaf.getFailed()){
+            // If the leaf node is failed, set the stage based off of the parent
+            leaf.setStage(leaf.getParent().getStage());
+        } else if(leaf.getStage().equals(STAGE_UNKNOWN)){
+            // If the leaf's stage is unknown set the parent stage
+            leaf.setStage(leaf.getParent().getStage());
+        }
+    }
+
     // TODO - Maybe accept a String[] fields array that is all the fields that should be pulled from a sample
     public Map<String, Object> execute() {
         try {
@@ -232,7 +256,8 @@ public class GetRequestTrackingTask {
 
             Request request = new Request(requestId, serviceId);
 
-            if(serviceId == null || serviceId.equals("")){
+            if(serviceId != null && !serviceId.equals("")){
+                // Add "submitted" stage if a serviceID exists
                 // TODO - Why is this the case (QA: "06302_W")
                 // TODO - Place in thread as this can be executed independently
                 SampleStageTracker submittedStage = getBankedSampleStage(serviceId, user, drm);
@@ -265,7 +290,7 @@ public class GetRequestTrackingTask {
 
             // Find paths & calculate stages for each sample in the request
             for (DataRecord record : samples) {
-                SampleTracker tracker = new SampleTracker(record, user);
+                SampleTracker tracker = new SampleTracker(record);
 
                 // Finds all non-failed leaf samples
                 AliquotStageTracker parentSample = new AliquotStageTracker(record, user);
@@ -273,37 +298,36 @@ public class GetRequestTrackingTask {
                 List<AliquotStageTracker> leafSamples = findValidLeafSamples(parentSample, new ArrayList<>(), user);
 
                 // Tracker is failed until it finds a leaf node that is not failed
-                tracker.setFailed(Boolean.FALSE);
+                tracker.setFailed(Boolean.TRUE);
 
                 // Find all paths from leaf to parent nodes
                 List<List<AliquotStageTracker>> paths = new ArrayList<>();
-                // TODO - rename curr
-                for (AliquotStageTracker curr : leafSamples) {
+                AliquotStageTracker parent;
+                for (AliquotStageTracker child : leafSamples) {
                     List<AliquotStageTracker> path = new ArrayList<>();
 
-                    while (curr != null) {
-                        curr.enrichSample(path);        // Add extra data fields to sample
+                    // Leaf sample will be processed after creating the path
+                    path.add(child);
+                    child = child.getParent();
 
-
-
-                        // If there is one non-failed sample, the sample isn't failed
-                        tracker.setFailed(curr.getFailed() && tracker.getFailed());
-
-                        // Set all to complete - only the last Aliquot may not be complete
-                        curr.setComplete(Boolean.TRUE);
-                        path.add(curr);
-                        curr = curr.getParent();
+                    while (child != null) {
+                        child.enrichSample();
+                        child.setComplete(Boolean.TRUE); // All non-leaf samples are complete -
+                        path.add(child);
+                        parent = child.getParent();
+                        if(parent != null){
+                            // Root is reached when parent is null
+                            parent.setChild(child);
+                        }
+                        child = parent;
                     }
 
-                    // Reset the leaf-node complete status based off of its status
-                    AliquotStageTracker leaf = path.get(0);
-                    leaf.setComplete(isCompletedStatus(leaf.getStatus()));
-                    // If the leaf node is failed, set the stage based off of the parent
-                    if(leaf.getFailed()){
-                        leaf.setStage(leaf.getParent().getStage());
-                    }
+                    child = path.get(0);
+                    enrichLeafSample(child);
+                    tracker.setFailed(child.getFailed() && tracker.getFailed());
 
-                    Collections.reverse(path); // Get path samples in order from parent to their leaf samples
+                    // Get path samples in order from parent to their leaf samples
+                    Collections.reverse(path);
                     paths.add(path);
                 }
                 tracker.setPaths(paths);
