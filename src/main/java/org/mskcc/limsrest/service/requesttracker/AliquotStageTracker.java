@@ -3,25 +3,25 @@ package org.mskcc.limsrest.service.requesttracker;
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.user.User;
-import org.omg.CORBA.UNKNOWN;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.*;
 import static org.mskcc.limsrest.util.DataRecordAccess.getRecordLongValue;
 import static org.mskcc.limsrest.util.DataRecordAccess.getRecordStringValue;
 
 public class AliquotStageTracker extends StageTracker {
+    private static Log log = LogFactory.getLog(AliquotStageTracker.class);
+
     Long recordId;
     String status;
-    Set<Long> children;
     AliquotStageTracker parent;     // TODO - Can this ever be multiple?
+    AliquotStageTracker child;
     DataRecord record;
     Boolean failed;
     private User user;
-
     public AliquotStageTracker(DataRecord record, User user) {
         setSize(0);
 
@@ -30,6 +30,14 @@ public class AliquotStageTracker extends StageTracker {
         this.parent = null;
         this.user = user;
         this.failed = Boolean.FALSE;
+    }
+
+    public AliquotStageTracker getChild() {
+        return child;
+    }
+
+    public void setChild(AliquotStageTracker child) {
+        this.child = child;
     }
 
     public Boolean getFailed() {
@@ -42,22 +50,19 @@ public class AliquotStageTracker extends StageTracker {
 
     /**
      * Add values for all sample fields that require a database call
-     *
-     * @param childPath - Path of wrapper classes around child records that descend from this sample
      */
-    public void enrichSample(List<AliquotStageTracker> childPath) {
+    public void enrichSample() {
         if (this.record == null || this.user == null) return;
 
         String status = getRecordStringValue(this.record, "ExemplarSampleStatus", this.user);
         String stage = getStageForStatus(status);
 
-        // If the stage is not known, the stage will be inherited by the last record in the childPath
-        if(stage.equals(STAGE_UNKNOWN) && childPath.size() > 0){
-            stage = childPath.get(childPath.size()-1).getStage();
-        }
-
         if (isFailedStatus(status)) {
             this.failed = Boolean.TRUE;
+        }
+        if (stage.equals(STAGE_UNKNOWN) && this.child != null) {
+            // The stage is set to the stage of the child sample
+            stage = this.child.getStage();
         }
 
         this.status = status;
@@ -91,15 +96,10 @@ public class AliquotStageTracker extends StageTracker {
 
     }
 
-    public void addChildren(List<Long> childRecords) {
-        this.children.addAll(childRecords);
-    }
-
     public Map<String, Object> toApiResponse() {
         Map<String, Object> apiMap = super.toApiResponse();
         apiMap.put("record", this.recordId);
         apiMap.put("status", this.status);
-        // map.put("children", this.children);
 
         return apiMap;
     }
