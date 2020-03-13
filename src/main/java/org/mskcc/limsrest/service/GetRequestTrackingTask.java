@@ -14,8 +14,9 @@ import org.mskcc.limsrest.service.requesttracker.*;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.isCompletedStatus;
+import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.*;
 import static org.mskcc.limsrest.util.DataRecordAccess.*;
 
 public class GetRequestTrackingTask {
@@ -41,6 +42,35 @@ public class GetRequestTrackingTask {
         this.conn = conn;
     }
 
+    /**
+     * Populates the metaData for the request using the Record from the Request DataType
+     *
+     * @param requestRecord - DataRecord from the Request DataType
+     * @param user
+     * @return
+     */
+    private Map<String, Object> populateMetaData(DataRecord requestRecord, User user){
+        Map<String, Object> requestMetaData = new HashMap<>();
+        for (String field : requestDataStringFields) {
+            requestMetaData.put(field, getRecordStringValue(requestRecord, field, user));
+        }
+        for (String field : requestDataLongFields) {
+            requestMetaData.put(field, getRecordLongValue(requestRecord, field, user));
+        }
+        return requestMetaData;
+    }
+
+    /**
+     * Projects are considered IGO-Complete if they have a delivery date
+     *
+     * @param requestRecord
+     * @param user
+     * @return
+     */
+    private Boolean isIgoComplete(DataRecord requestRecord, User user) {
+        return getRecordLongValue(requestRecord, "RecentDeliveryDate", user) != null;
+    }
+
     public Map<String, Object> execute() {
         try {
             VeloxConnection vConn = conn.getConnection();
@@ -48,7 +78,6 @@ public class GetRequestTrackingTask {
             DataRecordManager drm = vConn.getDataRecordManager();
 
             String serviceId = getBankedSampleServiceId(this.requestId, user, drm);
-
             Request request = new Request(requestId, serviceId);
 
             if (serviceId != null && !serviceId.equals("")) {
@@ -62,23 +91,12 @@ public class GetRequestTrackingTask {
             List<DataRecord> requestRecordList = drm.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
             if (requestRecordList.size() != 1) {  // error: request ID not found or more than one found
                 log.error(String.format("Request %s not found for requestId %s. Returning incomplete information", requestId));
+                return request.toApiResponse();
             }
 
             DataRecord requestRecord = requestRecordList.get(0);
-
-            Map<String, Object> requestMetaData = new HashMap<>();
-            for (String field : requestDataStringFields) {
-                requestMetaData.put(field, getRecordStringValue(requestRecord, field, user));
-            }
-            for (String field : requestDataLongFields) {
-                requestMetaData.put(field, getRecordLongValue(requestRecord, field, user));
-            }
-            request.setMetaData(requestMetaData);
-
-            if (getRecordLongValue(requestRecord, "RecentDeliveryDate", user) != null) {
-                // Projects are considered IGO-Complete if they have a delivery date
-                request.setIgoComplete(true);
-            }
+            request.setMetaData(populateMetaData(requestRecord, user));
+            request.setIgoComplete(isIgoComplete(requestRecord, user));
 
             // Immediate samples of the request. These samples represent the overall progress of each project sample
             DataRecord[] samples = requestRecord.getChildrenOfType("Sample", user);
@@ -91,53 +109,18 @@ public class GetRequestTrackingTask {
                 AliquotStageTracker parentSample = new AliquotStageTracker(record, user);
                 parentSample.setRecord(record);
                 parentSample.enrichSample();
-                List<AliquotStageTracker> leafSamples = findValidLeafSamples(parentSample, new ArrayList<>(), user);
 
-                // Tracker is failed until it finds a leaf node that is not failed
-                tracker.setFailed(Boolean.TRUE);
+                SampleTreeTracker tree = createSampleTree(record, user);
 
-                // Find all paths from leaf to parent nodes
-                List<List<AliquotStageTracker>> paths = new ArrayList<>();
-                for (AliquotStageTracker node : leafSamples) {
-                    List<AliquotStageTracker> path = new ArrayList<>();
-                    node = traverseAndLinkPath(node, path);
-                    while (node != null) {
-                        // All non-leaf samples are complete (workflow advanced w/ child sample)
-                        node.setComplete(Boolean.TRUE);
-                        node = traverseAndLinkPath(node, path);
-                    }
-                    for (AliquotStageTracker n : path) {
-                        n.assignStageToAmbiguousSamples();
-                    }
-                    // Leaf nodes are treated differently
-                    node = path.get(0);
-                    enrichLeafSample(node);
-
-                    // Sample will be failed unless there is at least one path w/ a non-failed leaf sample
-                    tracker.setFailed(node.getFailed() && tracker.getFailed());
-
-                    // Get path samples in order from parent to their leaf samples
-                    Collections.reverse(path);
-                    paths.add(path);
+                tracker.addStage(tree.getStageMap());
+                Boolean isFailed = Boolean.TRUE;    // One non-failed sample will set this to True
+                Boolean isComplete = Boolean.TRUE;  // All sub-samples need to be complete or the sample to be complete
+                for(AliquotStageTracker sample : tree.getSampleMap().values()){
+                    isFailed = isFailed && sample.getFailed();
+                    isComplete = isComplete && sample.getComplete();
                 }
-                tracker.setPaths(paths);
-
-                // Calculate stages of the map
-                for (List<AliquotStageTracker> path : paths) {
-                    tracker.addStage(calculatePathStages(path));
-                }
-
-                // Sample is complete if calculated stages are all complete
-                Optional<Boolean> isComplete = tracker.getStages()
-                        .values()
-                        .stream()
-                        .map(stage -> stage.getComplete())
-                        .reduce(Boolean::logicalAnd);
-                if (isComplete.isPresent()) {
-                    tracker.setComplete(isComplete.get());
-                } else {
-                    tracker.setComplete(Boolean.FALSE);
-                }
+                tracker.setFailed(isFailed);
+                tracker.setComplete(isComplete);
 
                 request.addSampleTracker(tracker);
             }
@@ -167,38 +150,97 @@ public class GetRequestTrackingTask {
     }
 
     /**
-     * Finds all samples w/o children that have not been failed
+     * Populates input @tree w/ based on the input @root sample & its children.
+     * Assumptions -
+     *      Sample w/ child samples is completed - moving on in the workflow creates a child sample
+     *      Sample w/o child samples is incomplete, unless it has a status that indicates a completed workflow
+     *      All nodes in the path to a failed leaf sample have failed
+     *      All nodes in a path to a Non-failed leaf sample have not failed
+     *      There only needs to be one non-failed leaf sample or the whole tree to have not failed
+     *      Samples that are awaiting processing or have an ambiguous status will take their stage from their parent
+     *      Samples are incomplete/not-failed until shown to be otherwise
      *
-     * @param sample
-     * @param paths
+     * @param root - Enriched model of a Sample record's data
+     * @param tree - Data Model for tracking Sample Stages, samples, and the root node
+     * @return
+     */
+    private SampleTreeTracker searchSampleTree(AliquotStageTracker root, SampleTreeTracker tree){
+        User user = tree.getUser();
+        tree.updateStage(root);
+        DataRecord[] children = new DataRecord[0];
+        try {
+            children = root.getRecord().getChildrenOfType("Sample", user);
+        } catch (IoError | RemoteException e) { /* Expected - No more children of the sample */ }
+
+        if (children.length == 0) {
+            tree.updateLeafStageCompletionStatus(root);
+
+            if(root.getFailed()){
+                // Iterate up from sample and set all samples to false
+                AliquotStageTracker parent = root.getParent();
+                while(parent != null){
+                    parent.setFailed(Boolean.TRUE);
+                    parent = parent.getParent();
+                }
+            }
+            return tree;
+        } else {
+            // Sample w/ children is complete
+            root.setComplete(Boolean.TRUE);
+
+            List<AliquotStageTracker> samples = Stream.of(children)
+                    .map(record -> {
+                        AliquotStageTracker sample = new AliquotStageTracker(record, user);
+                        sample.setParent(root);
+                        sample.setComplete(Boolean.FALSE);      // All Samples are incomplete until child is found
+                        sample.setFailed(Boolean.FALSE);
+                        sample.enrichSample();
+                        if(STAGE_UNKNOWN.equals(sample.getStage()) || STAGE_AWAITING_PROCESSING.equals(sample.getStage())){
+                            // Update the stage of the sample to the parent stage if it is unknown
+                            if(!STAGE_UNKNOWN.equals(root.getStage())){
+                                sample.setStage(root.getStage());
+                            }
+                        }
+                        return sample;
+                    })
+                    .collect(Collectors.toList());
+            for(AliquotStageTracker sample : samples){
+                tree.addSample(sample);
+            }
+            for(AliquotStageTracker sample : samples){
+                // Update tree w/ each sample
+                log.info(String.format("Searching children of root record: %d", root.getRecordId()));
+                tree = searchSampleTree(sample, tree);
+            }
+        }
+        return tree;
+    }
+
+    /**
+     * Creates data model of the tree of samples descending from the root parent sample
+     *
+     * @param record
      * @param user
      * @return
      */
-    private List<AliquotStageTracker> findValidLeafSamples(AliquotStageTracker sample, List<AliquotStageTracker> paths, User user) {
-        DataRecord[] children = new DataRecord[0];
+    private SampleTreeTracker createSampleTree(DataRecord record, User user) {
+        AliquotStageTracker root = new AliquotStageTracker(record, user);
+        root.enrichSample();
+        SampleTreeTracker inputTree = new SampleTreeTracker(root, user);
+        inputTree.addSample(root);
+        SampleTreeTracker populatedTree = searchSampleTree(root, inputTree);
 
-        DataRecord record = sample.getRecord();
-
-        try {
-            children = record.getChildrenOfType("Sample", user);
-        } catch (IoError | RemoteException e) {
-            // Expected - No more children of the sample
+        // TODO - Needs to account for partially complete stages
+        List<SampleStageTracker> stages = new ArrayList<>(populatedTree.getStageMap().values());
+        SampleStageTracker stage;
+        for(int i = 0; i<stages.size()-1; i++){
+            stage = stages.get(i);
+            stage.addEndingSample(1);
+            stage.setComplete(Boolean.TRUE);
         }
+        // TODO - Clarity: Last stage will have been populated in "searchSampleTree"
 
-        if (children.length == 0) {
-            // Terminating node is reached
-            paths.add(sample);
-            return paths;
-        } else {
-            for (DataRecord childRecord : children) {
-                AliquotStageTracker childSample = new AliquotStageTracker(childRecord, user);
-                childSample.setParent(sample);
-                childSample.enrichSample();
-                paths.addAll(findValidLeafSamples(childSample, new ArrayList<>(), user));
-            }
-        }
-
-        return paths;
+        return populatedTree;
     }
 
     /**
@@ -237,41 +279,6 @@ public class GetRequestTrackingTask {
         );
 
         return stageMap;
-    }
-
-    /**
-     * Calculates the Stages along the path of a sample. A path may contain multiple entries for a certain stage
-     *
-     * @param path
-     * @return
-     */
-    private Map<String, SampleStageTracker> calculatePathStages(List<AliquotStageTracker> path) {
-        Map<String, SampleStageTracker> stagesMap = new HashMap<>();
-
-        if (path.size() > 0) {
-            String currStage = path.get(0).getStage();
-            SampleStageTracker currentStage;
-            for (AliquotStageTracker node : path) {
-                String stageName = node.getStage();
-                Long startTime = node.getStartTime();
-                Long updateTime = node.getUpdateTime();
-
-                if (stagesMap.containsKey(stageName)) {
-                    stagesMap.get(stageName).updateStageTimes(node);
-                } else {
-                    stagesMap.put(stageName, new SampleStageTracker(stageName, SAMPLE_COUNT, 0, startTime, updateTime));
-                }
-
-                if (stageName != currStage) {
-                    currentStage = stagesMap.get(currStage);
-                    currentStage.addEndingSample(SAMPLE_COUNT);
-                    currentStage.setComplete(Boolean.TRUE);
-                    currStage = stageName;
-                }
-            }
-        }
-
-        return stagesMap;
     }
 
     /**
@@ -317,6 +324,8 @@ public class GetRequestTrackingTask {
         Boolean submittedComplete = total == promoted;
         if (submittedComplete) {
             requestStage.setComplete(Boolean.TRUE);
+        } else {
+            requestStage.setComplete(Boolean.FALSE);
         }
 
         // TODO - Are these still needed?
@@ -368,42 +377,6 @@ public class GetRequestTrackingTask {
             return "";
         }
 
-        return new ArrayList<String>(serviceIds).get(0);
-    }
-
-    /**
-     * Calculates the leaf status & stage, which is dependent on determination of the sample's path.
-     * Special logic for:
-     * - Failed Status
-     * - Stage
-     * - Status
-     *
-     * @param leaf - Tracker that is the leaf of a path
-     */
-    private void enrichLeafSample(AliquotStageTracker leaf) {
-        leaf.setComplete(isCompletedStatus(leaf.getStatus()));
-        if (leaf.getFailed()) {
-            // If the leaf node is failed, set the stage based off of the parent
-            leaf.setStage(leaf.getParent().getStage());
-        }
-    }
-
-    /**
-     * Appends to path of samples, that should be the current path from a leaf node to its root.
-     * Adds a link to the child from node that is traversed to.
-     *
-     * @param child
-     * @param path
-     * @return
-     */
-    private AliquotStageTracker traverseAndLinkPath(AliquotStageTracker child, List<AliquotStageTracker> path) {
-        AliquotStageTracker parent = child.getParent();
-        if (parent != null) {
-            // Root is reached when parent is null
-            parent.setChild(child);
-        }
-        path.add(child);
-
-        return parent;
+        return new ArrayList<>(serviceIds).get(0);
     }
 }

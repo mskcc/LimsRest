@@ -10,10 +10,6 @@ public class StageTracker {
     protected Long startTime;
     protected Long updateTime;
 
-    public StageTracker() {
-        this.complete = Boolean.FALSE;
-    }
-
     public String getStage() {
         return stage;
     }

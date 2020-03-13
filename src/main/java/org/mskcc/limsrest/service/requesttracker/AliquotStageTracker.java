@@ -30,7 +30,7 @@ public class AliquotStageTracker extends StageTracker {
         this.record = record;
         this.parent = null;
         this.user = user;
-        this.failed = Boolean.FALSE;
+        this.failed = Boolean.FALSE;        // TODO - remove this
     }
 
     public AliquotStageTracker getChild() {

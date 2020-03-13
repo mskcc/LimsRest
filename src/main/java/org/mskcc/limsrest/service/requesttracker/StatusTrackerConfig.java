@@ -110,7 +110,7 @@ public class StatusTrackerConfig {
         else if (SEQUENCING_STATUSES.contains(status)) return STAGE_SEQUENCING;
         else if (SAMPLE_QC_STATUSES.contains(status)) return STAGE_SAMPLE_QC;
         else if (STATUS_AWAITING_PROCESSING.equals(status)) return STAGE_AWAITING_PROCESSING;
-            // Failed statuses need to be assigned stages based on preceeding/succeeding samples
+        // Failed statuses need to be assigned stages based on preceeding/succeeding samples
         else if (FAILED_STATUSES.contains(status)) return STAGE_UNKNOWN;
 
         throw new IllegalArgumentException();

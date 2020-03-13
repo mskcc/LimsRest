@@ -88,8 +88,10 @@ public class SampleTracker {
 
         apiMap.put("sampleId", this.sampleId);
         apiMap.put("status", this.failed ? "Failed" : this.complete == true ? "Complete" : "Pending");
+        /*
         apiMap.put("paths", this.paths.stream().map(path -> path.stream()
                 .map(sample -> sample.toApiResponse())).collect(Collectors.toList()));
+         */
         apiMap.put("stages", this.stages.values().stream().map(
                 stage -> stage.toApiResponse()
         ).collect(Collectors.toList()));
