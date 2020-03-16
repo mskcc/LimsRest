@@ -14,8 +14,17 @@ public class SampleTracker {
     Map<String, Step> stepMap;
     Map<Long, AliquotStageTracker> sampleGraph;
     Boolean failed;
-    private List<List<AliquotStageTracker>> paths;
     private Map<String, SampleStageTracker> stages;
+
+    public AliquotStageTracker getRoot() {
+        return root;
+    }
+
+    public void setRoot(AliquotStageTracker root) {
+        this.root = root;
+    }
+
+    private AliquotStageTracker root;
 
     public SampleTracker(DataRecord record) {
         this.record = record;
@@ -69,10 +78,6 @@ public class SampleTracker {
         );
     }
 
-    public void setPaths(List<List<AliquotStageTracker>> paths) {
-        this.paths = paths;
-    }
-
     public DataRecord getRecord() {
         return this.record;
     }
@@ -95,6 +100,7 @@ public class SampleTracker {
         apiMap.put("stages", this.stages.values().stream().map(
                 stage -> stage.toApiResponse()
         ).collect(Collectors.toList()));
+        apiMap.put("root", this.root.toApiResponse());
 
         return apiMap;
     }

@@ -6,6 +6,9 @@ import com.velox.api.user.User;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.*;
@@ -18,14 +21,14 @@ public class AliquotStageTracker extends StageTracker {
     Long recordId;
     String status;
     AliquotStageTracker parent;     // TODO - Can this ever be multiple?
-    AliquotStageTracker child;
+    List<AliquotStageTracker> children;
     DataRecord record;
     Boolean failed;
     private User user;
-
     public AliquotStageTracker(DataRecord record, User user) {
         setSize(0);
 
+        this.children = new ArrayList<>();
         this.recordId = record.getRecordId();
         this.record = record;
         this.parent = null;
@@ -33,12 +36,8 @@ public class AliquotStageTracker extends StageTracker {
         this.failed = Boolean.FALSE;        // TODO - remove this
     }
 
-    public AliquotStageTracker getChild() {
-        return child;
-    }
-
-    public void setChild(AliquotStageTracker child) {
-        this.child = child;
+    public void addChild(AliquotStageTracker child){
+        this.children.add(child);
     }
 
     public Boolean getFailed() {
@@ -122,9 +121,15 @@ public class AliquotStageTracker extends StageTracker {
     }
 
     public Map<String, Object> toApiResponse() {
-        Map<String, Object> apiMap = super.toApiResponse();
-        apiMap.put("record", this.recordId);
-        apiMap.put("status", this.status);
+        Map<String, Object> apiMap = new HashMap<>();
+        apiMap.put("recordId", this.recordId);
+        apiMap.put("children", this.children.stream().map(AliquotStageTracker::toApiResponse));
+
+        Map<String, Object> attributesMap = super.toApiResponse();
+        attributesMap.put("status", this.status);
+        attributesMap.put("failed", this.failed);
+        attributesMap.put("completed", this.complete);
+        apiMap.put("attributes", attributesMap);
 
         return apiMap;
     }

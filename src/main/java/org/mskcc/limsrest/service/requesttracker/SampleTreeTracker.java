@@ -15,6 +15,14 @@ import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.isVa
 public class SampleTreeTracker {
     private static Log log = LogFactory.getLog(SampleTreeTracker.class);
 
+    public AliquotStageTracker getRoot() {
+        return root;
+    }
+
+    public void setRoot(AliquotStageTracker root) {
+        this.root = root;
+    }
+
     private AliquotStageTracker root;                   // Parent Sample of the tree
     private Map<Long, AliquotStageTracker> sampleMap;   // Map Record IDs to their enriched sample information
     private Map<String, SampleStageTracker> stageMap;   // Map to all stages by their stage name

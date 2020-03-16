@@ -121,6 +121,7 @@ public class GetRequestTrackingTask {
                 }
                 tracker.setFailed(isFailed);
                 tracker.setComplete(isComplete);
+                tracker.setRoot(tree.getRoot());
 
                 request.addSampleTracker(tracker);
             }
@@ -187,29 +188,27 @@ public class GetRequestTrackingTask {
         } else {
             // Sample w/ children is complete
             root.setComplete(Boolean.TRUE);
+            List<AliquotStageTracker> samples = new ArrayList<>();
 
-            List<AliquotStageTracker> samples = Stream.of(children)
-                    .map(record -> {
-                        AliquotStageTracker sample = new AliquotStageTracker(record, user);
-                        sample.setParent(root);
-                        sample.setComplete(Boolean.FALSE);      // All Samples are incomplete until child is found
-                        sample.setFailed(Boolean.FALSE);
-                        sample.enrichSample();
-                        if(STAGE_UNKNOWN.equals(sample.getStage()) || STAGE_AWAITING_PROCESSING.equals(sample.getStage())){
-                            // Update the stage of the sample to the parent stage if it is unknown
-                            if(!STAGE_UNKNOWN.equals(root.getStage())){
-                                sample.setStage(root.getStage());
-                            }
-                        }
-                        return sample;
-                    })
-                    .collect(Collectors.toList());
-            for(AliquotStageTracker sample : samples){
+            for(DataRecord record : children){
+                AliquotStageTracker sample = new AliquotStageTracker(record, user);
+                sample.setParent(root);
+                sample.setComplete(Boolean.FALSE);      // All Samples are incomplete until child is found
+                sample.setFailed(Boolean.FALSE);
+                sample.enrichSample();
+                if(STAGE_UNKNOWN.equals(sample.getStage()) || STAGE_AWAITING_PROCESSING.equals(sample.getStage())){
+                    // Update the stage of the sample to the parent stage if it is unknown
+                    if(!STAGE_UNKNOWN.equals(root.getStage())){
+                        sample.setStage(root.getStage());
+                    }
+                }
+
+                root.addChild(sample);
                 tree.addSample(sample);
-            }
-            for(AliquotStageTracker sample : samples){
+
                 // Update tree w/ each sample
                 log.info(String.format("Searching children of root record: %d", root.getRecordId()));
+
                 tree = searchSampleTree(sample, tree);
             }
         }
