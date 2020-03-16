@@ -22,11 +22,9 @@ import static org.mskcc.limsrest.util.DataRecordAccess.*;
 public class GetRequestTrackingTask {
     private static Log log = LogFactory.getLog(GetRequestTrackingTask.class);
     private static Integer SAMPLE_COUNT = 1;
-    // LIMS fields for the request metadata - separated by string & long value types
     private static String[] requestDataLongFields = new String[]{"RecentDeliveryDate", "ReceivedDate"};
     private static String[] requestDataStringFields = new String[]{
             "LaboratoryHead",
-            "IlabRequest",
             "GroupLeader",
             "TATFromInProcessing",
             "TATFromReceiving",
@@ -105,7 +103,6 @@ public class GetRequestTrackingTask {
             for (DataRecord record : samples) {
                 SampleTracker tracker = new SampleTracker(record);
 
-                // Finds all non-failed leaf samples
                 AliquotStageTracker parentSample = new AliquotStageTracker(record, user);
                 parentSample.setRecord(record);
                 parentSample.enrichSample();
