@@ -2,15 +2,11 @@ package org.mskcc.limsrest.service.requesttracker;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 public class SampleStageTracker extends StageTracker {
     private static Log log = LogFactory.getLog(SampleStageTracker.class);
     Integer endingSamples;
-    List<Step> steps;
 
     public SampleStageTracker(String stage, Integer startingSamples, Integer endingSamples, Long startTime, Long updateTime) {
         setStage(stage);
@@ -19,7 +15,6 @@ public class SampleStageTracker extends StageTracker {
         this.endingSamples = endingSamples;
         this.startTime = startTime;
         this.updateTime = updateTime;
-        this.steps = new ArrayList<>();
     }
 
     public Integer getEndingSamples() {
@@ -44,10 +39,6 @@ public class SampleStageTracker extends StageTracker {
             return;
         }
         this.endingSamples += count;
-    }
-
-    public void addStep(Step step) {
-        steps.add(step);
     }
 
     /**

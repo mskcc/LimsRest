@@ -324,20 +324,6 @@ public class GetRequestTrackingTask {
             requestStage.setComplete(Boolean.FALSE);
         }
 
-        // TODO - Are these still needed?
-        Step receivedStep = new Step("received", null);
-        receivedStep.setComplete(true);                         // automatically true - each input is complete
-        receivedStep.setTotalSamples(total);
-        receivedStep.setCompletedSamples(total);
-
-        Step promotedStep = new Step("promoted", null);
-        receivedStep.setComplete(submittedComplete);  // Complete if all samples promoted
-        receivedStep.setTotalSamples(total);                     // Total:       # of received samples
-        receivedStep.setCompletedSamples(promoted);              // Complete:    # of promoted samples
-
-        requestStage.addStep(receivedStep);
-        requestStage.addStep(promotedStep);
-
         return requestStage;
     }
 

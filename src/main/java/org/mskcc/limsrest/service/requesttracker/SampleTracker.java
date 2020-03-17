@@ -3,7 +3,6 @@ package org.mskcc.limsrest.service.requesttracker;
 import com.velox.api.datarecord.DataRecord;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -11,7 +10,6 @@ public class SampleTracker {
     Long sampleId;
     DataRecord record;
     boolean complete;
-    Map<String, Step> stepMap;
     Map<Long, AliquotStageTracker> sampleGraph;
     Boolean failed;
     private Map<String, SampleStageTracker> stages;
@@ -32,7 +30,6 @@ public class SampleTracker {
         this.complete = true;       // The sample is considered complete until a record is added that is not done
 
         this.sampleGraph = new HashMap<>();
-        this.stepMap = new HashMap<>();
         this.stages = new HashMap<>();
     }
 
