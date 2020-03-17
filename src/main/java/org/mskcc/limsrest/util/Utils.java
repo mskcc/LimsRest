@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import java.util.Optional;
 
 public class Utils {
-    private final static Log LOGGER = LogFactory.getLog(PatientSamplesWithCmoInfoRetriever.class);
+    private final static Log LOGGER = LogFactory.getLog(Utils.class);
 
     public static void runAndCatchNpe(Runnable runnable) {
         try {

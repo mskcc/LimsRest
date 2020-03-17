@@ -6,6 +6,7 @@ import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.sloan.cmo.recmodels.KAPALibPlateSetupProtocol1Model;
 import com.velox.sloan.cmo.recmodels.SampleModel;
 import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.logging.Log;
@@ -128,6 +129,8 @@ public class GetSampleManifestTask {
             return fastqsOnlyManifest(sampleManifest, runFailedQC);
         }
 
+        addIGOQcRecommendations(sampleManifest, sample, user);
+
         // query Picard QC records for bait set & "Passed" fastqs.
         List<DataRecord> qcs = sample.getDescendantsOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
         Set<String> runPassedQC = new HashSet<>();
@@ -158,13 +161,15 @@ public class GetSampleManifestTask {
             dnaLibraries.put(igoId, new LibraryDataRecord(sample));
         }
 
+        Double dnaInputNg = findDNAInputForLibraryForMSKACCESS(sample, user);
+
         // for each DNA Library traverse the records grab the fields we need and paths to fastqs.
         for (Map.Entry<String, LibraryDataRecord> aliquotEntry : dnaLibraries.entrySet()) {
             String libraryIgoId = aliquotEntry.getKey();
             DataRecord aliquot = aliquotEntry.getValue().record;
             DataRecord aliquotParent = aliquotEntry.getValue().parent;
             log.info("Processing DNA library: " + libraryIgoId);
-            SampleManifest.Library library = getLibraryFields(user, libraryIgoId, aliquot);
+            SampleManifest.Library library = getLibraryFields(user, libraryIgoId, aliquot, dnaInputNg);
 
             List<DataRecord> indexBarcodes = aliquot.getDescendantsOfType("IndexBarcode", user);
             if (aliquotParent != null) { // TODO get barcodes for WES samples
@@ -269,6 +274,54 @@ public class GetSampleManifestTask {
         return sampleManifest;
     }
 
+    protected void addIGOQcRecommendations(SampleManifest sampleManifest, DataRecord sample, User user) {
+        try {
+            log.info("Searching for QcReportDna report");
+            List<DataRecord> qcRecords = sample.getDescendantsOfType("QcReportDna", user);
+            if (qcRecords.size() > 0) {
+                DataRecord qcRecord = qcRecords.get(0);
+                String igoQcRecommendation = qcRecord.getStringVal("IgoQcRecommendation", user);
+                String comments = qcRecord.getStringVal("Comments", user);
+                String id = qcRecord.getStringVal("InvestigatorDecision", user);
+                SampleManifest.QcReport r = new SampleManifest.QcReport(SampleManifest.QcReportType.DNA, igoQcRecommendation, comments, id);
+                sampleManifest.getQcReports().add(r);
+            }
+
+            log.info("Searching for QcReportLibrary");
+            List<DataRecord> qcRecordsLib = sample.getDescendantsOfType("QcReportLibrary", user);
+            if (qcRecordsLib.size() > 0) {
+                DataRecord qcRecord = qcRecordsLib.get(0);
+                String igoQcRecommendation = qcRecord.getStringVal("IgoQcRecommendation", user);
+                String comments = qcRecord.getStringVal("Comments", user);
+                String id = qcRecord.getStringVal("InvestigatorDecision", user);
+                SampleManifest.QcReport r = new SampleManifest.QcReport(SampleManifest.QcReportType.LIBRARY, igoQcRecommendation, comments, id);
+                sampleManifest.getQcReports().add(r);
+            }
+        } catch (RemoteException | NotFound e) {
+            log.error("Failed to complete QC record searches.");
+            e.printStackTrace();
+        }
+    }
+
+    /*
+     * The ACCESS team has requested DNA input for library.
+     */
+    protected Double findDNAInputForLibraryForMSKACCESS(DataRecord sample, User user) {
+        try {
+            String recipe = sample.getStringVal(SampleModel.RECIPE, user);
+            if (recipe.contains("ACCESS") ){
+                log.info("Searching for DNA Library Input Mass (ng).");
+                DataRecord [] records = sample.getChildrenOfType(KAPALibPlateSetupProtocol1Model.DATA_TYPE_NAME, user);
+                DataRecord record = records[records.length - 1];
+                return record.getDoubleVal(KAPALibPlateSetupProtocol1Model.TARGET_MASS_ALIQ_1, user);
+            }
+            return null;
+        } catch (Exception e) {
+            log.error(e);
+            return null;
+        }
+    }
+
     protected SampleManifest getSampleLevelFields(String igoId, List<DataRecord> samples, DataRecord sample,
                                                   DataRecordManager dataRecordManager, User user)
             throws NotFound, RemoteException, IoError {
@@ -318,7 +371,7 @@ public class GetSampleManifestTask {
         return sampleManifest;
     }
 
-    private SampleManifest.Library getLibraryFields(User user, String libraryIgoId, DataRecord aliquot) throws IoError, RemoteException, NotFound {
+    private SampleManifest.Library getLibraryFields(User user, String libraryIgoId, DataRecord aliquot, Double dnaInputNg) throws IoError, RemoteException, NotFound {
         DataRecord[] libPrepProtocols = aliquot.getChildrenOfType("DNALibraryPrepProtocol3", user);
         Double libraryVolume = null;
         if (libPrepProtocols != null && libPrepProtocols.length == 1)
@@ -328,7 +381,7 @@ public class GetSampleManifestTask {
         if (libraryConcentrationObj != null)  // for example 06449_1 concentration is null
             libraryConcentration = aliquot.getDoubleVal("Concentration", user);
 
-        return new SampleManifest.Library(libraryIgoId, libraryVolume, libraryConcentration);
+        return new SampleManifest.Library(libraryIgoId, libraryVolume, libraryConcentration, dnaInputNg);
     }
 
     protected SampleManifest getSampleLevelFields(String igoId, DataRecord cmoInfo, User user) throws NotFound, RemoteException {
@@ -510,8 +563,10 @@ public class GetSampleManifestTask {
 
                 if (returnOnlyTwo) {
                     // Return only most recent R1&R2 in case of re-demux but return all fastqs if demux fastqs are by lane
-                    if (passedQCList.size() > 2 && !sameRunDifferentLane(passedQCList))
-                        passedQCList = passedQCList.subList(0,2);
+                    if (passedQCList.size() > 2 && hasRedemux(fastqList)) {
+                        log.info("Cutting response to not include prior redemuxes.");
+                        passedQCList = passedQCList.subList(0, 2);
+                    }
                 }
 
                 List<String> result = new ArrayList<>();
@@ -541,16 +596,22 @@ public class GetSampleManifestTask {
         BUT only return the most recent "_A2" run fastqs for this run:
 
         /ifs/archive/GCL/hiseq/FASTQ/A00227_0011_BH2YHKDMXX_A2/Project_93017_F/Sample_P-8765432-T01-WES_IGO_93017_F_74/P-8765432-T01-WES_IGO_93017_F_74_S11_R2_001.fastq.gz
+        not this fastq
+           /ifs/archive/GCL/hiseq/FASTQ/A00227_0011_BH2YHKDMXX/Project_93017_F/Sample_P-0020689-T01-WES_IGO_93017_F_74/P-0020689-T01-WES_IGO_93017_F_74_S88_R1_001.fastq.gz
+
+         Illumina sample sheet S** number will likely change when redemuxed:
+           https://support.illumina.com/help/BaseSpace_OLH_009008/Content/Source/Informatics/BS/NamingConvention_FASTQ-files-swBS.htm
          */
-    protected static boolean sameRunDifferentLane(List<ArchivedFastq> passedQCList) {
+    protected static boolean hasRedemux(List<ArchivedFastq> passedQCList) {
         Set<String> samples = new HashSet<>();
         for (ArchivedFastq fastqEntry : passedQCList) {
             String [] parts = fastqEntry.fastq.split("/");
             String sampleOnly = parts[parts.length - 1];
+            sampleOnly = sampleOnly.replaceAll("_S([0-9]{1,3})_", "");
             if (samples.contains(sampleOnly))
-                return false;
+                return true;
             samples.add(sampleOnly);
         }
-        return true;
+        return false;
     }
 }
