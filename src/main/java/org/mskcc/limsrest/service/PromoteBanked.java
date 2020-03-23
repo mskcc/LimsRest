@@ -50,6 +50,8 @@ public class PromoteBanked extends LimsTask {
     private SampleTypeCorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator = new SampleTypeCorrectedCmoSampleIdGenerator();
     private final BankedSampleToSampleConverter bankedSampleToSampleConverter = new BankedSampleToSampleConverter();
 
+    private static String previousUuid = "";
+
     String[] bankedIds;
     String requestId;
     String serviceId;
@@ -336,7 +338,18 @@ public class PromoteBanked extends LimsTask {
         UuidGenerator uuidGen = new UuidGenerator();
         String uuid;
         try {
+            // instead of fixing the possible duplicate values from getNextBankedId(),
+            // if a repeat value is returned just call the function again and log the error.
             uuid = uuidGen.integerToUUID(Integer.parseInt(util.getNextBankedId()), 32);
+            if (uuid.equals(previousUuid)) {
+                log.error("Repeat Alt-Id " + uuid + " generated. Trying again.");
+                Thread.sleep(500);
+                uuid = uuidGen.integerToUUID(Integer.parseInt(util.getNextBankedId()), 32);
+                if (uuid.equals(previousUuid)) {
+                    log.error("ERROR: failed to correct repeat alt-id:" + uuid);
+                }
+            }
+            previousUuid = uuid;
         } catch (Exception e) {
             throw new LimsException("UUID generation failed for sample due to " + e.getMessage());
         }
