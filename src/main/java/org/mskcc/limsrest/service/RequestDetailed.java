@@ -15,6 +15,7 @@ public class RequestDetailed {
    private String fundNumber;
    private String contactName;
    private String dataAnalyst;
+   //   to be replaced by dataAccessEmails
    private String dataAnalystEmail;
    private String dataDeliveryType;
    private String cmoProjectId;
@@ -26,7 +27,10 @@ public class RequestDetailed {
    private String furthest;  
    private String investigator;
    private String irbWaiverComments;
+   //   to be replaced by dataAccessEmails and qcAccessEmails
    private String mailTo;
+   private String dataAccessEmails;
+   private String qcAccessEmails;
    private String pi;
    private String projectNotes;
    private String group;
@@ -48,6 +52,7 @@ public class RequestDetailed {
    private String servicesRequested;
    private String studyId;
    private String communicationNotes;
+   private String analysisType;
 
 
 
@@ -135,6 +140,21 @@ public class RequestDetailed {
       if(mailTo.split("@").length == mailTo.split(",").length + 1){
            this.mailTo = mailTo;
       }
+   }
+   public void setQcAccessEmails(String qcAccessEmails){
+      //if this isn't well formed, don't set
+      if(qcAccessEmails.split("@").length == qcAccessEmails.split(",").length + 1){
+           this.qcAccessEmails = qcAccessEmails;
+      }
+   }
+   public void setDataAccessEmails(String dataAccessEmails){
+      //if this isn't well formed, don't set
+      if(dataAccessEmails.split("@").length == dataAccessEmails.split(",").length + 1){
+           this.dataAccessEmails = dataAccessEmails;
+      }
+   }
+   public void setAnalysisType(String analysisType){
+	this.analysisType = analysisType;
    }
    public void setPi(String pi){
 	this.pi = pi;
@@ -301,8 +321,10 @@ public class RequestDetailed {
    public String getDataDeliveryType(){
 	return dataDeliveryType;
    }
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getCmoContactName(){
+   @JsonInclude(JsonInclude.Include.NON_EMPTY)
+   public String getAnalysisType(){ return analysisType; }
+   @JsonInclude(JsonInclude.Include.NON_EMPTY)
+   public String getCmoContactName(){
      return cmoContactName;
   }
 
@@ -336,6 +358,10 @@ public class RequestDetailed {
    public String getMailTo(){
      return mailTo;
    }
+   @JsonInclude(JsonInclude.Include.NON_EMPTY)
+   public String getDataAccessEmails(){ return dataAccessEmails; }
+   @JsonInclude(JsonInclude.Include.NON_EMPTY)
+   public String getQcAccessEmails(){ return qcAccessEmails; }
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public String getPi(){
 	return pi;

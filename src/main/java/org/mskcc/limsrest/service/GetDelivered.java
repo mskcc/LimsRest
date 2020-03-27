@@ -121,6 +121,10 @@ public class GetDelivered extends LimsTask {
                 } catch (Exception e) {
                 }
                 try {
+                    rs.setAnalysisType((String) requestFields.get("AnalysisType"));
+                } catch (Exception e) {
+                }
+                try {
                     rs.setRequestType((String) requestFields.get("RequestName"));
                 } catch (Exception e) {
                 }

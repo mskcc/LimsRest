@@ -17,6 +17,7 @@ import java.util.concurrent.Future;
 
 /**
  * Used by the QC site so they can view recently delivered projects in the QC meetings.
+ * Also used by EmailDelivery code (https://github.com/mskcc/fastq-plus).
  */
 @RestController
 @RequestMapping("/")

@@ -96,6 +96,8 @@ public abstract class LimsTask implements VeloxExecutable<Object>, Callable<Obje
             runAndCatchNpe(() -> requestDetailed.setRequestId((String) requestFields.get("RequestId")));
             runAndCatchNpe(() -> requestDetailed.setFaxNumber((String) requestFields.get("FaxNum")));
             runAndCatchNpe(() -> requestDetailed.setMailTo((String) requestFields.get("MailTo")));
+            runAndCatchNpe(() -> requestDetailed.setDataAccessEmails((String) requestFields.get("DataAccessEmails")));
+            runAndCatchNpe(() -> requestDetailed.setQcAccessEmails((String) requestFields.get("QcAccessEmails")));
             runAndCatchNpe(() -> requestDetailed.setInvestigator((String) requestFields.get("Investigator")));
             runAndCatchNpe(() -> requestDetailed.setIrbWaiverComments((String) requestFields.get
                     ("IRBandWaiverComments")));
@@ -138,6 +140,7 @@ public abstract class LimsTask implements VeloxExecutable<Object>, Callable<Obje
             runAndCatchNpe(() -> requestDetailed.setAutorunnable((Boolean) requestFields.get("BicAutorunnable")));
             runAndCatchNpe(() -> requestDetailed.setFastqRequested((Boolean) requestFields.get("FASTQ")));
             runAndCatchNpe(() -> requestDetailed.setAnalysisRequested((Boolean) requestFields.get("BICAnalysis")));
+            runAndCatchNpe(() -> requestDetailed.setAnalysisType((String) requestFields.get("AnalysisType")));
             runAndCatchNpe(() -> requestDetailed.setHighPriority((Boolean) requestFields.get("HighPriority")));
         } catch (Throwable e) {
             requestDetailed.setInvestigator("Annotation failed: " + e.getMessage());

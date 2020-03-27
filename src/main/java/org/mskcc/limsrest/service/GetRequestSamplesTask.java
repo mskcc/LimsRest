@@ -66,7 +66,7 @@ public class GetRequestSamplesTask {
                 boolean igoComplete = samplesIGOComplete.contains(othersampleId);
                 // same othersampleId as other samples but these failed, could check exemplarSampleStatus too
                 // remove if qc status lookup done by IGO ID
-                if ("07078_E_1".equals(igoId) || "07078_E_2".equals(igoId) || "07078_E_5".equals(igoId) )
+                if ("07078_E_1".equals(igoId) || "07078_E_2".equals(igoId) || "07078_E_5".equals(igoId))
                     igoComplete = false;
 
                 RequestSample rs = new RequestSample(othersampleId, igoId, igoComplete);
@@ -92,6 +92,8 @@ public class GetRequestSamplesTask {
             rsl.setDataAnalystName(requestDataRecord.getStringVal("DataAnalyst", user));
             rsl.setDataAnalystEmail(requestDataRecord.getStringVal("DataAnalystEmail", user));
             rsl.setOtherContactEmails(requestDataRecord.getStringVal("MailTo", user));
+            rsl.setQcAccessEmails(requestDataRecord.getStringVal("QcAccessEmails", user));
+            rsl.setDataAccessEmails(requestDataRecord.getStringVal("DataAccessEmails", user));
 
             return rsl;
         } catch (Throwable e) {
@@ -181,6 +183,8 @@ public class GetRequestSamplesTask {
         public String investigatorName, investigatorEmail;
         public String dataAnalystName, dataAnalystEmail;
         public String otherContactEmails;
+        public String dataAccessEmails;
+        public String qcAccessEmails;
         public String strand; // only for RNA
 
         public List<RequestSample> samples;
@@ -286,6 +290,14 @@ public class GetRequestSamplesTask {
         public void setOtherContactEmails(String otherContactEmails) {
             this.otherContactEmails = otherContactEmails;
         }
+
+        public String getQcAccessEmails() { return qcAccessEmails; }
+
+        public void setQcAccessEmails(String qcAccessEmails) { this.qcAccessEmails = qcAccessEmails; }
+
+        public String getDataAccessEmails() { return dataAccessEmails; }
+
+        public void setDataAccessEmails(String dataAccessEmails) { this.dataAccessEmails = dataAccessEmails; }
     }
 
     public static class RequestSample {

@@ -335,6 +335,7 @@ public class GetSampleQc {
             runAndCatchNpe(() -> rs.setInvestigatorEmail((String) requestFields.get("Investigatoremail")));
             runAndCatchNpe(() -> rs.setAutorunnable((Boolean) requestFields.get("BicAutorunnable")));
             runAndCatchNpe(() -> rs.setAnalysisRequested((Boolean) requestFields.get("BICAnalysis")));
+            runAndCatchNpe(() -> rs.setAnalysisType((String) requestFields.get("AnalysisType")));
             runAndCatchNpe(() -> rs.setCmoProject((String) requestFields.get("CMOProjectID")));
             runAndCatchNpe(() -> rs.setProjectManager((String) requestFields.get("ProjectManager")));
         } catch (Throwable e) {
