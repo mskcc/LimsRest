@@ -15,7 +15,7 @@ import java.util.List;
 public class SampleManifest {
     private String igoId;
 
-    public String cmoInfoIgoId;
+    public String cmoInfoIgoId; // left out of pipeline JSON
 
     private String cmoSampleName; // aka "Corrected CMO Sample ID", but not an ID in by normal database standards
     private String sampleName;
@@ -31,7 +31,7 @@ public class SampleManifest {
     private String collectionYear;
     private String sex;
     private String species;
-    private String ACCESS2dBarcode;
+    private String cfDNA2dBarcode;
 
     private String baitSet;
 
@@ -165,9 +165,9 @@ public class SampleManifest {
 
     public SampleManifest() {}
 
-    public String getACCESS2dBarcode() { return ACCESS2dBarcode; }
+    public String getCfDNA2dBarcode() { return cfDNA2dBarcode; }
 
-    public void setACCESS2dBarcode(String ACCESS2dBarcode) { this.ACCESS2dBarcode = ACCESS2dBarcode; }
+    public void setCfDNA2dBarcode(String cfDNA2dBarcode) { this.cfDNA2dBarcode = cfDNA2dBarcode; }
 
     public List<QcReport> getQcReports() { return qcReports; }
 

@@ -168,7 +168,7 @@ public class GetSampleManifestTask {
             List<DataRecord> baseSamples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sampleManifest.cmoInfoIgoId + "'", user);
             if (baseSamples.size() > 0) {
                 DataRecord baseSample = baseSamples.get(0);
-                sampleManifest.setACCESS2dBarcode(baseSample.getStringVal("MicronicTubeBarcode", user));
+                sampleManifest.setCfDNA2dBarcode(baseSample.getStringVal("MicronicTubeBarcode", user));
             }
         }
 
