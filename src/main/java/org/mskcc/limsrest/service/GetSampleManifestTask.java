@@ -161,7 +161,16 @@ public class GetSampleManifestTask {
             dnaLibraries.put(igoId, new LibraryDataRecord(sample));
         }
 
-        Double dnaInputNg = findDNAInputForLibraryForMSKACCESS(sample, user);
+        Double dnaInputNg = null;
+        if (recipe.contains("ACCESS") ) {
+            dnaInputNg = findDNAInputForLibraryForMSKACCESS(sample, user);
+            log.info("Searching for ACCESS 2D barcode with base IGO sample ID=" + sampleManifest.cmoInfoIgoId);
+            List<DataRecord> baseSamples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sampleManifest.cmoInfoIgoId + "'", user);
+            if (baseSamples.size() > 0) {
+                DataRecord baseSample = baseSamples.get(0);
+                sampleManifest.setACCESS2dBarcode(baseSample.getStringVal("MicronicTubeBarcode", user));
+            }
+        }
 
         // for each DNA Library traverse the records grab the fields we need and paths to fastqs.
         for (Map.Entry<String, LibraryDataRecord> aliquotEntry : dnaLibraries.entrySet()) {
@@ -308,14 +317,10 @@ public class GetSampleManifestTask {
      */
     protected Double findDNAInputForLibraryForMSKACCESS(DataRecord sample, User user) {
         try {
-            String recipe = sample.getStringVal(SampleModel.RECIPE, user);
-            if (recipe.contains("ACCESS") ){
-                log.info("Searching for DNA Library Input Mass (ng).");
-                DataRecord [] records = sample.getChildrenOfType(KAPALibPlateSetupProtocol1Model.DATA_TYPE_NAME, user);
-                DataRecord record = records[records.length - 1];
-                return record.getDoubleVal(KAPALibPlateSetupProtocol1Model.TARGET_MASS_ALIQ_1, user);
-            }
-            return null;
+            log.info("Searching for DNA Library Input Mass (ng).");
+            DataRecord[] records = sample.getChildrenOfType(KAPALibPlateSetupProtocol1Model.DATA_TYPE_NAME, user);
+            DataRecord record = records[records.length - 1];
+            return record.getDoubleVal(KAPALibPlateSetupProtocol1Model.TARGET_MASS_ALIQ_1, user);
         } catch (Exception e) {
             log.error(e);
             return null;
@@ -338,7 +343,7 @@ public class GetSampleManifestTask {
         } else {
             cmoInfo = sampleCMOInfoRecords.get(0);
         }
-        return getSampleLevelFields(igoId, cmoInfo, user);
+        return getSampleLevelFields(igoId, cmoInfoIgoId, cmoInfo, user);
     }
 
     // source IGO ID field often has '0', blank or null
@@ -384,9 +389,10 @@ public class GetSampleManifestTask {
         return new SampleManifest.Library(libraryIgoId, libraryVolume, libraryConcentration, dnaInputNg);
     }
 
-    protected SampleManifest getSampleLevelFields(String igoId, DataRecord cmoInfo, User user) throws NotFound, RemoteException {
+    protected SampleManifest getSampleLevelFields(String igoId, String cmoInfoIgoId, DataRecord cmoInfo, User user) throws NotFound, RemoteException {
         SampleManifest s = new SampleManifest();
         s.setIgoId(igoId);
+        s.cmoInfoIgoId = cmoInfoIgoId;
         s.setCmoPatientId(cmoInfo.getStringVal("CmoPatientId", user));
         // aka "Sample Name" in SampleCMOInfoRecords
         String sampleName = cmoInfo.getStringVal("OtherSampleId", user);
