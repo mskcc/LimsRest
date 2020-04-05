@@ -557,10 +557,12 @@ public class GetSampleManifestTask {
                     if (runPassedQC.contains(fastq.runBaseDirectory))
                         passedQCList.add(fastq);
                     else {
-                        // for example 08106_C_35 has fastq PITT_0214_AHVHVFBBXX_A1 BUT PASSED PITT_0214_AHVHVFBBXX
+                        // for example, 08106_C_35 has fastq PITT_0214_AHVHVFBBXX_A1 BUT PASSED
+                        // PITT_0214_AHVHVFBBXX in LIMS which is okay
                         if (fastq.runBaseDirectory.endsWith("_A1") ||
                                 fastq.runBaseDirectory.endsWith("_A2") ||
-                                fastq.runBaseDirectory.endsWith("_A3")) {
+                                fastq.runBaseDirectory.endsWith("_A3") ||
+                                fastq.runBaseDirectory.endsWith("_RENAME")) { // DIANA_0176_AH735GDSXY_RENAME
                             if (runPassedQC.contains(fastq.run))
                                 passedQCList.add(fastq);
                         }
