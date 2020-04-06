@@ -168,7 +168,20 @@ public class GetSampleManifestTask {
             List<DataRecord> baseSamples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sampleManifest.cmoInfoIgoId + "'", user);
             if (baseSamples.size() > 0) {
                 DataRecord baseSample = baseSamples.get(0);
-                sampleManifest.setCfDNA2dBarcode(baseSample.getStringVal("MicronicTubeBarcode", user));
+                // example 2d barcode "8036707180"
+                String barcode = baseSample.getStringVal("MicronicTubeBarcode", user);
+                while (barcode == null || barcode.length() < 8) {
+                    // travel to child sample to look for the original barcode, for example 06302_AH_9
+                    log.info("No 2dbarcode in parent sample, checking child sample.");
+                    DataRecord [] sampleChildren = baseSample.getChildrenOfType("Sample", user);
+                    if (sampleChildren.length > 0) {
+                        baseSample = sampleChildren[0];
+                        barcode = baseSample.getStringVal("MicronicTubeBarcode", user);
+                    } else {
+                        break;
+                    }
+                }
+                sampleManifest.setCfDNA2dBarcode(barcode);
             }
         }
 
