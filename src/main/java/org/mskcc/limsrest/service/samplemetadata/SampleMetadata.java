@@ -20,6 +20,7 @@ public class SampleMetadata {
     private String recipe;
     private String baitset;
     private String fastqPath;
+    String principalInvestigator;
     private String ancestorSample;
     private boolean doNotUse;
     private String sampleStatus;
@@ -27,7 +28,7 @@ public class SampleMetadata {
     public SampleMetadata(String mrn, String cmoPatientId, String cmoSampleId, String igoId, String investigatorSampleId, String species,
                           String sex, String tumorOrNormal, String sampleType, String preservation, String tumorType, String parentTumorType,
                           String specimenType, String sampleOrigin, String tissueSource, String tissueLocation, String recipe,
-                          String baitset, String fastqPath, String ancestorSample, boolean doNotUse, String sampleStatus){
+                          String baitset, String fastqPath, String principalInvestigator, String ancestorSample, boolean doNotUse, String sampleStatus){
         this.mrn = mrn;
         this.cmoPatientId = cmoPatientId;
         this.cmoSampleId = cmoSampleId;
@@ -46,6 +47,7 @@ public class SampleMetadata {
         this.tissueLocation=tissueLocation;
         this.recipe=recipe;
         this.baitset=baitset;
+        this.principalInvestigator = principalInvestigator;
         this.fastqPath=fastqPath;
         this.ancestorSample=ancestorSample;
         this.doNotUse = doNotUse;
@@ -203,6 +205,15 @@ public class SampleMetadata {
     public void setFastqPath(String fastqPath) {
         this.fastqPath = fastqPath;
     }
+
+    public String getPrincipalInvestigator() {
+        return principalInvestigator;
+    }
+
+    public void setPrincipalInvestigator(String principalInvestigator) {
+        this.principalInvestigator = principalInvestigator;
+    }
+
     public String getAncestorSample() {
         return ancestorSample;
     }
@@ -225,6 +236,34 @@ public class SampleMetadata {
 
     public void setSampleStatus(String sampleStatus) {
         this.sampleStatus = sampleStatus;
+    }
+
+    @Override
+    public String toString() {
+        return "SampleMetadata{" +
+                "mrn='" + mrn + '\'' +
+                ", cmoPatientId='" + cmoPatientId + '\'' +
+                ", cmoSampleId='" + cmoSampleId + '\'' +
+                ", igoId='" + igoId + '\'' +
+                ", investigatorSampleId='" + investigatorSampleId + '\'' +
+                ", species='" + species + '\'' +
+                ", sex='" + sex + '\'' +
+                ", tumorOrNormal='" + tumorOrNormal + '\'' +
+                ", sampleType='" + sampleType + '\'' +
+                ", preservation='" + preservation + '\'' +
+                ", tumorType='" + tumorType + '\'' +
+                ", parentTumorType='" + parentTumorType + '\'' +
+                ", specimenType='" + specimenType + '\'' +
+                ", sampleOrigin='" + sampleOrigin + '\'' +
+                ", tissueSource='" + tissueSource + '\'' +
+                ", tissueLocation='" + tissueLocation + '\'' +
+                ", recipe='" + recipe + '\'' +
+                ", baitset='" + baitset + '\'' +
+                ", fastqPath='" + fastqPath + '\'' +
+                ", ancestorSample='" + ancestorSample + '\'' +
+                ", doNotUse=" + doNotUse +
+                ", sampleStatus='" + sampleStatus + '\'' +
+                '}';
     }
 }
 
