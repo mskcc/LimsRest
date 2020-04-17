@@ -135,13 +135,21 @@ public class GetSampleManifestTask {
         List<DataRecord> qcs = sample.getDescendantsOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
         Set<String> runPassedQC = new HashSet<>();
         String baitSet = null;
+        Long dateBaitSetCreated = Long.MAX_VALUE;
         for (DataRecord dr : qcs) {
             String qcResult = dr.getStringVal(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
             if ("Passed".equals(qcResult)) {
                 String run = dr.getStringVal(SeqAnalysisSampleQCModel.SEQUENCER_RUN_FOLDER, user);
                 runPassedQC.add(run);
                 log.info("Passed sample & run: " + run);
-                baitSet = dr.getStringVal(SeqAnalysisSampleQCModel.BAIT_SET, user);
+                // make sure to get correct baitset when samples are moved downstream i.e. 09687_N_8 WES has 09687_T_1 Methlyseq child
+                // choose earliest created baitset to avoid later baitsets from other requests
+                Long datecreated = dr.getLongVal(SeqAnalysisSampleQCModel.DATE_CREATED, user);
+                if (datecreated < dateBaitSetCreated) {
+                    baitSet = dr.getStringVal(SeqAnalysisSampleQCModel.BAIT_SET, user);
+                    log.info("Saving baitSet: " + baitSet);
+                    dateBaitSetCreated = datecreated;
+                }
             }
         }
 
