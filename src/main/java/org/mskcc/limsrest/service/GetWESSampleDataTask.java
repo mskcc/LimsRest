@@ -600,35 +600,35 @@ public class GetWESSampleDataTask {
     }
 
 
-    /**
-     * Method to get last child sample of sample passed to the method. A Sample can have children across requests,
-     * this method returns last  child from the same request as sample passed to the method.
-     *
-     * @param sample
-     * @return
-     * @throws IoError
-     * @throws RemoteException
-     */
-    private DataRecord getLastChildSample(DataRecord sample, String requestId) throws IoError, RemoteException, NotFound {
-        List<DataRecord> childSamples = sample.getDescendantsOfType("Sample", user);
-        List<DataRecord> childRecordsForSameRequest = new ArrayList<>();
-        if (childSamples.size() > 0) {
-            childRecordsForSameRequest = childSamples.stream().filter(s -> {
-                try {
-                    return (requestId.toLowerCase().equals(s.getStringVal("RequestId", user).trim().toLowerCase())
-                            || requestId.toLowerCase().contains(s.getStringVal("RequestId", user).trim().toLowerCase())
-                            || s.getStringVal("RequestId", user).trim().toLowerCase().contains(requestId.toLowerCase()));
-                } catch (NotFound | RemoteException notFound) {
-                    notFound.printStackTrace();
-                    return false;
-                }
-            }).collect(Collectors.toList());
-            if (childRecordsForSameRequest.size() > 0) {
-                return childRecordsForSameRequest.stream().max(Comparator.comparing(DataRecord::getRecordId)).orElse(sample);
-            }
-        }
-        return sample;
-    }
+//    /**
+//     * Method to get last child sample of sample passed to the method. A Sample can have children across requests,
+//     * this method returns last  child from the same request as sample passed to the method.
+//     *
+//     * @param sample
+//     * @return
+//     * @throws IoError
+//     * @throws RemoteException
+//     */
+//    private DataRecord getLastChildSample(DataRecord sample, String requestId) throws IoError, RemoteException, NotFound {
+//        List<DataRecord> childSamples = sample.getDescendantsOfType("Sample", user);
+//        List<DataRecord> childRecordsForSameRequest = new ArrayList<>();
+//        if (childSamples.size() > 0) {
+//            childRecordsForSameRequest = childSamples.stream().filter(s -> {
+//                try {
+//                    return (requestId.toLowerCase().equals(s.getStringVal("RequestId", user).trim().toLowerCase())
+//                            || requestId.toLowerCase().contains(s.getStringVal("RequestId", user).trim().toLowerCase())
+//                            || s.getStringVal("RequestId", user).trim().toLowerCase().contains(requestId.toLowerCase()));
+//                } catch (NotFound | RemoteException notFound) {
+//                    notFound.printStackTrace();
+//                    return false;
+//                }
+//            }).collect(Collectors.toList());
+//            if (childRecordsForSameRequest.size() > 0) {
+//                return childRecordsForSameRequest.stream().max(Comparator.comparing(DataRecord::getRecordId)).orElse(sample);
+//            }
+//        }
+//        return sample;
+//    }
 
 //    /**
 //     * Get latest status of samples in IGO.
@@ -647,7 +647,6 @@ public class GetWESSampleDataTask {
     private String getSampleStatus(DataRecord sample, String requestId){
         String sampleId ="";
         String sampleStatus;
-        String sampleType;
         try{
             sampleId = sample.getStringVal("SampleId", user);
             sampleStatus = (String)getValueFromDataRecord(sample, "ExemplarSampleStatus", "String");
