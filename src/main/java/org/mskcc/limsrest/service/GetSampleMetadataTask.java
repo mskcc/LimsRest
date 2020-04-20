@@ -25,7 +25,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class GetSampleMetadataTask {
-
     private Log log = LogFactory.getLog(GetSampleMetadata.class);
     private String timestamp;
     private ConnectionLIMS conn;
@@ -53,11 +52,17 @@ public class GetSampleMetadataTask {
             List<DataRecord> requests = new ArrayList<>();
 
             try {
+<<<<<<< HEAD
                 requests = dataRecordManager.queryDataRecords("Request", "CompletedDate > '" + timestamp +"' AND Status IN ('Completed', 'Completed with Failures')", user);//'" + timestamp +"'", user);//for testing
+=======
+                //requests = dataRecordManager.queryDataRecords("Request", "DateCreated > " + Long.parseLong(timestamp) , user);
+                requests = dataRecordManager.queryDataRecords("Request", "RequestId = '07973'", user);//'" + timestamp +"'", user);//for testing
+>>>>>>> 6b87ef53277473b6bd2acd4618739f1a1ee4c745
                 log.info("Num Request Records: " + requests.size());
                 for (DataRecord req: requests){
                     String labHead = (String)getValueFromDataRecord(req, "LaboratoryHead", "String");
                     DataRecord[] samples = req.getChildrenOfType("Sample", user);
+<<<<<<< HEAD
                     String requestId = (String) getValueFromDataRecord(req, "RequestId", "String");
                     for (DataRecord sample: samples){
                         log.info("start building object.");
@@ -108,13 +113,43 @@ public class GetSampleMetadataTask {
                         boolean doNotUse = false;
                         String sampleStatus = getSampleStatus(sample, requestId);
                         log.info("retrieved sampleStatus");
+=======
+                    for (DataRecord sample: samples){
+                        System.out.println("start building object.");
+                        String mrn ="";
+                        String cmoPatientId = (String)getFallBackValue(sample, "CorrectedInvestPatientId", "PatientId", "String");
+                        String cmoSampleId = (String)getFallBackValue(sample, "CorrectedCMOID", "OtherSampleId", "String");
+                        String igoId = sample.getStringVal("SampleId", user);
+                        String investigatorSampleId = (String)getFallBackValue(sample, "UserSampleID", "UserSampleID","String");
+                        String species = (String)getFallBackValue(sample, "Species", "Species","String");
+                        String sex = (String)getFallBackValue(sample, "Gender", "Gender","String");
+                        String tumorOrNormal = (String)getFallBackValue(sample, "TumorOrNormal", "TumorOrNormal","String");
+                        String sampleType = (String)getValueFromDataRecord(sample, "ExemplarSampleType", "String");
+                        String preservation = (String)getFallBackValue(sample, "Preservation", "Preservation","String");;
+                        String tumorType = (String)getFallBackValue(sample,"TumorType", "TumorType","String");
+                        String parentTumorType = "";//getOncotreeType(tumorType);
+                        String specimenType = (String)getFallBackValue(sample,"SpecimenType", "SpecimenType","String");
+                        String sampleOrigin = (String)getFallBackValue(sample,"SampleOrigin", "SampleOrigin","String");
+                        String tissueSource = (String)getFallBackValue(sample,"TissueSource", "TissueSource","String");
+                        String tissueLocation = (String)getFallBackValue(sample,"TissueLocation", "TissueLocation", "String");
+                        String recipe = (String)getFallBackValue(sample,"Recipe", "Recipe","String");
+                        String baitset = baitSet;
+                        String fastqPath ="";
+                        String ancestorSample = getOriginSampleId(sample);
+                        boolean doNotUse = false;
+                        String sampleStatus = getSampleStatus(sample);
+>>>>>>> 6b87ef53277473b6bd2acd4618739f1a1ee4c745
 
                         SampleMetadata metadata = new SampleMetadata(mrn, cmoPatientId, cmoSampleId, igoId, investigatorSampleId, species,
                                 sex, tumorOrNormal, sampleType, preservation, tumorType, parentTumorType,
                                 specimenType, sampleOrigin, tissueSource, tissueLocation, recipe,
                                 baitset, fastqPath, labHead, ancestorSample, doNotUse, sampleStatus);
                         sampleMetadata.add(metadata);
+<<<<<<< HEAD
                         log.info("Done building object.");
+=======
+                        System.out.println("Done building object.");
+>>>>>>> 6b87ef53277473b6bd2acd4618739f1a1ee4c745
                     }
                 }
             } catch (Throwable e) {
@@ -125,6 +160,7 @@ public class GetSampleMetadataTask {
         }catch (Exception e){
             log.error(e.getMessage());
         }
+<<<<<<< HEAD
         log.info("total time: " + (System.currentTimeMillis() - start));
         return sampleMetadata;
     }
@@ -148,6 +184,19 @@ public class GetSampleMetadataTask {
         char c = Character.toUpperCase((char)(r.nextInt(26) + 'a'));
         long number = (long)Math.floor(Math.random() * 9_000_000_0L) + 1_000_000_0L;
         return  String.valueOf(number + c);
+=======
+        return sampleMetadata;
+    }
+
+    private boolean isValidSampleType(DataRecord sample){
+        try{
+            String sampleType = sample.getStringVal("ExemplarSampleType", user);
+            return VALID_SAMPLETYPES.contains(sampleType.toLowerCase());
+        }catch (Exception e){
+            log.error(e.getMessage());
+        }
+        return false;
+>>>>>>> 6b87ef53277473b6bd2acd4618739f1a1ee4c745
     }
 
     /**
@@ -187,9 +236,17 @@ public class GetSampleMetadataTask {
 
     private DataRecord getRelatedCmoInfoRec(DataRecord sample){
         String sampleId="";
+<<<<<<< HEAD
         try{
             sampleId = sample.getStringVal("SampleId", user);
             if (sample.getChildrenOfType("SampleCMOInfoRecords", user).length>0){
+=======
+        System.out.println("started get cmo info rec");
+        try{
+            sampleId = sample.getStringVal("SampleId", user);
+            if (sample.getChildrenOfType("SampleCMOInfoRecords", user).length>0){
+                System.out.println("ended get cmo info rec");
+>>>>>>> 6b87ef53277473b6bd2acd4618739f1a1ee4c745
                 return sample.getChildrenOfType("SampleCMOInfoRecords", user)[0];
             }
             Stack<DataRecord> sampleStack = new Stack<>();
@@ -199,6 +256,10 @@ public class GetSampleMetadataTask {
             do {
                 DataRecord startSample = sampleStack.pop();
                 if (startSample.getChildrenOfType("SampleCMOInfoRecords", user).length > 0) {
+<<<<<<< HEAD
+=======
+                    System.out.println("ended get cmo info rec");
+>>>>>>> 6b87ef53277473b6bd2acd4618739f1a1ee4c745
                     return startSample.getChildrenOfType("SampleCMOInfoRecords", user)[0];
                 }
                 if (startSample.getParentsOfType("Sample", user).size() > 0) {
@@ -208,14 +269,26 @@ public class GetSampleMetadataTask {
         } catch (Exception e) {
             log.error(String.format("Error occured while finding related SampleCMOInfoRecords for Sample %s", sampleId));
         }
+<<<<<<< HEAD
         return null;
     }
 
     private Object getFieldValueForSample(DataRecord sample, DataRecord cmoInfoRecord, String cmoInfoFieldName, String sampleFieldName, String fieldType ) {
+=======
+        System.out.println("ended get cmo info rec");
+        return null;
+    }
+
+    private Object getFallBackValue(DataRecord sample, String cmoInfoFieldName, String sampleFieldName, String fieldType ) {
+>>>>>>> 6b87ef53277473b6bd2acd4618739f1a1ee4c745
         String sampleId="";
         try {
             sampleId = sample.getStringVal("SampleId", user);
             Object fieldValue = null;
+<<<<<<< HEAD
+=======
+            DataRecord cmoInfoRecord = getRelatedCmoInfoRec(sample);
+>>>>>>> 6b87ef53277473b6bd2acd4618739f1a1ee4c745
             if (cmoInfoRecord != null) {
                 fieldValue = getValueFromDataRecord(cmoInfoRecord, cmoInfoFieldName, fieldType);
                 if (fieldType != null || fieldValue != ""){
@@ -235,7 +308,11 @@ public class GetSampleMetadataTask {
      * @param tumorType
      * @return String
      */
+<<<<<<< HEAD
     private String getOncotreeTumorType(String tumorType) {
+=======
+    private String getOncotreeType(String tumorType) {
+>>>>>>> 6b87ef53277473b6bd2acd4618739f1a1ee4c745
         StringBuffer response = new StringBuffer();
         JSONArray oncotreeResponseData = null;
         String mainTumorType = "";
@@ -271,9 +348,17 @@ public class GetSampleMetadataTask {
 
     private String getOriginSampleId(DataRecord sample){
         String sampleId="";
+<<<<<<< HEAD
         try{
             sampleId = sample.getStringVal("SampleId", user);
             if (sample.getChildrenOfType("SampleCMOInfoRecords", user).length>0){
+=======
+        System.out.println("started get origin sample id");
+        try{
+            sampleId = sample.getStringVal("SampleId", user);
+            if (sample.getChildrenOfType("SampleCMOInfoRecords", user).length>0){
+                System.out.println("ended get origin sample id");
+>>>>>>> 6b87ef53277473b6bd2acd4618739f1a1ee4c745
                 return sample.getStringVal("SampleId", user);
             }
             Stack<DataRecord> sampleStack = new Stack<>();
@@ -283,6 +368,10 @@ public class GetSampleMetadataTask {
             do {
                 DataRecord startSample = sampleStack.pop();
                 if (startSample.getChildrenOfType("SampleCMOInfoRecords", user).length > 0) {
+<<<<<<< HEAD
+=======
+                    System.out.println("ended get origin sample id");
+>>>>>>> 6b87ef53277473b6bd2acd4618739f1a1ee4c745
                     return sample.getStringVal("SampleId", user);
                 }
                 if (startSample.getParentsOfType("Sample", user).size() > 0) {
@@ -293,27 +382,52 @@ public class GetSampleMetadataTask {
         } catch (Exception e) {
             log.error(String.format("Error occured while finding related SampleCMOInfoRecords for Sample %s", sampleId));
         }
+<<<<<<< HEAD
         return sampleId;
     }
 
     private String getSampleStatus(DataRecord sample, String requestId){
+=======
+        System.out.println("ended get origin sample id");
+        return sampleId;
+    }
+
+    private String getSampleStatus(DataRecord sample){
+        String requestId;
+>>>>>>> 6b87ef53277473b6bd2acd4618739f1a1ee4c745
         String sampleId ="";
         String sampleStatus;
         String sampleType;
         try{
+<<<<<<< HEAD
             sampleId = sample.getStringVal("SampleId", user);
             sampleStatus = (String)getValueFromDataRecord(sample, "ExemplarSampleStatus", "String");
+=======
+            System.out.println("start get status loop iteration.");
+            requestId = (String) getValueFromDataRecord(sample, "RequestId", "String");
+            sampleId = sample.getStringVal("SampleId", user);
+            sampleType = (String)getValueFromDataRecord(sample, "ExemplarSampleType", "String");;
+            sampleStatus = (String)getValueFromDataRecord(sample, "ExemplarSampleStatus", "String");;
+>>>>>>> 6b87ef53277473b6bd2acd4618739f1a1ee4c745
             int statusOrder=-1;
             long recordId = 0;
             Stack<DataRecord> sampleStack = new Stack<>();
             sampleStack.add(sample);
             do{
                 DataRecord current = sampleStack.pop();
+<<<<<<< HEAD
+=======
+                System.out.println(current.getStringVal("SampleId", user));
+>>>>>>> 6b87ef53277473b6bd2acd4618739f1a1ee4c745
                 String currentSampleType = (String)getValueFromDataRecord(current, "ExemplarSampleType", "String");
                 String currentSampleStatus = (String)getValueFromDataRecord(current, "ExemplarSampleStatus", "String");
                 int currentStatusOrder = SAMPLETYPES_IN_ORDER.indexOf(currentSampleType.toLowerCase());
                 long currentRecordId = current.getRecordId();
                 if (isSequencingComplete(current)){
+<<<<<<< HEAD
+=======
+                    System.out.println("end get status loop iteration.");
+>>>>>>> 6b87ef53277473b6bd2acd4618739f1a1ee4c745
                     return "Completed Sequencing";
                 }
                 if (currentRecordId > recordId && currentStatusOrder > statusOrder && isCompleteStatus(currentSampleStatus)){
@@ -321,11 +435,21 @@ public class GetSampleMetadataTask {
                     recordId = currentRecordId;
                     statusOrder= currentStatusOrder;
                 }
+<<<<<<< HEAD
                 DataRecord[] childSamples = current.getChildrenOfType("Sample", user);
                 for (DataRecord sam: childSamples){
                     String childRequestId = sam.getStringVal("RequestId", user);
                     if (requestId.equalsIgnoreCase(childRequestId)){
                         sampleStack.push(sam);
+=======
+                if (current.getChildrenOfType("Sample", user).length>0){
+                    List<DataRecord> childSamples = Arrays.asList(current.getChildrenOfType("Sample", user));
+                    for (DataRecord sam: childSamples){
+                        String childRequestId = sam.getStringVal("RequestId", user);
+                        if (requestId.equalsIgnoreCase(childRequestId)){
+                            sampleStack.push(sam);
+                        }
+>>>>>>> 6b87ef53277473b6bd2acd4618739f1a1ee4c745
                     }
                 }
             }while(sampleStack.size()>0);
@@ -333,16 +457,34 @@ public class GetSampleMetadataTask {
             log.error(String.format("Error while getting status for sample '%s'.", sampleId));
             return "";
         }
+<<<<<<< HEAD
+=======
+        System.out.println("end get status loop iteration.");
+>>>>>>> 6b87ef53277473b6bd2acd4618739f1a1ee4c745
         return sampleStatus;
     }
 
     private boolean isCompleteStatus(String status){
+<<<<<<< HEAD
         return status.toLowerCase().contains("completed");
+=======
+        if (status.toLowerCase().contains("completed")){
+            return true;
+        }
+        return false;
+>>>>>>> 6b87ef53277473b6bd2acd4618739f1a1ee4c745
     }
 
     private boolean isSequencingCompleteStatus(String status){
         status = status.toLowerCase();
+<<<<<<< HEAD
         return status.contains("completed - ") && status.contains("illumina") && status.contains("sequencing");
+=======
+        if (status.contains("completed - ") && status.contains("illumina") && status.contains("sequencing")){
+            return true;
+        }
+        return false;
+>>>>>>> 6b87ef53277473b6bd2acd4618739f1a1ee4c745
     }
 
     private String resolveCurrentStatus(String status, String sampleType) {
