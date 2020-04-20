@@ -118,16 +118,6 @@ public class GetSampleMetadataTask {
         return String.valueOf(number + c);
     }
 
-//    private boolean isValidSampleType(DataRecord sample) {
-//        try {
-//            String sampleType = sample.getStringVal("ExemplarSampleType", user);
-//            return VALID_SAMPLETYPES.contains(sampleType.toLowerCase());
-//        } catch (Exception e) {
-//            log.error(e.getMessage());
-//        }
-//        return false;
-//    }
-
     /**
      * Get a DataField value from a DataRecord.
      *
@@ -281,6 +271,8 @@ public class GetSampleMetadataTask {
         String requestId;
         String sampleId = "";
         String sampleStatus;
+        String currentSampleType = "";
+        String currentSampleStatus = "";
         try {
             requestId = (String) getValueFromDataRecord(sample, "RequestId", "String");
             sampleId = sample.getStringVal("SampleId", user);
@@ -291,16 +283,15 @@ public class GetSampleMetadataTask {
             sampleStack.add(sample);
             do {
                 DataRecord current = sampleStack.pop();
-                String currentSampleType = (String) getValueFromDataRecord(current, "ExemplarSampleType", "String");
-                String currentSampleStatus = (String) getValueFromDataRecord(current, "ExemplarSampleStatus", "String");
+                currentSampleType = (String) getValueFromDataRecord(current, "ExemplarSampleType", "String");
+                currentSampleStatus = (String) getValueFromDataRecord(current, "ExemplarSampleStatus", "String");
                 int currentStatusOrder = SAMPLETYPES_IN_ORDER.indexOf(currentSampleType.toLowerCase());
                 long currentRecordId = current.getRecordId();
                 if (isSequencingComplete(current)) {
                     return "Completed Sequencing";
                 }
                 if (currentRecordId > recordId && currentStatusOrder > statusOrder && isCompleteStatus(currentSampleStatus)) {
-                    sampleStatus = resolveCurrentStatus(currentSampleStatus, currentSampleType);
-                    recordId = currentRecordId;
+                    sampleStatus = currentSampleStatus;
                     statusOrder = currentStatusOrder;
                 }
                 DataRecord[] childSamples = current.getChildrenOfType("Sample", user);
@@ -315,7 +306,7 @@ public class GetSampleMetadataTask {
             log.error(String.format("Error while getting status for sample '%s'.", sampleId));
             return "";
         }
-        return sampleStatus;
+        return resolveCurrentStatus(sampleStatus, currentSampleType);
     }
 
     private boolean isCompleteStatus(String status) {

@@ -132,9 +132,8 @@ public class GetWESSampleDataTask {
                                         String scientificPi = (String)getValueFromDataRecord(dmpTrackRec, "i_PrimaryInvestigator", "String");
                                         Boolean consentPartAStatus = getConsentStatus(consentAList, dmpPatientId);
                                         Boolean consentPartCStatus = getConsentStatus(consentCList, dmpPatientId);
-                                        //String sampleStatus = getLatestIGOStatus(sample, request.getStringVal("RequestId", user));
                                         String sampleStatus = getSampleStatus(sample, igoRequestId);
-                                        //String baitsetUsed = getWesBaitsetType(sample);
+                                        log.info("sample status: " + sampleStatus);
                                         String baitsetUsed = baitSet;
                                         String accessLevel = "";
                                         String clinicalTrial = "";
@@ -233,7 +232,6 @@ public class GetWESSampleDataTask {
                 consentPartAStatus, consentPartCStatus, sampleStatus, accessLevel, clinicalTrial, sequencingSite, piRequestDate, pipeline, tissueType, collaborationCenter, limsSampleRecordId, limsTrackerRecordId);
         return nonIgoTrackingRec;
     }
-
 
     /**
      * Method to get all the child Samples directly under request as child and having a valid Whole Exome recipe.
@@ -464,44 +462,6 @@ public class GetWESSampleDataTask {
         return mainTumorType;
     }
 
-//    /**
-//     * Get the baitset used to capture the samples.
-//     *
-//     * @param sample
-//     * @return String
-//     * @throws NotFound
-//     * @throws RemoteException
-//     */
-//    private String getWesBaitsetType(DataRecord sample) throws NotFound, RemoteException {
-//        try {
-//            if (sample.getChildrenOfType("SeqAnalysisSampleQC", user).length > 0) {
-//                DataRecord seqAnalysisRecord = sample.getChildrenOfType("SeqAnalysisSampleQC", user)[0];
-//                if (seqAnalysisRecord.getValue("BaitSet", user) != null) {
-//                    return seqAnalysisRecord.getStringVal("BaitSet", user);
-//                }
-//            }
-//            Stack<DataRecord> sampleStack = new Stack<>();
-//            if (sample.getChildrenOfType("Sample", user).length > 0) {
-//                sampleStack.push(sample.getChildrenOfType("Sample", user)[0]);
-//            }
-//            do {
-//                DataRecord startSample = sampleStack.pop();
-//                if (startSample.getChildrenOfType("SeqAnalysisSampleQC", user).length > 0) {
-//                    DataRecord seqAnalysisRecord = startSample.getChildrenOfType("SeqAnalysisSampleQC", user)[0];
-//                    if (seqAnalysisRecord.getValue("BaitSet", user) != null) {
-//                        return seqAnalysisRecord.getStringVal("BaitSet", user);
-//                    }
-//                }
-//                if (startSample.getChildrenOfType("Sample", user).length > 0) {
-//                    sampleStack.addAll(Arrays.asList(startSample.getChildrenOfType("Sample", user)));
-//                }
-//            } while (!sampleStack.isEmpty());
-//        } catch (Exception e) {
-//            log.error(String.format("Error occured while finding parent Request for Sample %s\n", sample.getStringVal("SampleId", user), Arrays.toString(e.getStackTrace())));
-//        }
-//        return "";
-//    }
-
     /**
      * Get the sequencer types that were used to process the samples.
      *
@@ -599,54 +559,17 @@ public class GetWESSampleDataTask {
         return false;
     }
 
-
-//    /**
-//     * Method to get last child sample of sample passed to the method. A Sample can have children across requests,
-//     * this method returns last  child from the same request as sample passed to the method.
-//     *
-//     * @param sample
-//     * @return
-//     * @throws IoError
-//     * @throws RemoteException
-//     */
-//    private DataRecord getLastChildSample(DataRecord sample, String requestId) throws IoError, RemoteException, NotFound {
-//        List<DataRecord> childSamples = sample.getDescendantsOfType("Sample", user);
-//        List<DataRecord> childRecordsForSameRequest = new ArrayList<>();
-//        if (childSamples.size() > 0) {
-//            childRecordsForSameRequest = childSamples.stream().filter(s -> {
-//                try {
-//                    return (requestId.toLowerCase().equals(s.getStringVal("RequestId", user).trim().toLowerCase())
-//                            || requestId.toLowerCase().contains(s.getStringVal("RequestId", user).trim().toLowerCase())
-//                            || s.getStringVal("RequestId", user).trim().toLowerCase().contains(requestId.toLowerCase()));
-//                } catch (NotFound | RemoteException notFound) {
-//                    notFound.printStackTrace();
-//                    return false;
-//                }
-//            }).collect(Collectors.toList());
-//            if (childRecordsForSameRequest.size() > 0) {
-//                return childRecordsForSameRequest.stream().max(Comparator.comparing(DataRecord::getRecordId)).orElse(sample);
-//            }
-//        }
-//        return sample;
-//    }
-
-//    /**
-//     * Get latest status of samples in IGO.
-//     *
-//     * @param sample
-//     * @param requestId
-//     * @return String
-//     * @throws IoError
-//     * @throws RemoteException
-//     * @throws NotFound
-//     */
-//    private String getLatestIGOStatus(DataRecord sample, String requestId) throws IoError, RemoteException, NotFound {
-//        return getLastChildSample(sample, requestId).getStringVal("ExemplarSampleStatus", user);
-//    }
-
+    /**
+     * Method to get latest sample status.
+     * @param sample
+     * @param requestId
+     * @return
+     */
     private String getSampleStatus(DataRecord sample, String requestId){
         String sampleId ="";
         String sampleStatus;
+        String currentSampleType = "";
+        String currentSampleStatus = "";
         try{
             sampleId = sample.getStringVal("SampleId", user);
             sampleStatus = (String)getValueFromDataRecord(sample, "ExemplarSampleStatus", "String");
@@ -656,15 +579,15 @@ public class GetWESSampleDataTask {
             sampleStack.add(sample);
             do{
                 DataRecord current = sampleStack.pop();
-                String currentSampleType = (String)getValueFromDataRecord(current, "ExemplarSampleType", "String");
-                String currentSampleStatus = (String)getValueFromDataRecord(current, "ExemplarSampleStatus", "String");
+                currentSampleType = (String)getValueFromDataRecord(current, "ExemplarSampleType", "String");
+                currentSampleStatus = (String)getValueFromDataRecord(current, "ExemplarSampleStatus", "String");
                 int currentStatusOrder = SAMPLETYPES_IN_ORDER.indexOf(currentSampleType.toLowerCase());
                 long currentRecordId = current.getRecordId();
                 if (isSequencingComplete(current)){
                     return "Completed Sequencing";
                 }
                 if (currentRecordId > recordId && currentStatusOrder > statusOrder && isCompleteStatus(currentSampleStatus)){
-                    sampleStatus = resolveCurrentStatus(currentSampleStatus, currentSampleType);
+                    sampleStatus = currentSampleStatus;
                     recordId = currentRecordId;
                     statusOrder= currentStatusOrder;
                 }
@@ -680,18 +603,34 @@ public class GetWESSampleDataTask {
             log.error(String.format("Error while getting status for sample '%s'.", sampleId));
             return "";
         }
-        return sampleStatus;
+        return resolveCurrentStatus(sampleStatus,currentSampleType);
     }
 
+    /**
+     * Method to check is sample status is a completed status.
+     * @param status
+     * @return
+     */
     private boolean isCompleteStatus(String status){
         return status.toLowerCase().contains("completed");
     }
 
+    /**
+     * Method to check if the sample status is equivalent to "completed sequencing".
+     * @param status
+     * @return
+     */
     private boolean isSequencingCompleteStatus(String status){
         status = status.toLowerCase();
         return status.contains("completed - ") && status.contains("illumina") && status.contains("sequencing");
     }
 
+    /**
+     * Method to resolve the sample status to one of the main sample statuses.
+     * @param status
+     * @param sampleType
+     * @return
+     */
     private String resolveCurrentStatus(String status, String sampleType) {
         if (NUCLEIC_ACID_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("completed -") && status.toLowerCase().contains("extraction") && status.toLowerCase().contains("dna/rna simultaneous") ) {
             return String.format("Completed - %s Extraction", sampleType.toUpperCase());
@@ -714,6 +653,11 @@ public class GetWESSampleDataTask {
         return "";
     }
 
+    /**
+     * Method to check if Sequencing for a sample is complete based on presence of SeqAnalysisSampleQC as child record and status of SeqAnalysisSampleQC as Passed.
+     * @param sample
+     * @return
+     */
     private Boolean isSequencingComplete(DataRecord sample){
         try {
             baitSet = "";
