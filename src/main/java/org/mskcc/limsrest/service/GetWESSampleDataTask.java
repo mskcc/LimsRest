@@ -7,6 +7,7 @@ import com.velox.api.datarecord.NotFound;
 import com.velox.api.servermanager.PickListManager;
 import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
@@ -115,7 +116,7 @@ public class GetWESSampleDataTask {
                                         String sampleType = (String)getValueFromDataRecord(cmoInfoRec, "SpecimenType", "String");
                                         String sampleClass = getCvrDataValue(cvrData, "sample_type");
                                         String tumorType = getCvrDataValue(cvrData, "tumor_type");
-                                        String parentalTumorType = getOncotreeType(tumorType);
+                                        String parentalTumorType = getOncotreeTumorType(tumorType);
                                         String tissueSite = getCvrDataValue(cvrData, "primary_site");
                                         String molAccessionNum = getCvrDataValue(cvrData, "molecular_accession_num");
                                         String dateDmpRequest = (String) getValueFromDataRecord(dmpTrackRec, "i_DateSubmittedtoDMP", "Date");
@@ -199,7 +200,7 @@ public class GetWESSampleDataTask {
         String sampleType = "";
         String sampleClass = getCvrDataValue(cvrData, "sample_type");
         String tumorType = getCvrDataValue(cvrData, "tumor_type");
-        String parentalTumorType = getOncotreeType(tumorType);
+        String parentalTumorType = getOncotreeTumorType(tumorType);
         String tissueSite = getCvrDataValue(cvrData, "primary_site");
         String molAccessionNum = getCvrDataValue(cvrData, "molecular_accession_num");
         String dateDmpRequest = (String) getValueFromDataRecord(dmpTrackRec, "i_DateSubmittedtoDMP", "Date");
@@ -423,18 +424,18 @@ public class GetWESSampleDataTask {
     }
 
     /**
-     * Get MainCancerType from oncotree
+     * Method to get Main Tumor Type using Tumor Type Name eg: Breast Cancer or Pancreatic cancer etc.
      *
-     * @param cancerType
+     * @param url
+     * @param tumorType
      * @return String
      */
-    private String getOncotreeType(String cancerType) {
+    private String getOncotreeTumorTypeUsingTumorName(URL url, String tumorType) {
+        HttpURLConnection con = null;
         StringBuffer response = new StringBuffer();
         JSONArray oncotreeResponseData = null;
-        String mainTumorType = "";
         try {
-            URL url = new URL("http://oncotree.mskcc.org/api/tumorTypes/search/name/" + cancerType.split("/")[0].replace(" ", "%20") + "?exactMatch=false");
-            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
             BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
             String inputLine;
@@ -444,20 +445,80 @@ public class GetWESSampleDataTask {
             in.close();
             con.disconnect();
             oncotreeResponseData = new JSONArray(response.toString());
+            if (oncotreeResponseData.length() > 0) {
+                JSONObject jsonObject = oncotreeResponseData.getJSONObject(0);
+                Object mainType = jsonObject.get("mainType");
+                return mainType != null ? mainType.toString() : "";
+            }
         } catch (Exception e) {
-            log.error(String.format("Error occured while querying oncotree end point for Tumor Type %s\n%s", cancerType, Arrays.toString(e.getStackTrace())));
+            log.info(String.format("Error while querying oncotree api for name search. Will attempt to search using oncotree api for code search:\n%s",e.getMessage()));
             return "";
         }
-        if (oncotreeResponseData.length() > 0) {
-            try {
-                JSONObject rec = oncotreeResponseData.getJSONObject(0);
-                mainTumorType = rec.getString("mainType");
-                log.info(mainTumorType);
-            } catch (JSONException e) {
-                e.printStackTrace();
+        return "";
+    }
+
+    /**
+     * Method to get Main Tumor Type using TumorType CODE or abbreviation eg: BRCA for Breast Cancer and PAAD for
+     * Pancreatic cancer etc.
+     *
+     * @param url
+     * @param tumorType
+     * @return String
+     */
+    private String getOncotreeTumorTypeUsingTumorCode(URL url, String tumorType) {
+        HttpURLConnection con = null;
+        StringBuffer response = new StringBuffer();
+        JSONArray oncotreeResponseData = null;
+        try {
+            con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("GET");
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
             }
-        } else {
-            mainTumorType = "Oncotree Tumor Type not found.";
+            in.close();
+            con.disconnect();
+            oncotreeResponseData = new JSONArray(response.toString());
+            if (oncotreeResponseData.length() > 0) {
+                for (Object rec : oncotreeResponseData) {
+                    Object code = ((JSONObject) rec).get("code");
+                    if (code != null && tumorType.toLowerCase().equals(code.toString().trim().toLowerCase())) {
+                        Object mainType = ((JSONObject) rec).get("mainType");
+                        return mainType != null ? mainType.toString() : "";
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.info(String.format("Error while querying oncotree api using code search. Cannot find Main tumor type.\n%s",e.getMessage()));
+            return "";
+        }
+        return "";
+    }
+
+    /**
+     * Get MainCancerType from oncotree
+     *
+     * @param tumorType
+     * @return String
+     */
+    private String getOncotreeTumorType(String tumorType) {
+        StringBuffer response = new StringBuffer();
+        JSONArray oncotreeResponseData = null;
+        String mainTumorType = "";
+        try {
+            // In LIMS tumor types entry is not controlled. Sometimes tumor type as tumor name is entered and other times tumor type code is entered.
+            // First query oncotree using api for name search
+            URL url = new URL("http://oncotree.mskcc.org/api/tumorTypes/search/name/" + tumorType.split("/")[0].replace(" ", "%20") + "?exactMatch=false");
+            mainTumorType = getOncotreeTumorTypeUsingTumorName(url, tumorType);
+            // If name search returns nothing, then query oncotree using api for code search
+            if (StringUtils.isBlank(mainTumorType)) {
+                URL url2 = new URL("http://oncotree.mskcc.org/api/tumorTypes/search/code/" + tumorType.split("/")[0].replace(" ", "%20") + "?exactMatch=true");
+                mainTumorType = getOncotreeTumorTypeUsingTumorCode(url2, tumorType);
+            }
+        } catch (Exception e) {
+            log.error(String.format("Error occured while querying oncotree end point for Tumor Type %s\n%s", tumorType, e.getMessage()));
+            return "";
         }
         return mainTumorType;
     }
@@ -612,7 +673,7 @@ public class GetWESSampleDataTask {
      * @return
      */
     private boolean isCompleteStatus(String status){
-        return status.toLowerCase().contains("completed");
+        return status.toLowerCase().contains("completed") || status.toLowerCase().contains("failed");
     }
 
     /**
@@ -649,6 +710,9 @@ public class GetWESSampleDataTask {
         }
         if (LIBRARY_SAMPLE_TYPES.contains(sampleType.toLowerCase()) && isSequencingCompleteStatus(status)){
             return "Completed - Sequencing";
+        }
+        if (status.toLowerCase().contains("failed")){
+            return status;
         }
         return "";
     }
