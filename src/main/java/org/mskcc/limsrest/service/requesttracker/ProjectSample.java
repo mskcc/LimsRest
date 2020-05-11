@@ -3,30 +3,34 @@ package org.mskcc.limsrest.service.requesttracker;
 import com.velox.api.datarecord.DataRecord;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class SampleTracker {
+/**
+ * Representation of each sample in a project. These are the samples IGO's users are aware of,
+ *  i.e. User submits a project w/ 12 samples. There are 12 ProjectSamples
+ */
+public class ProjectSample {
     Long sampleId;
     DataRecord record;
     boolean complete;
-    Map<Long, AliquotStageTracker> sampleGraph;
+    Map<Long, WorkflowSample> sampleGraph;
     Boolean failed;
     private Map<String, SampleStageTracker> stages;
 
-    public AliquotStageTracker getRoot() {
+    public WorkflowSample getRoot() {
         return root;
     }
 
-    public void setRoot(AliquotStageTracker root) {
+    public void setRoot(WorkflowSample root) {
         this.root = root;
     }
 
-    private AliquotStageTracker root;
+    private WorkflowSample root;
 
-    public SampleTracker(DataRecord record) {
-        this.record = record;
-        this.sampleId = record.getRecordId();
+    public ProjectSample(Long recordId) {
+        this.sampleId = recordId;
         this.complete = true;       // The sample is considered complete until a record is added that is not done
 
         this.sampleGraph = new HashMap<>();
@@ -62,16 +66,15 @@ public class SampleTracker {
      *
      * @param stages
      */
-    public void addStage(Map<String, SampleStageTracker> stages) {
+    public void addStage(List<SampleStageTracker> stages) {
         stages.forEach(
-                (updateName, v) ->
-                        this.stages.merge(
-                                updateName, v, (SampleStageTracker currentStage, SampleStageTracker updateStage) -> {
-                                    currentStage.updateStageTimes(updateStage);
-                                    return currentStage;
-                                }
-                        )
-
+                (stage) -> {
+                    this.stages.merge(
+                            stage.getStage(), stage, (SampleStageTracker currentStage, SampleStageTracker updateStage) -> {
+                                currentStage.updateStageTimes(updateStage);
+                                return currentStage;
+                            });
+                }
         );
     }
 

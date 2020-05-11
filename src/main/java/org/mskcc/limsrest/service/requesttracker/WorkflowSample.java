@@ -15,17 +15,22 @@ import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.*;
 import static org.mskcc.limsrest.util.DataRecordAccess.getRecordLongValue;
 import static org.mskcc.limsrest.util.DataRecordAccess.getRecordStringValue;
 
-public class AliquotStageTracker extends StageTracker {
-    private static Log log = LogFactory.getLog(AliquotStageTracker.class);
+/**
+ * These are the samples that are created as part of a workflow. There can be many of these samples for each
+ * ProjectSample as the original ProjectSample creates children from it in LIMS as it goes through the stages of a
+ * workflow.
+ */
+public class WorkflowSample extends StageTracker {
+    private static Log log = LogFactory.getLog(WorkflowSample.class);
 
     Long recordId;
     String status;
-    AliquotStageTracker parent;     // TODO - Can this ever be multiple?
-    List<AliquotStageTracker> children;
+    WorkflowSample parent;     // TODO - Can this ever be multiple?
+    List<WorkflowSample> children;
     DataRecord record;
     Boolean failed;
     private User user;
-    public AliquotStageTracker(DataRecord record, User user) {
+    public WorkflowSample(DataRecord record, User user) {
         setSize(0);
 
         this.children = new ArrayList<>();
@@ -36,7 +41,7 @@ public class AliquotStageTracker extends StageTracker {
         this.failed = Boolean.FALSE;        // TODO - remove this
     }
 
-    public void addChild(AliquotStageTracker child){
+    public void addChild(WorkflowSample child){
         this.children.add(child);
     }
 
@@ -80,11 +85,11 @@ public class AliquotStageTracker extends StageTracker {
         return status;
     }
 
-    public AliquotStageTracker getParent() {
+    public WorkflowSample getParent() {
         return parent;
     }
 
-    public void setParent(AliquotStageTracker parent) {
+    public void setParent(WorkflowSample parent) {
         this.parent = parent;
     }
 
@@ -100,7 +105,7 @@ public class AliquotStageTracker extends StageTracker {
     public Map<String, Object> toApiResponse() {
         Map<String, Object> apiMap = new HashMap<>();
         apiMap.put("recordId", this.recordId);
-        apiMap.put("children", this.children.stream().map(AliquotStageTracker::toApiResponse));
+        apiMap.put("children", this.children.stream().map(WorkflowSample::toApiResponse));
 
         Map<String, Object> attributesMap = super.toApiResponse();
         attributesMap.put("status", this.status);

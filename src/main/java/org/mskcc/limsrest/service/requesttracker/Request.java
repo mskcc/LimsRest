@@ -14,7 +14,7 @@ public class Request {
     private Map<String, Object> metaData;
     private boolean igoComplete;
     private Map<String, SampleStageTracker> stages;
-    private List<SampleTracker> samples;
+    private List<ProjectSample> samples;
 
     public Request(String requestId, String bankedSampleId) {
         this.requestId = requestId;
@@ -56,15 +56,15 @@ public class Request {
         this.stages.put(stageName, stage);
     }
 
-    public List<SampleTracker> getSamples() {
+    public List<ProjectSample> getSamples() {
         return samples;
     }
 
-    public void setSamples(List<SampleTracker> samples) {
+    public void setSamples(List<ProjectSample> samples) {
         this.samples = samples;
     }
 
-    public void addSampleTracker(SampleTracker tracker) {
+    public void addTrackedSample(ProjectSample tracker) {
         this.samples.add(tracker);
     }
 
@@ -73,7 +73,7 @@ public class Request {
      */
     public void calculateStages() {
         Map<String, SampleStageTracker> stages;
-        for (SampleTracker tracker : samples) {
+        for (ProjectSample tracker : samples) {
             stages = tracker.getStages();
             for (Map.Entry<String, SampleStageTracker> entry : stages.entrySet()) {
 

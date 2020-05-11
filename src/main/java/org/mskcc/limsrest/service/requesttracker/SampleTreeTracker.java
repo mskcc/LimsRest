@@ -1,13 +1,10 @@
 package org.mskcc.limsrest.service.requesttracker;
 
-import com.velox.api.datarecord.DataRecord;
 import com.velox.api.user.User;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.isCompletedStatus;
 import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.isValidStage;
@@ -15,28 +12,28 @@ import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.isVa
 public class SampleTreeTracker {
     private static Log log = LogFactory.getLog(SampleTreeTracker.class);
 
-    public AliquotStageTracker getRoot() {
+    public WorkflowSample getRoot() {
         return root;
     }
 
-    public void setRoot(AliquotStageTracker root) {
+    public void setRoot(WorkflowSample root) {
         this.root = root;
     }
 
-    private AliquotStageTracker root;                   // Parent Sample of the tree
-    private Map<Long, AliquotStageTracker> sampleMap;   // Map Record IDs to their enriched sample information
+    private WorkflowSample root;                   // Parent Sample of the tree
+    private Map<Long, WorkflowSample> sampleMap;   // Map Record IDs to their enriched sample information
     private Map<String, SampleStageTracker> stageMap;   // Map to all stages by their stage name
     private User user;
 
-    public SampleTreeTracker(AliquotStageTracker root, User user) {
+    public SampleTreeTracker(WorkflowSample root, User user) {
         this.user = user;
         this.root = root;
         this.sampleMap = new HashMap<>();
         this.stageMap = new TreeMap<>(new StatusTrackerConfig.StageComp());     // Order map by order of stages
     }
 
-    public Map<Long, AliquotStageTracker> getSampleMap() {
-        return sampleMap;
+    public List<WorkflowSample> getSamples() {
+        return new ArrayList(sampleMap.values());
     }
 
     /**
@@ -44,16 +41,16 @@ public class SampleTreeTracker {
      *
      * @param sample
      */
-    public void addSample(AliquotStageTracker sample){
+    public void addSample(WorkflowSample sample){
         this.sampleMap.put(sample.getRecordId(), sample);
     }
 
-    public void setSampleMap(Map<Long, AliquotStageTracker> sampleMap) {
+    public void setSampleMap(Map<Long, WorkflowSample> sampleMap) {
         this.sampleMap = sampleMap;
     }
 
-    public Map<String, SampleStageTracker> getStageMap() {
-        return stageMap;
+    public List<SampleStageTracker> getStages() {
+        return new ArrayList<>(stageMap.values());
     }
 
     public void setStageMap(Map<String, SampleStageTracker> stageMap) {
@@ -64,7 +61,11 @@ public class SampleTreeTracker {
         return user;
     }
 
-    public void updateStage(AliquotStageTracker node){
+    /**
+     * Adds stage to known Stages of this tree
+     * @param node
+     */
+    public void addStageToTracked(WorkflowSample node){
         String stageName = node.getStage();
 
         if(isValidStage(stageName)){
@@ -85,7 +86,7 @@ public class SampleTreeTracker {
      * Updates the leaf samples 'stage in the stageMap of the tree to incomplete IF sample's status is not in a completed state
      * @param sample
      */
-    public void updateLeafStageCompletionStatus(AliquotStageTracker sample){
+    public void updateLeafStageCompletionStatus(WorkflowSample sample){
         String stageName = sample.getStage();
         String status = sample.getStatus();
 
@@ -101,5 +102,30 @@ public class SampleTreeTracker {
                 stage.setComplete(Boolean.TRUE);
             }
         }
+    }
+
+    /**
+     * Converts tree representation into a project Sample
+     *
+     * @return
+     */
+    public ProjectSample convertToProjectSample() {
+        if(this.root == null) return null;
+
+        ProjectSample projectSample = new ProjectSample(this.root.getRecordId());
+        List<SampleStageTracker> stages = getStages();
+        List<WorkflowSample> aliquots = getSamples();
+        projectSample.addStage(stages);
+        Boolean isFailed = Boolean.TRUE;    // One non-failed sample will set this to True
+        Boolean isComplete = Boolean.TRUE;  // All sub-samples need to be complete or the sample to be complete
+        for(WorkflowSample sample : aliquots){
+            isFailed = isFailed && sample.getFailed();
+            isComplete = isComplete && sample.getComplete();
+        }
+        projectSample.setFailed(isFailed);
+        projectSample.setComplete(isComplete);
+        projectSample.setRoot(getRoot());
+
+        return projectSample;
     }
 }

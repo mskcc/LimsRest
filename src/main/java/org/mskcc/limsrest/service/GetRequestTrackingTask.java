@@ -14,7 +14,6 @@ import org.mskcc.limsrest.service.requesttracker.*;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.*;
 import static org.mskcc.limsrest.util.DataRecordAccess.*;
@@ -38,35 +37,6 @@ public class GetRequestTrackingTask {
     public GetRequestTrackingTask(String requestId, ConnectionLIMS conn) {
         this.requestId = requestId;
         this.conn = conn;
-    }
-
-    /**
-     * Populates the metaData for the request using the Record from the Request DataType
-     *
-     * @param requestRecord - DataRecord from the Request DataType
-     * @param user
-     * @return
-     */
-    private Map<String, Object> populateMetaData(DataRecord requestRecord, User user){
-        Map<String, Object> requestMetaData = new HashMap<>();
-        for (String field : requestDataStringFields) {
-            requestMetaData.put(field, getRecordStringValue(requestRecord, field, user));
-        }
-        for (String field : requestDataLongFields) {
-            requestMetaData.put(field, getRecordLongValue(requestRecord, field, user));
-        }
-        return requestMetaData;
-    }
-
-    /**
-     * Projects are considered IGO-Complete if they have a delivery date
-     *
-     * @param requestRecord
-     * @param user
-     * @return
-     */
-    private Boolean isIgoComplete(DataRecord requestRecord, User user) {
-        return getRecordLongValue(requestRecord, "RecentDeliveryDate", user) != null;
     }
 
     public Map<String, Object> execute() {
@@ -93,38 +63,22 @@ public class GetRequestTrackingTask {
             }
 
             DataRecord requestRecord = requestRecordList.get(0);
-            request.setMetaData(populateMetaData(requestRecord, user));
-            request.setIgoComplete(isIgoComplete(requestRecord, user));
+            
+            Map<String, Object> metaData = getMetaDataFromRecord(requestRecord, user);
+            request.setMetaData(metaData);
 
-            // Immediate samples of the request. These samples represent the overall progress of each project sample
+            // Immediate samples of record represent physical samples. Children are created on workflow progress
             DataRecord[] samples = requestRecord.getChildrenOfType("Sample", user);
 
-            // Find paths & calculate stages for each sample in the request
+            // Parse the tree of each data record and return the statuses
             for (DataRecord record : samples) {
-                SampleTracker tracker = new SampleTracker(record);
-
-                AliquotStageTracker parentSample = new AliquotStageTracker(record, user);
-                parentSample.setRecord(record);
-                parentSample.enrichSample();
-
                 SampleTreeTracker tree = createSampleTree(record, user);
-
-                tracker.addStage(tree.getStageMap());
-                Boolean isFailed = Boolean.TRUE;    // One non-failed sample will set this to True
-                Boolean isComplete = Boolean.TRUE;  // All sub-samples need to be complete or the sample to be complete
-                for(AliquotStageTracker sample : tree.getSampleMap().values()){
-                    isFailed = isFailed && sample.getFailed();
-                    isComplete = isComplete && sample.getComplete();
-                }
-                tracker.setFailed(isFailed);
-                tracker.setComplete(isComplete);
-                tracker.setRoot(tree.getRoot());
-
-                request.addSampleTracker(tracker);
+                ProjectSample projectSample = tree.convertToProjectSample();
+                request.addTrackedSample(projectSample);
             }
 
             // Aggregate sample stage information into the request level
-            List<SampleTracker> sampleTrackers = request.getSamples();
+            List<ProjectSample> sampleTrackers = request.getSamples();
             List<SampleStageTracker> requestStages = sampleTrackers.stream()
                     .flatMap(tracker -> tracker.getStages().values().stream())
                     .collect(Collectors.toList());
@@ -162,20 +116,23 @@ public class GetRequestTrackingTask {
      * @param tree - Data Model for tracking Sample Stages, samples, and the root node
      * @return
      */
-    private SampleTreeTracker searchSampleTree(AliquotStageTracker root, SampleTreeTracker tree){
-        User user = tree.getUser();
-        tree.updateStage(root);
+    private SampleTreeTracker createWorkflowTree(WorkflowSample root, SampleTreeTracker tree){
+        // Update the tracked stages with the input sample's stage
+        tree.addStageToTracked(root);
+
+        // Search each child of the input
         DataRecord[] children = new DataRecord[0];
         try {
-            children = root.getRecord().getChildrenOfType("Sample", user);
+            children = root.getRecord().getChildrenOfType("Sample", tree.getUser());
         } catch (IoError | RemoteException e) { /* Expected - No more children of the sample */ }
 
         if (children.length == 0) {
+            // Leaf node
             tree.updateLeafStageCompletionStatus(root);
 
             if(root.getFailed()){
-                // Iterate up from sample and set all samples to false
-                AliquotStageTracker parent = root.getParent();
+                // Iterate up from sample and set all samples to their failed status
+                WorkflowSample parent = root.getParent();
                 while(parent != null){
                     parent.setFailed(Boolean.TRUE);
                     parent = parent.getParent();
@@ -185,10 +142,9 @@ public class GetRequestTrackingTask {
         } else {
             // Sample w/ children is complete
             root.setComplete(Boolean.TRUE);
-            List<AliquotStageTracker> samples = new ArrayList<>();
 
             for(DataRecord record : children){
-                AliquotStageTracker sample = new AliquotStageTracker(record, user);
+                WorkflowSample sample = new WorkflowSample(record, tree.getUser());
                 sample.setParent(root);
                 sample.setComplete(Boolean.FALSE);      // All Samples are incomplete until child is found
                 sample.setFailed(Boolean.FALSE);
@@ -206,7 +162,7 @@ public class GetRequestTrackingTask {
                 // Update tree w/ each sample
                 log.info(String.format("Searching children of root record: %d", root.getRecordId()));
 
-                tree = searchSampleTree(sample, tree);
+                tree = createWorkflowTree(sample, tree);
             }
         }
         return tree;
@@ -220,14 +176,17 @@ public class GetRequestTrackingTask {
      * @return
      */
     private SampleTreeTracker createSampleTree(DataRecord record, User user) {
-        AliquotStageTracker root = new AliquotStageTracker(record, user);
+        // Initialize input
+        WorkflowSample root = new WorkflowSample(record, user);
         root.enrichSample();
-        SampleTreeTracker inputTree = new SampleTreeTracker(root, user);
-        inputTree.addSample(root);
-        SampleTreeTracker populatedTree = searchSampleTree(root, inputTree);
+        SampleTreeTracker rootTree = new SampleTreeTracker(root, user);
+        rootTree.addSample(root);
+
+        // Recursively create the workflowTree from the input tree
+        SampleTreeTracker workflowTree = createWorkflowTree(root, rootTree);
 
         // TODO - Needs to account for partially complete stages
-        List<SampleStageTracker> stages = new ArrayList<>(populatedTree.getStageMap().values());
+        List<SampleStageTracker> stages = workflowTree.getStages();
         SampleStageTracker stage;
         for(int i = 0; i<stages.size()-1; i++){
             stage = stages.get(i);
@@ -236,7 +195,7 @@ public class GetRequestTrackingTask {
         }
         // TODO - Clarity: Last stage will have been populated in "searchSampleTree"
 
-        return populatedTree;
+        return workflowTree;
     }
 
     /**
@@ -360,5 +319,37 @@ public class GetRequestTrackingTask {
         }
 
         return new ArrayList<>(serviceIds).get(0);
+    }
+
+    /**
+     * Populates the metaData for the request using the Record from the Request DataType
+     *
+     * @param requestRecord - DataRecord from the Request DataType
+     * @param user
+     * @return
+     */
+    private Map<String, Object> getMetaDataFromRecord(DataRecord requestRecord, User user){
+        Map<String, Object> requestMetaData = new HashMap<>();
+        for (String field : requestDataStringFields) {
+            requestMetaData.put(field, getRecordStringValue(requestRecord, field, user));
+        }
+        for (String field : requestDataLongFields) {
+            requestMetaData.put(field, getRecordLongValue(requestRecord, field, user));
+        }
+        Boolean isIgoComplete = isIgoComplete(requestRecord, user);
+        requestMetaData.put("igoComplete", isIgoComplete);
+
+        return requestMetaData;
+    }
+
+    /**
+     * Projects are considered IGO-Complete if they have a delivery date
+     *
+     * @param requestRecord
+     * @param user
+     * @return
+     */
+    private Boolean isIgoComplete(DataRecord requestRecord, User user) {
+        return getRecordLongValue(requestRecord, "RecentDeliveryDate", user) != null;
     }
 }
