@@ -9,7 +9,9 @@ public class SampleStageTracker extends StageTracker {
     Integer endingSamples;
 
     public SampleStageTracker(String stage, Integer startingSamples, Integer endingSamples, Long startTime, Long updateTime) {
-        // IMPORTANT - Initialized w/o complete field set.
+        // Stages are considered complete until a leaf sample of that stage is found that doesn't have a complete status
+        // determined by StatusTrackerConfig::isCompletedStatus
+        this.complete = Boolean.TRUE;
 
         setStage(stage);
         setSize(startingSamples);   // The stage has a size equal to the number of samples it contains

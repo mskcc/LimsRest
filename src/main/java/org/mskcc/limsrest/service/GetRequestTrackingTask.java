@@ -117,6 +117,7 @@ public class GetRequestTrackingTask {
      *      There only needs to be one non-failed leaf sample or the whole tree to have not failed
      *      Samples that are awaiting processing or have an ambiguous status will take their stage from their parent
      *      Samples are incomplete/not-failed until shown to be otherwise
+     *      Stages are complete unless there's a leaf of that stage w/o a StatusTrackerConfig::isCompletedStatus status
      *
      * @param root - Enriched model of a Sample record's data
      * @param tree - Data Model for tracking Sample Stages, samples, and the root node
@@ -188,17 +189,13 @@ public class GetRequestTrackingTask {
         // Recursively create the workflowTree from the input tree
         ProjectSampleTree workflowTree = createWorkflowTree(root, rootTree);
 
-        // TODO - Needs to account for partially complete stages
+        // Partially complete stages are indicated to be incomplete as they will have a leaf node w/ a status that's not "complete"
         List<SampleStageTracker> stages = workflowTree.getStages();
         SampleStageTracker stage;
         for(int i = 0; i<stages.size()-1; i++){
             stage = stages.get(i);
             stage.addEndingSample(1);
-
-            // TODO - depends
-            stage.setComplete(Boolean.TRUE);
         }
-        // TODO - Clarity: Last stage will have been populated in "searchSampleTree"
 
         return workflowTree;
     }
