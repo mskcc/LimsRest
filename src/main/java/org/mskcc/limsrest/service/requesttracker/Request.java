@@ -50,10 +50,6 @@ public class Request {
         return samples;
     }
 
-    public void setSamples(List<ProjectSample> samples) {
-        this.samples = samples;
-    }
-
     public void addTrackedSample(ProjectSample projectSample) {
         this.samples.add(projectSample);
     }

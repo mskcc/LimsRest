@@ -133,11 +133,7 @@ public class GetRequestTrackingTask {
         } catch (IoError | RemoteException e) { /* Expected - No more children of the sample */ }
 
         if (children.length == 0) {
-            // Leaf node
-            tree.updateLeafStageCompletionStatus(root);
-
-            // TODO - Add logic that sets the root of the tree to incomplete
-
+            tree.updateTreeOnLeafStatus(root);
             if(root.getFailed()){
                 // Iterate up from sample and set all samples to their failed status
                 WorkflowSample parent = root.getParent();
@@ -198,6 +194,8 @@ public class GetRequestTrackingTask {
         for(int i = 0; i<stages.size()-1; i++){
             stage = stages.get(i);
             stage.addEndingSample(1);
+
+            // TODO - depends
             stage.setComplete(Boolean.TRUE);
         }
         // TODO - Clarity: Last stage will have been populated in "searchSampleTree"

@@ -9,6 +9,8 @@ public class SampleStageTracker extends StageTracker {
     Integer endingSamples;
 
     public SampleStageTracker(String stage, Integer startingSamples, Integer endingSamples, Long startTime, Long updateTime) {
+        // IMPORTANT - Initialized w/o complete field set.
+
         setStage(stage);
         setSize(startingSamples);   // The stage has a size equal to the number of samples it contains
 

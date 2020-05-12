@@ -90,19 +90,22 @@ public class ProjectSampleTree {
     }
 
     /**
-     * Updates the leaf samples 'stage in the stageMap of the tree to incomplete IF sample's status is not in a completed state
-     * @param sample
+     * Updates the tree stages and leaf sample completion status
+     *      - Tree stage in the stageMap becomes incomplete IF sample's status is not in a completed state
+     *      - Leaf completion status needs to be set because there are no children to determine completion
+     * @param leaf
      */
-    public void updateLeafStageCompletionStatus(WorkflowSample sample){
-        String stageName = sample.getStage();
-        String status = sample.getStatus();
+    public void updateTreeOnLeafStatus(WorkflowSample leaf){
+        String stageName = leaf.getStage();
+        String status = leaf.getStatus();
 
         SampleStageTracker stage = this.stageMap.get(stageName);
         if(!isCompletedStatus(status)){
             stage.setComplete(Boolean.FALSE);
         } else {
+            leaf.setComplete(Boolean.TRUE);         // Default leaf completion state is FALSE
             if(stage.getComplete() != null){
-                // Update completion status, but sample is failed if any leaf node is in an incomplete state
+                // Update completion status, but leaf is failed if any leaf node is in an incomplete state
                 stage.setComplete(Boolean.TRUE && stage.getComplete());
             } else {
                 // Initialize stage to true

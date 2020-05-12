@@ -40,7 +40,6 @@ public class WorkflowSample extends StageTracker {
         this.parent = null;
         this.user = user;
         this.complete = Boolean.FALSE;
-        // this.failed = Boolean.FALSE;        // TODO - remove this
 
         enrichSample();
     }
