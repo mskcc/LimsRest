@@ -1,5 +1,7 @@
 package org.mskcc.limsrest.service;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -9,8 +11,11 @@ import java.util.List;
  * <BR>
  * Samples can have libraries, libraries can have runs, runs have fastqs.
  */
+@JsonIgnoreProperties(value = { "cmoInfoIgoId" })
 public class SampleManifest {
     private String igoId;
+
+    public String cmoInfoIgoId; // left out of pipeline JSON
 
     private String cmoSampleName; // aka "Corrected CMO Sample ID", but not an ID in by normal database standards
     private String sampleName;
@@ -26,13 +31,13 @@ public class SampleManifest {
     private String collectionYear;
     private String sex;
     private String species;
+    private String cfDNA2dBarcode;
 
     private String baitSet;
 
     private List<QcReport> qcReports = new ArrayList<>();
 
     private List<Library> libraries = new ArrayList<>();
-
 
     public enum QcReportType {
         DNA, RNA, LIBRARY;
@@ -159,6 +164,10 @@ public class SampleManifest {
     }
 
     public SampleManifest() {}
+
+    public String getCfDNA2dBarcode() { return cfDNA2dBarcode; }
+
+    public void setCfDNA2dBarcode(String cfDNA2dBarcode) { this.cfDNA2dBarcode = cfDNA2dBarcode; }
 
     public List<QcReport> getQcReports() { return qcReports; }
 

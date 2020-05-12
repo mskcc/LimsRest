@@ -18,6 +18,7 @@ public class RequestSummary {
     private String investigatorEmail;
     private String piEmail;
     private String projectManager;
+    private String analysisType;
     private boolean pipelinable;
     private boolean analysisRequested;
     private long recordId;
@@ -60,6 +61,8 @@ public class RequestSummary {
     public void setAnalysisRequested(boolean req) {
         this.analysisRequested = req;
     }
+
+    public void setAnalysisType(String s) { this.analysisType = s;  }
 
     public void setRecordId(long id) {
         this.recordId = id;
@@ -110,6 +113,9 @@ public class RequestSummary {
     public boolean getAnalysisRequested() {
         return analysisRequested;
     }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getAnalysisType() { return analysisType; }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public long getRecordId() {
