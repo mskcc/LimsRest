@@ -12,14 +12,12 @@ public class Request {
     private String requestId;
     private String bankedSampleId;
     private Map<String, Object> metaData;
-    private boolean igoComplete;
     private Map<String, SampleStageTracker> stages;
     private List<ProjectSample> samples;
 
     public Request(String requestId, String bankedSampleId) {
         this.requestId = requestId;
         this.bankedSampleId = bankedSampleId;
-        this.igoComplete = false;        // Request is incomplete - must have a mostRecentDelvieryDate
         this.samples = new ArrayList<>();
         this.stages = new TreeMap<>(new StatusTrackerConfig.StageComp());
         this.metaData = new HashMap<>();
@@ -31,14 +29,6 @@ public class Request {
 
     public void setMetaData(Map<String, Object> metaData) {
         this.metaData = metaData;
-    }
-
-    public boolean isIgoComplete() {
-        return igoComplete;
-    }
-
-    public void setIgoComplete(boolean igoComplete) {
-        this.igoComplete = igoComplete;
     }
 
     public Map<String, SampleStageTracker> getStages() {
@@ -86,7 +76,6 @@ public class Request {
 
         apiResponse.put("requestId", this.requestId);
         apiResponse.put("bankedSampleId", this.bankedSampleId);
-        apiResponse.put("igoComplete", this.igoComplete);
         apiResponse.put("metaData", this.metaData);
         apiResponse.put("samples", this.samples.stream().map(tracker -> tracker.toApiResponse()).collect(Collectors.toList()));
         apiResponse.put("stages", this.stages.values().stream().map(

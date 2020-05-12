@@ -21,7 +21,7 @@ import static org.mskcc.limsrest.util.DataRecordAccess.*;
 public class GetRequestTrackingTask {
     private static Log log = LogFactory.getLog(GetRequestTrackingTask.class);
     private static Integer SAMPLE_COUNT = 1;
-    private static String[] requestDataLongFields = new String[]{"RecentDeliveryDate", "ReceivedDate"};
+    private static String[] requestDataLongFields = new String[]{"ReceivedDate"};
     private static String[] requestDataStringFields = new String[]{
             "LaboratoryHead",
             "GroupLeader",
@@ -336,8 +336,13 @@ public class GetRequestTrackingTask {
         for (String field : requestDataLongFields) {
             requestMetaData.put(field, getRecordLongValue(requestRecord, field, user));
         }
-        Boolean isIgoComplete = isIgoComplete(requestRecord, user);
-        requestMetaData.put("igoComplete", isIgoComplete);
+
+        // IGO Completion is confirmed by delivery, which sets the "RecentDeliveryDate" field
+        final Long mostRecentDeliveryDate = getRecordLongValue(requestRecord, "RecentDeliveryDate", user);
+        if(mostRecentDeliveryDate != null){
+            requestMetaData.put("isIgoComplete", true);
+        }
+        requestMetaData.put("RecentDeliveryDate", mostRecentDeliveryDate);
 
         return requestMetaData;
     }
