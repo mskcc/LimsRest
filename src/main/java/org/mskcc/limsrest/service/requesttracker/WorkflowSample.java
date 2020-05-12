@@ -24,6 +24,7 @@ public class WorkflowSample extends StageTracker {
     private static Log log = LogFactory.getLog(WorkflowSample.class);
 
     Long recordId;
+    String recordName;
     String status;
     WorkflowSample parent;     // TODO - Can this ever be multiple?
     List<WorkflowSample> children;
@@ -36,6 +37,7 @@ public class WorkflowSample extends StageTracker {
 
         this.children = new ArrayList<>();
         this.recordId = record.getRecordId();
+        this.recordName = getRecordStringValue(record, "DataRecordName", user);
         this.record = record;
         this.parent = null;
         this.user = user;
@@ -113,6 +115,7 @@ public class WorkflowSample extends StageTracker {
     public Map<String, Object> toApiResponse() {
         Map<String, Object> apiMap = new HashMap<>();
         apiMap.put("recordId", this.recordId);
+        apiMap.put("recordName", this.recordName);
 
         // TODO - for non-admins, exclude this field
         apiMap.put("children", this.children.stream().map(WorkflowSample::toApiResponse));
