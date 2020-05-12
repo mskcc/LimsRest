@@ -31,6 +31,7 @@ public class WorkflowSample extends StageTracker {
     Boolean failed;
     private User user;
     public WorkflowSample(DataRecord record, User user) {
+        // Workflow samples don't have a size - they are the extension of the root ProjectSample
         setSize(0);
 
         this.children = new ArrayList<>();
@@ -38,7 +39,10 @@ public class WorkflowSample extends StageTracker {
         this.record = record;
         this.parent = null;
         this.user = user;
-        this.failed = Boolean.FALSE;        // TODO - remove this
+        this.complete = Boolean.FALSE;
+        // this.failed = Boolean.FALSE;        // TODO - remove this
+
+        enrichSample();
     }
 
     public void addChild(WorkflowSample child){
@@ -69,6 +73,8 @@ public class WorkflowSample extends StageTracker {
 
         if (isFailedStatus(status)) {
             this.failed = Boolean.TRUE;
+        } else {
+            this.failed = Boolean.FALSE;
         }
 
         this.status = status;
@@ -105,12 +111,13 @@ public class WorkflowSample extends StageTracker {
     public Map<String, Object> toApiResponse() {
         Map<String, Object> apiMap = new HashMap<>();
         apiMap.put("recordId", this.recordId);
+
+        // TODO - for non-admins, exclude this field
         apiMap.put("children", this.children.stream().map(WorkflowSample::toApiResponse));
 
         Map<String, Object> attributesMap = super.toApiResponse();
         attributesMap.put("status", this.status);
         attributesMap.put("failed", this.failed);
-        attributesMap.put("completed", this.complete);
         apiMap.put("attributes", attributesMap);
 
         return apiMap;

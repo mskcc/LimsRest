@@ -9,8 +9,11 @@ import java.util.*;
 import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.isCompletedStatus;
 import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.isValidStage;
 
-public class SampleTreeTracker {
-    private static Log log = LogFactory.getLog(SampleTreeTracker.class);
+/**
+ * Data Model of the tree structure descending from one ProjectSample
+ */
+public class ProjectSampleTree {
+    private static Log log = LogFactory.getLog(ProjectSampleTree.class);
 
     public WorkflowSample getRoot() {
         return root;
@@ -25,7 +28,7 @@ public class SampleTreeTracker {
     private Map<String, SampleStageTracker> stageMap;   // Map to all stages by their stage name
     private User user;
 
-    public SampleTreeTracker(WorkflowSample root, User user) {
+    public ProjectSampleTree(WorkflowSample root, User user) {
         this.user = user;
         this.root = root;
         this.sampleMap = new HashMap<>();
@@ -49,6 +52,10 @@ public class SampleTreeTracker {
         this.sampleMap = sampleMap;
     }
 
+    /**
+     * Returns ordered list of stages in the ProjectSample
+     * @return
+     */
     public List<SampleStageTracker> getStages() {
         return new ArrayList<>(stageMap.values());
     }
@@ -114,11 +121,11 @@ public class SampleTreeTracker {
 
         ProjectSample projectSample = new ProjectSample(this.root.getRecordId());
         List<SampleStageTracker> stages = getStages();
-        List<WorkflowSample> aliquots = getSamples();
+        List<WorkflowSample> workflowSamples = getSamples();
         projectSample.addStage(stages);
         Boolean isFailed = Boolean.TRUE;    // One non-failed sample will set this to True
         Boolean isComplete = Boolean.TRUE;  // All sub-samples need to be complete or the sample to be complete
-        for(WorkflowSample sample : aliquots){
+        for(WorkflowSample sample : workflowSamples){
             isFailed = isFailed && sample.getFailed();
             isComplete = isComplete && sample.getComplete();
         }

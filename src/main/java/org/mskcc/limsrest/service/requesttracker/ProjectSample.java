@@ -2,6 +2,7 @@ package org.mskcc.limsrest.service.requesttracker;
 
 import com.velox.api.datarecord.DataRecord;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,8 +54,8 @@ public class ProjectSample {
         this.failed = failed;
     }
 
-    public Map<String, SampleStageTracker> getStages() {
-        return stages;
+    public List<SampleStageTracker> getStages() {
+        return new ArrayList(stages.values());
     }
 
     public void setStages(Map<String, SampleStageTracker> stages) {

@@ -56,38 +56,28 @@ public class GetRequestTrackingTask {
                 request.addStage("submitted", submittedStage);
             }
 
+            // Validate request record
             List<DataRecord> requestRecordList = drm.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
             if (requestRecordList.size() != 1) {  // error: request ID not found or more than one found
                 log.error(String.format("Request %s not found for requestId %s. Returning incomplete information", requestId));
                 return request.toApiResponse();
             }
-
             DataRecord requestRecord = requestRecordList.get(0);
             
             Map<String, Object> metaData = getMetaDataFromRecord(requestRecord, user);
             request.setMetaData(metaData);
 
-            // Immediate samples of record represent physical samples. Children are created on workflow progress
+            // Immediate samples of record represent physical samples. LIMS creates children of these in the workflow
             DataRecord[] samples = requestRecord.getChildrenOfType("Sample", user);
 
             // Parse the tree of each data record and return the statuses
             for (DataRecord record : samples) {
-                SampleTreeTracker tree = createSampleTree(record, user);
+                ProjectSampleTree tree = createProjectSampleTree(record, user);
                 ProjectSample projectSample = tree.convertToProjectSample();
                 request.addTrackedSample(projectSample);
             }
 
-            // Aggregate sample stage information into the request level
-            List<ProjectSample> sampleTrackers = request.getSamples();
-            List<SampleStageTracker> requestStages = sampleTrackers.stream()
-                    .flatMap(tracker -> tracker.getStages().values().stream())
-                    .collect(Collectors.toList());
-            Map<String, SampleStageTracker> requestStagesMap = aggregateStages(requestStages);
-
-            // Determine stages of the sampleTracker
-            for (Map.Entry<String, SampleStageTracker> requestStage : requestStagesMap.entrySet()) {
-                request.addStage(requestStage.getKey(), requestStage.getValue());
-            }
+            addStageSummaryToRequest(request);
 
             Map<String, Object> apiResponse = new HashMap<>();
             apiResponse.put("request", request.toApiResponse());
@@ -98,6 +88,22 @@ public class GetRequestTrackingTask {
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
             return null;
+        }
+    }
+
+    /**
+     * Summarizes stage-level information about the request using each sample in the request
+     *
+     * @param request
+     */
+    private void addStageSummaryToRequest(Request request){
+        // Aggregate flattened stage information for each sample in the request
+        List<SampleStageTracker> requestStages = request.getSamples().stream()
+                .flatMap(tracker -> tracker.getStages().stream())
+                .collect(Collectors.toList());
+        Map<String, SampleStageTracker> requestStagesMap = aggregateStages(requestStages);
+        for (Map.Entry<String, SampleStageTracker> requestStage : requestStagesMap.entrySet()) {
+            request.addStage(requestStage.getKey(), requestStage.getValue());
         }
     }
 
@@ -116,7 +122,7 @@ public class GetRequestTrackingTask {
      * @param tree - Data Model for tracking Sample Stages, samples, and the root node
      * @return
      */
-    private SampleTreeTracker createWorkflowTree(WorkflowSample root, SampleTreeTracker tree){
+    private ProjectSampleTree createWorkflowTree(WorkflowSample root, ProjectSampleTree tree){
         // Update the tracked stages with the input sample's stage
         tree.addStageToTracked(root);
 
@@ -129,6 +135,8 @@ public class GetRequestTrackingTask {
         if (children.length == 0) {
             // Leaf node
             tree.updateLeafStageCompletionStatus(root);
+
+            // TODO - Add logic that sets the root of the tree to incomplete
 
             if(root.getFailed()){
                 // Iterate up from sample and set all samples to their failed status
@@ -146,9 +154,9 @@ public class GetRequestTrackingTask {
             for(DataRecord record : children){
                 WorkflowSample sample = new WorkflowSample(record, tree.getUser());
                 sample.setParent(root);
-                sample.setComplete(Boolean.FALSE);      // All Samples are incomplete until child is found
-                sample.setFailed(Boolean.FALSE);
-                sample.enrichSample();
+                // sample.setComplete(Boolean.FALSE);      // All Samples are incomplete until child is found
+                // sample.setFailed(Boolean.FALSE);
+
                 if(STAGE_UNKNOWN.equals(sample.getStage()) || STAGE_AWAITING_PROCESSING.equals(sample.getStage())){
                     // Update the stage of the sample to the parent stage if it is unknown
                     if(!STAGE_UNKNOWN.equals(root.getStage())){
@@ -169,21 +177,20 @@ public class GetRequestTrackingTask {
     }
 
     /**
-     * Creates data model of the tree of samples descending from the root parent sample
+     * Creates data model of the tree for the DataRecord corresponding to a ProjectSample
      *
      * @param record
      * @param user
      * @return
      */
-    private SampleTreeTracker createSampleTree(DataRecord record, User user) {
+    private ProjectSampleTree createProjectSampleTree(DataRecord record, User user) {
         // Initialize input
         WorkflowSample root = new WorkflowSample(record, user);
-        root.enrichSample();
-        SampleTreeTracker rootTree = new SampleTreeTracker(root, user);
+        ProjectSampleTree rootTree = new ProjectSampleTree(root, user);
         rootTree.addSample(root);
 
         // Recursively create the workflowTree from the input tree
-        SampleTreeTracker workflowTree = createWorkflowTree(root, rootTree);
+        ProjectSampleTree workflowTree = createWorkflowTree(root, rootTree);
 
         // TODO - Needs to account for partially complete stages
         List<SampleStageTracker> stages = workflowTree.getStages();

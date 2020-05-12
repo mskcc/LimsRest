@@ -54,21 +54,8 @@ public class Request {
         this.samples = samples;
     }
 
-    public void addTrackedSample(ProjectSample tracker) {
-        this.samples.add(tracker);
-    }
-
-    /**
-     * Calculates the stages from its internal state of stages
-     */
-    public void calculateStages() {
-        Map<String, SampleStageTracker> stages;
-        for (ProjectSample tracker : samples) {
-            stages = tracker.getStages();
-            for (Map.Entry<String, SampleStageTracker> entry : stages.entrySet()) {
-
-            }
-        }
+    public void addTrackedSample(ProjectSample projectSample) {
+        this.samples.add(projectSample);
     }
 
     public Map<String, Object> toApiResponse() {

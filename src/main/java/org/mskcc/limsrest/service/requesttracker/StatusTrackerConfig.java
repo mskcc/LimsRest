@@ -144,7 +144,6 @@ public class StatusTrackerConfig {
             int p2 = getStageOrder(s2);
 
             return p1 - p2;
-            // return (p1 < p2) ? -1 : (p2 > p1) ? 1 : 0;
         }
     }
 
