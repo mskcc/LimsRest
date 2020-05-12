@@ -44,6 +44,9 @@ public class WorkflowSample extends StageTracker {
         enrichSample();
     }
 
+    public List<WorkflowSample> getChildren() {
+        return children;
+    }
     public void addChild(WorkflowSample child){
         this.children.add(child);
     }

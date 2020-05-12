@@ -136,9 +136,10 @@ public class GetRequestTrackingTask {
         if (children.length == 0) {
             tree.updateTreeOnLeafStatus(root);
             if(root.getFailed()){
-                // Iterate up from sample and set all samples to their failed status
+                // Iterate up from sample and set all samples to their failed status until the ProjectSample is reached
+                // or a parent with another potentially unfailed workflow path
                 WorkflowSample parent = root.getParent();
-                while(parent != null){
+                while(parent != null && parent.getChildren().size() == 1){
                     parent.setFailed(Boolean.TRUE);
                     parent = parent.getParent();
                 }
@@ -148,25 +149,25 @@ public class GetRequestTrackingTask {
             // Sample w/ children is complete
             root.setComplete(Boolean.TRUE);
 
+            // Add all data for the root's children at that level. Allows us to fail only the failed branch
+            List<WorkflowSample> workflowChildren = new ArrayList<>();
             for(DataRecord record : children){
                 WorkflowSample sample = new WorkflowSample(record, tree.getUser());
                 sample.setParent(root);
-                // sample.setComplete(Boolean.FALSE);      // All Samples are incomplete until child is found
-                // sample.setFailed(Boolean.FALSE);
-
                 if(STAGE_UNKNOWN.equals(sample.getStage()) || STAGE_AWAITING_PROCESSING.equals(sample.getStage())){
                     // Update the stage of the sample to the parent stage if it is unknown
                     if(!STAGE_UNKNOWN.equals(root.getStage())){
                         sample.setStage(root.getStage());
                     }
                 }
-
                 root.addChild(sample);
                 tree.addSample(sample);
+                workflowChildren.add(sample);
+            }
 
+            for(WorkflowSample sample : workflowChildren){
                 // Update tree w/ each sample
                 log.info(String.format("Searching children of root record: %d", root.getRecordId()));
-
                 tree = createWorkflowTree(sample, tree);
             }
         }
