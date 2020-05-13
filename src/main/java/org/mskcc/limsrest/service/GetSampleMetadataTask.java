@@ -2,7 +2,6 @@ package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
-import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
@@ -10,19 +9,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.controller.GetSampleMetadata;
 import org.mskcc.limsrest.service.samplemetadata.SampleMetadata;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.io.*;
+import java.net.*;
 import java.rmi.RemoteException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
 
 public class GetSampleMetadataTask {
     private final List<String> NUCLEIC_ACID_TYPES = Arrays.asList("dna", "rna", "cfdna", "amplicon", "cdna");
@@ -51,7 +48,7 @@ public class GetSampleMetadataTask {
             List<DataRecord> requests = new ArrayList<>();
             try {
                 requests = dataRecordManager.queryDataRecords("Request", "CompletedDate > '" + timestamp + "' AND Status IN ('Completed', 'Completed with Failures')", user);
-                //requests = dataRecordManager.queryDataRecords("Request", "RequestId = '07973'", user);//'" + timestamp +"'", user);//for testing requests.size());
+                //requests = dataRecordManager.queryDataRecords("Request", "RequestId = '93017_V'", user);//'" + timestamp +"'", user);//for testing requests.size());
                 log.info("Total Requests: " + requests.size());
                 for (DataRecord req : requests) {
                     String requestId = req.getStringVal("RequestId", user);
@@ -60,10 +57,12 @@ public class GetSampleMetadataTask {
                     DataRecord[] samples = req.getChildrenOfType("Sample", user);
                     log.info(String.format("Number of samples  in request %s: %d", requestId, samples.length));
                     for (DataRecord sample : samples) {
+                        baitSet = ""; // set baitset to empty before the search for each sample begins.
                         DataRecord cmoInfoRec = getRelatedCmoInfoRec(sample);
                         String mrn = getRandomValue();
                         String cmoPatientId = (String) getFieldValueForSample(sample, cmoInfoRec, "CorrectedInvestPatientId", "PatientId", "String");
                         String cmoSampleId = (String) getFieldValueForSample(sample, cmoInfoRec, "CorrectedCMOID", "OtherSampleId", "String");
+                        log.info(cmoSampleId);
                         String igoId = sample.getStringVal("SampleId", user);
                         String investigatorSampleId = (String) getFieldValueForSample(sample, cmoInfoRec, "UserSampleID", "UserSampleID", "String");
                         String species = (String) getFieldValueForSample(sample, cmoInfoRec, "Species", "Species", "String");
@@ -76,12 +75,14 @@ public class GetSampleMetadataTask {
                         if (!StringUtils.isBlank(tumorType) && !StringUtils.isBlank(tumorOrNormal) && tumorOrNormal.toLowerCase().equals("tumor")) {
                             parentTumorType = getOncotreeTumorType(tumorType);
                         }
+                        log.info("parent tumor type: " + parentTumorType);
                         String specimenType = (String) getFieldValueForSample(sample, cmoInfoRec, "SpecimenType", "SpecimenType", "String");
                         String sampleOrigin = (String) getFieldValueForSample(sample, cmoInfoRec, "SampleOrigin", "SampleOrigin", "String");
                         String tissueSource = (String) getFieldValueForSample(sample, cmoInfoRec, "TissueSource", "TissueSource", "String");
                         String tissueLocation = (String) getFieldValueForSample(sample, cmoInfoRec, "TissueLocation", "TissueLocation", "String");
                         String recipe = (String) getFieldValueForSample(sample, cmoInfoRec, "Recipe", "Recipe", "String");
                         String baitset = baitSet;
+                        log.info("baitset: " + baitset);
                         String fastqPath = "";
                         String ancestorSample = getOriginSampleId(sample);
                         boolean doNotUse = false;
@@ -150,10 +151,16 @@ public class GetSampleMetadataTask {
                 return dateFormatter.format(new Date(record.getDateVal(fieldName, user)));
             }
         }
-        return "None";
+        return "";
     }
 
-    private DataRecord getRelatedCmoInfoRec(DataRecord sample){
+    /**
+     * Method to get related SampleCMOInfoRecords for sample.
+     *
+     * @param sample
+     * @return
+     */
+    private DataRecord getRelatedCmoInfoRec(DataRecord sample) {
         String sampleId = "";
         try {
             sampleId = sample.getStringVal("SampleId", user);
@@ -182,20 +189,105 @@ public class GetSampleMetadataTask {
         return null;
     }
 
+    /**
+     * Method to get value for a field from SampleCMOInfoRecords if present or get fallback value from Parent Sample record.
+     *
+     * @param sample
+     * @param cmoInfoRecord
+     * @param cmoInfoFieldName
+     * @param sampleFieldName
+     * @param fieldType
+     * @return
+     */
     private Object getFieldValueForSample(DataRecord sample, DataRecord cmoInfoRecord, String cmoInfoFieldName, String sampleFieldName, String fieldType) {
         String sampleId = "";
         try {
             sampleId = sample.getStringVal("SampleId", user);
-            Object fieldValue = null;
+            Object fieldValue;
             if (cmoInfoRecord != null) {
                 fieldValue = getValueFromDataRecord(cmoInfoRecord, cmoInfoFieldName, fieldType);
-                if (fieldType != null || fieldValue != "") {
-                    return getValueFromDataRecord(sample, sampleFieldName, fieldType);
+                log.info(fieldValue.toString());
+                if (fieldValue != "") {
+                    return fieldValue;
                 }
             }
             return getValueFromDataRecord(sample, sampleFieldName, fieldType);
         } catch (Exception e) {
             log.error(String.format("Error getting '%s' value for sample '%s' from related samples or SampleCMOInfoRecords", sampleFieldName, sampleId));
+        }
+        return "";
+    }
+
+
+    /**
+     * Method to get Main Tumor Type using Tumor Type Name eg: Breast Cancer or Pancreatic cancer etc.
+     *
+     * @param url
+     * @param tumorType
+     * @return String
+     */
+    private String getOncotreeTumorTypeUsingName(URL url, String tumorType) {
+        HttpURLConnection con = null;
+        StringBuffer response = new StringBuffer();
+        JSONArray oncotreeResponseData = null;
+        try {
+            con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("GET");
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+            con.disconnect();
+            oncotreeResponseData = new JSONArray(response.toString());
+            if (oncotreeResponseData.length() > 0) {
+                JSONObject jsonObject = oncotreeResponseData.getJSONObject(0);
+                Object mainType = jsonObject.get("mainType");
+                return mainType != null ? mainType.toString() : "";
+            }
+        } catch (Exception e) {
+            log.info(String.format("Error while querying oncotree api for name search. Will attempt to search using oncotree api for code search:\n%s",e.getMessage()));
+            return "";
+        }
+        return "";
+    }
+
+    /**
+     * Method to get Main Tumor Type using TumorType CODE or abbreviation eg: BRCA for Breast Cancer and PAAD for
+     * Pancreatic cancer etc.
+     *
+     * @param url
+     * @param tumorType
+     * @return String
+     */
+    private String getOncotreeTumorTypeUsingCode(URL url, String tumorType) {
+        HttpURLConnection con = null;
+        StringBuffer response = new StringBuffer();
+        JSONArray oncotreeResponseData = null;
+        try {
+            con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("GET");
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+            con.disconnect();
+            oncotreeResponseData = new JSONArray(response.toString());
+            if (oncotreeResponseData.length() > 0) {
+                for (Object rec : oncotreeResponseData) {
+                    Object code = ((JSONObject) rec).get("code");
+                    if (code != null && tumorType.toLowerCase().equals(code.toString().trim().toLowerCase())) {
+                        Object mainType = ((JSONObject) rec).get("mainType");
+                        return mainType != null ? mainType.toString() : "";
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.info(String.format("Error while querying oncotree api using code search. Cannot find Main tumor type.\n%s",e.getMessage()));
+            return "";
         }
         return "";
     }
@@ -211,35 +303,28 @@ public class GetSampleMetadataTask {
         JSONArray oncotreeResponseData = null;
         String mainTumorType = "";
         try {
+            // In LIMS tumor types entry is not controlled. Sometimes tumor type as tumor name is entered and other times tumor type code is entered.
+            // First query oncotree using api for name search
             URL url = new URL("http://oncotree.mskcc.org/api/tumorTypes/search/name/" + tumorType.split("/")[0].replace(" ", "%20") + "?exactMatch=false");
-            HttpURLConnection con = (HttpURLConnection) url.openConnection();
-            con.setRequestMethod("GET");
-            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-            String inputLine;
-            while ((inputLine = in.readLine()) != null) {
-                response.append(inputLine);
+            mainTumorType = getOncotreeTumorTypeUsingName(url, tumorType);
+            // If name search returns nothing, then query oncotree using api for code search
+            if (StringUtils.isBlank(mainTumorType)) {
+                URL url2 = new URL("http://oncotree.mskcc.org/api/tumorTypes/search/code/" + tumorType.split("/")[0].replace(" ", "%20") + "?exactMatch=true");
+                mainTumorType = getOncotreeTumorTypeUsingCode(url2, tumorType);
             }
-            in.close();
-            con.disconnect();
-            oncotreeResponseData = new JSONArray(response.toString());
         } catch (Exception e) {
-            log.error(String.format("Error occured while querying oncotree end point for Tumor Type %s\n%s", tumorType, Arrays.toString(e.getStackTrace())));
+            log.error(String.format("Error occured while querying oncotree end point for Tumor Type %s\n%s", tumorType, e.getMessage()));
             return "";
-        }
-        if (oncotreeResponseData.length() > 0) {
-            try {
-                JSONObject rec = oncotreeResponseData.getJSONObject(0);
-                mainTumorType = rec.getString("mainType");
-                log.info(mainTumorType);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        } else {
-            mainTumorType = "Oncotree Tumor Type not found.";
         }
         return mainTumorType;
     }
 
+    /**
+     * Method to get origin Sample ID for a sample.
+     *
+     * @param sample
+     * @return boolean
+     */
     private String getOriginSampleId(DataRecord sample) {
         String sampleId = "";
         try {
@@ -267,6 +352,12 @@ public class GetSampleMetadataTask {
         return sampleId;
     }
 
+    /**
+     * Method to get Sample status.
+     *
+     * @param sample
+     * @return boolean
+     */
     private String getSampleStatus(DataRecord sample) {
         String requestId;
         String sampleId = "";
@@ -309,15 +400,34 @@ public class GetSampleMetadataTask {
         return resolveCurrentStatus(sampleStatus, currentSampleType);
     }
 
+    /**
+     * Method to check if the sample status is a complete status of a workflow/process.
+     *
+     * @param status
+     * @return boolean
+     */
     private boolean isCompleteStatus(String status) {
-        return status.toLowerCase().contains("completed");
+        return status.toLowerCase().contains("completed") || status.toLowerCase().contains("failed");
     }
 
+    /**
+     * Method to check if status indicates sequencing complete.
+     *
+     * @param status
+     * @return boolean
+     */
     private boolean isSequencingCompleteStatus(String status) {
         status = status.toLowerCase();
         return status.contains("completed - ") && status.contains("illumina") && status.contains("sequencing");
     }
 
+    /**
+     * Method to resolve status to one of the main complete/failed statuses.
+     *
+     * @param status
+     * @param sampleType
+     * @return String
+     */
     private String resolveCurrentStatus(String status, String sampleType) {
         if (NUCLEIC_ACID_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("completed -") && status.toLowerCase().contains("extraction") && status.toLowerCase().contains("dna/rna simultaneous")) {
             return String.format("Completed - %s Extraction", sampleType.toUpperCase());
@@ -337,9 +447,18 @@ public class GetSampleMetadataTask {
         if (LIBRARY_SAMPLE_TYPES.contains(sampleType.toLowerCase()) && isSequencingCompleteStatus(status)) {
             return "Completed - Sequencing";
         }
+        if (status.toLowerCase().contains("failed")) {
+            return status;
+        }
         return "";
     }
 
+    /**
+     * Method to check if sequencing has been completed on sample by checking for presence of SeqAnalysisSampleQC child record.
+     *
+     * @param sample
+     * @return Boolean
+     */
     private Boolean isSequencingComplete(DataRecord sample) {
         try {
             baitSet = "";
@@ -357,4 +476,5 @@ public class GetSampleMetadataTask {
         }
         return false;
     }
+
 }
