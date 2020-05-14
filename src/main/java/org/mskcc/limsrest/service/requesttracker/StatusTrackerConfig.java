@@ -59,8 +59,8 @@ public class StatusTrackerConfig {
      */
     private static String[] stageOrder = new String[]{
             STAGE_SUBMITTED,
-            STAGE_SAMPLE_QC,
             STAGE_LIBRARY_PREP,
+            STAGE_SAMPLE_QC,
             STAGE_SEQUENCING,
             STAGE_IGO_COMPLETE
     };
