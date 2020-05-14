@@ -20,6 +20,7 @@ import static org.mskcc.limsrest.util.DataRecordAccess.getRecordStringValue;
  * ProjectSample as the original ProjectSample creates children from it in LIMS as it goes through the stages of a
  * workflow.
  */
+// TODO - does this still need to extend StageTracker?
 public class WorkflowSample extends StageTracker {
     private static Log log = LogFactory.getLog(WorkflowSample.class);
 

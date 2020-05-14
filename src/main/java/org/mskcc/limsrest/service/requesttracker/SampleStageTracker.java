@@ -4,21 +4,27 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import java.util.Map;
 
+/**
+ * Represents a Tracked Stage in IGO's project tracker
+ * Notes:
+ *  - Stages are initialized as complete
+ *  - Failed WorkflowSamples are considered to have "completed" that stage and do not set a stage to incomplete
+ */
 public class SampleStageTracker extends StageTracker {
     private static Log log = LogFactory.getLog(SampleStageTracker.class);
-    Integer endingSamples;
 
-    public SampleStageTracker(String stage, Integer startingSamples, Integer endingSamples, Long startTime, Long updateTime) {
-        // Stages are considered complete until a leaf sample of that stage is found that doesn't have a complete status
-        // determined by StatusTrackerConfig::isCompletedStatus
-        this.complete = Boolean.TRUE;
+    private Integer endingSamples;      // Number of samples that have completed this stage and moved on to the next
+    private Integer failedSamples;      // Number of failed samples at this stage (considered incomplete)
 
-        setStage(stage);
-        setSize(startingSamples);   // The stage has a size equal to the number of samples it contains
-
+    public SampleStageTracker(String stage, Integer size, Integer endingSamples, Long startTime, Long updateTime) {
+        this.complete = Boolean.TRUE;   // Stages default to complete. Only an update can set to incomplete
         this.endingSamples = endingSamples;
+        this.failedSamples = 0;
         this.startTime = startTime;
         this.updateTime = updateTime;
+
+        setStage(stage);
+        setSize(size);
     }
 
     public Integer getEndingSamples() {
@@ -46,6 +52,21 @@ public class SampleStageTracker extends StageTracker {
     }
 
     /**
+     * Increments the count of failed samples
+     */
+    public void addFailedSample() {
+        this.failedSamples += 1;
+    }
+
+    /**
+     * Returns whether the current stage has any failed samples
+     * @return
+     */
+    public Integer getFailedSamplesCount() {
+        return this.failedSamples;
+    }
+
+    /**
      * Updates Sample times when merging with another sample
      *
      * @param stageTracker
@@ -64,6 +85,7 @@ public class SampleStageTracker extends StageTracker {
     public Map<String, Object> toApiResponse() {
         Map<String, Object> apiMap = super.toApiResponse();
         apiMap.put("completedSamples", this.endingSamples);
+        apiMap.put("failedSamples", this.failedSamples);
 
         return apiMap;
     }

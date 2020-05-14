@@ -70,14 +70,15 @@ public class GetRequestTrackingTask {
             // Immediate samples of record represent physical samples. LIMS creates children of these in the workflow
             DataRecord[] samples = requestRecord.getChildrenOfType("Sample", user);
 
-            // Parse the tree of each data record and return the statuses
+            // Create the tree of each ProjectSample aggregating per-sample status/stage information
             for (DataRecord record : samples) {
                 ProjectSampleTree tree = createProjectSampleTree(record, user);
                 ProjectSample projectSample = tree.convertToProjectSample();
                 request.addTrackedSample(projectSample);
             }
 
-            addStageSummaryToRequest(request);
+            // TODO - Make input List<ProjectSample> and explicitly show that aggregateStages are being added to request
+            aggregateStageInfoForRequest(request);
 
             Map<String, Object> apiResponse = new HashMap<>();
             apiResponse.put("request", request.toApiResponse());
@@ -96,7 +97,7 @@ public class GetRequestTrackingTask {
      *
      * @param request
      */
-    private void addStageSummaryToRequest(Request request){
+    private void aggregateStageInfoForRequest(Request request){
         // Aggregate flattened stage information for each sample in the request
         List<SampleStageTracker> requestStages = request.getSamples().stream()
                 .flatMap(tracker -> tracker.getStages().stream())
@@ -110,14 +111,36 @@ public class GetRequestTrackingTask {
     /**
      * Populates input @tree w/ based on the input @root sample & its children.
      * Assumptions -
-     *      Sample w/ child samples is completed - moving on in the workflow creates a child sample
-     *      Sample w/o child samples is incomplete, unless it has a status that indicates a completed workflow
-     *      All nodes in the path to a failed leaf sample have failed
-     *      All nodes in a path to a Non-failed leaf sample have not failed
-     *      There only needs to be one non-failed leaf sample or the whole tree to have not failed
-     *      Samples that are awaiting processing or have an ambiguous status will take their stage from their parent
-     *      Samples are incomplete/not-failed until shown to be otherwise
-     *      Stages are complete unless there's a leaf of that stage w/o a StatusTrackerConfig::isCompletedStatus status
+     *  SAMPLES (WorkflowSample)
+     *      STATUSES
+     *      I) PENDING
+     *          - WorkflowSamples default to Pending, i.e. complete = false on initialization
+     *      II) FAILED
+     *          - WorkflowSamples are evaluated for failure on initialization based on their initialized status
+     *          - Failed WorkflowSamples ARE considered complete (different from Stage)
+     *          - All parent WorkflowSamples from a failed leaf are marked failed until a parent w/ non-failed children
+     *          - All WorkflowSamples in a path to a Non-failed leaf sample should not be failed
+     *          - If the root WorkflowSample has not failed, then the ProjectSample has not failed, i.e. there only
+     *            needs to be one non-failed leaf sample in the tree for the whole tree to have not failed
+     *      III) COMPLETE
+     *          - WorkflowSample w/ child is completed b/c moving on in the workflow creates a child sample
+     *          - WorkflowSample w/o child samples is incomplete, unless failed or has status indicating completion
+     *      OTHER
+     *      - Samples that are awaiting processing or have an ambiguous status will take their stage from their parent
+     *
+     *  STAGES (SampleStageTracker)
+     *      INITIALIZATION
+     *          - Each WorkflowSample will add/update a SampleStageTracker instance in the tree
+     *          - SampleStageTracker instances default to complete
+     *      STATUSES
+     *      I) COMPLETE
+     *          - SampleStageTracker instances default to complete
+     *          - SampleStageTracker instances' completion status can only be updated by a leaf WorkflowSamples of
+     *            that stage
+     *      II) INCOMPLETE
+     *          - Leaf WorkflowSamples can only set the stage to incomplete if it is non-failed and is incomplete as
+     *            determined by StatusTrackerConfig::isCompletedStatus. Note - non-failed WorkflowSamples are considered
+     *            to have "completed" that stage
      *
      * @param root - Enriched model of a Sample record's data
      * @param tree - Data Model for tracking Sample Stages, samples, and the root node
@@ -135,15 +158,6 @@ public class GetRequestTrackingTask {
 
         if (children.length == 0) {
             tree.updateTreeOnLeafStatus(root);
-            if(root.getFailed()){
-                // Iterate up from sample and set all samples to their failed status until the ProjectSample is reached
-                // or a parent with another potentially unfailed workflow path
-                WorkflowSample parent = root.getParent();
-                while(parent != null && parent.getChildren().size() == 1){
-                    parent.setFailed(Boolean.TRUE);
-                    parent = parent.getParent();
-                }
-            }
             return tree;
         } else {
             // Sample w/ children is complete
@@ -167,7 +181,7 @@ public class GetRequestTrackingTask {
 
             for(WorkflowSample sample : workflowChildren){
                 // Update tree w/ each sample
-                log.info(String.format("Searching children of root record: %d", root.getRecordId()));
+                log.info(String.format("Searching children of data record ID: %d", root.getRecordId()));
                 tree = createWorkflowTree(sample, tree);
             }
         }
@@ -190,49 +204,49 @@ public class GetRequestTrackingTask {
         // Recursively create the workflowTree from the input tree
         ProjectSampleTree workflowTree = createWorkflowTree(root, rootTree);
 
-        // Partially complete stages are indicated to be incomplete as they will have a leaf node w/ a status that's not "complete"
-        List<SampleStageTracker> stages = workflowTree.getStages();
-        SampleStageTracker stage;
-        for(int i = 0; i<stages.size()-1; i++){
-            stage = stages.get(i);
-            stage.addEndingSample(1);
-        }
-
         return workflowTree;
     }
 
     /**
      * Calculates the stage the overall sample is at based on the least advanced path
      *
-     * @param path - List of Aliquot/Sample trackers
+     * @param sampleStages - List of SampleStageTracker instances representing one stage of one sample
      * @return
      */
-    public Map<String, SampleStageTracker> aggregateStages(List<? extends StageTracker> path) {
+    public Map<String, SampleStageTracker> aggregateStages(List<SampleStageTracker> sampleStages) {
         Map<String, SampleStageTracker> stageMap = new TreeMap<>(new StatusTrackerConfig.StageComp());
-        if (path.size() == 0) return stageMap;
+        if (sampleStages.size() == 0) return stageMap;
 
         String stageName;
-        SampleStageTracker stage;
-        for (StageTracker stageTracker : path) {
-            stageName = stageTracker.getStage();
+        SampleStageTracker projectStage;    // SampleStageTracker of the project created from aggregated sampleStages
+        Boolean isFailedStage;
+        for (SampleStageTracker sampleStage : sampleStages) {
+            stageName = sampleStage.getStage();
             if (stageMap.containsKey(stageName)) {
-                stage = stageMap.get(stageName);
-                stage.updateStageTimes(stageTracker);
-                stage.addStartingSample(SAMPLE_COUNT);
-                if (stageTracker.getComplete()) {
-                    stage.addEndingSample(SAMPLE_COUNT);
+                projectStage = stageMap.get(stageName);
+                projectStage.updateStageTimes(sampleStage);
+                projectStage.addStartingSample(SAMPLE_COUNT);
+                isFailedStage = sampleStage.getFailedSamplesCount() > 0;
+                if (sampleStage.getComplete() && !isFailedStage) {
+                    // Only non-failed, completed stages are considered to have "ended" the stage
+                    projectStage.addEndingSample(SAMPLE_COUNT);
+                }
+                // Incremement the number of failed samples in the aggregated
+                if (isFailedStage){
+                    projectStage.addFailedSample();
                 }
             } else {
-                Integer endingCount = stageTracker.getComplete() ? SAMPLE_COUNT : 0;
-                stage = new SampleStageTracker(stageName, SAMPLE_COUNT, endingCount, stageTracker.getStartTime(), stageTracker.getUpdateTime());
-                stageMap.put(stageName, stage);
+                Integer endingCount = sampleStage.getComplete() ? SAMPLE_COUNT : 0;
+                projectStage = new SampleStageTracker(stageName, SAMPLE_COUNT, endingCount, sampleStage.getStartTime(), sampleStage.getUpdateTime());
+                stageMap.put(stageName, projectStage);
             }
         }
 
-        // Calculate completion status of stage based on whether endingSamples equals total size
+        // Calculate completion status of stage based on whether ending + failed equals total size
         stageMap.values().forEach(
                 tracker -> {
-                    tracker.setComplete(tracker.getEndingSamples() == tracker.getSize());
+                    final Integer completedCount = tracker.getEndingSamples() + tracker.getFailedSamplesCount();
+                    tracker.setComplete(completedCount == tracker.getSize());
                 }
         );
 

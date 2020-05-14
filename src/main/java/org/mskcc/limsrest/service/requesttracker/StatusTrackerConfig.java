@@ -20,7 +20,8 @@ public class StatusTrackerConfig {
     public static final String STATUS_AWAITING_PROCESSING = "Awaiting Processing";  // Stage cannot be determined
     private static final Set<String> FAILED_STATUSES = new HashSet<>(Arrays.asList(
             "Failed - Completed",
-            "Failed - Pending User Decision"
+            "Failed - Pending User Decision",
+            "Failed - Library/Pool Quality Control"
     ));
     private static final Set<String> SAMPLE_QC_STATUSES = new HashSet<>(Arrays.asList(
             "Completed - Library/Pool Quality Control"

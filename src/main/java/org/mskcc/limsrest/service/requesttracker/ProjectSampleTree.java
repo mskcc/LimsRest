@@ -97,21 +97,54 @@ public class ProjectSampleTree {
      */
     public void updateTreeOnLeafStatus(WorkflowSample leaf){
         String stageName = leaf.getStage();
-        String status = leaf.getStatus();
-
         SampleStageTracker stage = this.stageMap.get(stageName);
-        if(!isCompletedStatus(status)){
-            stage.setComplete(Boolean.FALSE);
+
+        // Failed leafs do not modify the completion status
+        if(leaf.getFailed()){
+            // Fail all nodes in path to failed leaf until reaching root (parent == null) or node w/ non-failed children
+            WorkflowSample parent = leaf.getParent();
+            while(parent != null && allChildrenFailed(parent)){
+                parent.setFailed(Boolean.TRUE);
+                parent = parent.getParent();
+            }
+            // Record the sample has failed if the parent is null as this means the failed path reached the root
+            if(parent == null){
+                stage.addFailedSample();
+            }
         } else {
-            leaf.setComplete(Boolean.TRUE);         // Default leaf completion state is FALSE
-            if(stage.getComplete() != null){
-                // Update completion status, but leaf is failed if any leaf node is in an incomplete state
-                stage.setComplete(Boolean.TRUE && stage.getComplete());
+            String status = leaf.getStatus();
+            if(!isCompletedStatus(status)){
+                // A leaf w/ an incomplete status makes the stage incomplete, as this leaf is still pending
+                // A failed leaf does not make the stage incomplete as other branches may successfully complete this stage
+                stage.setComplete(Boolean.FALSE);
             } else {
-                // Initialize stage to true
-                stage.setComplete(Boolean.TRUE);
+                leaf.setComplete(Boolean.TRUE);         // Default leaf completion state is FALSE
+                if(stage.getComplete() != null){
+                    // Update completion status, but leaf is failed if any leaf node is in an incomplete state
+                    // TODO - WHAT?
+                    stage.setComplete(Boolean.TRUE && stage.getComplete());
+                } else {
+                    // Initialize stage to true
+                    stage.setComplete(Boolean.TRUE);
+                }
             }
         }
+    }
+
+    /**
+     * Returns whether input sample has only failed children
+     *
+     * @param sample
+     * @return
+     */
+    private boolean allChildrenFailed(WorkflowSample sample){
+        List<WorkflowSample> children = sample.getChildren();
+        for(WorkflowSample child : children){
+            if(!child.getFailed()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
