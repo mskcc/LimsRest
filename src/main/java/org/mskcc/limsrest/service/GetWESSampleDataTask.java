@@ -32,6 +32,9 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.mskcc.limsrest.util.Utils.getValueFromDataRecord;
+import static org.mskcc.limsrest.util.Utils.isSequencingComplete;
+
 /**
  * Task to compile data for the delphi-sample-tracker app. This endpoint currently collects data for all the entries in DMPSampleTracker for "WholeExomeSequencing" and retrieves information from
  * CVR db, oncotree db and LIMS.
@@ -103,9 +106,9 @@ public class GetWESSampleDataTask {
                                         DataRecord request = getRelatedRequest(sample);
                                         String sampleId = sample.getStringVal("SampleId", user);
                                         String userSampleId = dmpTrackRec.getStringVal("i_StudySampleIdentifierInvesti", user);
-                                        String userSampleidHistorical = (String) getValueFromDataRecord(dmpTrackRec, "InvestigatorSampleIdHistorical", "String");
-                                        String duplicateSample = (String) getValueFromDataRecord(dmpTrackRec, "DuplicateSample", "String");
-                                        String wesSampleid = (String) getValueFromDataRecord(dmpTrackRec, "WesId", "String");
+                                        String userSampleidHistorical = (String) getValueFromDataRecord(dmpTrackRec, "InvestigatorSampleIdHistorical", "String", user);
+                                        String duplicateSample = (String) getValueFromDataRecord(dmpTrackRec, "DuplicateSample", "String", user);
+                                        String wesSampleid = (String) getValueFromDataRecord(dmpTrackRec, "WesId", "String", user);
                                         String cmoSampleId = cmoInfoRec.getStringVal("CorrectedCMOID", user);
                                         String cmoPatientId = cmoInfoRec.getStringVal("CmoPatientId", user);
                                         String dmpSampleId = dmpTrackRec.getStringVal("i_DMPSampleID", user);
@@ -113,24 +116,24 @@ public class GetWESSampleDataTask {
                                         String dmpPatientId = getCvrDataValue(cvrData, "dmp_patient_lbl");
                                         String mrn = getCvrDataValue(cvrData, "mrn");
                                         String sex = getCvrDataValue(cvrData, "gender");
-                                        String sampleType = (String)getValueFromDataRecord(cmoInfoRec, "SpecimenType", "String");
+                                        String sampleType = (String)getValueFromDataRecord(cmoInfoRec, "SpecimenType", "String", user);
                                         String sampleClass = getCvrDataValue(cvrData, "sample_type");
                                         String tumorType = getCvrDataValue(cvrData, "tumor_type");
                                         String parentalTumorType = getOncotreeTumorType(tumorType);
                                         String tissueSite = getCvrDataValue(cvrData, "primary_site");
                                         String molAccessionNum = getCvrDataValue(cvrData, "molecular_accession_num");
-                                        String dateDmpRequest = (String) getValueFromDataRecord(dmpTrackRec, "i_DateSubmittedtoDMP", "Date");
+                                        String dateDmpRequest = (String) getValueFromDataRecord(dmpTrackRec, "i_DateSubmittedtoDMP", "Date", user);
                                         String dmpRequestId = dmpTrackRec.getStringVal("i_RequestReference", user);
-                                        String igoRequestId = (String) getValueFromDataRecord(request, "RequestId", "String");
-                                        String collectionYear = (String) getValueFromDataRecord(cmoInfoRec, "CollectionYear", "String");
-                                        String dateIgoReceived = (String) getValueFromDataRecord(request, "ReceivedDate", "Date");
-                                        String igoCompleteDate = (String) getValueFromDataRecord(request, "CompletedDate", "Date");
-                                        String applicationRequested = (String) getValueFromDataRecord(request, "RequestName", "String");
+                                        String igoRequestId = (String) getValueFromDataRecord(request, "RequestId", "String", user);
+                                        String collectionYear = (String) getValueFromDataRecord(cmoInfoRec, "CollectionYear", "String", user);
+                                        String dateIgoReceived = (String) getValueFromDataRecord(request, "ReceivedDate", "Date", user);
+                                        String igoCompleteDate = (String) getValueFromDataRecord(request, "CompletedDate", "Date", user);
+                                        String applicationRequested = (String) getValueFromDataRecord(request, "RequestName", "String", user);
                                         String sequencerType = getSequencerTypeUsed(sample);
-                                        String projectTitle = (String) getValueFromDataRecord(dmpTrackRec, "i_Studyname", "String");
-                                        String labHead = (String) getValueFromDataRecord(request, "LaboratoryHead", "String");
-                                        String ccFund = (String) getValueFromDataRecord(dmpTrackRec, "i_FundCostCenter", "String");
-                                        String scientificPi = (String)getValueFromDataRecord(dmpTrackRec, "i_PrimaryInvestigator", "String");
+                                        String projectTitle = (String) getValueFromDataRecord(dmpTrackRec, "i_Studyname", "String", user);
+                                        String labHead = (String) getValueFromDataRecord(request, "LaboratoryHead", "String", user);
+                                        String ccFund = (String) getValueFromDataRecord(dmpTrackRec, "i_FundCostCenter", "String", user);
+                                        String scientificPi = (String)getValueFromDataRecord(dmpTrackRec, "i_PrimaryInvestigator", "String", user);
                                         Boolean consentPartAStatus = getConsentStatus(consentAList, dmpPatientId);
                                         Boolean consentPartCStatus = getConsentStatus(consentCList, dmpPatientId);
                                         String sampleStatus = getSampleStatus(sample, igoRequestId);
@@ -184,12 +187,12 @@ public class GetWESSampleDataTask {
     private WESSampleData createNonIgoTrackingRecord(DataRecord dmpTrackRec, JSONObject consentAList, JSONObject consentCList) throws NotFound, IOException, KeyManagementException, NoSuchAlgorithmException {
         String sampleId = "";
         String userSampleId = dmpTrackRec.getStringVal("i_StudySampleIdentifierInvesti", user);;
-        String userSampleidHistorical = (String) getValueFromDataRecord(dmpTrackRec, "InvestigatorSampleIdHistorical", "String");
-        String duplicateSample = (String) getValueFromDataRecord(dmpTrackRec,"DuplicateSample", "String");
-        String wesSampleid = (String) getValueFromDataRecord(dmpTrackRec,"WesId", "String");
+        String userSampleidHistorical = (String) getValueFromDataRecord(dmpTrackRec, "InvestigatorSampleIdHistorical", "String", user);
+        String duplicateSample = (String) getValueFromDataRecord(dmpTrackRec,"DuplicateSample", "String", user);
+        String wesSampleid = (String) getValueFromDataRecord(dmpTrackRec,"WesId", "String", user);
         String cmoSampleId = "";
         String cmoPatientId = "";
-        String dmpSampleId = (String) getValueFromDataRecord(dmpTrackRec,"i_DMPSampleID", "String");;
+        String dmpSampleId = (String) getValueFromDataRecord(dmpTrackRec,"i_DMPSampleID", "String", user);;
         if (dmpTrackRec.getValue("i_DMPSampleID", user) != null) {
             dmpSampleId = dmpTrackRec.getStringVal("i_DMPSampleID", user);
         }
@@ -203,19 +206,19 @@ public class GetWESSampleDataTask {
         String parentalTumorType = getOncotreeTumorType(tumorType);
         String tissueSite = getCvrDataValue(cvrData, "primary_site");
         String molAccessionNum = getCvrDataValue(cvrData, "molecular_accession_num");
-        String dateDmpRequest = (String) getValueFromDataRecord(dmpTrackRec, "i_DateSubmittedtoDMP", "Date");
+        String dateDmpRequest = (String) getValueFromDataRecord(dmpTrackRec, "i_DateSubmittedtoDMP", "Date", user);
         String dmpRequestId = dmpTrackRec.getStringVal("i_RequestReference", user);
         String igoRequestId = "";
         String collectionYear = "";
         String dateIgoReceived = "";
         String igoCompleteDate = "";
-        String applicationRequested = (String) getValueFromDataRecord(dmpTrackRec, "i_SampleDownstreamApplication", "String");
+        String applicationRequested = (String) getValueFromDataRecord(dmpTrackRec, "i_SampleDownstreamApplication", "String", user);
         String baitsetUsed = "";
         String sequencerType = "";
-        String projectTitle = (String) getValueFromDataRecord(dmpTrackRec, "i_Studyname", "String");
-        String labHead = (String) getValueFromDataRecord(dmpTrackRec, "i_PrimaryInvestigator", "String");
-        String ccFund = (String) getValueFromDataRecord(dmpTrackRec, "i_FundCostCenter", "String");
-        String scientificPi = (String)getValueFromDataRecord(dmpTrackRec, "i_PrimaryInvestigator", "String");
+        String projectTitle = (String) getValueFromDataRecord(dmpTrackRec, "i_Studyname", "String", user);
+        String labHead = (String) getValueFromDataRecord(dmpTrackRec, "i_PrimaryInvestigator", "String", user);
+        String ccFund = (String) getValueFromDataRecord(dmpTrackRec, "i_FundCostCenter", "String", user);
+        String scientificPi = (String)getValueFromDataRecord(dmpTrackRec, "i_PrimaryInvestigator", "String", user);
         Boolean consentPartAStatus = getConsentStatus(consentAList, dmpPatientId);
         Boolean consentPartCStatus = getConsentStatus(consentCList, dmpPatientId);
         String sampleStatus = "";
@@ -313,41 +316,6 @@ public class GetWESSampleDataTask {
             log.error(String.format("Error occured while validating Recipe for Sample %s\n%s", sampleId, Arrays.toString(e.getStackTrace())));
         }
         return false;
-    }
-
-    /**
-     * Get a DataField value from a DataRecord.
-     *
-     * @param record
-     * @param fieldName
-     * @param fieldType
-     * @return Object
-     * @throws NotFound
-     * @throws RemoteException
-     */
-    private Object getValueFromDataRecord(DataRecord record, String fieldName, String fieldType) throws NotFound, RemoteException {
-        if (record == null) {
-            return "";
-        }
-        if (record.getValue(fieldName, user) != null) {
-            if (fieldType.equals("String")) {
-                return record.getStringVal(fieldName, user);
-            }
-            if (fieldType.equals("Integer")) {
-                return record.getIntegerVal(fieldName, user);
-            }
-            if (fieldType.equals("Long")) {
-                return record.getLongVal(fieldName, user);
-            }
-            if (fieldType.equals("Double")) {
-                return record.getDoubleVal(fieldName, user);
-            }
-            if (fieldType.equals("Date")) {
-                SimpleDateFormat dateFormatter = new SimpleDateFormat("MM-dd-yyyy");
-                return dateFormatter.format(new Date(record.getDateVal(fieldName, user)));
-            }
-        }
-        return "";
     }
 
     /**
@@ -633,18 +601,18 @@ public class GetWESSampleDataTask {
         String currentSampleStatus = "";
         try{
             sampleId = sample.getStringVal("SampleId", user);
-            sampleStatus = (String)getValueFromDataRecord(sample, "ExemplarSampleStatus", "String");
+            sampleStatus = (String)getValueFromDataRecord(sample, "ExemplarSampleStatus", "String", user);
             int statusOrder=-1;
             long recordId = 0;
             Stack<DataRecord> sampleStack = new Stack<>();
             sampleStack.add(sample);
             do{
                 DataRecord current = sampleStack.pop();
-                currentSampleType = (String)getValueFromDataRecord(current, "ExemplarSampleType", "String");
-                currentSampleStatus = (String)getValueFromDataRecord(current, "ExemplarSampleStatus", "String");
+                currentSampleType = (String)getValueFromDataRecord(current, "ExemplarSampleType", "String", user);
+                currentSampleStatus = (String)getValueFromDataRecord(current, "ExemplarSampleStatus", "String", user);
                 int currentStatusOrder = SAMPLETYPES_IN_ORDER.indexOf(currentSampleType.toLowerCase());
                 long currentRecordId = current.getRecordId();
-                if (isSequencingComplete(current)){
+                if (isSequencingComplete(current, user)){
                     return "Completed Sequencing";
                 }
                 if (currentRecordId > recordId && currentStatusOrder > statusOrder && isCompleteStatus(currentSampleStatus)){
@@ -715,28 +683,5 @@ public class GetWESSampleDataTask {
             return status;
         }
         return "";
-    }
-
-    /**
-     * Method to check if Sequencing for a sample is complete based on presence of SeqAnalysisSampleQC as child record and status of SeqAnalysisSampleQC as Passed.
-     * @param sample
-     * @return
-     */
-    private Boolean isSequencingComplete(DataRecord sample){
-        try {
-            baitSet = "";
-            List<DataRecord> seqAnalysisRecords = Arrays.asList(sample.getChildrenOfType("SeqAnalysisSampleQC", user));
-            if (seqAnalysisRecords.size()>0) {
-                Object sequencingStatus = seqAnalysisRecords.get(0).getValue("SeqQCStatus", user);
-                baitSet = (String)(getValueFromDataRecord(seqAnalysisRecords.get(0),"BaitSet", "String" ));
-                if (sequencingStatus != null && (sequencingStatus.toString().equalsIgnoreCase("passed") || sequencingStatus.toString().equalsIgnoreCase("failed"))){
-                    return true;
-                }
-            }
-        }catch (Exception e){
-            log.error(e.getMessage());
-            return false;
-        }
-        return false;
     }
 }
