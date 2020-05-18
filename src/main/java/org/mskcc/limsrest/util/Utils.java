@@ -18,6 +18,9 @@ import java.util.Optional;
 public class Utils {
     private final static Log LOGGER = LogFactory.getLog(Utils.class);
 
+    public final static String SEQ_QC_STATUS_PASSED = "passed";
+    public final static String SEQ_QC_STATUS_FAILED = "failed";
+
     public static void runAndCatchNpe(Runnable runnable) {
         try {
             runnable.run();
@@ -45,24 +48,53 @@ public class Utils {
     }
 
     /**
-     * Method to check if Sequencing for a sample is complete based on presence of SeqAnalysisSampleQC as child record and status of SeqAnalysisSampleQC as Passed.
+     * Method to check if Sequencing for a sample is complete based on presence of SeqAnalysisSampleQC as child record
+     * and status of SeqAnalysisSampleQC as Passed.
      * @param sample
      * @return
      */
     public static Boolean isSequencingComplete(DataRecord sample, User user){
+        DataRecord qcRecord = getChildSeqAnalysisSampleQcRecord(sample, user);
+        if(qcRecord == null) {
+            return false;
+        }
+        String sequencingStatus = getRecordStringValue(sample, "SeqQCStatus", user);
+        return sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_PASSED) || sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_FAILED);
+    }
+
+    /**
+     * Returns the SeqAnalysisSampleQC child of record if it exists. Returns null if no SeqAnalysisSampleQC child
+     * @param record
+     * @param user
+     * @return
+     */
+    public static DataRecord getChildSeqAnalysisSampleQcRecord(DataRecord record, User user){
         try {
-            List<DataRecord> seqAnalysisRecords = Arrays.asList(sample.getChildrenOfType("SeqAnalysisSampleQC", user));
+            List<DataRecord> seqAnalysisRecords = Arrays.asList(record.getChildrenOfType("SeqAnalysisSampleQC", user));
             if (seqAnalysisRecords.size()>0) {
-                Object sequencingStatus = seqAnalysisRecords.get(0).getValue("SeqQCStatus", user);
-                if (sequencingStatus != null && (sequencingStatus.toString().equalsIgnoreCase("passed") || sequencingStatus.toString().equalsIgnoreCase("failed"))){
-                    return true;
-                }
+                return seqAnalysisRecords.get(0);
             }
         }catch (Exception e){
             LOGGER.error(e.getMessage());
-            return false;
         }
-        return false;
+        return null;
+    }
+
+    /**
+     * Safely retrieves a String value from a dataRecord. Returns empty string on error.
+     *
+     * @param record
+     * @param key
+     * @param user
+     * @return
+     */
+    public static String getRecordStringValue(DataRecord record, String key, User user) {
+        try {
+            return record.getStringVal(key, user);
+        } catch (NotFound | RemoteException e) {
+            LOGGER.error(String.format("Failed to get key %s from Data Record: %d", key, record.getRecordId()));
+        }
+        return "";
     }
 
     /**
