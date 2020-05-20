@@ -21,6 +21,7 @@ public class Utils {
 
     public final static String SEQ_QC_STATUS_PASSED = "passed";
     public final static String SEQ_QC_STATUS_FAILED = "failed";
+    public final static String SEQ_QC_STATUS_PENDING = "not available";
 
     public static void runAndCatchNpe(Runnable runnable) {
         try {
@@ -101,6 +102,32 @@ public class Utils {
             LOGGER.error(String.format("Failed to get key %s from Data Record: %d", key, record.getRecordId()));
         }
         return "";
+    }
+
+    /**
+     * Safely retrieves a Long Value from a dataRecord
+     *
+     * @param record
+     * @param key
+     * @param user
+     * @return
+     */
+    public static Long getRecordLongValue(DataRecord record, String key, User user) {
+        try {
+            return record.getLongVal(key, user);
+        } catch (NotFound | RemoteException | NullPointerException e) {
+            LOGGER.error(String.format("Failed to get key %s from Sample Record: %d", key, record.getRecordId()));
+        }
+        return null;
+    }
+
+    public static Boolean getRecordBooleanValue(DataRecord record, String key, User user) {
+        try {
+            return record.getBooleanVal(key, user);
+        } catch (NotFound | RemoteException | NullPointerException e) {
+            LOGGER.error(String.format("Failed to get key %s from Sample Record: %d", key, record.getRecordId()));
+        }
+        return null;
     }
 
     /**

@@ -16,7 +16,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.*;
-import static org.mskcc.limsrest.util.DataRecordAccess.*;
+import static org.mskcc.limsrest.util.Utils.*;
 
 public class GetRequestTrackingTask {
     private static Log log = LogFactory.getLog(GetRequestTrackingTask.class);
@@ -109,46 +109,58 @@ public class GetRequestTrackingTask {
     }
 
     /**
-     * Populates input @tree w/ based on the input @root sample & its children.
-     * Assumptions -
+     * Populates an input @tree (or subtree) representing a Project Sample using a recursive depth-first search. Will
+     * gather the ExemplarSampleStatus of each Sample DataRecord in the workflow to determine the Stages in the workflow
+     *
+     * Implementation Notes:
      *  SAMPLES (WorkflowSample)
-     *      STATUSES
-     *      I) PENDING
-     *          - WorkflowSamples default to Pending, i.e. complete = false on initialization
-     *      II) FAILED
-     *          - WorkflowSamples are evaluated for failure on initialization based on their initialized status
-     *          - Failed WorkflowSamples ARE considered complete (different from Stage)
+     *      A sample can be incomplete, complete, & failed-complete. These are determined by a failed and complete flag.
+     *      WorkflowSamples default to incomplete and can only be changed to,
+     *          I)  FAILED      on  INITIALIZATION, if they have a failed ExemplarSampleStatus
+     *          II) COMPLETE    on  TREE TRAVERSAL, if they have a DataRecord Child in the "Sample" DataType
+     *      STATUSES (More Info):
+     *      I)  INCOMPLETE: Default                                                 sample.complete = false (on init)
+     *      II) FAILED: Has an ExemplarSampleStatus determined to be failed         sample.failed   = true
      *          - All parent WorkflowSamples from a failed leaf are marked failed until a parent w/ non-failed children
      *          - All WorkflowSamples in a path to a Non-failed leaf sample should not be failed
      *          - If the root WorkflowSample has not failed, then the ProjectSample has not failed, i.e. there only
      *            needs to be one non-failed leaf sample in the tree for the whole tree to have not failed
-     *      III) COMPLETE
+     *          - Note: A Failed WorkflowSample is complete (different from Stage)
+     *      III) COMPLETE: Sample has a Sample-DataType DataRecord  child           sample.complete = true
      *          - WorkflowSample w/ child is completed b/c moving on in the workflow creates a child sample
-     *          - WorkflowSample w/o child samples is incomplete, unless failed or has status indicating completion
-     *      OTHER
-     *      - Samples that are awaiting processing or have an ambiguous status will take their stage from their parent
+     *          - Non-failed WorkflowSample w/o sample children is incomplete
      *
      *  STAGES (SampleStageTracker)
-     *      INITIALIZATION
-     *          - Each WorkflowSample will add/update a SampleStageTracker instance in the tree
-     *          - SampleStageTracker instances default to complete
-     *      STATUSES
-     *      I) COMPLETE
-     *          - SampleStageTracker instances default to complete
-     *          - SampleStageTracker instances' completion status can only be updated by a leaf WorkflowSamples of
-     *            that stage
-     *      II) INCOMPLETE
-     *          - Leaf WorkflowSamples can only set the stage to incomplete if it is non-failed and is incomplete as
-     *            determined by StatusTrackerConfig::isCompletedStatus. Note - non-failed WorkflowSamples are considered
-     *            to have "completed" that stage
+     *      Each Sample belongs to a Stage, i.e. a SampleStageTracker instance. There are only two possible stage
+     *      statuses - COMPLETE/INCOMPLETE. The stage statuses for a ProjectSample determine the overall state of that
+     *      sample (Pending, Complete, Failed)
+     *      Each WorkflowSample will add/update a SampleStageTracker instance in the tree. The stage is determined by
+     *      the ExemplarSampleStatus of the Sample DataRecord EXCEPT FOR,
+     *          - If a sample is "Awaiting Processing" or has an ambiguous status. In this case the WorkflowSample's
+     *          stage will be that of their parent
+     *          - If a Sample DataRecord has a "SeqAnalysisSampleQC" child, it belongs to the Data-QC stage
+     *      The Stage of a Sample is initialized to COMPLETE and can only be changed to INCOMPLETE by,
+     *          I) A LEAF-SAMPLE        WHEN    the Sample is non-failed and has an incomplete ExemplarSampleStatus
+     *          determined by StatusTrackerConfig::isCompletedStatus
+     *          II) A NON-LEAF SAMPLE   WHEN    the Sample is determined to be in the Data-QC and determined to have
+     *          not passed Data QC by ProjectSampleTree::isPassedDataQc
      *
-     * @param root - Enriched model of a Sample record's data
-     * @param tree - Data Model for tracking Sample Stages, samples, and the root node
+     * @param root - Workflow sample root whose subtree will be evaluated and update the @tree
+     * @param tree - Tree describing the workflow, which is represented in LIMS as a tree descending from the @root
      * @return
      */
-    private ProjectSampleTree createWorkflowTree(WorkflowSample root, ProjectSampleTree tree){
-        // Update the tracked stages with the input sample's stage
-        tree.addStageToTracked(root);
+    private ProjectSampleTree  createWorkflowTree(WorkflowSample root, ProjectSampleTree tree){
+        // TODO - better way to identify which roots could have a Sequencing QC table?
+        DataRecord sampleQcRecord = getChildSeqAnalysisSampleQcRecord(root.getRecord(), tree.getUser());
+        if(!tree.isPassedDataQc() && sampleQcRecord != null){
+            // If the input node has a SeqQCStatus record, it is a part of the DataQC stage
+            String sequencingStatus = getRecordStringValue(sampleQcRecord, "SeqQCStatus", tree.getUser());
+            tree.setDataQcStatus(sequencingStatus);
+            // Stage needs to be reset
+            root.setStage(STAGE_DATA_QC);
+        }
+
+        tree.addStageToTracked(root);   // Update the overall Project Sample stages w/ the input Workflow sample's stage
 
         // Search each child of the input
         DataRecord[] children = new DataRecord[0];
@@ -246,7 +258,7 @@ public class GetRequestTrackingTask {
         stageMap.values().forEach(
                 tracker -> {
                     final Integer completedCount = tracker.getEndingSamples() + tracker.getFailedSamplesCount();
-                    tracker.setComplete(completedCount == tracker.getSize());
+                    tracker.setComplete(completedCount.equals(tracker.getSize()));
                 }
         );
 

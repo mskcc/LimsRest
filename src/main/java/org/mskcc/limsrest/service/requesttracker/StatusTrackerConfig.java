@@ -62,6 +62,7 @@ public class StatusTrackerConfig {
             STAGE_LIBRARY_PREP,
             STAGE_SAMPLE_QC,
             STAGE_SEQUENCING,
+            STAGE_DATA_QC,  // If something needs to be re-sequenced, we want to keep the sample in data-qc
             STAGE_IGO_COMPLETE
     };
     private static Map<String, String> nextStageMap;
@@ -72,18 +73,6 @@ public class StatusTrackerConfig {
             nextStageMap.put(stageOrder[i], stageOrder[i + 1]);
         }
         nextStageMap.put(stageOrder[stageOrder.length - 1], null);
-    }
-
-    /**
-     * Returns whether a status is a complete one
-     * <p>
-     * TODO - Posible that this won't work if the workflow doesn't end w/ sequencing
-     *
-     * @param status
-     * @return
-     */
-    public static final boolean isCompletedStatus(String status) {
-        return status.equals("Completed - Illumina Sequencing");
     }
 
     /**

@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.*;
-import static org.mskcc.limsrest.util.DataRecordAccess.getRecordLongValue;
-import static org.mskcc.limsrest.util.DataRecordAccess.getRecordStringValue;
+import static org.mskcc.limsrest.util.Utils.getRecordLongValue;
+import static org.mskcc.limsrest.util.Utils.getRecordStringValue;
 
 /**
  * These are the samples that are created as part of a workflow. There can be many of these samples for each
