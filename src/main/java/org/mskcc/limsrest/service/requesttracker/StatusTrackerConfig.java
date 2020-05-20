@@ -14,7 +14,7 @@ public class StatusTrackerConfig {
 
     // INVALID STAGES
     public static final String STAGE_UNKNOWN = "unknown";
-    public static final String STAGE_AWAITING_PROCESSING = "awaitingProcessing";
+    public static final String STAGE_AWAITING_PROCESSING = "awaitingProcessing";    // Stage prior to any workflow
 
     // Special Statuses
     public static final String STATUS_AWAITING_PROCESSING = "Awaiting Processing";  // Stage cannot be determined
@@ -59,6 +59,7 @@ public class StatusTrackerConfig {
      */
     private static String[] stageOrder = new String[]{
             STAGE_SUBMITTED,
+            STAGE_AWAITING_PROCESSING,
             STAGE_LIBRARY_PREP,
             STAGE_SAMPLE_QC,
             STAGE_SEQUENCING,
