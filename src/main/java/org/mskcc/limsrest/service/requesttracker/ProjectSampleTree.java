@@ -185,8 +185,9 @@ public class ProjectSampleTree {
 
         ProjectSample projectSample = new ProjectSample(this.root.getRecordId());
         List<SampleStageTracker> stages = getStages();
-        List<WorkflowSample> workflowSamples = getSamples();
         projectSample.addStage(stages);
+
+        // TODO - Edge case where a sample hasn't started a workflow and has only one "Awaiting Processing" stage
 
         Boolean isFailed = root.getFailed();                // A failed root indicates 0 branches w/ a non-failed sample
         // ProjectSample completion is determined by all stages
