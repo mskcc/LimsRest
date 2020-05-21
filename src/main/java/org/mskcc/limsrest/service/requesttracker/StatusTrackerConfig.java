@@ -53,13 +53,23 @@ public class StatusTrackerConfig {
             "Completed - MSK Access Capture - Hybridization",
             "Ready for - Library/Pool Quality Control",
             "Ready for - Digital Droplet PCR",      // ???
-            "Received"
+            "Completed - TruSeqRNA Poly-A cDNA Preparation",
+            "Completed - MSK Access Library Preparation",
+            "Completed - STR/Fragment Analysis Profiling",
+            "Completed - STR PCR Human",
+            "Completed - Digital Droplet PCR",
+            "STR",     // ???
+            "Received"  // ???
     ));
     private static final Set<String> SEQUENCING_STATUSES = new HashSet<>(Arrays.asList(
             "Ready for - Pooling of Sample Libraries for Sequencing",
             "Completed - Pooling of Sample Libraries for Sequencing",
             "In Process - Illumina Sequencing",
-            "Completed - Illumina Sequencing"
+            "Completed - Illumina Sequencing",
+            "Completed - Illumina Sequencing Setup",
+            "Completed - Illumina Sequencing Planning/Denaturing",
+            "Completed - Illumina Sequencing Analysis"
+
     ));
     /**
      * Add the order of valid stages here and then the ordering map will be statically initialzed
