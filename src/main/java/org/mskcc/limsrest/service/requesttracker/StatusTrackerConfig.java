@@ -11,6 +11,7 @@ public class StatusTrackerConfig {
     public static final String STAGE_SEQUENCING = "sequencing";
     public static final String STAGE_DATA_QC = "dataQc";
     public static final String STAGE_IGO_COMPLETE = "igoComplete";
+    public static final String STAGE_EXTRACTION = "extraction";
 
     // INVALID STAGES
     public static final String STAGE_UNKNOWN = "unknown";
@@ -23,6 +24,12 @@ public class StatusTrackerConfig {
             "Failed - Pending User Decision",
             "Failed - Library/Pool Quality Control"
     ));
+
+    private static final Set<String> STATUS_EXTRACTION = new HashSet<>(Arrays.asList(
+            "Completed - DNA Extraction",
+            "Returned to User"              // ?
+    ));
+
     private static final Set<String> SAMPLE_QC_STATUSES = new HashSet<>(Arrays.asList(
             "Completed - Library/Pool Quality Control"
     ));
@@ -60,6 +67,7 @@ public class StatusTrackerConfig {
     private static String[] stageOrder = new String[]{
             STAGE_SUBMITTED,
             STAGE_AWAITING_PROCESSING,
+            STAGE_EXTRACTION,
             STAGE_LIBRARY_PREP,
             STAGE_SAMPLE_QC,
             STAGE_SEQUENCING,
@@ -101,6 +109,7 @@ public class StatusTrackerConfig {
         else if (SEQUENCING_STATUSES.contains(status)) return STAGE_SEQUENCING;
         else if (SAMPLE_QC_STATUSES.contains(status)) return STAGE_SAMPLE_QC;
         else if (STATUS_AWAITING_PROCESSING.equals(status)) return STAGE_AWAITING_PROCESSING;
+        else if (STATUS_EXTRACTION.contains(status)) return STAGE_EXTRACTION;
         // Failed statuses need to be assigned stages based on preceeding/succeeding samples
         else if (FAILED_STATUSES.contains(status)) return STAGE_UNKNOWN;
 
