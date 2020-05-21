@@ -30,41 +30,61 @@ public class StatusTrackerConfig {
             "Returned to User"              // ?
     ));
 
+    // Will take from the last available stage
+    // "Returned to User'"
+    // Turned off by Group Leader
+    // Processing Completed
+    // "Discarded"
+    // "Received"  // ???
+
     private static final Set<String> SAMPLE_QC_STATUSES = new HashSet<>(Arrays.asList(
+            "Ready for - Library/Pool Quality Control",
             "Completed - Library/Pool Quality Control"
     ));
     private static final Set<String> LIBRARY_PREP_STATUSES = new HashSet<>(Arrays.asList(
-            "Completed - Generic Normalization Plate Setup",
             "Completed - Generic Library Preparation",
-            "Completed - Pooling of Sample Libraries by Volume",
-            "In Process - KAPA Library Preparation",
-            "In Process - Capture - Hybridization",
-            "Completed - MSK Access Normalization Plate Setup",
-            "Ready for - MSK Access Capture - Hybridization",
-            "Ready for - Pooling of Sample Libraries by Volume",
             "Completed - Library Clean Up/Size Selection",
-            "Completed - Normalization Plate Setup",
+
+            "In Process - KAPA Library Preparation",
             "Completed - KAPA Library Preparation",
-            "Ready for - Normalization Plate Setup",
-            "Completed - Archer Library Preparation Experiment",
             "Completed - Capture from KAPA Library",
+
+            "Completed - Generic Normalization Plate Setup",
+            "Completed - MSK Access Normalization Plate Setup",
+
+            "Completed - Pooling of Sample Libraries by Volume",
+            "Ready for - Pooling of Sample Libraries by Volume",
             "In Process - Pooling of Sample Libraries for Sequencing",
+
+            "In Process - Capture - Hybridization",
+            "Ready for - MSK Access Capture - Hybridization",
             "Completed - Capture - Hybridization",
             "Completed - MSK Access Capture - Hybridization",
-            "Ready for - Library/Pool Quality Control",
-            "Ready for - Digital Droplet PCR",      // ???
-            "Completed - TruSeqRNA Poly-A cDNA Preparation",
             "Completed - MSK Access Library Preparation",
+
+            "Completed - Normalization Plate Setup",
+            "Ready for - Normalization Plate Setup",
+
+            "Completed - Archer Library Preparation Experiment",
+
+            "Completed - TruSeqRNA Poly-A cDNA Preparation",
+
             "Completed - STR/Fragment Analysis Profiling",
             "Completed - STR PCR Human",
-            "Completed - Digital Droplet PCR",
             "STR",     // ???
-            "Received"  // ???
+
+            "Ready for - Digital Droplet PCR",      // ???
+            "Completed - Digital Droplet PCR",
+            "Completed - PCR Cycle Re-Amplification",
+
+            "Completed - 10X Genomics cDNA Preparation",
+            "Completed - 10X Genomics Library Preparation"
     ));
     private static final Set<String> SEQUENCING_STATUSES = new HashSet<>(Arrays.asList(
             "Ready for - Pooling of Sample Libraries for Sequencing",
-            "Completed - Pooling of Sample Libraries for Sequencing",
+            "Ready for - Illumina Sequencing",
             "In Process - Illumina Sequencing",
+            "Completed - Pooling of Sample Libraries for Sequencing",
             "Completed - Illumina Sequencing",
             "Completed - Illumina Sequencing Setup",
             "Completed - Illumina Sequencing Planning/Denaturing",
