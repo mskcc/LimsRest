@@ -47,8 +47,8 @@ public class GetSampleMetadataTask {
             log.info(" Starting GetSampleMetadata task using timestamp " + timestamp);
             List<DataRecord> requests = new ArrayList<>();
             try {
-                requests = dataRecordManager.queryDataRecords("Request", "CompletedDate > '" + timestamp + "' AND Status IN ('Completed', 'Completed with Failures')", user);
-                //requests = dataRecordManager.queryDataRecords("Request", "RequestId = '93017_V'", user);//'" + timestamp +"'", user);//for testing requests.size());
+                requests = dataRecordManager.queryDataRecords("Request", "CompletedDate > '" + timestamp + "'", user);
+                //requests = dataRecordManager.queryDataRecords("Request", "RequestId = '93017_V'", user);//'" + timestamp +"'", user);//for testing requests.size()); AND Status IN ('Completed', 'Completed with Failures')
                 log.info("Total Requests: " + requests.size());
                 for (DataRecord req : requests) {
                     String requestId = req.getStringVal("RequestId", user);
