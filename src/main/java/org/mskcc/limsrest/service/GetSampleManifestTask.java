@@ -135,13 +135,21 @@ public class GetSampleManifestTask {
         List<DataRecord> qcs = sample.getDescendantsOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
         Set<String> runPassedQC = new HashSet<>();
         String baitSet = null;
+        Long dateBaitSetCreated = Long.MAX_VALUE;
         for (DataRecord dr : qcs) {
             String qcResult = dr.getStringVal(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
             if ("Passed".equals(qcResult)) {
                 String run = dr.getStringVal(SeqAnalysisSampleQCModel.SEQUENCER_RUN_FOLDER, user);
                 runPassedQC.add(run);
                 log.info("Passed sample & run: " + run);
-                baitSet = dr.getStringVal(SeqAnalysisSampleQCModel.BAIT_SET, user);
+                // make sure to get correct baitset when samples are moved downstream i.e. 09687_N_8 WES has 09687_T_1 Methlyseq child
+                // choose earliest created baitset to avoid later baitsets from other requests
+                Long datecreated = dr.getLongVal(SeqAnalysisSampleQCModel.DATE_CREATED, user);
+                if (datecreated < dateBaitSetCreated) {
+                    baitSet = dr.getStringVal(SeqAnalysisSampleQCModel.BAIT_SET, user);
+                    log.info("Saving baitSet: " + baitSet);
+                    dateBaitSetCreated = datecreated;
+                }
             }
         }
 
@@ -161,7 +169,29 @@ public class GetSampleManifestTask {
             dnaLibraries.put(igoId, new LibraryDataRecord(sample));
         }
 
-        Double dnaInputNg = findDNAInputForLibraryForMSKACCESS(sample, user);
+        Double dnaInputNg = null;
+        if (recipe.contains("ACCESS") ) {
+            dnaInputNg = findDNAInputForLibraryForMSKACCESS(sample, user);
+            log.info("Searching for ACCESS 2D barcode with base IGO sample ID=" + sampleManifest.cmoInfoIgoId);
+            List<DataRecord> baseSamples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sampleManifest.cmoInfoIgoId + "'", user);
+            if (baseSamples.size() > 0) {
+                DataRecord baseSample = baseSamples.get(0);
+                // example 2d barcode "8036707180"
+                String barcode = baseSample.getStringVal("MicronicTubeBarcode", user);
+                while (barcode == null || barcode.length() < 8) {
+                    // travel to child sample to look for the original barcode, for example 06302_AH_9
+                    log.info("No 2dbarcode in parent sample, checking child sample.");
+                    DataRecord [] sampleChildren = baseSample.getChildrenOfType("Sample", user);
+                    if (sampleChildren.length > 0) {
+                        baseSample = sampleChildren[0];
+                        barcode = baseSample.getStringVal("MicronicTubeBarcode", user);
+                    } else {
+                        break;
+                    }
+                }
+                sampleManifest.setCfDNA2dBarcode(barcode);
+            }
+        }
 
         // for each DNA Library traverse the records grab the fields we need and paths to fastqs.
         for (Map.Entry<String, LibraryDataRecord> aliquotEntry : dnaLibraries.entrySet()) {
@@ -308,14 +338,10 @@ public class GetSampleManifestTask {
      */
     protected Double findDNAInputForLibraryForMSKACCESS(DataRecord sample, User user) {
         try {
-            String recipe = sample.getStringVal(SampleModel.RECIPE, user);
-            if (recipe.contains("ACCESS") ){
-                log.info("Searching for DNA Library Input Mass (ng).");
-                DataRecord [] records = sample.getChildrenOfType(KAPALibPlateSetupProtocol1Model.DATA_TYPE_NAME, user);
-                DataRecord record = records[records.length - 1];
-                return record.getDoubleVal(KAPALibPlateSetupProtocol1Model.TARGET_MASS_ALIQ_1, user);
-            }
-            return null;
+            log.info("Searching for DNA Library Input Mass (ng).");
+            DataRecord[] records = sample.getChildrenOfType(KAPALibPlateSetupProtocol1Model.DATA_TYPE_NAME, user);
+            DataRecord record = records[records.length - 1];
+            return record.getDoubleVal(KAPALibPlateSetupProtocol1Model.TARGET_MASS_ALIQ_1, user);
         } catch (Exception e) {
             log.error(e);
             return null;
@@ -338,7 +364,7 @@ public class GetSampleManifestTask {
         } else {
             cmoInfo = sampleCMOInfoRecords.get(0);
         }
-        return getSampleLevelFields(igoId, cmoInfo, user);
+        return getSampleLevelFields(igoId, cmoInfoIgoId, cmoInfo, user);
     }
 
     // source IGO ID field often has '0', blank or null
@@ -384,9 +410,10 @@ public class GetSampleManifestTask {
         return new SampleManifest.Library(libraryIgoId, libraryVolume, libraryConcentration, dnaInputNg);
     }
 
-    protected SampleManifest getSampleLevelFields(String igoId, DataRecord cmoInfo, User user) throws NotFound, RemoteException {
+    protected SampleManifest getSampleLevelFields(String igoId, String cmoInfoIgoId, DataRecord cmoInfo, User user) throws NotFound, RemoteException {
         SampleManifest s = new SampleManifest();
         s.setIgoId(igoId);
+        s.cmoInfoIgoId = cmoInfoIgoId;
         s.setCmoPatientId(cmoInfo.getStringVal("CmoPatientId", user));
         // aka "Sample Name" in SampleCMOInfoRecords
         String sampleName = cmoInfo.getStringVal("OtherSampleId", user);
@@ -551,10 +578,12 @@ public class GetSampleManifestTask {
                     if (runPassedQC.contains(fastq.runBaseDirectory))
                         passedQCList.add(fastq);
                     else {
-                        // for example 08106_C_35 has fastq PITT_0214_AHVHVFBBXX_A1 BUT PASSED PITT_0214_AHVHVFBBXX
+                        // for example, 08106_C_35 has fastq PITT_0214_AHVHVFBBXX_A1 BUT PASSED
+                        // PITT_0214_AHVHVFBBXX in LIMS which is okay
                         if (fastq.runBaseDirectory.endsWith("_A1") ||
                                 fastq.runBaseDirectory.endsWith("_A2") ||
-                                fastq.runBaseDirectory.endsWith("_A3")) {
+                                fastq.runBaseDirectory.endsWith("_A3") ||
+                                fastq.runBaseDirectory.endsWith("_RENAME")) { // DIANA_0176_AH735GDSXY_RENAME
                             if (runPassedQC.contains(fastq.run))
                                 passedQCList.add(fastq);
                         }
