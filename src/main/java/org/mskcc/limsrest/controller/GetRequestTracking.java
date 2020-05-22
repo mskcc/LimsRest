@@ -1,5 +1,7 @@
 package org.mskcc.limsrest.controller;
 
+import com.velox.api.datarecord.IoError;
+import com.velox.api.datarecord.NotFound;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletRequest;
+import java.rmi.RemoteException;
 import java.util.Map;
 
 import static org.mskcc.limsrest.util.Utils.getResponseEntity;
@@ -42,7 +45,7 @@ public class GetRequestTracking {
             GetRequestTrackingTask t = new GetRequestTrackingTask(requestId, conn);
             Map<String, Object> requestTracker = t.execute();
             return getResponseEntity(requestTracker, HttpStatus.OK);
-        } catch (Exception e) {
+        } catch (IoError | RemoteException | NotFound e) {
             log.error(e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }

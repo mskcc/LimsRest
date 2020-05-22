@@ -1,13 +1,17 @@
 package org.mskcc.limsrest.service;
 
+import com.velox.api.datarecord.IoError;
+import com.velox.api.datarecord.NotFound;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mskcc.limsrest.ConnectionLIMS;
 
+import java.rmi.RemoteException;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class GetRequestTrackingTaskTest {
     ConnectionLIMS conn;
@@ -163,7 +167,13 @@ public class GetRequestTrackingTaskTest {
             // gate
             if(TEST_THESE_PROJECTS.contains(project.name)) {
                 GetRequestTrackingTask t = new GetRequestTrackingTask(project.name, this.conn);
-                Map<String, Object> requestTracker = t.execute();
+                Map<String, Object> requestTracker = new HashMap<>();
+                try {
+                    requestTracker = t.execute();
+                } catch (IoError | RemoteException | NotFound e){
+                    assertTrue("Exception in task execution", false);
+                }
+
                 Map<String, Object> request = (Map<String, Object>) requestTracker.get("request");
                 testProjectStages(request, project);
             }

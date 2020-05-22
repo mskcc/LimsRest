@@ -39,62 +39,72 @@ public class GetRequestTrackingTask {
         this.conn = conn;
     }
 
-    public Map<String, Object> execute() {
-        try {
-            VeloxConnection vConn = conn.getConnection();
-            User user = vConn.getUser();
-            DataRecordManager drm = vConn.getDataRecordManager();
+    public Map<String, Object> execute() throws IoError, RemoteException, NotFound {
+        VeloxConnection vConn = conn.getConnection();
+        User user = vConn.getUser();
+        DataRecordManager drm = vConn.getDataRecordManager();
 
-            String serviceId = getBankedSampleServiceId(this.requestId, user, drm);
-            Request request = new Request(requestId, serviceId);
+        String serviceId = getBankedSampleServiceId(this.requestId, user, drm);
+        Request request = new Request(requestId, serviceId);
 
-            if (serviceId != null && !serviceId.equals("")) {
-                // Add "submitted" stage if a serviceID exists
-                // TODO - Why is this the case (QA: "06302_W")
-                // TODO - Place in thread as this can be executed independently
-                SampleStageTracker submittedStage = getSubmittedStage(serviceId, user, drm);
-                request.addStage("submitted", submittedStage);
-            }
-
-            // Validate request record
-            List<DataRecord> requestRecordList = drm.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
-            if (requestRecordList.size() != 1) {  // error: request ID not found or more than one found
-                log.error(String.format("Request %s not found for requestId %s. Returning incomplete information", requestId));
-                return request.toApiResponse();
-            }
-            DataRecord requestRecord = requestRecordList.get(0);
-            
-            Map<String, Object> metaData = getMetaDataFromRecord(requestRecord, user);
-            request.setMetaData(metaData);
-
-            // Immediate samples of record represent physical samples. LIMS creates children of these in the workflow
-            DataRecord[] samples = requestRecord.getChildrenOfType("Sample", user);
-
-            // Create the tree of each ProjectSample aggregating per-sample status/stage information
-            List<ProjectSample> projectSamples = new ArrayList<>();
-            for (DataRecord record : samples) {
-                ProjectSampleTree tree = createProjectSampleTree(record, user);
-                ProjectSample projectSample = tree.convertToProjectSample();
-                projectSamples.add(projectSample);
-            }
-            request.setSamples(projectSamples);
-
-            // Add stages to request
-            Map<String, SampleStageTracker> projectStages = getProjectStagesFromSamples(projectSamples);
-            for (Map.Entry<String, SampleStageTracker> requestStage : projectStages.entrySet()) {
-                request.addStage(requestStage.getKey(), requestStage.getValue());
-            }
-
-            Map<String, Object> apiResponse = new HashMap<>();
-            apiResponse.put("request", request.toApiResponse());
-            apiResponse.put("requestId", this.requestId);
-            apiResponse.put("serviceId", serviceId);
-
-            return apiResponse;
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-            return null;
+        if (serviceId != null && !serviceId.equals("")) {
+            // Add "submitted" stage if a serviceID exists
+            // TODO - Why is this the case (QA: "06302_W")
+            // TODO - Place in thread as this can be executed independently
+            SampleStageTracker submittedStage = getSubmittedStage(serviceId, user, drm);
+            request.addStage("submitted", submittedStage);
         }
+
+        // Validate request record
+        List<DataRecord> requestRecordList = drm.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
+        if (requestRecordList.size() != 1) {  // error: request ID not found or more than one found
+            log.error(String.format("Request %s not found for requestId %s. Returning incomplete information", requestId));
+            return request.toApiResponse();
+        }
+        DataRecord requestRecord = requestRecordList.get(0);
+
+        Map<String, Object> metaData = getMetaDataFromRecord(requestRecord, user);
+        request.setMetaData(metaData);
+
+        List<ProjectSample> projectSamples = getProjectSamplesFromDataRecord(requestRecord, user);
+        request.setSamples(projectSamples);
+
+        Map<String, SampleStageTracker> projectStages = getProjectStagesFromSamples(projectSamples);
+        for (Map.Entry<String, SampleStageTracker> requestStage : projectStages.entrySet()) {
+            request.addStage(requestStage.getKey(), requestStage.getValue());
+        }
+
+        Map<String, Object> apiResponse = new HashMap<>();
+        apiResponse.put("request", request.toApiResponse());
+        apiResponse.put("requestId", this.requestId);
+        apiResponse.put("serviceId", serviceId);
+
+        return apiResponse;
+    }
+
+    /**
+     * Traverse the tree of each "Sample" DataType child of the input @requestRecord. This tree is converted into
+     * a ProjectSample data model that represents the tree
+     *
+     * @param requestRecord - DataRecord of the request being tracked
+     * @param user
+     * @return
+     * @throws IoError
+     * @throws RemoteException
+     */
+    private List<ProjectSample> getProjectSamplesFromDataRecord(DataRecord requestRecord, User user) throws IoError, RemoteException  {
+        // Immediate samples of record represent physical samples. LIMS creates children of these in the workflow
+        DataRecord[] samples = requestRecord.getChildrenOfType("Sample", user);
+
+        // Create the tree of each ProjectSample aggregating per-sample status/stage information
+        List<ProjectSample> projectSamples = new ArrayList<>();
+        for (DataRecord record : samples) {
+            ProjectSampleTree tree = createProjectSampleTree(record, user);
+            ProjectSample projectSample = tree.convertToProjectSample();
+            projectSamples.add(projectSample);
+        }
+
+        return projectSamples;
     }
 
     /**
@@ -209,7 +219,8 @@ public class GetRequestTrackingTask {
     }
 
     /**
-     * Aggregate SampleStageTracker from all input @projectSamples
+     * Aggregate SampleStageTracker from all input @projectSamples. The Project Stages summarize the progress of each
+     * Project Sample in the request
      *
      * @param projectSamples - All samples of a request
      * @return
