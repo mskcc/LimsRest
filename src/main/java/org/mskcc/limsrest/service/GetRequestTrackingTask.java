@@ -71,14 +71,19 @@ public class GetRequestTrackingTask {
             DataRecord[] samples = requestRecord.getChildrenOfType("Sample", user);
 
             // Create the tree of each ProjectSample aggregating per-sample status/stage information
+            List<ProjectSample> projectSamples = new ArrayList<>();
             for (DataRecord record : samples) {
                 ProjectSampleTree tree = createProjectSampleTree(record, user);
                 ProjectSample projectSample = tree.convertToProjectSample();
-                request.addTrackedSample(projectSample);
+                projectSamples.add(projectSample);
             }
+            request.setSamples(projectSamples);
 
-            // TODO - Make input List<ProjectSample> and explicitly show that aggregateStages are being added to request
-            aggregateStageInfoForRequest(request);
+            // Add stages to request
+            Map<String, SampleStageTracker> projectStages = getProjectStagesFromSamples(projectSamples);
+            for (Map.Entry<String, SampleStageTracker> requestStage : projectStages.entrySet()) {
+                request.addStage(requestStage.getKey(), requestStage.getValue());
+            }
 
             Map<String, Object> apiResponse = new HashMap<>();
             apiResponse.put("request", request.toApiResponse());
@@ -89,22 +94,6 @@ public class GetRequestTrackingTask {
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
             return null;
-        }
-    }
-
-    /**
-     * Summarizes stage-level information about the request using each sample in the request
-     *
-     * @param request
-     */
-    private void aggregateStageInfoForRequest(Request request){
-        // Aggregate flattened stage information for each sample in the request
-        List<SampleStageTracker> requestStages = request.getSamples().stream()
-                .flatMap(tracker -> tracker.getStages().stream())
-                .collect(Collectors.toList());
-        Map<String, SampleStageTracker> requestStagesMap = aggregateStages(requestStages);
-        for (Map.Entry<String, SampleStageTracker> requestStage : requestStagesMap.entrySet()) {
-            request.addStage(requestStage.getKey(), requestStage.getValue());
         }
     }
 
@@ -217,6 +206,20 @@ public class GetRequestTrackingTask {
         ProjectSampleTree workflowTree = createWorkflowTree(root, rootTree);
 
         return workflowTree;
+    }
+
+    /**
+     * Aggregate SampleStageTracker from all input @projectSamples
+     *
+     * @param projectSamples - All samples of a request
+     * @return
+     */
+    public Map<String, SampleStageTracker> getProjectStagesFromSamples(List<ProjectSample> projectSamples){
+        List<SampleStageTracker> sampleStages = projectSamples.stream()
+                .flatMap(tracker -> tracker.getStages().stream())
+                .collect(Collectors.toList());
+        Map<String, SampleStageTracker> requestStagesMap = aggregateStages(sampleStages);
+        return requestStagesMap;
     }
 
     /**

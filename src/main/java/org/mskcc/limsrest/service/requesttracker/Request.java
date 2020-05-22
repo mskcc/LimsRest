@@ -31,14 +31,11 @@ public class Request {
         this.metaData = metaData;
     }
 
-    public Map<String, SampleStageTracker> getStages() {
-        return stages;
-    }
-
-    public void setStages(Map<String, SampleStageTracker> stages) {
-        this.stages = stages;
-    }
-
+    /**
+     * Adds a stage to the request
+     * @param stageName
+     * @param stage
+     */
     public void addStage(String stageName, SampleStageTracker stage) {
         if (this.stages.containsKey(stageName)) {
             log.warn(String.format("Overriding stage: %s recorded for record: %s", stageName, this.requestId));
@@ -50,8 +47,8 @@ public class Request {
         return samples;
     }
 
-    public void addTrackedSample(ProjectSample projectSample) {
-        this.samples.add(projectSample);
+    public void setSamples(List<ProjectSample> samples) {
+        this.samples = samples;
     }
 
     public Map<String, Object> toApiResponse() {
