@@ -254,13 +254,19 @@ public class GetRequestTrackingTask {
             }
         }
 
-        // Calculate completion status of stage based on whether ending + failed equals total size
-        stageMap.values().forEach(
-                tracker -> {
-                    final Integer completedCount = tracker.getEndingSamples() + tracker.getFailedSamplesCount();
-                    tracker.setComplete(completedCount.equals(tracker.getSize()));
-                }
-        );
+        /**
+         * A stage is marked complete if,
+         *      1) (# ending) + (# failed) = total
+         *      2) Previous stage is complete
+         */
+        Boolean complete = true;
+        Integer completedCount;
+        Collection<SampleStageTracker> trackers = stageMap.values();
+        for(SampleStageTracker tracker : trackers){
+            completedCount = tracker.getEndingSamples() + tracker.getFailedSamplesCount();
+            complete = complete && completedCount.equals(tracker.getSize());
+            tracker.setComplete(complete);
+        }
 
         return stageMap;
     }

@@ -38,10 +38,10 @@ public class GetRequestTrackingTaskTest {
             "06302_AG",		// Not detecting the Data-QC failures (Many samples - should be excluded from most test runs)
 
             // Failed/Pending
-            "05888_G"		// Good: 3 w/ failed Sequencing Branches, 5 "Under-Review"
+            "05888_G",		// Good: 3 w/ failed Sequencing Branches, 5 "Under-Review"
 
-            // TODO - Single Awaiting Processing Node
-            // "09546_T",      // Single awaitingProcessing Node
+            // Awaiting Processing - When a sample hasn't been assigned to a workflow
+            "09546_T"      // Single awaitingProcessing Node
     ));
 
 
@@ -113,7 +113,7 @@ public class GetRequestTrackingTaskTest {
                         .addStage("libraryPrep", true, 382, 380, 2)
                         // TODO - Failed should be 48 & completed 332, but sequencing failures are difficult
                         .addStage("sequencing", false, 380, 332, 0)
-                        .addStage("dataQc", true, 380, 332, 48)
+                        .addStage("dataQc", false, 380, 332, 48)
                         .build()
         ));
 
@@ -138,15 +138,16 @@ public class GetRequestTrackingTaskTest {
 
     @Test
     public void awaitingProcessingProjects()  throws Exception {
-        /*  Single Awaiting Processing Node
+        /*  Single Awaiting Processing Node - All stages after "awaitingProcessing" should be incomplete
             "09546_T",			// doesn't load
          */
         List<Project> testCases = new ArrayList<>(Arrays.asList(
                 new ProjectBuilder("09546_T")
-                        .addStage("submitted", true, 10, 10, 0)
-                        .addStage("libraryPrep", true, 10, 10, 0)
-                        .addStage("sequencing", false, 10, 9, 0)
-                        .addStage("dataQc", false, 10, 9, 0)
+                        .addStage("submitted", true, 26, 26, 0)
+                        .addStage("awaitingProcessing", false, 10, 0, 0)
+                        .addStage("libraryPrep", false, 16, 16, 0)
+                        .addStage("sequencing", false, 16, 16, 0)
+                        .addStage("dataQc", false, 16, 16, 0)
                         .build()));
 
         testProjects(testCases);
