@@ -125,17 +125,17 @@ public class PromoteBanked extends LimsTask {
                     if (mappedReq.size() > 0) {
                         DataRecord req = mappedReq.get(0);
                         String requestId = req.getStringVal("RequestId", user);
-                        nextRequest = "Promoting to request " + requestId + " because service id matches";
+                        nextRequest = "Would promote to Request " + requestId + " because Service ID matches.";
                     } else {
-                        nextRequest = "Promoting to a new request";
+                        nextRequest = "Would promote to a new Request.";
                     }
                 } catch (Exception e) {
-                    nextRequest = "Promoting to a new request";
+                    nextRequest = "Would promote to a new Request.";
                 }
             } else if (!requestId.equals("NULL")) {
-                nextRequest = "Promoting to existent request " + requestId;
+                nextRequest = "Would promote to existing Request " + requestId;
             } else {
-                nextRequest = "Promoting to a new request in project " + projectId;
+                nextRequest = "Would promote to a new Request in Project " + projectId;
             }
 
             return ResponseEntity.ok(nextRequest);

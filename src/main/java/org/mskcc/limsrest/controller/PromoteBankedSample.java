@@ -75,8 +75,8 @@ public class PromoteBankedSample {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
-            log.error("Promote error:" + e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage() + "\nTRACE: " + sw.toString());
+            log.error("Promote error:" + e +  "\nTRACE: " + sw.toString());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 }
