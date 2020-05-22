@@ -1,14 +1,25 @@
 package org.mskcc.limsrest.util;
 
+import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.NotFound;
+import com.velox.api.user.User;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.NucleicAcid;
 import org.mskcc.limsrest.service.PatientSamplesWithCmoInfoRetriever;
 
+import java.rmi.RemoteException;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 public class Utils {
     private final static Log LOGGER = LogFactory.getLog(Utils.class);
+
+    public final static String SEQ_QC_STATUS_PASSED = "passed";
+    public final static String SEQ_QC_STATUS_FAILED = "failed";
 
     public static void runAndCatchNpe(Runnable runnable) {
         try {
@@ -34,5 +45,90 @@ public class Utils {
 
             return Optional.empty();
         }
+    }
+
+    /**
+     * Method to check if Sequencing for a sample is complete based on presence of SeqAnalysisSampleQC as child record
+     * and status of SeqAnalysisSampleQC as Passed.
+     * @param sample
+     * @return
+     */
+    public static Boolean isSequencingComplete(DataRecord sample, User user){
+        DataRecord qcRecord = getChildSeqAnalysisSampleQcRecord(sample, user);
+        if(qcRecord == null) {
+            return false;
+        }
+        String sequencingStatus = getRecordStringValue(sample, "SeqQCStatus", user);
+        return sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_PASSED) || sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_FAILED);
+    }
+
+    /**
+     * Returns the SeqAnalysisSampleQC child of record if it exists. Returns null if no SeqAnalysisSampleQC child
+     * @param record
+     * @param user
+     * @return
+     */
+    public static DataRecord getChildSeqAnalysisSampleQcRecord(DataRecord record, User user){
+        try {
+            List<DataRecord> seqAnalysisRecords = Arrays.asList(record.getChildrenOfType("SeqAnalysisSampleQC", user));
+            if (seqAnalysisRecords.size()>0) {
+                return seqAnalysisRecords.get(0);
+            }
+        }catch (Exception e){
+            LOGGER.error(e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Safely retrieves a String value from a dataRecord. Returns empty string on error.
+     *
+     * @param record
+     * @param key
+     * @param user
+     * @return
+     */
+    public static String getRecordStringValue(DataRecord record, String key, User user) {
+        try {
+            return record.getStringVal(key, user);
+        } catch (NotFound | RemoteException e) {
+            LOGGER.error(String.format("Failed to get key %s from Data Record: %d", key, record.getRecordId()));
+        }
+        return "";
+    }
+
+    /**
+     * Get a DataField value from a DataRecord.
+     *
+     * @param record
+     * @param fieldName
+     * @param fieldType
+     * @return Object
+     * @throws NotFound
+     * @throws RemoteException
+     */
+    public static Object getValueFromDataRecord(DataRecord record, String fieldName, String fieldType, User user) throws NotFound, RemoteException {
+        if (record == null) {
+            return "";
+        }
+        if (record.getValue(fieldName, user) != null) {
+            if (fieldType.equals("String")) {
+                return record.getStringVal(fieldName, user);
+            }
+            if (fieldType.equals("Integer")) {
+                return record.getIntegerVal(fieldName, user);
+            }
+            if (fieldType.equals("Long")) {
+                return record.getLongVal(fieldName, user);
+            }
+            if (fieldType.equals("Double")) {
+                return record.getDoubleVal(fieldName, user);
+            }
+            if (fieldType.equals("Date")) {
+                SimpleDateFormat dateFormatter = new SimpleDateFormat("MM-dd-yyyy");
+                return dateFormatter.format(new Date(record.getDateVal(fieldName, user)));
+            }
+        }
+        return "";
     }
 }

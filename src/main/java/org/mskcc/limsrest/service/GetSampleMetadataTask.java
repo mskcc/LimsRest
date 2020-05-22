@@ -20,6 +20,8 @@ import java.rmi.RemoteException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static org.mskcc.limsrest.util.Utils.isSequencingComplete;
+
 
 public class GetSampleMetadataTask {
     private final List<String> NUCLEIC_ACID_TYPES = Arrays.asList("dna", "rna", "cfdna", "amplicon", "cdna");
@@ -47,8 +49,8 @@ public class GetSampleMetadataTask {
             log.info(" Starting GetSampleMetadata task using timestamp " + timestamp);
             List<DataRecord> requests = new ArrayList<>();
             try {
-                requests = dataRecordManager.queryDataRecords("Request", "CompletedDate > '" + timestamp + "' AND Status IN ('Completed', 'Completed with Failures')", user);
-                //requests = dataRecordManager.queryDataRecords("Request", "RequestId = '93017_V'", user);//'" + timestamp +"'", user);//for testing requests.size());
+                requests = dataRecordManager.queryDataRecords("Request", "CompletedDate > '" + timestamp + "'", user);
+                //requests = dataRecordManager.queryDataRecords("Request", "RequestId = '93017_V'", user);//'" + timestamp +"'", user);//for testing requests.size()); AND Status IN ('Completed', 'Completed with Failures')
                 log.info("Total Requests: " + requests.size());
                 for (DataRecord req : requests) {
                     String requestId = req.getStringVal("RequestId", user);
@@ -378,7 +380,7 @@ public class GetSampleMetadataTask {
                 currentSampleStatus = (String) getValueFromDataRecord(current, "ExemplarSampleStatus", "String");
                 int currentStatusOrder = SAMPLETYPES_IN_ORDER.indexOf(currentSampleType.toLowerCase());
                 long currentRecordId = current.getRecordId();
-                if (isSequencingComplete(current)) {
+                if (isSequencingComplete(current, user)) {
                     return "Completed Sequencing";
                 }
                 if (currentRecordId > recordId && currentStatusOrder > statusOrder && isCompleteStatus(currentSampleStatus)) {
@@ -452,29 +454,4 @@ public class GetSampleMetadataTask {
         }
         return "";
     }
-
-    /**
-     * Method to check if sequencing has been completed on sample by checking for presence of SeqAnalysisSampleQC child record.
-     *
-     * @param sample
-     * @return Boolean
-     */
-    private Boolean isSequencingComplete(DataRecord sample) {
-        try {
-            baitSet = "";
-            List<DataRecord> seqAnalysisRecords = Arrays.asList(sample.getChildrenOfType("SeqAnalysisSampleQC", user));
-            if (seqAnalysisRecords.size() > 0) {
-                Object sequencingStatus = seqAnalysisRecords.get(0).getValue("SeqQCStatus", user);
-                baitSet = (String) (getValueFromDataRecord(seqAnalysisRecords.get(0), "BaitSet", "String"));
-                if (sequencingStatus != null && (sequencingStatus.toString().equalsIgnoreCase("passed") || sequencingStatus.toString().equalsIgnoreCase("failed"))) {
-                    return true;
-                }
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            return false;
-        }
-        return false;
-    }
-
 }
