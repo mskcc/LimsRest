@@ -138,7 +138,7 @@ public class GetSampleStatusTask {
                 int currentStatusOrder = getSampleTypeOrder(currentSampleType.toLowerCase());
                 long currentRecordId = current.getRecordId();
                 if (isSequencingComplete(current)) {
-                    return "Completed Sequencing";
+                    return "Completed - Sequencing";
                 }
                 if (currentRecordId > recordId && currentStatusOrder > statusOrder && isCompleteStatus(currentSampleStatus)) {
                     sampleStatus = resolveCurrentStatus(currentSampleStatus, currentSampleType);
@@ -207,6 +207,9 @@ public class GetSampleStatusTask {
         }
         if (LIBRARY_SAMPLE_TYPES.contains(sampleType.toLowerCase()) && isSequencingCompleteStatus(status)) {
             return "Completed - Sequencing";
+        }
+        if (LIBRARY_SAMPLE_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("completed") && status.toLowerCase().contains("capture")) {
+            return "Completed - Library Capture";
         }
         if (status.toLowerCase().contains("failed")) {
             return status;
