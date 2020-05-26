@@ -105,7 +105,7 @@ public class Utils {
             if(record.getValue(key, user) != null) {
                 return record.getStringVal(key, user);
             }
-        } catch (NotFound | RemoteException e) {
+        } catch (NotFound | RemoteException | NullPointerException e) {
             LOGGER.error(String.format("Failed to get key %s from Data Record: %d", key, record.getRecordId()));
             return "";
         }
