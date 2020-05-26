@@ -88,7 +88,7 @@ public class Utils {
      * @param status
      * @return
      */
-    private static boolean isCompleteStatus(String status){
+    public static boolean isCompleteStatus(String status){
         return status.toLowerCase().contains("completed") || status.toLowerCase().contains("failed");
     }
 
@@ -352,7 +352,7 @@ public class Utils {
      * @param sampleType
      * @return
      */
-    private static String resolveCurrentStatus(String status, String sampleType) {
+    public static String resolveCurrentStatus(String status, String sampleType) {
         if (NUCLEIC_ACID_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("completed -") && status.toLowerCase().contains("extraction") && status.toLowerCase().contains("dna/rna simultaneous")) {
             return String.format("Completed - %s Extraction", sampleType.toUpperCase());
         }
