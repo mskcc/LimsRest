@@ -192,7 +192,7 @@ public class GetRequestTrackingTask {
 
             for(WorkflowSample sample : workflowChildren){
                 // Update tree w/ each sample
-                log.info(String.format("Searching children of data record ID: %d", root.getRecordId()));
+                log.debug(String.format("Searching children of data record ID: %d", root.getRecordId()));
                 tree = createWorkflowTree(sample, tree);
             }
         }

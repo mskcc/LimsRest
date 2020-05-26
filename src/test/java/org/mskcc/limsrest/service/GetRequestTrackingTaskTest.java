@@ -29,10 +29,11 @@ public class GetRequestTrackingTaskTest {
 
     public static final Set<String> TEST_THESE_PROJECTS = new HashSet<>(Arrays.asList(
             // ALL PASSED
-             "10795",        // Good:    BASIC                           3 IGO-Complete
-             "09443_AS",		// Good:    BASIC                           8 IGO-complete
-             "09602_F",		// Good:    Multiple successful Banches     12 IGO-complete
-             "09367_K",		// Good:    Failed branches                 1 IGO-Complete
+            "10795",        // Good:    BASIC                           3 IGO-Complete
+            "09443_AS",		// Good:    BASIC                           8 IGO-complete
+            "09602_F",		// Good:    Multiple successful Banches     12 IGO-complete
+            "09367_K",		// Good:    Failed branches                 1 IGO-Complete
+            "07428_AA",     // Good:    Includes extraction             4 IGO-Complete
 
             // Passed/Pending
             "10793",        // Good: 9 Passed, 1 Pending
@@ -78,6 +79,14 @@ public class GetRequestTrackingTaskTest {
                         .addStage("libraryPrep", true, 1, 1, 0)
                         .addStage("sequencing", true, 1, 1, 0)
                         .addStage("dataQc", true, 1, 1, 0)
+                        .build(),
+                new ProjectBuilder("07428_AA")
+                        .addStage("submitted", true, 4, 4, 0)
+                        .addStage("extraction", true, 4, 4, 0)
+                        .addStage("libraryPrep", true, 4, 4, 0)
+                        .addStage("sampleQc", true, 4, 4, 0)
+                        .addStage("sequencing", true, 4, 4, 0)
+                        .addStage("dataQc", true, 4, 4, 0)
                         .build()
         ));
 
