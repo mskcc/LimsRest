@@ -45,7 +45,7 @@ public class GetSampleStatusTask {
             if (samples.size()==1){
                 DataRecord sample = samples.get(0);
                 requestId = (String)getValueFromDataRecord(sample, "RequestId", "String", user);
-                status = getSampleStatus(samples.get(0), requestId, user);
+                status = getMostAdvancedSampleStatus(samples.get(0), requestId, user);
             }
             log.info("request id: " + requestId);
         } catch (Throwable e) {

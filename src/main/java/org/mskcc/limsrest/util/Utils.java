@@ -23,6 +23,11 @@ public class Utils {
 
     private final static String SEQ_QC_STATUS_PASSED = "passed";
     private final static String SEQ_QC_STATUS_FAILED = "failed";
+    private final static List<String> TISSUE_SAMPLE_TYPES = Arrays.asList("cells","plasma","blood","tissue","buffy coat","blocks/slides","ffpe sample","other","tissue sample");
+    private final static List<String> NUCLEIC_ACID_TYPES = Arrays.asList("dna","rna","cdna","cfdna","dna,cfdna","amplicon","pre-qc rna");
+    private final static List<String> LIBRARY_SAMPLE_TYPES = Arrays.asList("dna library", "cdna library", "gdna library");
+    private final static List<String> CAPTURE_SAMPLE_TYPES = Collections.singletonList("capture library");
+    private final static List<String> POOLED_SAMPLE_TYPES = Collections.singletonList("pooled library");
 
     public static void runAndCatchNpe(Runnable runnable) {
         try {
@@ -287,7 +292,7 @@ public class Utils {
      * @param requestId
      * @return
      */
-    public static String getSampleStatus(DataRecord sample, String requestId, User user) {
+    public static String getMostAdvancedSampleStatus(DataRecord sample, String requestId, User user) {
         String sampleId = "";
         String sampleStatus = "";
         String currentSampleType = "";
@@ -340,11 +345,6 @@ public class Utils {
         return status.contains("completed - ") && status.contains("illumina") && status.contains("sequencing");
     }
 
-    private final static List<String> TISSUE_SAMPLE_TYPES = Arrays.asList("cells","plasma","blood","tissue","buffy coat","blocks/slides","ffpe sample","other","tissue sample");
-    private final static List<String> NUCLEIC_ACID_TYPES = Arrays.asList("dna","rna","cdna","cfdna","dna,cfdna","amplicon","pre-qc rna");
-    private final static List<String> LIBRARY_SAMPLE_TYPES = Arrays.asList("dna library", "cdna library", "gdna library");
-    private final static List<String> CAPTURE_SAMPLE_TYPES = Collections.singletonList("capture library");
-    private final static List<String> POOLED_SAMPLE_TYPES = Collections.singletonList("pooled library");
     /**
      * Method to resolve the sample status to one of the main sample statuses.
      *
