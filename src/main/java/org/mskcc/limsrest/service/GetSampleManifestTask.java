@@ -353,7 +353,7 @@ public class GetSampleManifestTask {
             throws NotFound, RemoteException, IoError {
         // try to find the CMO Sample Level record if it exists, if not use the sample level fields.
 
-        String cmoInfoIgoId = getCMOSampleIGOID(sample, igoId, dataRecordManager, user);
+        String cmoInfoIgoId = getCMOSampleIGOID(sample, igoId, dataRecordManager, 0, user);
         // 06302_R_1 has no sampleCMOInfoRecord so use the same fields at the sample level
         log.info("Searching for CMO info record by IGO ID:" + cmoInfoIgoId);
         List<DataRecord> sampleCMOInfoRecords = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "SampleId = '" + cmoInfoIgoId +  "'", user);
@@ -368,18 +368,24 @@ public class GetSampleManifestTask {
     }
 
     // source IGO ID field often has '0', blank or null
-    private String getCMOSampleIGOID(DataRecord sample, String igoId, DataRecordManager dataRecordManager, User user)
+    // this recursive function could just be a while loop
+    private String getCMOSampleIGOID(DataRecord sample, String igoId, DataRecordManager dataRecordManager, int depth, User user)
             throws NotFound, RemoteException, IoError {
         // for example sample: 10049_B_1->10049_1_1 source LIMS sample ID
         // Also possible parent's parent has the CMO Info record: 07724_D_8->07724_B_8->07724_8
         // or no CMO level record exists: 06230_C_5
         String sourceSampleID = sample.getStringVal("SourceLimsId", user);
+        // exit recursion by these conditions
         if (sourceSampleID == null || sourceSampleID.isEmpty() || sourceSampleID.equals("0"))
             return igoId;
+        if (depth > 5) {
+            log.info("Likely self-referencial sample: " + igoId);
+            return igoId;
+        }
         else {
             String baseIGOID = IGOTools.baseIgoSampleId(sourceSampleID);
             List<DataRecord> samples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + baseIGOID + "'", user);
-            return getCMOSampleIGOID(samples.get(0), baseIGOID, dataRecordManager, user);
+            return getCMOSampleIGOID(samples.get(0), baseIGOID, dataRecordManager, ++depth, user);
         }
     }
 
@@ -415,7 +421,10 @@ public class GetSampleManifestTask {
         s.setIgoId(igoId);
         s.cmoInfoIgoId = cmoInfoIgoId;
         s.setCmoPatientId(cmoInfo.getStringVal("CmoPatientId", user));
+        //if (fixIt.contains(igoId))
+         //   s.setCmoPatientId("C-UNKNOWN-"+ igoId);
         // aka "Sample Name" in SampleCMOInfoRecords
+
         String sampleName = cmoInfo.getStringVal("OtherSampleId", user);
         if (sampleName == null || "".equals(sampleName.trim())) { // for example 05304_O_4 Agilent 51MB or update DB so this is not necessary?
             //sampleName = cmoInfo.getStringVal("UserSampleID", user);
