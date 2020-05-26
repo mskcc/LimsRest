@@ -3,23 +3,26 @@ package org.mskcc.limsrest.util;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.mskcc.domain.sample.NucleicAcid;
-import org.mskcc.limsrest.service.PatientSamplesWithCmoInfoRetriever;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.rmi.RemoteException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class Utils {
     private final static Log LOGGER = LogFactory.getLog(Utils.class);
 
-    public final static String SEQ_QC_STATUS_PASSED = "passed";
-    public final static String SEQ_QC_STATUS_FAILED = "failed";
+    private final static String SEQ_QC_STATUS_PASSED = "passed";
+    private final static String SEQ_QC_STATUS_FAILED = "failed";
 
     public static void runAndCatchNpe(Runnable runnable) {
         try {
@@ -68,7 +71,7 @@ public class Utils {
      * @param user
      * @return
      */
-    public static DataRecord getChildSeqAnalysisSampleQcRecord(DataRecord record, User user){
+    private static DataRecord getChildSeqAnalysisSampleQcRecord(DataRecord record, User user){
         try {
             List<DataRecord> seqAnalysisRecords = Arrays.asList(record.getChildrenOfType("SeqAnalysisSampleQC", user));
             if (seqAnalysisRecords.size()>0) {
@@ -81,6 +84,15 @@ public class Utils {
     }
 
     /**
+     * Method to check is sample status is a completed status.
+     * @param status
+     * @return
+     */
+    private static boolean isCompleteStatus(String status){
+        return status.toLowerCase().contains("completed") || status.toLowerCase().contains("failed");
+    }
+
+    /**
      * Safely retrieves a String value from a dataRecord. Returns empty string on error.
      *
      * @param record
@@ -88,11 +100,14 @@ public class Utils {
      * @param user
      * @return
      */
-    public static String getRecordStringValue(DataRecord record, String key, User user) {
+    private static String getRecordStringValue(DataRecord record, String key, User user) {
         try {
-            return record.getStringVal(key, user);
+            if(record.getValue(key, user) != null) {
+                return record.getStringVal(key, user);
+            }
         } catch (NotFound | RemoteException e) {
             LOGGER.error(String.format("Failed to get key %s from Data Record: %d", key, record.getRecordId()));
+            return "";
         }
         return "";
     }
@@ -131,4 +146,262 @@ public class Utils {
         }
         return "";
     }
+
+
+    /**
+     * Method to get Main Tumor Type using Tumor Type Name eg: Breast Cancer or Pancreatic cancer etc.
+     *
+     * @param url
+     * @param tumorType
+     * @return String
+     */
+    private static String getOncotreeTumorTypeUsingName(URL url, String tumorType) {
+        HttpURLConnection con = null;
+        StringBuilder response = new StringBuilder();
+        JSONArray oncotreeResponseData = null;
+        try {
+            con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("GET");
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+            con.disconnect();
+            oncotreeResponseData = new JSONArray(response.toString());
+            if (oncotreeResponseData.length() > 0) {
+                JSONObject jsonObject = oncotreeResponseData.getJSONObject(0);
+                Object mainType = jsonObject.get("mainType");
+                return mainType != null ? mainType.toString() : "";
+            }
+        } catch (Exception e) {
+            LOGGER.info(String.format("Error while querying oncotree api for name search. Will attempt to search using oncotree api for code search:\n%s",e.getMessage()));
+            return "";
+        }
+        return "";
+    }
+
+    /**
+     * Method to get Main Tumor Type using TumorType CODE or abbreviation eg: BRCA for Breast Cancer and PAAD for
+     * Pancreatic cancer etc.
+     *
+     * @param url
+     * @param tumorType
+     * @return String
+     */
+    private static String getOncotreeTumorTypeUsingCode(URL url, String tumorType) {
+        HttpURLConnection con = null;
+        StringBuilder response = new StringBuilder();
+        JSONArray oncotreeResponseData = null;
+        try {
+            con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("GET");
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+            con.disconnect();
+            oncotreeResponseData = new JSONArray(response.toString());
+            if (oncotreeResponseData.length() > 0) {
+                for (Object rec : oncotreeResponseData) {
+                    Object code = ((JSONObject) rec).get("code");
+                    if (code != null && tumorType.toLowerCase().equals(code.toString().trim().toLowerCase())) {
+                        Object mainType = ((JSONObject) rec).get("mainType");
+                        return mainType != null ? mainType.toString() : "";
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.info(String.format("Error while querying oncotree api using code search. Cannot find Main tumor type.\n%s",e.getMessage()));
+            return "";
+        }
+        return "";
+    }
+
+    /**
+     * Get MainCancerType from oncotree
+     *
+     * @param tumorType
+     * @return String
+     */
+    public static String getOncotreeTumorType(String tumorType) {
+        String mainTumorType = "";
+        try {
+            // In LIMS tumor types entry is not controlled. Sometimes tumor type as tumor name is entered and other times tumor type code is entered.
+            // First query oncotree using api for name search
+            URL url = new URL("http://oncotree.mskcc.org/api/tumorTypes/search/name/" + tumorType.split("/")[0].replace(" ", "%20") + "?exactMatch=false");
+            mainTumorType = getOncotreeTumorTypeUsingName(url, tumorType);
+            // If name search returns nothing, then query oncotree using api for code search
+            if (StringUtils.isBlank(mainTumorType)) {
+                URL url2 = new URL("http://oncotree.mskcc.org/api/tumorTypes/search/code/" + tumorType.split("/")[0].replace(" ", "%20") + "?exactMatch=true");
+                mainTumorType = getOncotreeTumorTypeUsingCode(url2, tumorType);
+            }
+        } catch (Exception e) {
+            LOGGER.error(String.format("Error occured while querying oncotree end point for Tumor Type %s\n%s", tumorType, e.getMessage()));
+            return "";
+        }
+        return mainTumorType;
+    }
+
+    /**
+     * Method to get origin Sample ID for a sample.
+     *
+     * @param sample
+     * @return boolean
+     */
+    public static String getOriginSampleId(DataRecord sample, User user) {
+        String sampleId = "";
+        try {
+            sampleId = sample.getStringVal("SampleId", user);
+            if (sample.getChildrenOfType("SampleCMOInfoRecords", user).length > 0) {
+                return sample.getStringVal("SampleId", user);
+            }
+            Stack<DataRecord> sampleStack = new Stack<>();
+            if (sample.getParentsOfType("Sample", user).size() > 0) {
+                sampleStack.addAll((sample.getParentsOfType("Sample", user)));
+            }
+            do {
+                DataRecord startSample = sampleStack.pop();
+                if (startSample.getChildrenOfType("SampleCMOInfoRecords", user).length > 0) {
+                    return sample.getStringVal("SampleId", user);
+                }
+                if (startSample.getParentsOfType("Sample", user).size() > 0) {
+                    sampleStack.addAll(startSample.getParentsOfType("Sample", user));
+                }
+
+            } while (!sampleStack.isEmpty());
+        } catch (Exception e) {
+            LOGGER.error(String.format("Error occured while finding related SampleCMOInfoRecords for Sample %s", sampleId));
+        }
+        return sampleId;
+    }
+
+
+    /**
+     * Method to get latest sample status.
+     *
+     * @param sample
+     * @param requestId
+     * @return
+     */
+    public static String getSampleStatus(DataRecord sample, String requestId, User user) {
+        String sampleId = "";
+        String sampleStatus = "";
+        String currentSampleType = "";
+        String currentSampleStatus = "";
+        try {
+            sampleId = sample.getStringVal("SampleId", user);
+            int statusOrder = -1;
+            long recordId = 0;
+            Stack<DataRecord> sampleStack = new Stack<>();
+            sampleStack.add(sample);
+            do {
+                DataRecord current = sampleStack.pop();
+                currentSampleType = (String)getValueFromDataRecord(current, "ExemplarSampleType", "String", user);
+                currentSampleStatus = (String) getValueFromDataRecord(current, "ExemplarSampleStatus", "String", user);
+                int currentStatusOrder = getSampleTypeOrder(currentSampleType.toLowerCase());
+                long currentRecordId = current.getRecordId();
+                if (isSequencingComplete(current, user)) {
+                    return "Completed - Sequencing";
+                }
+                if (currentRecordId > recordId && currentStatusOrder > statusOrder && isCompleteStatus(currentSampleStatus)) {
+                    sampleStatus = currentSampleStatus;
+                    recordId = currentRecordId;
+                    statusOrder = currentStatusOrder;
+                    LOGGER.info("current status: " + sampleStatus);
+                }
+                DataRecord[] childSamples = current.getChildrenOfType("Sample", user);
+                for (DataRecord sam : childSamples) {
+                    String childRequestId = sam.getStringVal("RequestId", user);
+                    if (requestId.equalsIgnoreCase(childRequestId)) {
+                        sampleStack.push(sam);
+                    }
+                }
+            } while (sampleStack.size() > 0);
+        } catch (Exception e) {
+            System.out.println("Statu error: " + e);
+            LOGGER.error(String.format("Error while getting status for sample '%s'.", sampleId));
+            return "unknown";
+        }
+        return resolveCurrentStatus(currentSampleStatus, currentSampleType);
+    }
+
+    /**
+     * Method to check if the sample status is equivalent to "completed sequencing".
+     *
+     * @param status
+     * @return
+     */
+    public static boolean isSequencingCompleteStatus(String status) {
+        status = status.toLowerCase();
+        return status.contains("completed - ") && status.contains("illumina") && status.contains("sequencing");
+    }
+
+    private final static List<String> TISSUE_SAMPLE_TYPES = Arrays.asList("cells","plasma","blood","tissue","buffy coat","blocks/slides","ffpe sample","other","tissue sample");
+    private final static List<String> NUCLEIC_ACID_TYPES = Arrays.asList("dna","rna","cdna","cfdna","dna,cfdna","amplicon","pre-qc rna");
+    private final static List<String> LIBRARY_SAMPLE_TYPES = Arrays.asList("dna library", "cdna library", "gdna library");
+    private final static List<String> CAPTURE_SAMPLE_TYPES = Collections.singletonList("capture library");
+    private final static List<String> POOLED_SAMPLE_TYPES = Collections.singletonList("pooled library");
+    /**
+     * Method to resolve the sample status to one of the main sample statuses.
+     *
+     * @param status
+     * @param sampleType
+     * @return
+     */
+    private static String resolveCurrentStatus(String status, String sampleType) {
+        if (NUCLEIC_ACID_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("completed -") && status.toLowerCase().contains("extraction") && status.toLowerCase().contains("dna/rna simultaneous")) {
+            return String.format("Completed - %s Extraction", sampleType.toUpperCase());
+        }
+        if (NUCLEIC_ACID_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("completed -") && status.toLowerCase().contains("extraction") && status.toLowerCase().contains("rna")) {
+            return "Completed - RNA Extraction";
+        }
+        if (NUCLEIC_ACID_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("completed -") && status.toLowerCase().contains("extraction") && status.toLowerCase().contains("dna")) {
+            return "Completed - DNA Extraction";
+        }
+        if (NUCLEIC_ACID_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("completed -") && status.toLowerCase().contains("quality control")) {
+            return "Completed - Quality Control";
+        }
+        if (LIBRARY_SAMPLE_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("completed") && status.toLowerCase().contains("library preparation")) {
+            return "Completed - Library Preparaton";
+        }
+        if (LIBRARY_SAMPLE_TYPES.contains(sampleType.toLowerCase()) && isSequencingCompleteStatus(status)) {
+            return "Completed - Sequencing";
+        }
+        if (LIBRARY_SAMPLE_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("completed") && status.toLowerCase().contains("capture")) {
+            return "Completed - Library Capture";
+        }
+        if (status.toLowerCase().contains("failed")) {
+            return status;
+        }
+        return status;
+    }
+
+    /**
+     * Method to get order or Sample based on its SampleType.
+     * @param sampleType
+     * @return int order
+     */
+    public static int getSampleTypeOrder(String sampleType){
+        if (TISSUE_SAMPLE_TYPES.contains(sampleType)){
+            return 1;
+        }
+        if (NUCLEIC_ACID_TYPES.contains(sampleType)){
+            return 2;
+        }
+        if (LIBRARY_SAMPLE_TYPES.contains(sampleType)){
+            return 3;
+        }
+        if (CAPTURE_SAMPLE_TYPES.contains(sampleType)){
+            return 4;
+        }
+        if (POOLED_SAMPLE_TYPES.contains(sampleType)){
+            return 5;
+        }
+        return 0;
+    }
+
 }
