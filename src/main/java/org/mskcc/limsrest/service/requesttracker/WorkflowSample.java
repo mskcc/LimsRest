@@ -3,6 +3,7 @@ package org.mskcc.limsrest.service.requesttracker;
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.user.User;
+import com.velox.sloan.cmo.recmodels.SampleModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -38,7 +39,7 @@ public class WorkflowSample extends StageTracker {
 
         this.children = new ArrayList<>();
         this.recordId = record.getRecordId();
-        this.recordName = getRecordStringValue(record, "DataRecordName", user);
+        this.recordName = getRecordStringValue(record, SampleModel.DATA_RECORD_NAME, user);
         this.record = record;
         this.parent = null;
         this.user = user;
@@ -68,7 +69,7 @@ public class WorkflowSample extends StageTracker {
     public void enrichSample() {
         if (this.record == null || this.user == null) return;
 
-        String status = getRecordStringValue(this.record, "ExemplarSampleStatus", this.user);
+        String status = getRecordStringValue(this.record, SampleModel.EXEMPLAR_SAMPLE_STATUS, this.user);
         String stage = STAGE_UNKNOWN;
         try {
             stage = getStageForStatus(status);
@@ -83,8 +84,8 @@ public class WorkflowSample extends StageTracker {
         }
 
         this.status = status;
-        super.startTime = getRecordLongValue(record, "DateCreated", this.user);
-        super.updateTime = getRecordLongValue(record, "DateModified", this.user);
+        super.startTime = getRecordLongValue(this.record, SampleModel.DATE_CREATED, this.user);
+        super.updateTime = getRecordLongValue(this.record, SampleModel.DATE_MODIFIED, this.user);
         super.stage = stage;
     }
 

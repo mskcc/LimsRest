@@ -55,16 +55,13 @@ public class ProjectSample {
         return new ArrayList(stages.values());
     }
 
-    public void setStages(Map<String, SampleStageTracker> stages) {
-        this.stages = stages;
-    }
-
     /**
-     * Merges stages
+     * Adds a list of stages to the map of stages.
+     * We merge a Stage when it already exists in the map by updating its update time
      *
      * @param stages
      */
-    public void addStage(List<SampleStageTracker> stages) {
+    public void addStages(List<SampleStageTracker> stages) {
         stages.forEach(
                 (stage) -> {
                     this.stages.merge(
@@ -91,10 +88,6 @@ public class ProjectSample {
 
         apiMap.put("sampleId", this.sampleId);
         apiMap.put("status", this.failed ? "Failed" : this.complete == true ? "Complete" : "Pending");
-        /*
-        apiMap.put("paths", this.paths.stream().map(path -> path.stream()
-                .map(sample -> sample.toApiResponse())).collect(Collectors.toList()));
-         */
         apiMap.put("stages", this.stages.values().stream().map(
                 stage -> stage.toApiResponse()
         ).collect(Collectors.toList()));

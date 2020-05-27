@@ -185,7 +185,7 @@ public class ProjectSampleTree {
 
         ProjectSample projectSample = new ProjectSample(this.root.getRecordId());
         List<SampleStageTracker> stages = getStages();
-        projectSample.addStage(stages);
+        projectSample.addStages(stages);
 
         // TODO - Edge case where a sample hasn't started a workflow and has only one "Awaiting Processing" stage
 

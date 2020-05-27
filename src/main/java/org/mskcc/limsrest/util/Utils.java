@@ -3,6 +3,7 @@ package org.mskcc.limsrest.util;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
+import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -87,7 +88,7 @@ public class Utils {
      */
     public static DataRecord getChildSeqAnalysisSampleQcRecord(DataRecord record, User user){
         try {
-            List<DataRecord> seqAnalysisRecords = Arrays.asList(record.getChildrenOfType("SeqAnalysisSampleQC", user));
+            List<DataRecord> seqAnalysisRecords = Arrays.asList(record.getChildrenOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user));
             if (seqAnalysisRecords.size()>0) {
                 return seqAnalysisRecords.get(0);
             }

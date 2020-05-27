@@ -6,6 +6,7 @@ import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.sloan.cmo.recmodels.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
@@ -21,15 +22,16 @@ import static org.mskcc.limsrest.util.Utils.*;
 public class GetRequestTrackingTask {
     private static Log log = LogFactory.getLog(GetRequestTrackingTask.class);
     private static Integer SAMPLE_COUNT = 1;
-    private static String[] requestDataLongFields = new String[]{"ReceivedDate"};
+
+    private static String[] requestDataLongFields = new String[]{RequestModel.RECEIVED_DATE};
     private static String[] requestDataStringFields = new String[]{
-            "LaboratoryHead",
-            "GroupLeader",
-            "TATFromInProcessing",
-            "TATFromReceiving",
-            "ProjectManager",
-            "LabHeadEmail",
-            "Investigator"
+            RequestModel.LABORATORY_HEAD,
+            RequestModel.GROUP_LEADER,
+            RequestModel.TATFROM_IN_PROCESSING,
+            RequestModel.TATFROM_RECEIVING,
+            RequestModel.PROJECT_MANAGER,
+            RequestModel.LAB_HEAD_EMAIL,
+            RequestModel.INVESTIGATOR
     };
     private ConnectionLIMS conn;
     private String requestId;
@@ -56,7 +58,9 @@ public class GetRequestTrackingTask {
         }
 
         // Validate request record
-        List<DataRecord> requestRecordList = drm.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
+
+        final String query = String.format("%s = '%s'", RequestModel.REQUEST_ID, requestId);
+        List<DataRecord> requestRecordList = drm.queryDataRecords(RequestModel.DATA_TYPE_NAME, query, user);
         if (requestRecordList.size() != 1) {  // error: request ID not found or more than one found
             log.error(String.format("Request %s not found for requestId %s. Returning incomplete information", requestId));
             return request.toApiResponse();
@@ -94,7 +98,7 @@ public class GetRequestTrackingTask {
      */
     private List<ProjectSample> getProjectSamplesFromDataRecord(DataRecord requestRecord, User user) throws IoError, RemoteException  {
         // Immediate samples of record represent physical samples. LIMS creates children of these in the workflow
-        DataRecord[] samples = requestRecord.getChildrenOfType("Sample", user);
+        DataRecord[] samples = requestRecord.getChildrenOfType(SampleModel.DATA_TYPE_NAME, user);
 
         // Create the tree of each ProjectSample aggregating per-sample status/stage information
         List<ProjectSample> projectSamples = new ArrayList<>();
@@ -153,7 +157,7 @@ public class GetRequestTrackingTask {
         DataRecord sampleQcRecord = getChildSeqAnalysisSampleQcRecord(root.getRecord(), tree.getUser());
         if(!tree.isPassedDataQc() && sampleQcRecord != null){
             // If the input node has a SeqQCStatus record, it is a part of the DataQC stage
-            String sequencingStatus = getRecordStringValue(sampleQcRecord, "SeqQCStatus", tree.getUser());
+            String sequencingStatus = getRecordStringValue(sampleQcRecord, SeqAnalysisSampleQCModel.SEQ_QCSTATUS, tree.getUser());
             tree.setDataQcStatus(sequencingStatus);
             // Stage needs to be reset
             root.setStage(STAGE_DATA_QC);
@@ -164,7 +168,7 @@ public class GetRequestTrackingTask {
         // Search each child of the input
         DataRecord[] children = new DataRecord[0];
         try {
-            children = root.getRecord().getChildrenOfType("Sample", tree.getUser());
+            children = root.getRecord().getChildrenOfType(SampleModel.DATA_TYPE_NAME, tree.getUser());
         } catch (IoError | RemoteException e) { /* Expected - No more children of the sample */ }
 
         if (children.length == 0) {
@@ -296,10 +300,10 @@ public class GetRequestTrackingTask {
     private SampleStageTracker getSubmittedStage(String serviceId, User user, DataRecordManager drm) {
         Map<String, Integer> tracker = new HashMap<>();
 
-        String query = String.format("ServiceId = '%s'", serviceId);
+        String query = String.format("%s = '%s'", BankedSampleModel.SERVICE_ID, serviceId);
         List<DataRecord> bankedList = new ArrayList<>();
         try {
-            bankedList = drm.queryDataRecords("BankedSample", query, user);
+            bankedList = drm.queryDataRecords(BankedSampleModel.DATA_TYPE_NAME, query, user);
         } catch (NotFound | IoError | RemoteException e) {
             log.info(String.format("Could not find BankedSample record for %s", serviceId));
             return null;
@@ -314,16 +318,17 @@ public class GetRequestTrackingTask {
             tracker.put("Total", total + 1);
 
             // Increment promoted if sample was promoted
-            promoted = tracker.computeIfAbsent("Promoted", k -> 0);
-            wasPromoted = getRecordBooleanValue(record, "Promoted", user);
+            promoted = tracker.computeIfAbsent(BankedSampleModel.PROMOTED, k -> 0);
+            wasPromoted = getRecordBooleanValue(record, BankedSampleModel.PROMOTED, user);
             if (wasPromoted) {
-                tracker.put("Promoted", promoted + 1);
+                tracker.put(BankedSampleModel.PROMOTED, promoted + 1);
             }
         }
 
         total = tracker.get("Total");
-        promoted = tracker.get("Promoted");
+        promoted = tracker.get(BankedSampleModel.PROMOTED);
 
+        // TODO - constants
         SampleStageTracker requestStage = new SampleStageTracker("submitted", total, promoted, null, null);
         Boolean submittedComplete = total == promoted;
         if (submittedComplete) {
@@ -346,8 +351,9 @@ public class GetRequestTrackingTask {
     public String getBankedSampleServiceId(String requestId, User user, DataRecordManager drm) {
         String query = String.format("RequestId = '%s'", requestId);
         List<DataRecord> bankedList = new ArrayList<>();
+
         try {
-            bankedList = drm.queryDataRecords("BankedSample", query, user);
+            bankedList = drm.queryDataRecords(BankedSampleModel.DATA_TYPE_NAME, query, user);
         } catch (NotFound | IoError | RemoteException e) {
             log.info(String.format("Could not find BankedSample records w/ RequestId: %s", requestId));
             return null;
@@ -356,7 +362,7 @@ public class GetRequestTrackingTask {
         Set<String> serviceIds = new HashSet<>();
         String serviceId;
         for (DataRecord record : bankedList) {
-            serviceId = getRecordStringValue(record, "ServiceId", user);
+            serviceId = getRecordStringValue(record, BankedSampleModel.SERVICE_ID, user);
             serviceIds.add(serviceId);
         }
 
@@ -387,23 +393,12 @@ public class GetRequestTrackingTask {
         }
 
         // IGO Completion is confirmed by delivery, which sets the "RecentDeliveryDate" field
-        final Long mostRecentDeliveryDate = getRecordLongValue(requestRecord, "RecentDeliveryDate", user);
+        final Long mostRecentDeliveryDate = getRecordLongValue(requestRecord, RequestModel.RECENT_DELIVERY_DATE, user);
         if(mostRecentDeliveryDate != null){
             requestMetaData.put("isIgoComplete", true);
         }
-        requestMetaData.put("RecentDeliveryDate", mostRecentDeliveryDate);
+        requestMetaData.put(RequestModel.RECENT_DELIVERY_DATE, mostRecentDeliveryDate);
 
         return requestMetaData;
-    }
-
-    /**
-     * Projects are considered IGO-Complete if they have a delivery date
-     *
-     * @param requestRecord
-     * @param user
-     * @return
-     */
-    private Boolean isIgoComplete(DataRecord requestRecord, User user) {
-        return getRecordLongValue(requestRecord, "RecentDeliveryDate", user) != null;
     }
 }
