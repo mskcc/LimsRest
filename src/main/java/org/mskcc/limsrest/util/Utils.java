@@ -3,6 +3,8 @@ package org.mskcc.limsrest.util;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
+import com.velox.sloan.cmo.recmodels.SampleModel;
+import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -353,27 +355,46 @@ public class Utils {
      * @return
      */
     public static String resolveCurrentStatus(String status, String sampleType) {
-        if (NUCLEIC_ACID_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("completed -") && status.toLowerCase().contains("extraction") && status.toLowerCase().contains("dna/rna simultaneous")) {
-            return String.format("Completed - %s Extraction", sampleType.toUpperCase());
+        if (NUCLEIC_ACID_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("extraction") && status.toLowerCase().contains("dna/rna simultaneous")) {
+            if(status.toLowerCase().contains("completed -")){
+                return String.format("Completed - %s Extraction", sampleType.toUpperCase());
+            }
+            return String.format("Pending - %s Extraction", sampleType.toUpperCase());
         }
-        if (NUCLEIC_ACID_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("completed -") && status.toLowerCase().contains("extraction") && status.toLowerCase().contains("rna")) {
-            return "Completed - RNA Extraction";
+        if (NUCLEIC_ACID_TYPES.contains(sampleType.toLowerCase())  && status.toLowerCase().contains("extraction") && status.toLowerCase().contains("rna")) {
+            if(status.toLowerCase().contains("completed -")){
+                return "Completed - RNA Extraction";
+            }
+            return "Pending - RNA Extraction";
         }
-        if (NUCLEIC_ACID_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("completed -") && status.toLowerCase().contains("extraction") && status.toLowerCase().contains("dna")) {
-            return "Completed - DNA Extraction";
+        if (NUCLEIC_ACID_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("extraction") && status.toLowerCase().contains("dna")) {
+            if(status.toLowerCase().contains("completed -")){
+                return "Completed - DNA Extraction";
+            }
+            return "Pending - DNA Extraction";
         }
-        if (NUCLEIC_ACID_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("completed -") && status.toLowerCase().contains("quality control")) {
-            return "Completed - Quality Control";
+        if (NUCLEIC_ACID_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("quality control")) {
+            if(status.toLowerCase().contains("completed -")){
+                return "Completed - Quality Control";
+            }
+            return "Pending - Quality Control";
         }
-        if (LIBRARY_SAMPLE_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("completed") && status.toLowerCase().contains("library preparation")) {
-            return "Completed - Library Preparaton";
+        if (LIBRARY_SAMPLE_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("library preparation")) {
+            if(status.toLowerCase().contains("completed")){
+                return "Completed - Library Preparaton";
+            }
+            return "Pending - Library Preparaton";
         }
         if (LIBRARY_SAMPLE_TYPES.contains(sampleType.toLowerCase()) && isSequencingCompleteStatus(status)) {
             return "Completed - Sequencing";
         }
-        if (LIBRARY_SAMPLE_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("completed") && status.toLowerCase().contains("capture")) {
-            return "Completed - Library Capture";
+        if (LIBRARY_SAMPLE_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("capture")) {
+            if(status.toLowerCase().contains("completed")){
+                return "Completed - Library Capture";
+            }
+            return "Pending - Library Capture";
         }
+        // TODO - Should this return a "Failed" status?
         if (status.toLowerCase().contains("failed")) {
             return status;
         }
