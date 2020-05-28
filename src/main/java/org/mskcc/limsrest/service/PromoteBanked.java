@@ -41,7 +41,11 @@ public class PromoteBanked extends LimsTask {
     private static final Log log = LogFactory.getLog(PromoteBanked.class);
 
     private static final List<String> HUMAN_RECIPES =
-            Arrays.asList("IMPACT341","IMPACT410","IMPACT410+","IMPACT468","HemePACT_v3","HemePACT_v4","MSK-ACCESS_v1");
+            Arrays.asList("IMPACT341", "IMPACT410", "IMPACT410+", "IMPACT468", "HemePACT_v3", "HemePACT_v4", "MSK-ACCESS_v1");
+
+    private static final List<String> INDEX_MATERIALS =
+            Arrays.asList("DNA Library", "Pooled Library");
+
 
     private static final HumanSamplePredicate humanSamplePredicate = new HumanSamplePredicate();
 
@@ -55,6 +59,7 @@ public class PromoteBanked extends LimsTask {
     String serviceId;
     String projectId;
     String igoUser;
+    String materials;
     boolean dryrun = false;
     private Multimap<String, String> errors = HashMultimap.create();
     private Map<Integer, Double> coverageToSeqReqWES = ImmutableMap.<Integer, Double>builder()
@@ -103,12 +108,13 @@ public class PromoteBanked extends LimsTask {
         seqRequirementMap.put("RequestedReads", requestedReads);
     }
 
-    public void init(String[] bankedIds, String projectId, String requestId, String serviceId, String igoUser, boolean dryrun) {
+    public void init(String[] bankedIds, String projectId, String requestId, String serviceId, String igoUser, String materials, boolean dryrun) {
         this.bankedIds = bankedIds;
         this.projectId = projectId;
         this.requestId = requestId;
         this.serviceId = serviceId;
         this.igoUser = igoUser;
+        this.materials = materials;
         this.dryrun = dryrun;
     }
 
@@ -139,139 +145,156 @@ public class PromoteBanked extends LimsTask {
             }
 
             return ResponseEntity.ok(nextRequest);
-        }
+        } else {
 
-        try {
-            List<DataRecord> validBarcodeList = dataRecordManager.queryDataRecords("IndexAssignment", "IndexType != " +
-                    "'IDT_TRIM'", user);
-            HashMap<String, String> barcodeId2Sequence = new HashMap<>();
-            for (DataRecord knownBarcode : validBarcodeList) {
-                barcodeId2Sequence.put(knownBarcode.getStringVal("IndexId", user), knownBarcode.getStringVal
-                        ("IndexTag", user));
-            }
-            StringBuffer sb = new StringBuffer();
-            for (int i = 0; i < bankedIds.length - 1; i++) {
+            try {
+
+                //GET ALL BANKED SAMPLES
+                StringBuffer sb = new StringBuffer();
+                for (int i = 0; i < bankedIds.length - 1; i++) {
+                    sb.append("'");
+                    sb.append(bankedIds[i]);
+                    sb.append("',");
+                }
                 sb.append("'");
-                sb.append(bankedIds[i]);
-                sb.append("',");
-            }
-            sb.append("'");
-            sb.append(bankedIds[bankedIds.length - 1]);
-            sb.append("'");
+                sb.append(bankedIds[bankedIds.length - 1]);
+                sb.append("'");
 
-            List<DataRecord> bankedList = dataRecordManager.queryDataRecords("BankedSample", "RecordId in (" + sb
-                    .toString() + ") order by transactionId, rowIndex", user);
-            SloanCMOUtils util = new SloanCMOUtils(managerContext);
+                List<DataRecord> bankedList = dataRecordManager.queryDataRecords("BankedSample", "RecordId in (" + sb.toString() + ") order by transactionId, rowIndex", user);
+                SloanCMOUtils util = new SloanCMOUtils(managerContext);
 
-            DataRecord req = null;
-            //TODO THREAD WARNING: Not thread safe. Depends on the queue being single consumer thread to handle concurrency
-            if (requestId.equals("NULL") && projectId.equals("NULL")) {
-                log.info("Creating new request.");
-                try {
-                    List<DataRecord> mappedReq = dataRecordManager.queryDataRecords("Request", "IlabRequest = '" +
-                            serviceId + "'", user);
-                    if (mappedReq.size() > 0) {
-                        req = mappedReq.get(0);
-                        requestId = req.getStringVal("RequestId", user);
-                    } else {
-                        requestId = util.getNextProjectId();
-                        DataRecord proj = null;
-                        List<DataRecord> projs = dataRecordManager.queryDataRecords("Directory", "DirectoryName = " +
-                                "'Projects'", user);
-                        if (projs.size() > 0) {
-                            proj = projs.get(0).addChild("Project", user);
+
+                //GET INDEXES IF MATERIAL IS INDEX MATERIAL
+                boolean indexNeeded = false;
+                HashMap<String, String> barcodeId2Sequence = new HashMap<>();
+                for (String material : INDEX_MATERIALS) {
+                    if (materials.contains(material)) {
+                        indexNeeded = true;
+                        break;
+                    }
+                }
+                log.info((indexNeeded ? "" : "No ") + "Index needed.");
+                if (indexNeeded) {
+
+                    List<DataRecord> validBarcodeList = dataRecordManager.queryDataRecords("IndexAssignment", "IndexType != " +
+                            "'IDT_TRIM'", user);
+                    for (DataRecord knownBarcode : validBarcodeList) {
+                        barcodeId2Sequence.put(knownBarcode.getStringVal("IndexId", user), knownBarcode.getStringVal
+                                ("IndexTag", user));
+                    }
+                }
+
+
+                DataRecord req = null;
+                //TODO THREAD WARNING: Not thread safe. Depends on the queue being single consumer thread to handle concurrency
+                if (requestId.equals("NULL") && projectId.equals("NULL")) {
+                    log.info("Creating new request.");
+                    try {
+                        List<DataRecord> mappedReq = dataRecordManager.queryDataRecords("Request", "IlabRequest = '" +
+                                serviceId + "'", user);
+                        if (mappedReq.size() > 0) {
+                            req = mappedReq.get(0);
+                            requestId = req.getStringVal("RequestId", user);
                         } else {
-                            proj = dataRecordManager.addDataRecord("Project", user);
+                            requestId = util.getNextProjectId();
+                            DataRecord proj = null;
+                            List<DataRecord> projs = dataRecordManager.queryDataRecords("Directory", "DirectoryName = " +
+                                    "'Projects'", user);
+                            if (projs.size() > 0) {
+                                proj = projs.get(0).addChild("Project", user);
+                            } else {
+                                proj = dataRecordManager.addDataRecord("Project", user);
+                            }
+                            proj.setDataField("ProjectId", requestId, user);
+                            Map<String, Object> reqFields = new HashMap<>();
+                            reqFields.put("RequestId", requestId);
+                            reqFields.put("IlabRequest", serviceId);
+                            reqFields.put("ProjectId", requestId);
+                            req = proj.addChild("Request", reqFields, user);
                         }
-                        proj.setDataField("ProjectId", requestId, user);
-                        Map<String, Object> reqFields = new HashMap<>();
-                        reqFields.put("RequestId", requestId);
-                        reqFields.put("IlabRequest", serviceId);
-                        reqFields.put("ProjectId", requestId);
-                        req = proj.addChild("Request", reqFields, user);
-                    }
-                } catch (Exception e) {
-                    throw new LimsException("Unable to create a new request for this project: " + e.getMessage());
-                }
-            } else if (!requestId.equals("NULL")) {
-                List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
-                if (requestList.size() == 0) {
-                    throw new LimsException("There is no request with id '" + requestId + "'");
-                }
-                req = requestList.get(0);
-            } else {
-                log.info("Adding based off project id: " + projectId);
-                List<DataRecord> projectList = dataRecordManager.queryDataRecords("Project", "ProjectId = '" +
-                        projectId + "'", user);
-                if (projectList.size() == 0) {
-                    throw new LimsException("There is no project with id '" + projectId + "'");
-                }
-                DataRecord[] allChildRequests = projectList.get(0).getChildrenOfType("Request", user);
-                for (DataRecord possibleRequest : allChildRequests) {
-                    String reqServiceId = "";
-                    try {
-                        reqServiceId = possibleRequest.getStringVal("IlabRequest", user);
-                    } catch (NullPointerException npe) {
-                    }
-                    if (serviceId.equals(reqServiceId)) {
-                        req = possibleRequest;
-                        requestId = req.getStringVal("RequestId", user);
-                    }
-                }
-                if (req == null) {
-                    log.info("Adding a new request for project: " + projectId);
-                    try {
-                        requestId = util.getNextRequestId(projectId);
-                        log.info("request id " + requestId);
-                        Map<String, Object> reqFields = new HashMap<>();
-                        reqFields.put("RequestId", requestId);
-                        reqFields.put("IlabRequest", serviceId);
-                        reqFields.put("ProjectId", projectId);
-                        req = projectList.get(0).addChild("Request", reqFields, user);
                     } catch (Exception e) {
                         throw new LimsException("Unable to create a new request for this project: " + e.getMessage());
                     }
-                }
-            }
-            log.info("Using request: " + req.getStringVal(("RequestId"), user));
-
-            if (bankedList.size() == 0) {
-                throw new LimsException("No banked sample with ids '" + sb.toString() + "'");
-            }
-            DataRecord[] existentSamples = req.getChildrenOfType("Sample", user);
-            HashSet<String> existentIds = new HashSet<>();
-            int maxId = 0;
-            for (DataRecord e : existentSamples) {
-                try {
-                    String otherId = e.getStringVal("OtherSampleId", user);
-                    existentIds.add(otherId);
-                    String sampleId = e.getStringVal("SampleId", user);
-                    String[] igoElements = unaliquotName(sampleId).split("_");
-                    int currentId = Integer.parseInt(igoElements[igoElements.length - 1]);
-                    if (currentId > maxId) {
-                        maxId = currentId;
+                } else if (!requestId.equals("NULL")) {
+                    List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
+                    if (requestList.size() == 0) {
+                        throw new LimsException("There is no request with id '" + requestId + "'");
                     }
-                } catch (NullPointerException npe) {
+                    req = requestList.get(0);
+                } else {
+                    log.info("Adding based off project id: " + projectId);
+                    List<DataRecord> projectList = dataRecordManager.queryDataRecords("Project", "ProjectId = '" +
+                            projectId + "'", user);
+                    if (projectList.size() == 0) {
+                        throw new LimsException("There is no project with id '" + projectId + "'");
+                    }
+                    DataRecord[] allChildRequests = projectList.get(0).getChildrenOfType("Request", user);
+                    for (DataRecord possibleRequest : allChildRequests) {
+                        String reqServiceId = "";
+                        try {
+                            reqServiceId = possibleRequest.getStringVal("IlabRequest", user);
+                        } catch (NullPointerException npe) {
+                        }
+                        if (serviceId.equals(reqServiceId)) {
+                            req = possibleRequest;
+                            requestId = req.getStringVal("RequestId", user);
+                        }
+                    }
+                    if (req == null) {
+                        log.info("Adding a new request for project: " + projectId);
+                        try {
+                            requestId = util.getNextRequestId(projectId);
+                            log.info("request id " + requestId);
+                            Map<String, Object> reqFields = new HashMap<>();
+                            reqFields.put("RequestId", requestId);
+                            reqFields.put("IlabRequest", serviceId);
+                            reqFields.put("ProjectId", projectId);
+                            req = projectList.get(0).addChild("Request", reqFields, user);
+                        } catch (Exception e) {
+                            throw new LimsException("Unable to create a new request for this project: " + e.getMessage());
+                        }
+                    }
                 }
-            }
-            int offset = 1;
-            HashMap<String, DataRecord> plateId2Plate = new HashMap<>();
-            for (DataRecord bankedSample : bankedList) {
-                createRecords(bankedSample, req, requestId, barcodeId2Sequence, plateId2Plate, existentIds, maxId, offset);
-                offset++;
-                bankedSample.setDataField("Promoted", Boolean.TRUE, user);
-                bankedSample.setDataField("RequestId", requestId, user);
-            }
-            log.info(igoUser + "  promoted the banked samples " + sb.toString());
-            dataRecordManager.storeAndCommit(igoUser + "  promoted the banked samples " + sb.toString(), user);
-        } catch (Exception e) {
-            log.error(e);
+                log.info("Using request: " + req.getStringVal(("RequestId"), user));
 
-            MultiValueMap<String, String> headers = new HttpHeaders();
-            headers.add(Constants.ERRORS,
-                    Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + e.toString() + ": " + e.getMessage());
+                if (bankedList.size() == 0) {
+                    throw new LimsException("No banked sample with ids '" + sb.toString() + "'");
+                }
+                DataRecord[] existentSamples = req.getChildrenOfType("Sample", user);
+                HashSet<String> existentIds = new HashSet<>();
+                int maxId = 0;
+                for (DataRecord e : existentSamples) {
+                    try {
+                        String otherId = e.getStringVal("OtherSampleId", user);
+                        existentIds.add(otherId);
+                        String sampleId = e.getStringVal("SampleId", user);
+                        String[] igoElements = unaliquotName(sampleId).split("_");
+                        int currentId = Integer.parseInt(igoElements[igoElements.length - 1]);
+                        if (currentId > maxId) {
+                            maxId = currentId;
+                        }
+                    } catch (NullPointerException npe) {
+                    }
+                }
+                int offset = 1;
+                HashMap<String, DataRecord> plateId2Plate = new HashMap<>();
+                for (DataRecord bankedSample : bankedList) {
+                    createRecords(bankedSample, req, requestId, barcodeId2Sequence, plateId2Plate, existentIds, maxId, offset);
+                    offset++;
+                    bankedSample.setDataField("Promoted", Boolean.TRUE, user);
+                    bankedSample.setDataField("RequestId", requestId, user);
+                }
+                log.info(igoUser + "  promoted the banked samples " + sb.toString());
+                dataRecordManager.storeAndCommit(igoUser + "  promoted the banked samples " + sb.toString(), user);
+            } catch (Exception e) {
+                log.error(e);
 
-            return new ResponseEntity<>(headers, HttpStatus.OK);
+                MultiValueMap<String, String> headers = new HttpHeaders();
+                headers.add(Constants.ERRORS,
+                        Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + e.toString() + ": " + e.getMessage());
+
+                return new ResponseEntity<>(headers, HttpStatus.OK);
+            }
         }
 
         MultiValueMap<String, String> headers = new HttpHeaders();
@@ -286,7 +309,7 @@ public class PromoteBanked extends LimsTask {
 
         for (String sampleId : errors.keySet()) {
             Collection<String> errorMessages = errors.get(sampleId);
-            message.append(String.format("Banked sample %s errors: \n%s\n", sampleId,
+            message.append(String.format("Banked sample %s errors: %s,", sampleId,
                     StringUtils.join(errorMessages, System.lineSeparator())));
         }
 
@@ -437,7 +460,7 @@ public class PromoteBanked extends LimsTask {
 
     protected static double selectLarger(String requestedReads) {
         // example 30-40 million
-        String [] parts = requestedReads.split("[ -]+");
+        String[] parts = requestedReads.split("[ -]+");
         requestedReads = parts[1].trim();
         return Double.parseDouble(requestedReads);
     }
