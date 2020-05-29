@@ -20,6 +20,8 @@ import java.rmi.RemoteException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
+
 public class Utils {
     private final static Log LOGGER = LogFactory.getLog(Utils.class);
 
@@ -386,13 +388,13 @@ public class Utils {
             stage = String.format("%s Extraction", exemplarSampleType.toUpperCase());
         }
         if (NUCLEIC_ACID_TYPES.contains(exemplarSampleType.toLowerCase()) && exemplarSampleStatus.toLowerCase().contains("quality control")) {
-            stage = "Quality Control";
+            stage = STAGE_SAMPLE_QC;
         }
         if (LIBRARY_SAMPLE_TYPES.contains(exemplarSampleType.toLowerCase()) && exemplarSampleStatus.toLowerCase().contains("library preparation")) {
-            stage = "Library Preparaton";
+            stage = STAGE_LIBRARY_PREP;
         }
         if (LIBRARY_SAMPLE_TYPES.contains(exemplarSampleType.toLowerCase()) && exemplarSampleStatus.toLowerCase().contains("capture")) {
-            stage = "Library Capture";
+            stage = STAGE_LIBRARY_CAPTURE;
         }
         return stage;
     }
