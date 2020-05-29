@@ -3,6 +3,7 @@ package org.mskcc.limsrest.util;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
+import com.velox.sloan.cmo.recmodels.SampleModel;
 import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -382,38 +383,62 @@ public class Utils {
     }
 
     /**
-     * Method to resolve the sample status to one of the main sample statuses.
+     * Resolves Sample DataRecord's "ExemplarSampleType" & "ExemplarSampleStatus" to one of the main sample statuses
      *
      * @param status
      * @param sampleType
      * @return
      */
     public static String resolveCurrentStatus(String status, String sampleType) {
-        if (NUCLEIC_ACID_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("completed -") && status.toLowerCase().contains("extraction") && status.toLowerCase().contains("dna/rna simultaneous")) {
-            return String.format("Completed - %s Extraction", sampleType.toUpperCase());
+        LimsStage stage = getLimsStage(status, sampleType);
+        return stage.getStageStatus();
+    }
+
+    /**
+     * Converts Sample DataRecord's "ExemplarSampleType" & "ExemplarSampleStatus" to a LimsStage
+     *
+     * @param exemplarSampleStatus,
+     * @param exemplarSampleType
+     * @return
+     */
+    public static LimsStage getLimsStage(String exemplarSampleStatus, String exemplarSampleType){
+        final String stageName = getLimstStageName(exemplarSampleStatus, exemplarSampleType);
+        LimsStage.Status limstStageStatus = getLimsStageStatus(exemplarSampleStatus);
+        return new LimsStage(stageName, limstStageStatus);
+    }
+
+    /**
+     * Determines the name of the stage based on Sample DataRecord's "ExemplarSampleType" & "ExemplarSampleStatus"
+     *
+     * @param exemplarSampleStatus
+     * @param exemplarSampleType
+     * @return
+     */
+    private static String getLimstStageName(String exemplarSampleStatus, String exemplarSampleType){
+        // TODO - constants
+        String stage = "Unknown";
+        if (NUCLEIC_ACID_TYPES.contains(exemplarSampleType.toLowerCase()) && exemplarSampleStatus.toLowerCase().contains("extraction")) {
+            stage = String.format("%s Extraction", exemplarSampleType.toUpperCase());
         }
-        if (NUCLEIC_ACID_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("completed -") && status.toLowerCase().contains("extraction") && status.toLowerCase().contains("rna")) {
-            return "Completed - RNA Extraction";
+        if (NUCLEIC_ACID_TYPES.contains(exemplarSampleType.toLowerCase()) && exemplarSampleStatus.toLowerCase().contains("quality control")) {
+            stage = "Quality Control";
         }
-        if (NUCLEIC_ACID_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("completed -") && status.toLowerCase().contains("extraction") && status.toLowerCase().contains("dna")) {
-            return "Completed - DNA Extraction";
+        if (LIBRARY_SAMPLE_TYPES.contains(exemplarSampleType.toLowerCase()) && exemplarSampleStatus.toLowerCase().contains("library preparation")) {
+            stage = "Library Preparaton";
         }
-        if (NUCLEIC_ACID_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("completed -") && status.toLowerCase().contains("quality control")) {
-            return "Completed - Quality Control";
+        if (LIBRARY_SAMPLE_TYPES.contains(exemplarSampleType.toLowerCase()) && exemplarSampleStatus.toLowerCase().contains("capture")) {
+            stage = "Library Capture";
         }
-        if (LIBRARY_SAMPLE_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("completed") && status.toLowerCase().contains("library preparation")) {
-            return "Completed - Library Preparaton";
+        return stage;
+    }
+
+    private static LimsStage.Status getLimsStageStatus(String exemplarSampleStatus) {
+        if(isSequencingCompleteStatus(exemplarSampleStatus) || exemplarSampleStatus.toLowerCase().contains("completed -")){
+            return LimsStage.Status.Complete;
+        } else if(exemplarSampleStatus.toLowerCase().contains("failed")){
+            return LimsStage.Status.Failed;
         }
-        if (LIBRARY_SAMPLE_TYPES.contains(sampleType.toLowerCase()) && isSequencingCompleteStatus(status)) {
-            return "Completed - Sequencing";
-        }
-        if (LIBRARY_SAMPLE_TYPES.contains(sampleType.toLowerCase()) && status.toLowerCase().contains("completed") && status.toLowerCase().contains("capture")) {
-            return "Completed - Library Capture";
-        }
-        if (status.toLowerCase().contains("failed")) {
-            return status;
-        }
-        return status;
+        return LimsStage.Status.Pending;
     }
 
     /**
