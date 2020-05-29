@@ -54,7 +54,7 @@ public class GetRequestTrackingTask {
             // TODO - Why is this the case (QA: "06302_W")
             // TODO - Place in thread as this can be executed independently
             SampleStageTracker submittedStage = getSubmittedStage(serviceId, user, drm);
-            request.addStage("submitted", submittedStage);
+            request.addStage(STAGE_SUBMITTED, submittedStage);
         }
 
         // Validate request record
@@ -329,7 +329,7 @@ public class GetRequestTrackingTask {
         promoted = tracker.get(BankedSampleModel.PROMOTED);
 
         // TODO - constants
-        SampleStageTracker requestStage = new SampleStageTracker("submitted", total, promoted, null, null);
+        SampleStageTracker requestStage = new SampleStageTracker(STAGE_SUBMITTED, total, promoted, null, null);
         Boolean submittedComplete = total == promoted;
         if (submittedComplete) {
             requestStage.setComplete(Boolean.TRUE);

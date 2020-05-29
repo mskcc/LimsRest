@@ -5,17 +5,31 @@ import java.util.*;
 // Temporary mapping of statuse to their buckets
 public class StatusTrackerConfig {
     // VALID STAGES
-    public static final String STAGE_SUBMITTED = "submitted";
-    public static final String STAGE_SAMPLE_QC = "sampleQc";
-    public static final String STAGE_LIBRARY_PREP = "libraryPrep";
-    public static final String STAGE_SEQUENCING = "sequencing";
-    public static final String STAGE_DATA_QC = "dataQc";
-    public static final String STAGE_IGO_COMPLETE = "igoComplete";
-    public static final String STAGE_EXTRACTION = "extraction";
-
+    public static final String STAGE_SUBMITTED = "Submitted";
+    public static final String STAGE_SAMPLE_QC = "Quality Control";
+    public static final String STAGE_EXTRACTION = "Extraction";
+    public static final String STAGE_LIBRARY_PREP = "Library Preparaton";
+    public static final String STAGE_SEQUENCING = "Sequencing";
+    public static final String STAGE_DATA_QC = "Data QC";
+    public static final String STAGE_IGO_COMPLETE = "IGO Complete";
     // INVALID STAGES
     public static final String STAGE_UNKNOWN = "unknown";
     public static final String STAGE_AWAITING_PROCESSING = "awaitingProcessing";    // Stage prior to any workflow
+
+    /**
+     * Add the order of valid stages here and then the ordering map will be statically initialzed
+     */
+    private static String[] stageOrder = new String[]{
+            STAGE_SUBMITTED,
+            STAGE_AWAITING_PROCESSING,
+            STAGE_EXTRACTION,
+            STAGE_LIBRARY_PREP,
+            STAGE_SAMPLE_QC,
+            STAGE_SEQUENCING,
+            STAGE_DATA_QC,  // If something needs to be re-sequenced, we want to keep the sample in data-qc
+            STAGE_IGO_COMPLETE
+    };
+
 
     // Special Statuses
     public static final String STATUS_AWAITING_PROCESSING = "Awaiting Processing";  // Stage cannot be determined
@@ -91,19 +105,7 @@ public class StatusTrackerConfig {
             "Completed - Illumina Sequencing Analysis"
 
     ));
-    /**
-     * Add the order of valid stages here and then the ordering map will be statically initialzed
-     */
-    private static String[] stageOrder = new String[]{
-            STAGE_SUBMITTED,
-            STAGE_AWAITING_PROCESSING,
-            STAGE_EXTRACTION,
-            STAGE_LIBRARY_PREP,
-            STAGE_SAMPLE_QC,
-            STAGE_SEQUENCING,
-            STAGE_DATA_QC,  // If something needs to be re-sequenced, we want to keep the sample in data-qc
-            STAGE_IGO_COMPLETE
-    };
+
     private static Map<String, String> nextStageMap;
 
     static {

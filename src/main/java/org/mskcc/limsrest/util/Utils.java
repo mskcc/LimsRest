@@ -3,7 +3,6 @@ package org.mskcc.limsrest.util;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
-import com.velox.sloan.cmo.recmodels.SampleModel;
 import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -21,6 +20,8 @@ import java.net.URL;
 import java.rmi.RemoteException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.*;
 
 public class Utils {
     private final static Log LOGGER = LogFactory.getLog(Utils.class);
@@ -418,16 +419,16 @@ public class Utils {
         // TODO - constants
         String stage = "Unknown";
         if (NUCLEIC_ACID_TYPES.contains(exemplarSampleType.toLowerCase()) && exemplarSampleStatus.toLowerCase().contains("extraction")) {
-            stage = String.format("%s Extraction", exemplarSampleType.toUpperCase());
+            stage = String.format("%s %s", exemplarSampleType.toUpperCase(), STAGE_EXTRACTION);
         }
         if (NUCLEIC_ACID_TYPES.contains(exemplarSampleType.toLowerCase()) && exemplarSampleStatus.toLowerCase().contains("quality control")) {
-            stage = "Quality Control";
+            stage = STAGE_SAMPLE_QC;
         }
         if (LIBRARY_SAMPLE_TYPES.contains(exemplarSampleType.toLowerCase()) && exemplarSampleStatus.toLowerCase().contains("library preparation")) {
-            stage = "Library Preparaton";
+            stage = STAGE_LIBRARY_PREP;
         }
         if (LIBRARY_SAMPLE_TYPES.contains(exemplarSampleType.toLowerCase()) && exemplarSampleStatus.toLowerCase().contains("capture")) {
-            stage = "Library Capture";
+            stage = STAGE_LIBRARY_PREP;
         }
         return stage;
     }
