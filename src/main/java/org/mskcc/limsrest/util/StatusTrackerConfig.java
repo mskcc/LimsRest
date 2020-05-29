@@ -18,6 +18,7 @@ public class StatusTrackerConfig {
      * Add the order of valid stages here and then the ordering map will be statically initialzed
      */
     private static String[] stageOrder = new String[]{
+            // TODO - need to confirm w/ Anna/Ajay
             STAGE_SUBMITTED,
             STAGE_AWAITING_PROCESSING,
             STAGE_EXTRACTION,
