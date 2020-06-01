@@ -83,6 +83,19 @@ public class Utils {
     }
 
     /**
+     * Returns whether the input status is a failed one
+     *
+     * @param status
+     * @return
+     */
+    public static Boolean isFailedStatus(String status) {
+        if(status != null && status != ""){
+            return status.toLowerCase().contains("failed");
+        }
+        return Boolean.FALSE;
+    }
+
+    /**
      * Returns the SeqAnalysisSampleQC child of record if it exists. Returns null if no SeqAnalysisSampleQC child
      * @param record
      * @param user

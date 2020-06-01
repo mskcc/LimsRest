@@ -80,16 +80,6 @@ public class StatusTrackerConfig {
 
     ));
 
-    /**
-     * Returns whether the input status is a failed one
-     *
-     * @param status
-     * @return
-     */
-    public static Boolean isFailedStatus(String status) {
-        return FAILED_STATUSES.contains(status);
-    }
-
     public static String getStageForStatus(String status) throws IllegalArgumentException {
         if (LIBRARY_PREP_STATUSES.contains(status)) return STAGE_LIBRARY_PREP;
         else if (SEQUENCING_STATUSES.contains(status)) return STAGE_SEQUENCING;

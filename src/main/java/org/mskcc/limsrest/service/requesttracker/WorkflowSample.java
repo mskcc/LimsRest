@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
+import static org.mskcc.limsrest.util.Utils.*;
 import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.*;
 import static org.mskcc.limsrest.util.Utils.getRecordLongValue;
 import static org.mskcc.limsrest.util.Utils.getRecordStringValue;
