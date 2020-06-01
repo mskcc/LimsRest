@@ -6,7 +6,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mskcc.limsrest.ConnectionLIMS;
-import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.*;
+import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 
 import java.rmi.RemoteException;
 import java.util.*;

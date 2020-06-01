@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 
 public class Request {
     private static Log log = LogFactory.getLog(Request.class);
@@ -19,7 +20,7 @@ public class Request {
         this.requestId = requestId;
         this.bankedSampleId = bankedSampleId;
         this.samples = new ArrayList<>();
-        this.stages = new TreeMap<>(new StatusTrackerConfig.StageComp());
+        this.stages = new TreeMap<>(new StageComp());
         this.metaData = new HashMap<>();
     }
 

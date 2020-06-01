@@ -6,7 +6,7 @@ import org.apache.commons.logging.LogFactory;
 
 import java.util.*;
 
-import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.*;
+import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 import static org.mskcc.limsrest.util.Utils.*;
 
 /**
@@ -26,7 +26,7 @@ public class ProjectSampleTree {
         this.user = user;
         this.root = root;
         this.sampleMap = new HashMap<>();
-        this.stageMap = new TreeMap<>(new StatusTrackerConfig.StageComp()); // Order map by order of stages
+        this.stageMap = new TreeMap<>(new StageComp()); // Order map by order of stages
         this.dataQcStatus = SEQ_QC_STATUS_PENDING;                          // Pending until finding a QcStatus child
     }
 

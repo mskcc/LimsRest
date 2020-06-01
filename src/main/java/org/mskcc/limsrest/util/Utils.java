@@ -21,7 +21,7 @@ import java.rmi.RemoteException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.*;
+import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 
 public class Utils {
     private final static Log LOGGER = LogFactory.getLog(Utils.class);
@@ -416,8 +416,7 @@ public class Utils {
      * @return
      */
     private static String getLimstStageName(String exemplarSampleStatus, String exemplarSampleType){
-        // TODO - constants
-        String stage = "Unknown";
+        String stage = STAGE_AWAITING_PROCESSING;
         if (NUCLEIC_ACID_TYPES.contains(exemplarSampleType.toLowerCase()) && exemplarSampleStatus.toLowerCase().contains("extraction")) {
             stage = String.format("%s %s", exemplarSampleType.toUpperCase(), STAGE_EXTRACTION);
         }
@@ -428,7 +427,7 @@ public class Utils {
             stage = STAGE_LIBRARY_PREP;
         }
         if (LIBRARY_SAMPLE_TYPES.contains(exemplarSampleType.toLowerCase()) && exemplarSampleStatus.toLowerCase().contains("capture")) {
-            stage = STAGE_LIBRARY_PREP;
+            stage = STAGE_LIBRARY_CAPTURE;
         }
         return stage;
     }

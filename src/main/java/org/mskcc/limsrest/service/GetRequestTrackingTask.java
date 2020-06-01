@@ -16,8 +16,8 @@ import java.rmi.RemoteException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.*;
 import static org.mskcc.limsrest.util.Utils.*;
+import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 
 public class GetRequestTrackingTask {
     private static Log log = LogFactory.getLog(GetRequestTrackingTask.class);
@@ -244,7 +244,7 @@ public class GetRequestTrackingTask {
      * @return
      */
     public Map<String, SampleStageTracker> aggregateStages(List<SampleStageTracker> sampleStages) {
-        Map<String, SampleStageTracker> stageMap = new TreeMap<>(new StatusTrackerConfig.StageComp());
+        Map<String, SampleStageTracker> stageMap = new TreeMap<>(new StageComp());
         if (sampleStages.size() == 0) return stageMap;
 
         String stageName;

@@ -5,6 +5,8 @@ import com.velox.api.datarecord.DataRecord;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
+
 /**
  * Representation of each sample in a project. These are the samples IGO's users are aware of,
  *  i.e. User submits a project w/ 12 samples. There are 12 ProjectSamples
@@ -32,7 +34,7 @@ public class ProjectSample {
         this.complete = true;       // The sample is considered complete until a record is added that is not done
 
         this.sampleGraph = new HashMap<>();
-        this.stages = new TreeMap<>(new StatusTrackerConfig.StageComp());
+        this.stages = new TreeMap<>(new StageComp());
     }
 
     public boolean isComplete() {

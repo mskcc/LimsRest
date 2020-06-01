@@ -262,7 +262,7 @@ public class GetSampleManifestTask {
                         // example: /ifs/pitt/161102_PITT_0089_AHFG3GBBXX/ or /ifs/lola/150814_LOLA_1298_BC7259ACXX/
                         String run = seqExperiment.getStringVal("SequencerRunFolder", user);
                         if (run == null || "".equals(run)) { // 04553_I_33 has empty SequencerRunFolder
-                            log.warn("Skipping run: " + seqExperiment.getStringVal("folowCellId", user));
+                            log.warn("Skipping run: " + flowCellId);
                             continue;
                         }
                         String[] runFolderElements = run.split("_");
@@ -421,8 +421,6 @@ public class GetSampleManifestTask {
         s.setIgoId(igoId);
         s.cmoInfoIgoId = cmoInfoIgoId;
         s.setCmoPatientId(cmoInfo.getStringVal("CmoPatientId", user));
-        //if (fixIt.contains(igoId))
-         //   s.setCmoPatientId("C-UNKNOWN-"+ igoId);
         // aka "Sample Name" in SampleCMOInfoRecords
 
         String sampleName = cmoInfo.getStringVal("OtherSampleId", user);
@@ -584,7 +582,11 @@ public class GetSampleManifestTask {
                 // so compare only full run directory to exclude failed runs
                 List<ArchivedFastq> passedQCList = new ArrayList<>();
                 for (ArchivedFastq fastq : fastqList) {
-                    if (runPassedQC.contains(fastq.runBaseDirectory))
+                    // in the absence of QC data automatically assume it is 'passed'
+                    // The LIMS has no QC data for samples prior to Oct. 2015
+                    if (runPassedQC.size() == 0)
+                        passedQCList.add(fastq);
+                    else if (runPassedQC.contains(fastq.runBaseDirectory))
                         passedQCList.add(fastq);
                     else {
                         // for example, 08106_C_35 has fastq PITT_0214_AHVHVFBBXX_A1 BUT PASSED
