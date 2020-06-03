@@ -70,7 +70,7 @@ public class Utils {
         if(qcRecord == null) {
             return false;
         }
-        String sequencingStatus = getRecordStringValue(sample, "SeqQCStatus", user);
+        String sequencingStatus = getRecordStringValue(qcRecord, "SeqQCStatus", user);
         return sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_PASSED) || sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_FAILED);
     }
 
