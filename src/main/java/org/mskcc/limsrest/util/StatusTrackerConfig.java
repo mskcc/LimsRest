@@ -4,13 +4,13 @@ package org.mskcc.limsrest.util;
 public class StatusTrackerConfig {
     // VALID STAGES
     public static final String STAGE_SUBMITTED = "Submitted";
-    public static final String STAGE_SAMPLE_QC = "Quality Control";
+    public static final String STAGE_SAMPLE_QC = "QualityControl";
     public static final String STAGE_EXTRACTION = "Extraction";
-    public static final String STAGE_LIBRARY_PREP = "Library Preparaton";
-    public static final String STAGE_LIBRARY_CAPTURE = "Library Capture";
+    public static final String STAGE_LIBRARY_PREP = "LibraryPreparaton";
+    public static final String STAGE_LIBRARY_CAPTURE = "LibraryCapture";
     public static final String STAGE_SEQUENCING = "Sequencing";
-    public static final String STAGE_DATA_QC = "Data QC";
-    public static final String STAGE_IGO_COMPLETE = "IGO Complete";
+    public static final String STAGE_DATA_QC = "DataQC";
+    public static final String STAGE_IGO_COMPLETE = "IGOComplete";
     // AMBIGUOUS STAGES
     public static final String STAGE_AWAITING_PROCESSING = "awaitingProcessing";    // Stage prior to any workflow
 
