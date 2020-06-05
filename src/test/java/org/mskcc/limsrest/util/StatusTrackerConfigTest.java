@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.mskcc.limsrest.util.StatusTrackerConfig.STAGE_ORDER;
 import static org.mskcc.limsrest.util.StatusTrackerConfig.getLimsStageNameFromStatus;
 
 public class StatusTrackerConfigTest {
@@ -324,6 +325,14 @@ public class StatusTrackerConfigTest {
         }
     }
 
+    @Test
+    public void getLimsStageNameFromStatusTest_stagesHaveMappings() {
+        // All stages should map to a non-blank name. Some may be overriden by the workflow mapping
+        for(String stage : STAGE_ORDER){
+            String actualStage = getLimsStageNameFromStatus(this.conn, stage);
+            Assert.assertNotEquals(String.format("Stage %s had a blank mapping", stage), "", stage);
+        }
+    }
 
     /**
      * BELOW ARE ALL THE BAD EXEMPLAR STATUSES EXTRACTED FROM TANGO.

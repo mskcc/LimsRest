@@ -327,7 +327,7 @@ public class Utils {
                 int currentStatusOrder = getSampleTypeOrder(currentSampleType.toLowerCase());
                 long currentRecordId = current.getRecordId();
                 if (isSequencingComplete(current, user)) {
-                    return "Completed - Sequencing";
+                    return String.format("%s%s", WORKFLOW_STATUS_COMPLETED, STAGE_SEQUENCING);
                 }
                 if (currentRecordId > recordId && currentStatusOrder > statusOrder && isCompleteStatus(currentSampleStatus)) {
                     sampleStatus = currentSampleStatus;
@@ -344,7 +344,7 @@ public class Utils {
                 }
             } while (sampleStack.size() > 0);
         } catch (Exception e) {
-            System.out.println("Statu error: " + e);
+            System.out.println("Status error: " + e);
             LOGGER.error(String.format("Error while getting status for sample '%s'.", sampleId));
             return "unknown";
         }

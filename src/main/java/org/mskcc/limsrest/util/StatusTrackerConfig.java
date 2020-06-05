@@ -56,7 +56,7 @@ public class StatusTrackerConfig {
     /**
      * Add the order of valid stages here and then the ordering map will be statically initialzed
      */
-    private static String[] stageOrder = new String[]{
+    final public static String[] STAGE_ORDER = new String[]{
             // TODO - need to confirm w/ Anna/Ajay
             STAGE_SUBMITTED,
             STAGE_AWAITING_PROCESSING,
@@ -88,7 +88,7 @@ public class StatusTrackerConfig {
     };
 
     // A Standard ExemplarSampleStatus is composed of a workflow status prefix (below) and workflow name
-    private static String WORKFLOW_STATUS_COMPLETED = "Completed - ";
+    public static String WORKFLOW_STATUS_COMPLETED = "Completed - ";
     private static String WORKFLOW_STATUS_IN_PROCESS = "In Process - ";
     private static String WORKFLOW_STATUS_READY_FOR = "Ready for - ";
     private static String WORKFLOW_STATUS_FAILED = "Failed - ";
@@ -112,9 +112,15 @@ public class StatusTrackerConfig {
             VeloxConnection vConn = conn.getConnection();
             User user = vConn.getUser();
 
-            Set<String> validStages = new HashSet<>(Arrays.asList(stageOrder));
+            Set<String> validStages = new HashSet<>(Arrays.asList(STAGE_ORDER));
             try {
                 List<Workflow> workflowList = vConn.getDataMgmtServer().getWorkflowManager(user).getLatestWorkflowList(user);
+
+                // Each stage should map to its stage exactly
+                for(String stage : STAGE_ORDER){
+                    workflowNameToStageMap.put(stage, stage);
+                }
+
                 // Create the mapping of the workflow name to its corresponding stage, stored in category
                 for (Workflow wkflw : workflowList) {
                     // Each workflow has populated its stage in the "Short Description" field
@@ -169,6 +175,6 @@ public class StatusTrackerConfig {
             }
         }
         LOGGER.warn(String.format("Non-standard Exemplar Status: %s", exemplarSampleStatus));
-        return "";
+        return exemplarSampleStatus;
     }
 }
