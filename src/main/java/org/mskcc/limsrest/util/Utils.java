@@ -335,7 +335,7 @@ public class Utils {
             LOGGER.error(String.format("Error while getting status for sample '%s'.", sampleId));
             return "unknown";
         }
-        return resolveCurrentStatus(currentSampleStatus, currentSampleType);
+        return resolveCurrentStatus(sampleStatus, currentSampleType);
     }
 
     /**
