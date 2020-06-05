@@ -27,310 +27,313 @@ public class StatusTrackerConfigTest {
         this.conn.close();
     }
 
-    /**
-     * Helper method used to test all stage extraction from input statuses
-     *
-     * @param testSamples
-     */
-    private void assertSamples(List<SampleStageTester> testSamples) {
-        for (SampleStageTester test : testSamples) {
-            String actualStage = getLimsStageNameFromStatus(this.conn, test.status);
-            Assert.assertEquals(String.format("FAILED: Status %s -> Stage %s (Actual: %s)", test.status, test.expectedStage, actualStage), actualStage, test.expectedStage);
-        }
-    }
-
     @Test
     public void getLimsStageNameFromStatusTest_sampleQC() {
-        List<SampleStageTester> testSamples = new ArrayList<>(Arrays.asList(
+        List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
                 // STAGE_SAMPLE_QC
-                new SampleStageTester("Completed - Quality Control", "05837_1", "02756_B", "Sample QC"),
-                new SampleStageTester("Failed - Quality Control", "05546_2", "", "Sample QC"),
-                new SampleStageTester("In Process - Quality Control", "05426_2", "", "Sample QC"),
-                new SampleStageTester("Ready for - Quality Control", "Neg-1924", "", "Sample QC")
+                new StageExtractorTester("Completed - Quality Control", "05837_1", "02756_B", "Sample QC"),
+                new StageExtractorTester("Failed - Quality Control", "05546_2", "", "Sample QC"),
+                new StageExtractorTester("In Process - Quality Control", "05426_2", "", "Sample QC"),
+                new StageExtractorTester("Ready for - Quality Control", "Neg-1924", "", "Sample QC")
         ));
         assertSamples(testSamples);
     }
 
     @Test
     public void getLimsStageNameFromStatusTest_returnedToUser() {
-        List<SampleStageTester> testSamples = new ArrayList<>(Arrays.asList(
-                new SampleStageTester("Completed - Return Samples To User", "NOT_IN_TANGO", "NOT_IN_TANGO", "Returned To User")
+        List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
+                new StageExtractorTester("Completed - Return Samples To User", "NOT_IN_TANGO", "NOT_IN_TANGO", "Returned To User")
         ));
         assertSamples(testSamples);
     }
 
     @Test
     public void getLimsStageNameFromStatusTest_extraction() {
-        List<SampleStageTester> testSamples = new ArrayList<>(Arrays.asList(
-                new SampleStageTester("Completed - cfDNA Extraction", "06302_Q_198", "06302_Q", "Nucleic Acid Extraction"),
-                new SampleStageTester("Completed - Covid19 Testing RNA Extraction", "10858_1663_1", "10858", "Nucleic Acid Extraction"),
-                new SampleStageTester("Completed - DNA Extraction", "06795_5", "04430_AA", "Nucleic Acid Extraction"),
-                new SampleStageTester("Completed - DNA Extraction From Blood", "07453_C_26", "05469_Z", "Nucleic Acid Extraction"),
-                new SampleStageTester("Completed - DNA/RNA Simultaneous Extraction", "05540_16", "05130_B", "Nucleic Acid Extraction"),
-                new SampleStageTester("In Process - DNA Extraction", "06000_DP_1", "06000_DP", "Nucleic Acid Extraction"),
-                new SampleStageTester("In Process - DNA/RNA Simultaneous Extraction", "05486_28", "05486", "Nucleic Acid Extraction"),
-                new SampleStageTester("Ready for - DNA Extraction", "07973_EW_6", "05257_BV", "Nucleic Acid Extraction"),
-                new SampleStageTester("Ready for - DNA/RNA Simultaneous Extraction", "09687_AQ_1", "09687_AQ", "Nucleic Acid Extraction"),
-                new SampleStageTester("Completed - RNA Extraction", "06534_C_4", "", "Nucleic Acid Extraction"),
-                new SampleStageTester("Failed - Blood Extraction", "05257_B_8", "05257_B", "Nucleic Acid Extraction"),
-                new SampleStageTester("In Process - Covid19 Testing RNA Extraction", "10858_10493", "10858", "Nucleic Acid Extraction")
+        List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
+                new StageExtractorTester("Completed - cfDNA Extraction", "06302_Q_198", "06302_Q", "Nucleic Acid Extraction"),
+                new StageExtractorTester("Completed - Covid19 Testing RNA Extraction", "10858_1663_1", "10858", "Nucleic Acid Extraction"),
+                new StageExtractorTester("Completed - DNA Extraction", "06795_5", "04430_AA", "Nucleic Acid Extraction"),
+                new StageExtractorTester("Completed - DNA Extraction From Blood", "07453_C_26", "05469_Z", "Nucleic Acid Extraction"),
+                new StageExtractorTester("Completed - DNA/RNA Simultaneous Extraction", "05540_16", "05130_B", "Nucleic Acid Extraction"),
+                new StageExtractorTester("In Process - DNA Extraction", "06000_DP_1", "06000_DP", "Nucleic Acid Extraction"),
+                new StageExtractorTester("In Process - DNA/RNA Simultaneous Extraction", "05486_28", "05486", "Nucleic Acid Extraction"),
+                new StageExtractorTester("Ready for - DNA Extraction", "07973_EW_6", "05257_BV", "Nucleic Acid Extraction"),
+                new StageExtractorTester("Ready for - DNA/RNA Simultaneous Extraction", "09687_AQ_1", "09687_AQ", "Nucleic Acid Extraction"),
+                new StageExtractorTester("Completed - RNA Extraction", "06534_C_4", "", "Nucleic Acid Extraction"),
+                new StageExtractorTester("Failed - Blood Extraction", "05257_B_8", "05257_B", "Nucleic Acid Extraction"),
+                new StageExtractorTester("In Process - Covid19 Testing RNA Extraction", "10858_10493", "10858", "Nucleic Acid Extraction")
         ));
         assertSamples(testSamples);
     }
 
     @Test
     public void getLimsStageNameFromStatusTest_libraryCapture() {
-        List<SampleStageTester> testSamples = new ArrayList<>(Arrays.asList(
+        List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
                 // STAGE_LIBRARY_CAPTURE,
-                new SampleStageTester("Completed - Agilent Capture from KAPA Library", "05622_C_10_1_1_1", "04430_U", "Library Capture"),
-                new SampleStageTester("Completed - Capture from KAPA Library", "04540_H_2", "", "Library Capture"),
-                new SampleStageTester("Completed - Pooling for Whole Exome Capture", "05605_B_1_1_1_1", "04525_J", "Library Capture"),
-                new SampleStageTester("Failed - Agilent Capture from KAPA Library", "05428_O_10_1_1", "05428_O", "Library Capture"),
-                new SampleStageTester("In Process - Agilent Capture from KAPA Library", "06049_O_77", "06049_O", "Library Capture"),
-                new SampleStageTester("In Process - Capture from KAPA Library", "10786_D_38", "10786_D", "Library Capture")
+                new StageExtractorTester("Completed - Agilent Capture from KAPA Library", "05622_C_10_1_1_1", "04430_U", "Library Capture"),
+                new StageExtractorTester("Completed - Capture from KAPA Library", "04540_H_2", "", "Library Capture"),
+                new StageExtractorTester("Completed - Pooling for Whole Exome Capture", "05605_B_1_1_1_1", "04525_J", "Library Capture"),
+                new StageExtractorTester("Failed - Agilent Capture from KAPA Library", "05428_O_10_1_1", "05428_O", "Library Capture"),
+                new StageExtractorTester("In Process - Agilent Capture from KAPA Library", "06049_O_77", "06049_O", "Library Capture"),
+                new StageExtractorTester("In Process - Capture from KAPA Library", "10786_D_38", "10786_D", "Library Capture")
         ));
         assertSamples(testSamples);
     }
 
     @Test
     public void getLimsStageNameFromStatusTest_libraryPrep() {
-        List<SampleStageTester> testSamples = new ArrayList<>(Arrays.asList(
-                new SampleStageTester("Completed - 10X Genomics cDNA Preparation", "05667_CB_1", "05667_CB", "Library Preparation"),
-                new SampleStageTester("Completed - 10X Genomics Library Preparation", "05667_CB_1_1", "05667_CB", "Library Preparation"),
-                new SampleStageTester("Completed - AmpliSeq Enrichment", "06605_F_1", "05604_S", "Library Preparation"),
-                new SampleStageTester("Completed - AmpliSeq Library Prep", "06605_F_1_1", "05604_S", "Library Preparation"),
-                new SampleStageTester("Completed - Archer Library Preparation Experiment", "07616_C_1_1", "", "Library Preparation"),
-                new SampleStageTester("Completed - ATAC Library Prep", "06865_1", "06125_K", "Library Preparation"),
-                new SampleStageTester("Completed - CloneTech SMARTer RNA Amplification", "06639_C_2", "", "Library Preparation"),
-                new SampleStageTester("Completed - DLP Library Preparation", "Pool-06000_GP-Tube3", "06000_GP", "Library Preparation"),
-                new SampleStageTester("Completed - EPIC Library Preparation", "06287_BG_10_1_1", "", "Library Preparation"),
-                new SampleStageTester("Completed - Generic Library Preparation", "09093_1_1", "06000_FD", "Library Preparation"),
-                new SampleStageTester("Completed - Generic Normalization Plate Setup", "09083_1", "06000_FD", "Library Preparation"),
-                new SampleStageTester("Completed - ImmunoSEQ Library Preparation", "07340_B_1", "", "Library Preparation"),
-                new SampleStageTester("Completed - KAPA Library Preparation", "05829_C_1_1_1_1", "", "Library Preparation"),
-                new SampleStageTester("Completed - Library Clean Up", "06777_10_1_1", "04622_C", "Library Preparation"),
-                new SampleStageTester("Completed - Library Clean Up/Size Selection", "07238_1_1_1_1_1", "", "Library Preparation"),
-                new SampleStageTester("Completed - Methyl Miner", "05813_1", "05813", "Library Preparation"),
-                new SampleStageTester("Completed - MSK Access Library Preparation", "06302_R_1_2", "", "Library Preparation"),
-                new SampleStageTester("Completed - MSK Access Normalization Plate Setup", "06302_R_138", "05257_BX", "Library Preparation"),
-                new SampleStageTester("Completed - Nextera Library Prep", "10091_100_1", "10091", "Library Preparation"),
-                new SampleStageTester("Completed - NexteraXT Library Prep", "06712_C_2_1", "06000_DQ", "Library Preparation"),
-                new SampleStageTester("Completed - Normalization Plate Setup", "06048_B_6_1", "", "Library Preparation"),
-                new SampleStageTester("Completed - PCR Cycle Re-Amplification", "05794_C_1_1", "", "Library Preparation"),
-                new SampleStageTester("Completed - PCR Free Whole Genome Library Preparation", "08368_25_1", "05732_AH", "Library Preparation"),
-                new SampleStageTester("Completed - PolyA RNA Normalization Plate Setup", "06389_B_1", "04907_D", "Library Preparation"),
-                new SampleStageTester("Completed - Ribodeplete RNA Normalization Plate Setup", "07008_AF_1", "04592_F", "Library Preparation"),
-                new SampleStageTester("Completed - RNA Normalization Plate Set up", "08858_F_1", "", "Library Preparation"),
-                new SampleStageTester("Completed - Sample Cleanup/Size Selection", "05667_V_2", "", "Library Preparation"),
-                new SampleStageTester("Completed - Sample Shearing", "05213_I_1_1_1", "", "Library Preparation"),
-                new SampleStageTester("Completed - Shearing Plate Setup", "05304_E_10_1_2", "04540_E", "Library Preparation"),
-                new SampleStageTester("Completed - Smarter RNA Normalization Plate Setup", "08185_B_5", "05737_X", "Library Preparation"),
-                new SampleStageTester("Completed - TruSeqRNA Fusion Discovery", "05491_B_11", "04835_D", "Library Preparation"),
-                new SampleStageTester("Completed - TruSeqRNA Poly-A cDNA Preparation", "08024_1_1", "", "Library Preparation"),
-                new SampleStageTester("Completed - TruSeqRNA Poly-A Library Preparation", "05018_B_10", "03498_D", "Library Preparation"),
-                new SampleStageTester("Completed - TruSeqRNA RiboDeplete cDNA Preparation", "07008_Y_1", "", "Library Preparation"),
-                new SampleStageTester("Completed - TruSeqRNA RiboDeplete Library Prep", "04969_D_2", "04592_C", "Library Preparation"),
-                new SampleStageTester("Failed - KAPA Library Preparation", "06159_88_1_1", "05428_AH", "Library Preparation"),
-                new SampleStageTester("In Process - 10X Genomics Library Preparation", "09955_E_1_1", "09955_E", "Library Preparation"),
-                new SampleStageTester("In Process - AmpliSeq Enrichment", "04966_L_1", "04966_L", "Library Preparation"),
-                new SampleStageTester("In Process - AmpliSeq Library Prep", "07973_BW_1_2_1", "07973_BW", "Library Preparation"),
-                new SampleStageTester("In Process - CloneTech SMARTer RNA Amplification", "07615_L_1", "07615_L", "Library Preparation"),
-                new SampleStageTester("In Process - Generic Library Preparation", "09364_B_8", "09364_B", "Library Preparation"),
-                new SampleStageTester("In Process - KAPA Library Preparation", "04298_C_1_1_1", "", "Library Preparation"),
-                new SampleStageTester("In Process - Normalization Plate Setup", "06477_G_1_2", "06477_G", "Library Preparation"),
-                new SampleStageTester("In Process - PCR Cycle Re-Amplification", "07570_10_1_1", "07570", "Library Preparation"),
-                new SampleStageTester("In Process - TruSeqRNA Library Preparation from cDNA", "05667_CO_10_1_1_1", "", "Library Preparation"),
-                new SampleStageTester("Ready for - 10X Genomics cDNA Preparation", "09743_L_1", "09743_L", "Library Preparation"),
-                new SampleStageTester("Ready for - Capture from KAPA Library", "07871_X_28", "07871_X", "Library Capture"),
-                new SampleStageTester("Ready for - CloneTech SMARTer RNA Amplification", "10223_385", "", "Library Preparation"),
-                new SampleStageTester("Ready for - DLP Library Preparation", "06000_GY_1", "06000_GY", "Library Preparation"),
-                new SampleStageTester("Ready for - Generic Library Preparation", "09279_466", "09279", "Library Preparation"),
-                new SampleStageTester("Ready for - KAPA Library Preparation", "04864_D_10_1", "04864_D", "Library Preparation"),
-                new SampleStageTester("Ready for - MSK Access Normalization Plate Setup", "09324_C_31", "09324_C", "Library Preparation"),
-                new SampleStageTester("Ready for - Normalization Plate Setup", "06477_B_357", "", "Library Preparation"),
-                new SampleStageTester("Ready for - PCR Free Whole Genome Library Preparation", "08822_GL_3_1_2", "08822_GL", "Library Preparation"),
-                new SampleStageTester("Ready for - RNA Normalization Plate Set up", "08822_GV_4_1", "08822_GV", "Library Preparation"),
-                new SampleStageTester("Ready for - TruSeqRNA Library Preparation from cDNA", "Neg-1302_1", "", "Library Preparation"),
-                new SampleStageTester("Ready for - TruSeqRNA RiboDeplete Library Prep", "06961_6", "06717_E", "Library Preparation")
+        List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
+                new StageExtractorTester("Completed - 10X Genomics cDNA Preparation", "05667_CB_1", "05667_CB", "Library Preparation"),
+                new StageExtractorTester("Completed - 10X Genomics Library Preparation", "05667_CB_1_1", "05667_CB", "Library Preparation"),
+                new StageExtractorTester("Completed - AmpliSeq Enrichment", "06605_F_1", "05604_S", "Library Preparation"),
+                new StageExtractorTester("Completed - AmpliSeq Library Prep", "06605_F_1_1", "05604_S", "Library Preparation"),
+                new StageExtractorTester("Completed - Archer Library Preparation Experiment", "07616_C_1_1", "", "Library Preparation"),
+                new StageExtractorTester("Completed - ATAC Library Prep", "06865_1", "06125_K", "Library Preparation"),
+                new StageExtractorTester("Completed - CloneTech SMARTer RNA Amplification", "06639_C_2", "", "Library Preparation"),
+                new StageExtractorTester("Completed - DLP Library Preparation", "Pool-06000_GP-Tube3", "06000_GP", "Library Preparation"),
+                new StageExtractorTester("Completed - EPIC Library Preparation", "06287_BG_10_1_1", "", "Library Preparation"),
+                new StageExtractorTester("Completed - Generic Library Preparation", "09093_1_1", "06000_FD", "Library Preparation"),
+                new StageExtractorTester("Completed - Generic Normalization Plate Setup", "09083_1", "06000_FD", "Library Preparation"),
+                new StageExtractorTester("Completed - ImmunoSEQ Library Preparation", "07340_B_1", "", "Library Preparation"),
+                new StageExtractorTester("Completed - KAPA Library Preparation", "05829_C_1_1_1_1", "", "Library Preparation"),
+                new StageExtractorTester("Completed - Library Clean Up", "06777_10_1_1", "04622_C", "Library Preparation"),
+                new StageExtractorTester("Completed - Library Clean Up/Size Selection", "07238_1_1_1_1_1", "", "Library Preparation"),
+                new StageExtractorTester("Completed - Methyl Miner", "05813_1", "05813", "Library Preparation"),
+                new StageExtractorTester("Completed - MSK Access Library Preparation", "06302_R_1_2", "", "Library Preparation"),
+                new StageExtractorTester("Completed - MSK Access Normalization Plate Setup", "06302_R_138", "05257_BX", "Library Preparation"),
+                new StageExtractorTester("Completed - Nextera Library Prep", "10091_100_1", "10091", "Library Preparation"),
+                new StageExtractorTester("Completed - NexteraXT Library Prep", "06712_C_2_1", "06000_DQ", "Library Preparation"),
+                new StageExtractorTester("Completed - Normalization Plate Setup", "06048_B_6_1", "", "Library Preparation"),
+                new StageExtractorTester("Completed - PCR Cycle Re-Amplification", "05794_C_1_1", "", "Library Preparation"),
+                new StageExtractorTester("Completed - PCR Free Whole Genome Library Preparation", "08368_25_1", "05732_AH", "Library Preparation"),
+                new StageExtractorTester("Completed - PolyA RNA Normalization Plate Setup", "06389_B_1", "04907_D", "Library Preparation"),
+                new StageExtractorTester("Completed - Ribodeplete RNA Normalization Plate Setup", "07008_AF_1", "04592_F", "Library Preparation"),
+                new StageExtractorTester("Completed - RNA Normalization Plate Set up", "08858_F_1", "", "Library Preparation"),
+                new StageExtractorTester("Completed - Sample Cleanup/Size Selection", "05667_V_2", "", "Library Preparation"),
+                new StageExtractorTester("Completed - Sample Shearing", "05213_I_1_1_1", "", "Library Preparation"),
+                new StageExtractorTester("Completed - Shearing Plate Setup", "05304_E_10_1_2", "04540_E", "Library Preparation"),
+                new StageExtractorTester("Completed - Smarter RNA Normalization Plate Setup", "08185_B_5", "05737_X", "Library Preparation"),
+                new StageExtractorTester("Completed - TruSeqRNA Fusion Discovery", "05491_B_11", "04835_D", "Library Preparation"),
+                new StageExtractorTester("Completed - TruSeqRNA Poly-A cDNA Preparation", "08024_1_1", "", "Library Preparation"),
+                new StageExtractorTester("Completed - TruSeqRNA Poly-A Library Preparation", "05018_B_10", "03498_D", "Library Preparation"),
+                new StageExtractorTester("Completed - TruSeqRNA RiboDeplete cDNA Preparation", "07008_Y_1", "", "Library Preparation"),
+                new StageExtractorTester("Completed - TruSeqRNA RiboDeplete Library Prep", "04969_D_2", "04592_C", "Library Preparation"),
+                new StageExtractorTester("Failed - KAPA Library Preparation", "06159_88_1_1", "05428_AH", "Library Preparation"),
+                new StageExtractorTester("In Process - 10X Genomics Library Preparation", "09955_E_1_1", "09955_E", "Library Preparation"),
+                new StageExtractorTester("In Process - AmpliSeq Enrichment", "04966_L_1", "04966_L", "Library Preparation"),
+                new StageExtractorTester("In Process - AmpliSeq Library Prep", "07973_BW_1_2_1", "07973_BW", "Library Preparation"),
+                new StageExtractorTester("In Process - CloneTech SMARTer RNA Amplification", "07615_L_1", "07615_L", "Library Preparation"),
+                new StageExtractorTester("In Process - Generic Library Preparation", "09364_B_8", "09364_B", "Library Preparation"),
+                new StageExtractorTester("In Process - KAPA Library Preparation", "04298_C_1_1_1", "", "Library Preparation"),
+                new StageExtractorTester("In Process - Normalization Plate Setup", "06477_G_1_2", "06477_G", "Library Preparation"),
+                new StageExtractorTester("In Process - PCR Cycle Re-Amplification", "07570_10_1_1", "07570", "Library Preparation"),
+                new StageExtractorTester("In Process - TruSeqRNA Library Preparation from cDNA", "05667_CO_10_1_1_1", "", "Library Preparation"),
+                new StageExtractorTester("Ready for - 10X Genomics cDNA Preparation", "09743_L_1", "09743_L", "Library Preparation"),
+                new StageExtractorTester("Ready for - Capture from KAPA Library", "07871_X_28", "07871_X", "Library Capture"),
+                new StageExtractorTester("Ready for - CloneTech SMARTer RNA Amplification", "10223_385", "", "Library Preparation"),
+                new StageExtractorTester("Ready for - DLP Library Preparation", "06000_GY_1", "06000_GY", "Library Preparation"),
+                new StageExtractorTester("Ready for - Generic Library Preparation", "09279_466", "09279", "Library Preparation"),
+                new StageExtractorTester("Ready for - KAPA Library Preparation", "04864_D_10_1", "04864_D", "Library Preparation"),
+                new StageExtractorTester("Ready for - MSK Access Normalization Plate Setup", "09324_C_31", "09324_C", "Library Preparation"),
+                new StageExtractorTester("Ready for - Normalization Plate Setup", "06477_B_357", "", "Library Preparation"),
+                new StageExtractorTester("Ready for - PCR Free Whole Genome Library Preparation", "08822_GL_3_1_2", "08822_GL", "Library Preparation"),
+                new StageExtractorTester("Ready for - RNA Normalization Plate Set up", "08822_GV_4_1", "08822_GV", "Library Preparation"),
+                new StageExtractorTester("Ready for - TruSeqRNA Library Preparation from cDNA", "Neg-1302_1", "", "Library Preparation"),
+                new StageExtractorTester("Ready for - TruSeqRNA RiboDeplete Library Prep", "06961_6", "06717_E", "Library Preparation")
         ));
         assertSamples(testSamples);
     }
 
     @Test
     public void getLimsStageNameFromStatusTest_sequencing() {
-        List<SampleStageTester> testSamples = new ArrayList<>(Arrays.asList(
-                new SampleStageTester("Completed - Illumina Sequencing", "Pool-06604_D-Tube1_2_2_1_1", "06604_D", "Sequencing"),
-                new SampleStageTester("Completed - Illumina Sequencing Planning/Denaturing", "Pool-06604_D-Tube1_2_2", "06604_D", "Sequencing"),
-                new SampleStageTester("Completed - Illumina Sequencing Setup", "Pool-06604_D-Tube1_2_2_1", "06604_D", "Sequencing"),
-                new SampleStageTester("Completed - Illumina Sequencing", "Pool-05363-1081", "", "Sequencing"),
-                new SampleStageTester("Completed - Illumina Sequencing Analysis", "Pool-05338_B-1080_4", "", "Sequencing"),
-                new SampleStageTester("Completed - Illumina Sequencing Planning/Denaturing", "Pool-05338_B-1080_2", "", "Sequencing"),
-                new SampleStageTester("Completed - Illumina Sequencing Setup", "06712_B_2_1", "04298_E", "Sequencing"),
-                new SampleStageTester("Completed - Normalization of Pooled Libraries", "05423_1", "", "Sequencing"),
-                new SampleStageTester("Completed - Pooling of Sample Libraries by Volume", "07810_1_1_1_1", "", "Sequencing"),
-                new SampleStageTester("Completed - Pooling of Sample Libraries for Sequencing", "06420_C_13_1", "", "Sequencing"),
-                new SampleStageTester("In Process - Illumina Sequencing", "06287_Q_8_1_1_1", "04430_AO,10431,05257_CD,10431_B,07973_ES", "Sequencing"),
-                new SampleStageTester("In Process - Normalization of Pooled Libraries", "Pool-05491_C-Tube1_1", "05491_C", "Sequencing"),
-                new SampleStageTester("In Process - Pooling of Sample Libraries for Sequencing", "07149_D_1_1_1", "06179_X", "Sequencing"),
-                new SampleStageTester("Ready for - Illumina Sequencing", "Pool-10848_B-B1_1", "", "Sequencing"),
-                new SampleStageTester("Ready for - Pooling of Sample Libraries by Volume", "07931_2_1_1", "07931", "Sequencing"),
-                new SampleStageTester("Ready for - Pooling of Sample Libraries for Sequencing", "09259_H_101_2", "06287_BG", "Sequencing")
+        List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
+                new StageExtractorTester("Completed - Illumina Sequencing", "Pool-06604_D-Tube1_2_2_1_1", "06604_D", "Sequencing"),
+                new StageExtractorTester("Completed - Illumina Sequencing Planning/Denaturing", "Pool-06604_D-Tube1_2_2", "06604_D", "Sequencing"),
+                new StageExtractorTester("Completed - Illumina Sequencing Setup", "Pool-06604_D-Tube1_2_2_1", "06604_D", "Sequencing"),
+                new StageExtractorTester("Completed - Illumina Sequencing", "Pool-05363-1081", "", "Sequencing"),
+                new StageExtractorTester("Completed - Illumina Sequencing Analysis", "Pool-05338_B-1080_4", "", "Sequencing"),
+                new StageExtractorTester("Completed - Illumina Sequencing Planning/Denaturing", "Pool-05338_B-1080_2", "", "Sequencing"),
+                new StageExtractorTester("Completed - Illumina Sequencing Setup", "06712_B_2_1", "04298_E", "Sequencing"),
+                new StageExtractorTester("Completed - Normalization of Pooled Libraries", "05423_1", "", "Sequencing"),
+                new StageExtractorTester("Completed - Pooling of Sample Libraries by Volume", "07810_1_1_1_1", "", "Sequencing"),
+                new StageExtractorTester("Completed - Pooling of Sample Libraries for Sequencing", "06420_C_13_1", "", "Sequencing"),
+                new StageExtractorTester("In Process - Illumina Sequencing", "06287_Q_8_1_1_1", "04430_AO,10431,05257_CD,10431_B,07973_ES", "Sequencing"),
+                new StageExtractorTester("In Process - Normalization of Pooled Libraries", "Pool-05491_C-Tube1_1", "05491_C", "Sequencing"),
+                new StageExtractorTester("In Process - Pooling of Sample Libraries for Sequencing", "07149_D_1_1_1", "06179_X", "Sequencing"),
+                new StageExtractorTester("Ready for - Illumina Sequencing", "Pool-10848_B-B1_1", "", "Sequencing"),
+                new StageExtractorTester("Ready for - Pooling of Sample Libraries by Volume", "07931_2_1_1", "07931", "Sequencing"),
+                new StageExtractorTester("Ready for - Pooling of Sample Libraries for Sequencing", "09259_H_101_2", "06287_BG", "Sequencing")
         ));
         assertSamples(testSamples);
     }
 
     @Test
     public void getLimsStageNameFromStatusTest_libraryQC() {
-        List<SampleStageTester> testSamples = new ArrayList<>(Arrays.asList(
-                new SampleStageTester("Completed - Library/Pool Quality Control", "06822_11", "", "Library QC"),
-                new SampleStageTester("Failed - Library/Pool Quality Control", "06477_D_532_1_1", "", "Library QC"),
-                new SampleStageTester("In Process - Library/Pool Quality Control", "Pool-06645-Tube1_3_1", "", "Library QC"),
-                new SampleStageTester("Ready for - Library/Pool Quality Control", "06819_F_13", "", "Library QC")
+        List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
+                new StageExtractorTester("Completed - Library/Pool Quality Control", "06822_11", "", "Library QC"),
+                new StageExtractorTester("Failed - Library/Pool Quality Control", "06477_D_532_1_1", "", "Library QC"),
+                new StageExtractorTester("In Process - Library/Pool Quality Control", "Pool-06645-Tube1_3_1", "", "Library QC"),
+                new StageExtractorTester("Ready for - Library/Pool Quality Control", "06819_F_13", "", "Library QC")
         ));
         assertSamples(testSamples);
     }
 
     @Test
     public void getLimsStageNameFromStatusTest_covid19() {
-        List<SampleStageTester> testSamples = new ArrayList<>(Arrays.asList(
-                new SampleStageTester("Completed - COVID-19 Testing QPCR", "10858_62_1_1_1", "", "COVID-19 Assay"),
-                new SampleStageTester("Completed - Covid19 Testing", "10858_2", "", "COVID-19 Assay"),
-                new SampleStageTester("In Process - COVID-19 Testing QPCR", "10858_10411_1_1_1", "", "COVID-19 Assay"),
-                new SampleStageTester("In Process - Covid19 Testing", "10858_1243_1", "10858", "COVID-19 Assay")
+        List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
+                new StageExtractorTester("Completed - COVID-19 Testing QPCR", "10858_62_1_1_1", "", "COVID-19 Assay"),
+                new StageExtractorTester("Completed - Covid19 Testing", "10858_2", "", "COVID-19 Assay"),
+                new StageExtractorTester("In Process - COVID-19 Testing QPCR", "10858_10411_1_1_1", "", "COVID-19 Assay"),
+                new StageExtractorTester("In Process - Covid19 Testing", "10858_1243_1", "10858", "COVID-19 Assay")
         ));
         assertSamples(testSamples);
     }
 
     @Test
     public void getLimsStageNameFromStatusTest_digitalPCR() {
-        List<SampleStageTester> testSamples = new ArrayList<>(Arrays.asList(
-                new SampleStageTester("Completed - Digital Droplet PCR", "05463_W_6", "04609_R", "Digital PCR"),
-                new SampleStageTester("Completed - Digital PCR", "06390_3", "06390", "Digital PCR"),
-                new SampleStageTester("In Process - Digital Droplet PCR", "07788_1_1", "07788", "Digital PCR"),
-                new SampleStageTester("Ready for - Digital Droplet PCR", "09802_C_14", "08039_CH", "Digital PCR")
+        List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
+                new StageExtractorTester("Completed - Digital Droplet PCR", "05463_W_6", "04609_R", "Digital PCR"),
+                new StageExtractorTester("Completed - Digital PCR", "06390_3", "06390", "Digital PCR"),
+                new StageExtractorTester("In Process - Digital Droplet PCR", "07788_1_1", "07788", "Digital PCR"),
+                new StageExtractorTester("Ready for - Digital Droplet PCR", "09802_C_14", "08039_CH", "Digital PCR")
         ));
         assertSamples(testSamples);
     }
 
     @Test
     public void getLimsStageNameFromStatusTest_addingCMOInformation() {
-        List<SampleStageTester> testSamples = new ArrayList<>(Arrays.asList(
-                new SampleStageTester("Completed - Adding CMO Information", "05200_J_1", "04430_H", "Adding CMO Information"),
-                new SampleStageTester("In Process - Adding CMO Information", "06575_25", "06575", "Adding CMO Information")
+        List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
+                new StageExtractorTester("Completed - Adding CMO Information", "05200_J_1", "04430_H", "Adding CMO Information"),
+                new StageExtractorTester("In Process - Adding CMO Information", "06575_25", "06575", "Adding CMO Information")
         ));
         assertSamples(testSamples);
     }
 
     @Test
     public void getLimsStageNameFromStatusTest_pendingUserDecision() {
-        List<SampleStageTester> testSamples = new ArrayList<>(Arrays.asList(
-                new SampleStageTester("Completed - Pending User Decision", "04926_L_29", "04926_L", "Pending User Decision"),
-                new SampleStageTester("Failed - Pending User Decision", "07431_2", "", "Pending User Decision"),
-                new SampleStageTester("In Process - Pending User Decision", "06678_C_19_1_2", "06678_C", "Pending User Decision"),
-                new SampleStageTester("Ready for - Pending User Decision", "10653_D_1_1_1_1", "09756_D", "Pending User Decision")
+        List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
+                new StageExtractorTester("Completed - Pending User Decision", "04926_L_29", "04926_L", "Pending User Decision"),
+                new StageExtractorTester("Failed - Pending User Decision", "07431_2", "", "Pending User Decision"),
+                new StageExtractorTester("In Process - Pending User Decision", "06678_C_19_1_2", "06678_C", "Pending User Decision"),
+                new StageExtractorTester("Ready for - Pending User Decision", "10653_D_1_1_1_1", "09756_D", "Pending User Decision")
         ));
         assertSamples(testSamples);
     }
 
     @Test
     public void getLimsStageNameFromStatusTest_batchPlanning() {
-        List<SampleStageTester> testSamples = new ArrayList<>(Arrays.asList(
-                new SampleStageTester("Completed - Batch Planning", "04926_P_5", "04926_P", "Batch Planning")
+        List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
+                new StageExtractorTester("Completed - Batch Planning", "04926_P_5", "04926_P", "Batch Planning")
         ));
         assertSamples(testSamples);
     }
 
     @Test
     public void getLimsStageNameFromStatusTest_createSampleAliquots() {
-        List<SampleStageTester> testSamples = new ArrayList<>(Arrays.asList(
-                new SampleStageTester("Completed - Create Sample Aliquots", "07624_D_75", "07624_D", "Create Sample Aliquots")
+        List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
+                new StageExtractorTester("Completed - Create Sample Aliquots", "07624_D_75", "07624_D", "Create Sample Aliquots")
         ));
         assertSamples(testSamples);
     }
 
     @Test
     public void getLimsStageNameFromStatusTest_nanoString() {
-        List<SampleStageTester> testSamples = new ArrayList<>(Arrays.asList(
-                new SampleStageTester("Completed - NanoString", "06260_B_9_2", "05654_H", "Nano string"),
-                new SampleStageTester("Ready for - NanoString", "10761_1", "10761", "Nano string"),
-                new SampleStageTester("In Process - NanoString", "06722_J_19", "06722_J", "Nano string")
+        List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
+                new StageExtractorTester("Completed - NanoString", "06260_B_9_2", "05654_H", "Nano string"),
+                new StageExtractorTester("Ready for - NanoString", "10761_1", "10761", "Nano string"),
+                new StageExtractorTester("In Process - NanoString", "06722_J_19", "06722_J", "Nano string")
         ));
         assertSamples(testSamples);
     }
 
     @Test
     public void getLimsStageNameFromStatusTest_str() {
-        List<SampleStageTester> testSamples = new ArrayList<>(Arrays.asList(
-                new SampleStageTester("Completed - STR PCR Human", "08822_GL_1_1_1_1", "05971_AI", "STR PCR"),
-                new SampleStageTester("Completed - STR/Fragment Analysis Profiling", "10347_B_1", "", "STR Analysis"),
-                new SampleStageTester("Ready for - STR/Fragment Analysis Profiling", "Neg-4885", "", "STR Analysis")
+        List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
+                new StageExtractorTester("Completed - STR PCR Human", "08822_GL_1_1_1_1", "05971_AI", "STR PCR"),
+                new StageExtractorTester("Completed - STR/Fragment Analysis Profiling", "10347_B_1", "", "STR Analysis"),
+                new StageExtractorTester("Ready for - STR/Fragment Analysis Profiling", "Neg-4885", "", "STR Analysis")
         ));
         assertSamples(testSamples);
     }
 
     @Test
     public void getLimsStageNameFromStatusTest_snpFingerprinting() {
-        List<SampleStageTester> testSamples = new ArrayList<>(Arrays.asList(
-                new SampleStageTester("In Process - SNP Fingerprinting", "06938_K_10_1_1", "06938_K", "SNP Fingerprinting"),
-                new SampleStageTester("Completed - SNP Fingerprinting", "07037_M_1_1", "04430_X", "SNP Fingerprinting")
+        List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
+                new StageExtractorTester("In Process - SNP Fingerprinting", "06938_K_10_1_1", "06938_K", "SNP Fingerprinting"),
+                new StageExtractorTester("Completed - SNP Fingerprinting", "07037_M_1_1", "04430_X", "SNP Fingerprinting")
         ));
         assertSamples(testSamples);
     }
 
     @Test
     public void getLimsStageNameFromStatusTest_sampleReceipt() {
-        List<SampleStageTester> testSamples = new ArrayList<>(Arrays.asList(
-                new SampleStageTester("Completed - Sample Combination for Pooled Submissions", "05332_7", "05114_B", "Sample Receipt")
+        List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
+                new StageExtractorTester("Completed - Sample Combination for Pooled Submissions", "05332_7", "05114_B", "Sample Receipt")
         ));
         assertSamples(testSamples);
     }
 
     @Test
     public void getLimsStageNameFromStatusTest_sampleReplacementContamination() {
-        List<SampleStageTester> testSamples = new ArrayList<>(Arrays.asList(
-                new SampleStageTester("Completed - Sample Replacement/Combination", "06265_H_1", "04971_L", "Sample Replacement/Combination")
+        List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
+                new StageExtractorTester("Completed - Sample Replacement/Combination", "06265_H_1", "04971_L", "Sample Replacement/Combination")
         ));
         assertSamples(testSamples);
     }
 
     @Test
     public void getLimsStageNameFromStatusTest_transferTubeSamples() {
-        List<SampleStageTester> testSamples = new ArrayList<>(Arrays.asList(
-                new SampleStageTester("Completed - Transfer Tube Samples to Plates", "05445_D_1", "04298_D", "Transfer Tube Samples to Plates"),
-                new SampleStageTester("Failed - Transfer Tube Samples to Plates", "04540_D_1_1", "04540_D", "Transfer Tube Samples to Plates")
+        List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
+                new StageExtractorTester("Completed - Transfer Tube Samples to Plates", "05445_D_1", "04298_D", "Transfer Tube Samples to Plates"),
+                new StageExtractorTester("Failed - Transfer Tube Samples to Plates", "04540_D_1_1", "04540_D", "Transfer Tube Samples to Plates")
         ));
         assertSamples(testSamples);
     }
 
     @Test
     public void getLimsStageNameFromStatusTest_pathology() {
-        List<SampleStageTester> testSamples = new ArrayList<>(Arrays.asList(
-                new SampleStageTester("Failed - Pathology", "04644_K_22", "04430_X", "Pathology"),
-                new SampleStageTester("Ready for - Pathology", "09687_AP_1", "05257_BU", "Pathology")
+        List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
+                new StageExtractorTester("Failed - Pathology", "04644_K_22", "04430_X", "Pathology"),
+                new StageExtractorTester("Ready for - Pathology", "09687_AP_1", "05257_BU", "Pathology")
         ));
         assertSamples(testSamples);
-    }
-
-    private class SampleStageTester {
-        String status;
-        String sampleId;
-        String requestId;
-        String expectedStage;
-
-        SampleStageTester(String status, String sampleId, String requestId, String expectedStage) {
-            this.status = status;
-            this.sampleId = sampleId;
-            this.requestId = requestId;
-            this.expectedStage = expectedStage;
-        }
     }
 
     @Test
     public void getLimsStageNameFromStatusTest_stagesHaveMappings() {
         // All stages should map to a non-blank name. Some may be overriden by the workflow mapping
-        for(String stage : STAGE_ORDER){
+        for (String stage : STAGE_ORDER) {
             String actualStage = getLimsStageNameFromStatus(this.conn, stage);
             Assert.assertNotEquals(String.format("Stage %s had a blank mapping", stage), "", stage);
+        }
+    }
+
+    /**
+     * Helper method used to test all stage extraction from input statuses
+     *
+     * @param testSamples
+     */
+    private void assertSamples(List<StageExtractorTester> testSamples) {
+        for (StageExtractorTester test : testSamples) {
+            String actualStage = getLimsStageNameFromStatus(this.conn, test.status);
+            Assert.assertEquals(String.format("FAILED: Status %s -> Stage %s (Actual: %s)", test.status, test.expectedStage, actualStage), actualStage, test.expectedStage);
+        }
+    }
+
+    /**
+     * Helper class containing relevant test cases for checking stage extraction from LIMS status
+     */
+    private class StageExtractorTester {
+        String status;                  // ExemplarSampleStatus
+        String sampleId;                // Not needed for the tests, but a reference for finding the actual sample
+        String requestId;               // Not needed for the tests, but a reference for finding the actual sample
+        String expectedStage;           // Stage expected to be returned
+
+        StageExtractorTester(String status, String sampleId, String requestId, String expectedStage) {
+            this.status = status;
+            this.sampleId = sampleId;
+            this.requestId = requestId;
+            this.expectedStage = expectedStage;
         }
     }
 
