@@ -276,6 +276,7 @@ public class GetSampleManifestTask {
                         if (runsMap.containsKey(flowCellId)) { // already created, just add new lane num to list
                             runsMap.get(flowCellId).addLane(laneNum);
                         } else { // lookup fastq paths for this run, currently making extra queries for 06260_N_9 KIM & others
+                            //06938_J_86 was demuxed by lane on 2017-06-16 16:49:08
                             List<String> fastqs = FastQPathFinder.search(runId, origSampleName, sampleManifest.getIgoId(), true, runPassedQC);
                             if (fastqs == null && aliquot.getLongVal("DateCreated", user) < 1455132132000L) { // try search again with pre-Jan 2016 naming convention, 06184_4
                                 log.info("Searching fastq database again for pre-Jan. 2016 sample.");
@@ -601,13 +602,7 @@ public class GetSampleManifestTask {
                     }
                 }
 
-                if (returnOnlyTwo) {
-                    // Return only most recent R1&R2 in case of re-demux but return all fastqs if demux fastqs are by lane
-                    if (passedQCList.size() > 2 && hasRedemux(fastqList)) {
-                        log.info("Cutting response to not include prior redemuxes.");
-                        passedQCList = passedQCList.subList(0, 2);
-                    }
-                }
+                passedQCList = filterMultipleDemuxes(passedQCList);
 
                 List<String> result = new ArrayList<>();
                 for (ArchivedFastq fastq : passedQCList) {
@@ -626,7 +621,10 @@ public class GetSampleManifestTask {
         }
     }
 
-    /*
+    /**
+     * If the list of fastqs contains multiple demuxes return only the most recent demuxed fastqs.
+     * Fastqs may be across many lanes or lanes all merged to R1 & R2 fastqs only
+
       If fastqs were demuxed by lane we should return all fastqs, ie: L005 & L006 fastqs should be included from this run in in Oct. 2016
         '/ifs/archive/GCL/hiseq/FASTQ/JAX_0039_BHCKCHBBXX/Project_06208_C/Sample_P-1234567-T01-WES_IGO_06208_C_80/P-1234567-T01-WES_IGO_06208_C_80_S25_L005_R1_001.fastq.gz'
         '/ifs/archive/GCL/hiseq/FASTQ/JAX_0039_BHCKCHBBXX/Project_06208_C/Sample_P-1234567-T01-WES_IGO_06208_C_80/P-1234567-T01-WES_IGO_06208_C_80_S25_L005_R2_001.fastq.gz'
@@ -642,16 +640,19 @@ public class GetSampleManifestTask {
          Illumina sample sheet S** number will likely change when redemuxed:
            https://support.illumina.com/help/BaseSpace_OLH_009008/Content/Source/Informatics/BS/NamingConvention_FASTQ-files-swBS.htm
          */
-    protected static boolean hasRedemux(List<ArchivedFastq> passedQCList) {
-        Set<String> samples = new HashSet<>();
-        for (ArchivedFastq fastqEntry : passedQCList) {
-            String [] parts = fastqEntry.fastq.split("/");
-            String sampleOnly = parts[parts.length - 1];
-            sampleOnly = sampleOnly.replaceAll("_S([0-9]{1,3})_", "");
-            if (samples.contains(sampleOnly))
-                return true;
-            samples.add(sampleOnly);
+    protected static List<ArchivedFastq> filterMultipleDemuxes(List<ArchivedFastq> fastqs) {
+        fastqs.sort(Comparator.comparing(ArchivedFastq::getFastqLastModified).reversed());
+
+        List<ArchivedFastq> onlyMostRecentDemux = new ArrayList();
+        onlyMostRecentDemux.add(fastqs.get(0));
+        for (int i=1; i < fastqs.size(); i++) {
+            if (fastqs.get(i).getRunBaseDirectory().equals(fastqs.get(i-1).getRunBaseDirectory()))
+                onlyMostRecentDemux.add(fastqs.get(i));
+            else
+                break;
         }
-        return false;
+        return onlyMostRecentDemux;
     }
+
+
 }
