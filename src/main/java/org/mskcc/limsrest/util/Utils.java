@@ -291,11 +291,12 @@ public class Utils {
      * Returns the Lims Stage corresponding to the most advacned stage of the DataRecord
      * @param sample
      * @param requestId
-     * @param user
      * @param conn
      * @return
      */
-    public static String getMostAdvancedLimsStage(DataRecord sample, String requestId, User user, ConnectionLIMS conn) {
+    // TODO - how to handle "Ready For" <- should be the one that proceeds it
+    public static String getMostAdvancedLimsStage(DataRecord sample, String requestId, ConnectionLIMS conn) {
+        User user = conn.getConnection().getUser();
         String mostAdvancedSampleStatus = getMostAdvancedSampleStatus(sample, requestId, user);
         String limsStage = getLimsStageNameFromStatus(conn, mostAdvancedSampleStatus);
         return limsStage;

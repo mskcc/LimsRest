@@ -126,7 +126,7 @@ public class GetWESSampleDataTask {
                                         String scientificPi = (String)getValueFromDataRecord(dmpTrackRec, "i_PrimaryInvestigator", "String", user);
                                         Boolean consentPartAStatus = getConsentStatus(consentAList, dmpPatientId);
                                         Boolean consentPartCStatus = getConsentStatus(consentCList, dmpPatientId);
-                                        String resolvedStatus = getMostAdvancedLimsStage(sample, igoRequestId, user, this.conn);
+                                        String resolvedStatus = getMostAdvancedLimsStage(sample, igoRequestId, this.conn);
                                         log.info("sample status: " + resolvedStatus);
                                         String baitsetUsed = "";
                                         String accessLevel = "";

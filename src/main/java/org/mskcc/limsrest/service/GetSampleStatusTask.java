@@ -45,7 +45,7 @@ public class GetSampleStatusTask {
             if (samples.size()==1){
                 DataRecord sample = samples.get(0);
                 requestId = (String)getValueFromDataRecord(sample, "RequestId", "String", user);
-                status = getMostAdvancedLimsStage(samples.get(0), requestId, user, this.conn);
+                status = getMostAdvancedLimsStage(samples.get(0), requestId, this.conn);
             }
             log.info("request id: " + requestId);
         } catch (Throwable e) {

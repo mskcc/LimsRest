@@ -76,7 +76,7 @@ public class GetSampleMetadataTask {
                         String fastqPath = "";
                         String ancestorSample = getOriginSampleId(sample, user);
                         boolean doNotUse = false;
-                        String sampleStatus = getMostAdvancedLimsStage(sample, requestId, user, this.conn);
+                        String sampleStatus = getMostAdvancedLimsStage(sample, requestId, this.conn);
                         SampleMetadata metadata = new SampleMetadata(mrn, cmoPatientId, cmoSampleId, igoId, investigatorSampleId, species,
                                 sex, tumorOrNormal, sampleType, preservation, tumorType, parentTumorType,
                                 specimenType, sampleOrigin, tissueSource, tissueLocation, recipe,

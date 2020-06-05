@@ -1,6 +1,5 @@
 package org.mskcc.limsrest.util;
 
-import com.velox.api.datamgmtserver.DataMgmtServer;
 import com.velox.api.user.User;
 import com.velox.api.util.ServerException;
 import com.velox.api.workflow.Workflow;
@@ -11,7 +10,6 @@ import org.mskcc.limsrest.ConnectionLIMS;
 
 import java.rmi.RemoteException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 // Temporary mapping of statuse to their buckets
 public class StatusTrackerConfig {
@@ -98,24 +96,28 @@ public class StatusTrackerConfig {
      * @return
      */
     public static String getLimsStageNameFromStatus(ConnectionLIMS conn, String status) {
-        String targetWkflw = getWorkflowFromStatus(status);
+        String workflowName = getWorkflowNameFromStatus(status);
         Map<String, String> workflowMap = getPopulatedWorkflowMap(conn);
-        if(workflowMap.containsKey(targetWkflw)){
-            return workflowMap.get(targetWkflw);
-            new HashSet<String>(workflowMap.values());
+        if(workflowMap.containsKey(workflowName)){
+            return workflowMap.get(workflowName);
         }
-        LOGGER.warn(String.format("Stage (Category) for Exemplar status not found: %s", status));
+        LOGGER.warn(String.format("Stage (Short Description) for Exemplar status not found: %s", status));
         return "";
     }
 
     /**
-     * Extracts the workflow from the input status
+     * Extracts the workflow from the input Exemplar Status
+     *      The Exemplar Status is typically composed of,
+     *          1) a Progress Status - "Ready For" -> "In Process" -> "Completed"
+     *          2) Workflow Name
+     *      So we need to extract the workflow name from the status prefix
+     *          E.g. "Ready For - Illumina Sequencing" -> "Illumina Sequencing"
      *
-     * @param status
-     * @return
+     * @param exemplarSampleStatus, Sample::ExemplarSampleStatus
+     * @return Workflow name
      */
-    private static String getWorkflowFromStatus(String status) {
-        String[] statusComponents = status.split(" - ");
+    private static String getWorkflowNameFromStatus(String exemplarSampleStatus) {
+        String[] statusComponents = exemplarSampleStatus.split(" - ");
         if(statusComponents.length != 2){
             LOGGER.error("Failed to extract stage from status");
             return null;
