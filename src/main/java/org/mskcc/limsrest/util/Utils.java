@@ -294,7 +294,7 @@ public class Utils {
      * @param conn
      * @return
      */
-    // TODO - how to handle "Ready For" <- should be the one that proceeds it
+    // TODO - how to handle "Ready For" <- should be the one that proceeds it (eventually)
     public static String getMostAdvancedLimsStage(DataRecord sample, String requestId, ConnectionLIMS conn) {
         User user = conn.getConnection().getUser();
         String mostAdvancedSampleStatus = getMostAdvancedSampleStatus(sample, requestId, user);
@@ -371,6 +371,7 @@ public class Utils {
      * @param sampleType
      * @return
      */
+    // TODO - delete? Only used in tests
     public static String resolveCurrentStatus(String status, String sampleType) {
         LimsStage stage = getLimsStage(status, sampleType);
         return stage.getStageStatus();
