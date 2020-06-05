@@ -327,6 +327,7 @@ public class Utils {
                 int currentStatusOrder = getSampleTypeOrder(currentSampleType.toLowerCase());
                 long currentRecordId = current.getRecordId();
                 if (isSequencingComplete(current, user)) {
+                    // Return the Completed-Sequencing status, NOT currentSampleStatus as this could not unrelated to sequencing
                     return String.format("%s%s", WORKFLOW_STATUS_COMPLETED, STAGE_SEQUENCING);
                 }
                 if (currentRecordId > recordId && currentStatusOrder > statusOrder && isCompleteStatus(currentSampleStatus)) {
@@ -349,7 +350,7 @@ public class Utils {
             return "unknown";
         }
 
-        return currentSampleStatus;
+        return sampleStatus;
     }
 
     /**
