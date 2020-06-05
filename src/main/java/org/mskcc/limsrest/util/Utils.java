@@ -3,14 +3,13 @@ package org.mskcc.limsrest.util;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
-import com.velox.sloan.cmo.recmodels.SampleModel;
-import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.mskcc.domain.sample.NucleicAcid;
+import org.mskcc.limsrest.ConnectionLIMS;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -109,7 +108,7 @@ public class Utils {
      * @param user
      * @return
      */
-    private static String getRecordStringValue(DataRecord record, String key, User user) {
+    public static String getRecordStringValue(DataRecord record, String key, User user) {
         try {
             if(record.getValue(key, user) != null) {
                 return record.getStringVal(key, user);
@@ -288,6 +287,19 @@ public class Utils {
         return sampleId;
     }
 
+    /**
+     * Returns the Lims Stage corresponding to the most advacned stage of the DataRecord
+     * @param sample
+     * @param requestId
+     * @param user
+     * @param conn
+     * @return
+     */
+    public static String getMostAdvancedLimsStage(DataRecord sample, String requestId, User user, ConnectionLIMS conn) {
+        String mostAdvancedSampleStatus = getMostAdvancedSampleStatus(sample, requestId, user);
+        String limsStage = getLimsStageNameFromStatus(conn, mostAdvancedSampleStatus);
+        return limsStage;
+    }
 
     /**
      * Method to get latest sample status.
@@ -296,7 +308,7 @@ public class Utils {
      * @param requestId
      * @return
      */
-    public static String getMostAdvancedSampleStatus(DataRecord sample, String requestId, User user) {
+    private static String getMostAdvancedSampleStatus(DataRecord sample, String requestId, User user) {
         String sampleId = "";
         String sampleStatus = "";
         String currentSampleType = "";
@@ -335,7 +347,8 @@ public class Utils {
             LOGGER.error(String.format("Error while getting status for sample '%s'.", sampleId));
             return "unknown";
         }
-        return resolveCurrentStatus(currentSampleStatus, currentSampleType);
+
+        return currentSampleStatus;
     }
 
     /**
@@ -369,7 +382,7 @@ public class Utils {
      * @return
      */
     public static LimsStage getLimsStage(String exemplarSampleStatus, String exemplarSampleType){
-        final String stageName = getLimstStageName(exemplarSampleStatus, exemplarSampleType);
+        final String stageName = getLimsStageName(exemplarSampleStatus, exemplarSampleType);
         LimsStage.Status limstStageStatus = getLimsStageStatus(exemplarSampleStatus);
         return new LimsStage(stageName, limstStageStatus);
     }
@@ -381,7 +394,7 @@ public class Utils {
      * @param exemplarSampleType
      * @return
      */
-    private static String getLimstStageName(String exemplarSampleStatus, String exemplarSampleType){
+    private static String getLimsStageName(String exemplarSampleStatus, String exemplarSampleType){
         // TODO - constants
         String stage = "Unknown";
         if (NUCLEIC_ACID_TYPES.contains(exemplarSampleType.toLowerCase()) && exemplarSampleStatus.toLowerCase().contains("extraction")) {
