@@ -126,8 +126,8 @@ public class GetWESSampleDataTask {
                                         String scientificPi = (String)getValueFromDataRecord(dmpTrackRec, "i_PrimaryInvestigator", "String", user);
                                         Boolean consentPartAStatus = getConsentStatus(consentAList, dmpPatientId);
                                         Boolean consentPartCStatus = getConsentStatus(consentCList, dmpPatientId);
-                                        String resolvedStatus = getMostAdvancedLimsStage(sample, igoRequestId, this.conn);
-                                        log.info("sample status: " + resolvedStatus);
+                                        String sampleStatus = getMostAdvancedLimsStage(sample, igoRequestId, conn);
+                                        log.info("sample status: " + sampleStatus);
                                         String baitsetUsed = "";
                                         String accessLevel = "";
                                         String clinicalTrial = "";
@@ -140,7 +140,7 @@ public class GetWESSampleDataTask {
                                         String limsTrackerRecordId = String.valueOf(dmpTrackRec.getLongVal("RecordId", user));
                                         resultList.add(new WESSampleData(sampleId, userSampleId, userSampleidHistorical, duplicateSample, wesSampleid, cmoSampleId, cmoPatientId, dmpSampleId, dmpPatientId, mrn, sex, sampleType, sampleClass, tumorType, parentalTumorType, tissueSite,
                                                 molAccessionNum, collectionYear, dateDmpRequest, dmpRequestId, igoRequestId, dateIgoReceived, igoCompleteDate, applicationRequested, baitsetUsed, sequencerType, projectTitle, labHead, ccFund, scientificPi,
-                                                consentPartAStatus, consentPartCStatus, resolvedStatus, accessLevel, clinicalTrial, sequencingSite, piRequestDate, pipeline, tissueType, collaborationCenter, limsSampleRecordId, limsTrackerRecordId));
+                                                consentPartAStatus, consentPartCStatus, sampleStatus, accessLevel, clinicalTrial, sequencingSite, piRequestDate, pipeline, tissueType, collaborationCenter, limsSampleRecordId, limsTrackerRecordId));
                                     }
                                 }
                             } else {
