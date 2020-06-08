@@ -1,6 +1,7 @@
 package org.mskcc.limsrest.util;
 
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
 import com.velox.sloan.cmo.recmodels.SampleModel;
@@ -109,16 +110,54 @@ public class Utils {
      * @param user
      * @return
      */
-    private static String getRecordStringValue(DataRecord record, String key, User user) {
+    public static String getRecordStringValue(DataRecord record, String key, User user) {
         try {
             if(record.getValue(key, user) != null) {
                 return record.getStringVal(key, user);
             }
         } catch (NotFound | RemoteException | NullPointerException e) {
-            LOGGER.error(String.format("Failed to get key %s from Data Record: %d", key, record.getRecordId()));
+            LOGGER.error(String.format("Failed to get (String) key %s from Data Record: %d", key, record.getRecordId()));
             return "";
         }
         return "";
+    }
+
+    /**
+     * Safely extracts integer values
+     *
+     * @param record
+     * @param key
+     * @param user
+     * @return
+     */
+    public static Long getRecordLongValue(DataRecord record, String key, User user) {
+        try {
+            if(record.getValue(key, user) != null) {
+                return record.getLongVal(key, user);
+            }
+        } catch (NotFound | RemoteException | NullPointerException e) {
+            LOGGER.error(String.format("Failed to get (Integer) key %s from Data Record: %d", key, record.getRecordId()));
+            return null;
+        }
+        return null;
+    }
+
+    /**
+     * Returns the DataRecord children of an input datatype of an input data record
+     *
+     * @param record
+     * @param childDataType
+     * @param user
+     * @return
+     */
+    public static DataRecord[] getChildrenofDataRecord(DataRecord record, String childDataType, User user){
+        try {
+            DataRecord[] sampleChildren = record.getChildrenOfType(childDataType, user);
+            return sampleChildren;
+        } catch(IoError | RemoteException e) {
+            LOGGER.error(String.format("Failed to retrieve %s children of %s record: %d", childDataType, record.getDataTypeName(), record.getRecordId()));
+        }
+        return new DataRecord[0];
     }
 
     /**
