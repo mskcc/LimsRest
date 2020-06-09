@@ -72,7 +72,7 @@ public class WorkflowSample extends StageTracker {
         if (this.record == null || this.user == null) return;
 
         String status = getRecordStringValue(this.record, SampleModel.EXEMPLAR_SAMPLE_STATUS, this.user);
-        String stage = STAGE_AMBIGUOUS;
+        String stage = STAGE_UNKNOWN;
         try {
             stage = getStageForStatus(status);
         } catch (IllegalArgumentException e) {

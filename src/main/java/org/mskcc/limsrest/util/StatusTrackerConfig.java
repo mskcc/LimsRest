@@ -40,7 +40,7 @@ public class StatusTrackerConfig {
     public static final String STAGE_Digital_PCR = "Digital PCR";
     public static final String STAGE_RETURNED_TO_USER = "Returned to User";
     // Invalid Stage, but used when the exact stage can't be determined (e.g. manual status assignment, new workflow)
-    public static final String STAGE_AMBIGUOUS = "Ambiguous Stage";
+    public static final String STAGE_UNKNOWN = "Unknown";
     // TODO - This should be added, but in a way that it disappears once it is not longer processing
     // TODO - PROCESSING STAGES
     public static final String STAGE_AWAITING_PROCESSING = "awaitingProcessing";    // Stage prior to any workflow

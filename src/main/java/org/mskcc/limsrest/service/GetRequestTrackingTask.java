@@ -183,9 +183,9 @@ public class GetRequestTrackingTask {
             for(DataRecord record : children){
                 WorkflowSample sample = new WorkflowSample(record, tree.getUser());
                 sample.setParent(root);
-                if(STAGE_AMBIGUOUS.equals(sample.getStage()) || STAGE_AWAITING_PROCESSING.equals(sample.getStage())){
+                if(STAGE_UNKNOWN.equals(sample.getStage()) || STAGE_AWAITING_PROCESSING.equals(sample.getStage())){
                     // Update the stage of the sample to the parent stage if it is unknown
-                    if(!STAGE_AMBIGUOUS.equals(root.getStage())){
+                    if(!STAGE_UNKNOWN.equals(root.getStage())){
                         sample.setStage(root.getStage());
                     }
                 }

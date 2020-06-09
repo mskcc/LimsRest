@@ -87,7 +87,7 @@ public class StatusTrackerConfig {
         else if (STATUS_AWAITING_PROCESSING.equals(status)) return STAGE_AWAITING_PROCESSING;
         else if (STATUS_EXTRACTION.contains(status)) return STAGE_EXTRACTION;
             // Failed statuses need to be assigned stages based on preceeding/succeeding samples
-        else if (FAILED_STATUSES.contains(status)) return STAGE_AMBIGUOUS;
+        else if (FAILED_STATUSES.contains(status)) return STAGE_UNKNOWN;
 
         throw new IllegalArgumentException();
     }
