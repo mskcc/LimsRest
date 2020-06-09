@@ -397,13 +397,23 @@ public class GetSampleManifestTask {
         // exit recursion by these conditions
         if (sourceSampleID == null || sourceSampleID.isEmpty() || sourceSampleID.equals("0"))
             return igoId;
-        if (depth > 5) {
+        if (depth >= 5) {
             log.info("Likely self-referencial sample: " + igoId);
             return igoId;
         }
         else {
             String baseIGOID = IGOTools.baseIgoSampleId(sourceSampleID);
+            log.info("Searching sample table for: " + baseIGOID);
             List<DataRecord> samples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + baseIGOID + "'", user);
+            if (samples.size() == 0) {
+                // Some samples in LIMS such as 06048_P_15, 06194_F_2
+                // have source samples like 06048_F_11_1 where no 06048_F_11 exists in the LIMS
+                samples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sourceSampleID + "'", user);
+            }
+            if (samples.size() == 0) {
+                // 06194_E_1 lists source sample ID 06194_D_1 which does not exist in the LIMS!
+                return sourceSampleID;
+            }
             return getCMOSampleIGOID(samples.get(0), baseIGOID, dataRecordManager, ++depth, user);
         }
     }
