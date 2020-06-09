@@ -239,9 +239,9 @@ public class StatusTrackerConfigTest {
     @Test
     public void getLimsStageNameFromStatusTest_nanoString() {
         List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
-                new StageExtractorTester("Completed - NanoString", "06260_B_9_2", "05654_H", "Nano string"),
-                new StageExtractorTester("Ready for - NanoString", "10761_1", "10761", "Nano string"),
-                new StageExtractorTester("In Process - NanoString", "06722_J_19", "06722_J", "Nano string")
+                new StageExtractorTester("Completed - NanoString", "06260_B_9_2", "05654_H", "NanoString"),
+                new StageExtractorTester("Ready for - NanoString", "10761_1", "10761", "NanoString"),
+                new StageExtractorTester("In Process - NanoString", "06722_J_19", "06722_J", "NanoString")
         ));
         assertSamples(testSamples);
     }

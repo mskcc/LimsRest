@@ -29,7 +29,7 @@ public class StatusTrackerConfig {
     public static final String STAGE_COVID_19_ASSAY = "COVID-19 Assay";
     public static final String STAGE_BATCH_PLANNING = "Batch Planning";
     public static final String STAGE_SAMPLE_ALIQUOTS = "Create Sample Aliquots";
-    public static final String STAGE_NANO_STRING = "Nano string";
+    public static final String STAGE_NANO_STRING = "NanoString";
     public static final String STAGE_STR_PCR = "STR PCR";
     public static final String STAGE_STR_ANALYSIS = "STR Analysis";
     public static final String STAGE_SNP_FINGERPRINTING = "SNP Fingerprinting";
