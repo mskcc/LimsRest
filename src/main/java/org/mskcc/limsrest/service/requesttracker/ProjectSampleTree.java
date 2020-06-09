@@ -78,7 +78,7 @@ public class ProjectSampleTree {
     public void addStageToTracked(WorkflowSample node){
         String stageName = node.getStage();
 
-        if(isValidStage(stageName)){
+        if(!"".equals(stageName) && stageName != null){
             SampleStageTracker stage;
             if(this.stageMap.containsKey(stageName)){
                 stage = this.stageMap.get(stageName);

@@ -12,6 +12,7 @@ import org.json.JSONObject;
 import org.mskcc.domain.sample.NucleicAcid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.mskcc.limsrest.ConnectionLIMS;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -78,7 +79,7 @@ public class Utils {
         if(qcRecord == null) {
             return false;
         }
-        String sequencingStatus = getRecordStringValue(sample, "SeqQCStatus", user);
+        String sequencingStatus = getRecordStringValue(qcRecord, "SeqQCStatus", user);
         return sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_PASSED) || sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_FAILED);
     }
 
@@ -335,6 +336,20 @@ public class Utils {
         return sampleId;
     }
 
+    /**
+     * Returns the Lims Stage corresponding to the most advacned stage of the DataRecord
+     * @param sample
+     * @param requestId
+     * @param conn
+     * @return
+     */
+    // TODO - how to handle "Ready For" <- should be the one that proceeds it (eventually)
+    public static String getMostAdvancedLimsStage(DataRecord sample, String requestId, ConnectionLIMS conn) {
+        User user = conn.getConnection().getUser();
+        String mostAdvancedSampleStatus = getMostAdvancedSampleStatus(sample, requestId, user);
+        String limsStage = getLimsStageNameFromStatus(conn, mostAdvancedSampleStatus);
+        return limsStage;
+    }
 
     /**
      * Method to get latest sample status.
@@ -343,7 +358,7 @@ public class Utils {
      * @param requestId
      * @return
      */
-    public static String getMostAdvancedSampleStatus(DataRecord sample, String requestId, User user) {
+    private static String getMostAdvancedSampleStatus(DataRecord sample, String requestId, User user) {
         String sampleId = "";
         String sampleStatus = "";
         String currentSampleType = "";
@@ -361,7 +376,8 @@ public class Utils {
                 int currentStatusOrder = getSampleTypeOrder(currentSampleType.toLowerCase());
                 long currentRecordId = current.getRecordId();
                 if (isSequencingComplete(current, user)) {
-                    return "Completed - Sequencing";
+                    // Return the Completed-Sequencing status, NOT currentSampleStatus as this could not unrelated to sequencing
+                    return String.format("%s%s", WORKFLOW_STATUS_COMPLETED, STAGE_SEQUENCING);
                 }
                 if (currentRecordId > recordId && currentStatusOrder > statusOrder && isCompleteStatus(currentSampleStatus)) {
                     sampleStatus = currentSampleStatus;
@@ -378,11 +394,11 @@ public class Utils {
                 }
             } while (sampleStack.size() > 0);
         } catch (Exception e) {
-            System.out.println("Statu error: " + e);
+            System.out.println("Status error: " + e);
             LOGGER.error(String.format("Error while getting status for sample '%s'.", sampleId));
             return "unknown";
         }
-        return resolveCurrentStatus(currentSampleStatus, currentSampleType);
+        return sampleStatus;
     }
 
     /**
@@ -403,6 +419,7 @@ public class Utils {
      * @param sampleType
      * @return
      */
+    // TODO - delete? Only used in tests
     public static String resolveCurrentStatus(String status, String sampleType) {
         LimsStage stage = getLimsStage(status, sampleType);
         return stage.getStageStatus();
