@@ -337,8 +337,7 @@ public class Utils {
     public static String getMostAdvancedLimsStage(DataRecord sample, String requestId, ConnectionLIMS conn) {
         User user = conn.getConnection().getUser();
         String mostAdvancedSampleStatus = getMostAdvancedSampleStatus(sample, requestId, user);
-        String limsStage = getLimsStageNameFromStatus(conn, mostAdvancedSampleStatus);
-        return limsStage;
+        return getLimsStageNameFromStatus(conn, mostAdvancedSampleStatus);
     }
 
     /**
@@ -400,66 +399,6 @@ public class Utils {
     public static boolean isSequencingCompleteStatus(String status) {
         status = status.toLowerCase();
         return status.contains("completed - ") && status.contains("illumina") && status.contains("sequencing");
-    }
-
-    /**
-     * Resolves Sample DataRecord's "ExemplarSampleType" & "ExemplarSampleStatus" to one of the main sample statuses
-     *
-     * @param status
-     * @param sampleType
-     * @return
-     */
-    // TODO - delete? Only used in tests
-    public static String resolveCurrentStatus(String status, String sampleType) {
-        LimsStage stage = getLimsStage(status, sampleType);
-        return stage.getStageStatus();
-    }
-
-    /**
-     * Converts Sample DataRecord's "ExemplarSampleType" & "ExemplarSampleStatus" to a LimsStage
-     *
-     * @param exemplarSampleStatus,
-     * @param exemplarSampleType
-     * @return
-     */
-    public static LimsStage getLimsStage(String exemplarSampleStatus, String exemplarSampleType){
-        final String stageName = getLimsStageName(exemplarSampleStatus, exemplarSampleType);
-        LimsStage.Status limstStageStatus = getLimsStageStatus(exemplarSampleStatus);
-        return new LimsStage(stageName, limstStageStatus);
-    }
-
-    /**
-     * Determines the name of the stage based on Sample DataRecord's "ExemplarSampleType" & "ExemplarSampleStatus"
-     *
-     * @param exemplarSampleStatus
-     * @param exemplarSampleType
-     * @return
-     */
-    private static String getLimsStageName(String exemplarSampleStatus, String exemplarSampleType){
-        // TODO - constants
-        String stage = "Unknown";
-        if (NUCLEIC_ACID_TYPES.contains(exemplarSampleType.toLowerCase()) && exemplarSampleStatus.toLowerCase().contains("extraction")) {
-            stage = String.format("%s Extraction", exemplarSampleType.toUpperCase());
-        }
-        if (NUCLEIC_ACID_TYPES.contains(exemplarSampleType.toLowerCase()) && exemplarSampleStatus.toLowerCase().contains("quality control")) {
-            stage = STAGE_SAMPLE_QC;
-        }
-        if (LIBRARY_SAMPLE_TYPES.contains(exemplarSampleType.toLowerCase()) && exemplarSampleStatus.toLowerCase().contains("library preparation")) {
-            stage = STAGE_LIBRARY_PREP;
-        }
-        if (LIBRARY_SAMPLE_TYPES.contains(exemplarSampleType.toLowerCase()) && exemplarSampleStatus.toLowerCase().contains("capture")) {
-            stage = STAGE_LIBRARY_CAPTURE;
-        }
-        return stage;
-    }
-
-    private static LimsStage.Status getLimsStageStatus(String exemplarSampleStatus) {
-        if(isSequencingCompleteStatus(exemplarSampleStatus) || exemplarSampleStatus.toLowerCase().contains("completed -")){
-            return LimsStage.Status.Complete;
-        } else if(exemplarSampleStatus.toLowerCase().contains("failed")){
-            return LimsStage.Status.Failed;
-        }
-        return LimsStage.Status.Pending;
     }
 
     /**

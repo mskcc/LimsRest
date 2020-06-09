@@ -10,8 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.mskcc.limsrest.util.StatusTrackerConfig.STAGE_ORDER;
-import static org.mskcc.limsrest.util.StatusTrackerConfig.getLimsStageNameFromStatus;
+import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 
 public class StatusTrackerConfigTest {
     ConnectionLIMS conn;
@@ -315,8 +314,8 @@ public class StatusTrackerConfigTest {
      */
     private void assertSamples(List<StageExtractorTester> testSamples) {
         for (StageExtractorTester test : testSamples) {
-            String actualStage = getLimsStageNameFromStatus(this.conn, test.status);
-            Assert.assertEquals(String.format("FAILED: Status %s -> Stage %s (Actual: %s)", test.status, test.expectedStage, actualStage), actualStage, test.expectedStage);
+            LimsStage actualStage = getLimsStageFromStatus(this.conn, test.status);
+            Assert.assertEquals(String.format("FAILED: Status %s -> Stage %s (Actual: %s)", test.status, test.expectedStage, actualStage), actualStage.getStageName(), test.expectedStage);
         }
     }
 

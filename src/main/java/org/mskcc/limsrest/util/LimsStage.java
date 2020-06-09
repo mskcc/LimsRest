@@ -4,41 +4,32 @@ package org.mskcc.limsrest.util;
  * Lims Stage for a ProjectSample composed of a Sample DataRecord's "ExemplarSampleType" & "ExemplarSampleStatus"
  */
 public class LimsStage {
-    enum Status {
-        Pending,
-        Failed,
-        Complete
-    }
+    private String stageName;
+    private Boolean isComplete;
 
-    private String stage;
-    private Status status;
-
-    public LimsStage(String stage, Status status){
-        this.stage = stage;
-        this.status = status;
-    }
-
-    public boolean isFailed() {
-        return (this.status == Status.Failed);
+    public LimsStage(String stageName, Boolean isComplete){
+        this.stageName = stageName;
+        this.isComplete = isComplete;
     }
 
     private String getStatusString() {
-        // TODO - constants
-        if(this.status == Status.Failed){
-            return "Failed";
-        } else if (this.status == Status.Complete){
+        if (this.isComplete) {
             return "Completed";
         }
-        return "Pending";
+        return "Pre-Processing";
+    }
+
+    public String getStageName() {
+        return this.stageName;
     }
 
     /**
-     * Stringifies Stage (E.g. "com
+     * Stringifies Stage w/ stageName and status
      *
      * @return
      */
-    public String getStageStatus(){
+    public String toString(){
         String status = getStatusString();
-        return String.format("%s - %s", status, this.stage);
+        return String.format("%s - %s", this.stageName, status);
     }
 }

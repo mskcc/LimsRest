@@ -40,7 +40,7 @@ public class StatusTrackerConfig {
     public static final String STAGE_Digital_PCR = "Digital PCR";
     public static final String STAGE_RETURNED_TO_USER = "Returned to User";
     // Invalid Stage, but used when the exact stage can't be determined (e.g. manual status assignment, new workflow)
-    public static final String STAGE_AMBIGUOUS = "Ambiguous Stage";
+    public static final String STAGE_UNKNOWN = "Unknown";
     // TODO - This should be added, but in a way that it disappears once it is not longer processing
     // TODO - PROCESSING STAGES
     public static final String STAGE_AWAITING_PROCESSING = "awaitingProcessing";    // Stage prior to any workflow
@@ -51,7 +51,7 @@ public class StatusTrackerConfig {
     new SampleStageTester("In Processing", "06430_2", "06049_T", ""),
     new SampleStageTester("Processing Completed", "05411_97", "", "")
      */
-    private static Map<String, String> workflowNameToStageMap = new HashMap<>();
+    private static Map<String, LimsStage> workflowNameToStageMap = new HashMap<>();
 
     /**
      * Add the order of valid stages here and then the ordering map will be statically initialzed
@@ -107,7 +107,7 @@ public class StatusTrackerConfig {
      * @param conn
      * @return
      */
-    private static synchronized Map<String, String> computeIfAbsentWorkflowMap(ConnectionLIMS conn) {
+    private static synchronized Map<String, LimsStage> computeIfAbsentWorkflowMap(ConnectionLIMS conn) {
         if (workflowNameToStageMap.size() == 0) {
             VeloxConnection vConn = conn.getConnection();
             User user = vConn.getUser();
@@ -116,19 +116,16 @@ public class StatusTrackerConfig {
             try {
                 List<Workflow> workflowList = vConn.getDataMgmtServer().getWorkflowManager(user).getLatestWorkflowList(user);
 
-                // Each stage should map to its stage exactly
-                for(String stage : STAGE_ORDER){
-                    workflowNameToStageMap.put(stage, stage);
-                }
-
                 // Create the mapping of the workflow name to its corresponding stage, stored in category
                 for (Workflow wkflw : workflowList) {
                     // Each workflow has populated its stage in the "Short Description" field
-                    String stage = wkflw.getShortDesc();
-                    if (!validStages.contains(stage)) {
+                    String stageName = wkflw.getShortDesc();
+                    Boolean isComplete = isCompleteWorkflow(wkflw, stageName);
+                    if (!validStages.contains(stageName)) {
                         // TODO - Send alert
-                        LOGGER.error(String.format("%s is not recognized as a valid stage. Please amend or remove", stage));
+                        LOGGER.error(String.format("%s is not recognized as a valid stage. Please amend or remove", stageName));
                     }
+                    LimsStage stage = new LimsStage(stageName, isComplete);
                     workflowNameToStageMap.put(wkflw.getWorkflowName(), stage);
                 }
             } catch (RemoteException | ServerException e) {
@@ -139,20 +136,42 @@ public class StatusTrackerConfig {
     }
 
     /**
+     * Returns whether the input workflow is a complete one
+     *
+     * @param wkflw
+     * @return
+     */
+    private static Boolean isCompleteWorkflow(Workflow wkflw, String stage){
+        Map<String, String> options = new HashMap<>();
+        try {
+             options = wkflw.getWorkflowOptions();
+        } catch(RemoteException e){
+            LOGGER.error(String.format("Unable to retrieve workflow options for %s", stage));
+        }
+        String isCompleteString = options.computeIfAbsent("LIMS_COMPLETE_STATUS", k -> "false");
+        return Boolean.parseBoolean(isCompleteString);
+    }
+
+    /**
      * Returns the LIMs stage name as derived from the category field of the workflow the input status maps to
      *      e.g. "Illumina Sequencing" -> "Sequencing"
      * @param conn
      * @param status
      * @return
      */
-    public static String getLimsStageNameFromStatus(ConnectionLIMS conn, String status) {
+    public static LimsStage getLimsStageFromStatus(ConnectionLIMS conn, String status) {
         String workflowName = getWorkflowNameFromStatus(status);
-        Map<String, String> workflowMap = computeIfAbsentWorkflowMap(conn);
+        Map<String, LimsStage> workflowMap = computeIfAbsentWorkflowMap(conn);
         if (workflowMap.containsKey(workflowName)) {
             return workflowMap.get(workflowName);
         }
         LOGGER.warn(String.format("Stage (Short Description) for Exemplar status not found: %s", status));
-        return "";
+        return new LimsStage(STAGE_UNKNOWN, false);
+    }
+
+    public static String getLimsStageNameFromStatus(ConnectionLIMS conn, String status){
+        LimsStage stage = getLimsStageFromStatus(conn, status);
+        return stage.toString();
     }
 
     /**
