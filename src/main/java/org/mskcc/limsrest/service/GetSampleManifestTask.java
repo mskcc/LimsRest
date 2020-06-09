@@ -295,6 +295,8 @@ public class GetSampleManifestTask {
                 }
             }
 
+            runJax0004IsMissingFlowcellInfoInLIMS(origSampleName, sampleManifest, runPassedQC, library);
+
             // only report this library if it made it to a sequencer/run and has passed fastqs
             // for example 05257_BS_20 has a library which was sequenced then failed so skip
             if (library.hasFastqs()) {
@@ -303,6 +305,22 @@ public class GetSampleManifestTask {
             }
         }
         return sampleManifest;
+    }
+
+    /**
+     * 05428_O has samples sequenced on two runs, one of those runs - JAX_0004 has no lane information present in the LIMS
+     * although it does have passed QC LIMS records for that run
+     */
+    private void runJax0004IsMissingFlowcellInfoInLIMS(String origSampleName, SampleManifest sampleManifest,
+                                                       Set<String> runPassedQC, SampleManifest.Library library) {
+        if (runPassedQC.contains("JAX_0004_BH5GJYBBXX")) {
+            String runID = "JAX_0004";
+            SampleManifest.Run r = new SampleManifest.Run("", runID, "H5GJYBBXX", "", "2015-11-30");
+            r.fastqs = FastQPathFinder.search(runID, origSampleName, sampleManifest.getIgoId(), false, runPassedQC);
+            if (r.fastqs != null) {
+                library.runs.add(r);
+            }
+        }
     }
 
     protected void addIGOQcRecommendations(SampleManifest sampleManifest, DataRecord sample, User user) {
@@ -379,13 +397,23 @@ public class GetSampleManifestTask {
         // exit recursion by these conditions
         if (sourceSampleID == null || sourceSampleID.isEmpty() || sourceSampleID.equals("0"))
             return igoId;
-        if (depth > 5) {
+        if (depth >= 5) {
             log.info("Likely self-referencial sample: " + igoId);
             return igoId;
         }
         else {
             String baseIGOID = IGOTools.baseIgoSampleId(sourceSampleID);
+            log.info("Searching sample table for: " + baseIGOID);
             List<DataRecord> samples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + baseIGOID + "'", user);
+            if (samples.size() == 0) {
+                // Some samples in LIMS such as 06048_P_15, 06194_F_2
+                // have source samples like 06048_F_11_1 where no 06048_F_11 exists in the LIMS
+                samples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sourceSampleID + "'", user);
+            }
+            if (samples.size() == 0) {
+                // 06194_E_1 lists source sample ID 06194_D_1 which does not exist in the LIMS!
+                return sourceSampleID;
+            }
             return getCMOSampleIGOID(samples.get(0), baseIGOID, dataRecordManager, ++depth, user);
         }
     }
