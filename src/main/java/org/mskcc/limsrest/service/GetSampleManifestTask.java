@@ -295,6 +295,8 @@ public class GetSampleManifestTask {
                 }
             }
 
+            runJax0004IsMissingFlowcellInfoInLIMS(origSampleName, sampleManifest, runPassedQC, library);
+
             // only report this library if it made it to a sequencer/run and has passed fastqs
             // for example 05257_BS_20 has a library which was sequenced then failed so skip
             if (library.hasFastqs()) {
@@ -303,6 +305,22 @@ public class GetSampleManifestTask {
             }
         }
         return sampleManifest;
+    }
+
+    /**
+     * 05428_O has samples sequenced on two runs, one of those runs - JAX_0004 has no lane information present in the LIMS
+     * although it does have passed QC LIMS records for that run
+     */
+    private void runJax0004IsMissingFlowcellInfoInLIMS(String origSampleName, SampleManifest sampleManifest,
+                                                       Set<String> runPassedQC, SampleManifest.Library library) {
+        if (runPassedQC.contains("JAX_0004_BH5GJYBBXX")) {
+            String runID = "JAX_0004";
+            SampleManifest.Run r = new SampleManifest.Run("", runID, "H5GJYBBXX", "", "2015-11-30");
+            r.fastqs = FastQPathFinder.search(runID, origSampleName, sampleManifest.getIgoId(), false, runPassedQC);
+            if (r.fastqs != null) {
+                library.runs.add(r);
+            }
+        }
     }
 
     protected void addIGOQcRecommendations(SampleManifest sampleManifest, DataRecord sample, User user) {
