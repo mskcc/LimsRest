@@ -3,9 +3,7 @@ package org.mskcc.limsrest.controller;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
-import org.mskcc.limsrest.ConnectionPoolLIMS;
 import org.mskcc.limsrest.service.GetSampleFlowCellLanesTask;
-import org.mskcc.limsrest.service.interops.GetInterOpsDataTask;
 import org.mskcc.util.Constants;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,12 +13,33 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
 
+/**
+ * This method returns a mapping of the samples in the input projects list to the flow cell lanes they were sequenced
+ * on.
+ *  E.g.
+ *      Request: getSampleFlowCellLanes?projects=P1,P2
+ *      Response: {
+         "projects": [
+             {
+                 "project": "P1",
+                 "samples": [
+                     {
+                         "flowCellLanes": [
+                             1,
+                             2
+                         ],
+                        "sample": "S1"
+                    }, ...
+                ]
+            }, ...
+        ]
+    }
+ *
+ */
 @RestController
 @RequestMapping("/")
 public class GetSampleFlowCellLanes {

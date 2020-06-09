@@ -12,7 +12,6 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.springframework.beans.factory.annotation.Value;
 
-import javax.xml.crypto.Data;
 import java.util.*;
 
 import static org.mskcc.limsrest.util.Utils.*;
@@ -64,7 +63,7 @@ public class GetSampleFlowCellLanesTask {
          * }
          */
         List<Map<String, Object>> response = new ArrayList<>();
-        for(DataRecord request : requestList){
+        for (DataRecord request : requestList) {
             // Create Request entry - "projects"
             Map<String, Object> projectEntry = new HashMap<>();
             String requestId = getRecordStringValue(request, RequestModel.REQUEST_ID, user);
@@ -73,7 +72,7 @@ public class GetSampleFlowCellLanesTask {
             // Create Request entry - "samples", which is a list of sampleMappings for each sample in the project
             List<Map<String, Object>> sampleMappings = new ArrayList<>();
             DataRecord[] samples = getChildrenofDataRecord(request, SampleModel.DATA_TYPE_NAME, user);
-            for(DataRecord sample : samples){
+            for (DataRecord sample : samples) {
                 Map<String, Object> sampleMapping = new HashMap<>();
 
                 String sampleId = getRecordStringValue(sample, SampleModel.SAMPLE_ID, user);
@@ -82,19 +81,19 @@ public class GetSampleFlowCellLanesTask {
                 // Extract all flow cell lanes
                 Set<Long> flowCellLanes = new HashSet<>();
                 List<DataRecord> queue = new LinkedList<>(Arrays.asList(samples));
-                while(!queue.isEmpty()){
+                while (!queue.isEmpty()) {
                     DataRecord curr = queue.remove(0);
 
                     DataRecord[] sampleChildren = getChildrenofDataRecord(curr, SampleModel.DATA_TYPE_NAME, user);
                     queue.addAll(Arrays.asList(sampleChildren));
 
                     DataRecord[] flowCellLaneChildren = getChildrenofDataRecord(curr, FlowCellLaneModel.DATA_TYPE_NAME, user);
-                    for(DataRecord flowCellLaneChild : flowCellLaneChildren){
+                    for (DataRecord flowCellLaneChild : flowCellLaneChildren) {
                         Long laneNumber = getRecordLongValue(flowCellLaneChild, FlowCellLaneModel.LANE_NUM, user);
                         flowCellLanes.add(laneNumber);
 
 
-                        if(flowCellLanes.size() == MAX_FLOW_CELL_LANES){
+                        if (flowCellLanes.size() == MAX_FLOW_CELL_LANES) {
                             // If all lanes are present, empty queue and finish project. No need to add redundant lanes.
                             queue.clear();
                         }
