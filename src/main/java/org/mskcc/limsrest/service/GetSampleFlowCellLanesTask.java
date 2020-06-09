@@ -19,6 +19,11 @@ import static org.mskcc.limsrest.util.Utils.*;
 
 public class GetSampleFlowCellLanesTask {
     private static final Log log = LogFactory.getLog(org.mskcc.limsrest.service.GetSampleFlowCellLanesTask.class);
+    // TODO - this can actually be 8
+    //      See - https://www.illumina.com/systems/sequencing-platforms/hiseq-3000-4000/specifications.html
+    // For WGS there are 4 lanes max b/c a NovaSeq run has 4 lanes - 4 for S4 flowcell, 2 lanes for SP,
+    // S1 and S2 flowcell
+    private final int MAX_FLOW_CELL_LANES = 4;
     protected List<String> projectList;
     private ConnectionLIMS conn;
 
@@ -88,10 +93,9 @@ public class GetSampleFlowCellLanesTask {
                         Long laneNumber = getRecordLongValue(flowCellLaneChild, FlowCellLaneModel.LANE_NUM, user);
                         flowCellLanes.add(laneNumber);
 
-                        if(flowCellLanes.size() == 4){
-                            // Maximum of 4 flowcell lanes. If all are present, empty queue and finish project
-                            // There are 4 lanes max b/c a NovaSeq run has 4 lanes - 4 for S4 flowcell, 2 lanes for SP,
-                            // S1 and S2 flowcell
+
+                        if(flowCellLanes.size() == MAX_FLOW_CELL_LANES){
+                            // If all lanes are present, empty queue and finish project. No need to add redundant lanes.
                             queue.clear();
                         }
                     }
