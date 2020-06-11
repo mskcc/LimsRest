@@ -16,7 +16,7 @@ public class LimsStage {
         if (this.isComplete) {
             return "Completed";
         }
-        return "Pre-Processing";
+        return "In-Processing";
     }
 
     public String getStageName() {
