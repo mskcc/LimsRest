@@ -7,7 +7,7 @@ public class LimsStage {
     private String stageName;
     private Boolean isComplete;
 
-    public LimsStage(String stageName, Boolean isComplete){
+    public LimsStage(String stageName, Boolean isComplete) {
         this.stageName = stageName;
         this.isComplete = isComplete;
     }
@@ -28,7 +28,7 @@ public class LimsStage {
      *
      * @return
      */
-    public String toString(){
+    public String toString() {
         String status = getStatusString();
         return String.format("%s - %s", this.stageName, status);
     }

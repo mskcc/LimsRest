@@ -301,7 +301,6 @@ public class StatusTrackerConfigTest {
     public void getLimsStageNameFromStatusTest_stagesHaveMappings() {
         // All stages should map to a non-blank name. Some may be overriden by the workflow mapping
         for (String stage : STAGE_ORDER) {
-            String actualStage = getLimsStageNameFromStatus(this.conn, stage);
             Assert.assertNotEquals(String.format("Stage %s had a blank mapping", stage), "", stage);
         }
     }
