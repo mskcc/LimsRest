@@ -72,12 +72,13 @@ public class Utils {
     /**
      * Method to check if Sequencing for a sample is complete based on presence of SeqAnalysisSampleQC as child record
      * and status of SeqAnalysisSampleQC as Passed.
+     *
      * @param sample
      * @return
      */
-    public static Boolean isSequencingComplete(DataRecord sample, User user){
+    public static Boolean isSequencingComplete(DataRecord sample, User user) {
         DataRecord qcRecord = getChildSeqAnalysisSampleQcRecord(sample, user);
-        if(qcRecord == null) {
+        if (qcRecord == null) {
             return false;
         }
         String sequencingStatus = getRecordStringValue(qcRecord, "SeqQCStatus", user);
@@ -99,6 +100,7 @@ public class Utils {
 
     /**
      * Returns the SeqAnalysisSampleQC child of record if it exists. Returns null if no SeqAnalysisSampleQC child
+     *
      * @param record
      * @param user
      * @return
@@ -109,7 +111,7 @@ public class Utils {
             if (seqAnalysisRecords.size()>0) {
                 return seqAnalysisRecords.get(0);
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             LOGGER.error(e.getMessage());
         }
         return null;
@@ -117,10 +119,11 @@ public class Utils {
 
     /**
      * Method to check is sample status is a completed status.
+     *
      * @param status
      * @return
      */
-    public static boolean isCompleteStatus(String status){
+    public static boolean isCompleteStatus(String status) {
         return status.toLowerCase().contains("completed") || status.toLowerCase().contains("failed");
     }
 
@@ -134,7 +137,7 @@ public class Utils {
      */
     public static String getRecordStringValue(DataRecord record, String key, User user) {
         try {
-            if(record.getValue(key, user) != null) {
+            if (record.getValue(key, user) != null) {
                 return record.getStringVal(key, user);
             }
         } catch (NotFound | RemoteException | NullPointerException e) {
@@ -186,11 +189,11 @@ public class Utils {
      * @param user
      * @return
      */
-    public static DataRecord[] getChildrenofDataRecord(DataRecord record, String childDataType, User user){
+    public static DataRecord[] getChildrenofDataRecord(DataRecord record, String childDataType, User user) {
         try {
             DataRecord[] sampleChildren = record.getChildrenOfType(childDataType, user);
             return sampleChildren;
-        } catch(IoError | RemoteException e) {
+        } catch (IoError | RemoteException e) {
             LOGGER.error(String.format("Failed to retrieve %s children of %s record: %d", childDataType, record.getDataTypeName(), record.getRecordId()));
         }
         return new DataRecord[0];
@@ -260,7 +263,7 @@ public class Utils {
                 return mainType != null ? mainType.toString() : "";
             }
         } catch (Exception e) {
-            LOGGER.info(String.format("Error while querying oncotree api for name search. Will attempt to search using oncotree api for code search:\n%s",e.getMessage()));
+            LOGGER.info(String.format("Error while querying oncotree api for name search. Will attempt to search using oncotree api for code search:\n%s", e.getMessage()));
             return "";
         }
         return "";
@@ -299,7 +302,7 @@ public class Utils {
                 }
             }
         } catch (Exception e) {
-            LOGGER.info(String.format("Error while querying oncotree api using code search. Cannot find Main tumor type.\n%s",e.getMessage()));
+            LOGGER.info(String.format("Error while querying oncotree api using code search. Cannot find Main tumor type.\n%s", e.getMessage()));
             return "";
         }
         return "";
@@ -365,6 +368,7 @@ public class Utils {
 
     /**
      * Returns the Lims Stage corresponding to the most advacned stage of the DataRecord
+     *
      * @param sample
      * @param requestId
      * @param conn
@@ -374,8 +378,8 @@ public class Utils {
     public static String getMostAdvancedLimsStage(DataRecord sample, String requestId, ConnectionLIMS conn) {
         User user = conn.getConnection().getUser();
         String mostAdvancedSampleStatus = getMostAdvancedSampleStatus(sample, requestId, user);
-        String limsStage = getLimsStageNameFromStatus(conn, mostAdvancedSampleStatus);
-        return limsStage;
+        LimsStage stage = getLimsStageFromStatus(conn, mostAdvancedSampleStatus);
+        return stage.toString();
     }
 
     /**
@@ -398,7 +402,7 @@ public class Utils {
             sampleStack.add(sample);
             do {
                 DataRecord current = sampleStack.pop();
-                currentSampleType = (String)getValueFromDataRecord(current, "ExemplarSampleType", "String", user);
+                currentSampleType = (String) getValueFromDataRecord(current, "ExemplarSampleType", "String", user);
                 currentSampleStatus = (String) getValueFromDataRecord(current, "ExemplarSampleStatus", "String", user);
                 int currentStatusOrder = getSampleTypeOrder(currentSampleType.toLowerCase());
                 long currentRecordId = current.getRecordId();
@@ -440,83 +444,25 @@ public class Utils {
     }
 
     /**
-     * Resolves Sample DataRecord's "ExemplarSampleType" & "ExemplarSampleStatus" to one of the main sample statuses
-     *
-     * @param status
-     * @param sampleType
-     * @return
-     */
-    // TODO - delete? Only used in tests
-    public static String resolveCurrentStatus(String status, String sampleType) {
-        LimsStage stage = getLimsStage(status, sampleType);
-        return stage.getStageStatus();
-    }
-
-    /**
-     * Converts Sample DataRecord's "ExemplarSampleType" & "ExemplarSampleStatus" to a LimsStage
-     *
-     * @param exemplarSampleStatus,
-     * @param exemplarSampleType
-     * @return
-     */
-    public static LimsStage getLimsStage(String exemplarSampleStatus, String exemplarSampleType){
-        final String stageName = getLimstStageName(exemplarSampleStatus, exemplarSampleType);
-        LimsStage.Status limstStageStatus = getLimsStageStatus(exemplarSampleStatus);
-        return new LimsStage(stageName, limstStageStatus);
-    }
-
-    /**
-     * Determines the name of the stage based on Sample DataRecord's "ExemplarSampleType" & "ExemplarSampleStatus"
-     *
-     * @param exemplarSampleStatus
-     * @param exemplarSampleType
-     * @return
-     */
-    private static String getLimstStageName(String exemplarSampleStatus, String exemplarSampleType){
-        String stage = STAGE_AWAITING_PROCESSING;
-        if (NUCLEIC_ACID_TYPES.contains(exemplarSampleType.toLowerCase()) && exemplarSampleStatus.toLowerCase().contains("extraction")) {
-            stage = String.format("%s %s", exemplarSampleType.toUpperCase(), STAGE_EXTRACTION);
-        }
-        if (NUCLEIC_ACID_TYPES.contains(exemplarSampleType.toLowerCase()) && exemplarSampleStatus.toLowerCase().contains("quality control")) {
-            stage = STAGE_SAMPLE_QC;
-        }
-        if (LIBRARY_SAMPLE_TYPES.contains(exemplarSampleType.toLowerCase()) && exemplarSampleStatus.toLowerCase().contains("library preparation")) {
-            stage = STAGE_LIBRARY_PREP;
-        }
-        if (LIBRARY_SAMPLE_TYPES.contains(exemplarSampleType.toLowerCase()) && exemplarSampleStatus.toLowerCase().contains("capture")) {
-            stage = STAGE_LIBRARY_CAPTURE;
-        }
-        return stage;
-    }
-
-    private static LimsStage.Status getLimsStageStatus(String exemplarSampleStatus) {
-        if(isSequencingCompleteStatus(exemplarSampleStatus) || exemplarSampleStatus.toLowerCase().contains("completed -")){
-            return LimsStage.Status.Complete;
-        } else if(exemplarSampleStatus.toLowerCase().contains("failed")){
-            return LimsStage.Status.Failed;
-        }
-        return LimsStage.Status.Pending;
-    }
-
-    /**
      * Method to get order or Sample based on its SampleType.
+     *
      * @param sampleType
      * @return int order
      */
-    public static int getSampleTypeOrder(String sampleType){
-        if (TISSUE_SAMPLE_TYPES.contains(sampleType)){
+    public static int getSampleTypeOrder(String sampleType) {
+        if (TISSUE_SAMPLE_TYPES.contains(sampleType)) {
             return 1;
         }
-        if (NUCLEIC_ACID_TYPES.contains(sampleType)){
+        if (NUCLEIC_ACID_TYPES.contains(sampleType)) {
             return 2;
         }
-        if (LIBRARY_SAMPLE_TYPES.contains(sampleType)){
+        if (LIBRARY_SAMPLE_TYPES.contains(sampleType)) {
             return 3;
         }
-        if (CAPTURE_SAMPLE_TYPES.contains(sampleType)){
+        if (CAPTURE_SAMPLE_TYPES.contains(sampleType)) {
             return 4;
         }
-        if (POOLED_SAMPLE_TYPES.contains(sampleType)){
+        if (POOLED_SAMPLE_TYPES.contains(sampleType)) {
             return 5;
         }
         return 0;
