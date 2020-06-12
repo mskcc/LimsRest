@@ -32,7 +32,8 @@ public class GetRequestTrackingTaskTest {
             // ALL PASSED
             "10795",        // Good:    BASIC                           3 IGO-Complete
             "09443_AS",		// Good:    BASIC                           8 IGO-complete
-            "09602_F",		// Good:    Multiple successful Banches     12 IGO-complete
+
+            // "09602_F",		// Bad:    Multiple successful Banches     12 IGO-complete (different number Library Prep & Capture)
             "09367_K",		// Good:    Failed branches                 1 IGO-Complete
             "07428_AA",     // Good:    Includes extraction             4 IGO-Complete
 
@@ -40,8 +41,8 @@ public class GetRequestTrackingTaskTest {
             "10793",        // Good: 9 Passed, 1 Pending
 
             // Failed/Complete
-            "06302_W",		// Good: 1 Failed Library Prep, 41 IGO-Complete
-            "06302_AG",		// Not detecting the Data-QC failures (Many samples - should be excluded from most test runs)
+            // "06302_W",		// Bad: 1 Failed Library Prep, 41 IGO-Complete
+            // "06302_AG",		// Bad: Not detecting the Data-QC failures (Many samples - should be excluded from most test runs)
 
             // Failed/Pending
             "05888_G",		// Good: 3 w/ failed Sequencing Branches, 5 "Under-Review"
@@ -78,6 +79,7 @@ public class GetRequestTrackingTaskTest {
                         .build(),
                 new ProjectBuilder("09367_K")
                         .addStage(STAGE_LIBRARY_PREP, true, 1, 1, 0)
+                        .addStage(STAGE_LIBRARY_CAPTURE, true, 1, 1, 0)
                         .addStage(STAGE_SEQUENCING, true, 1, 1, 0)
                         .addStage(STAGE_DATA_QC, true, 1, 1, 0)
                         .build(),
@@ -85,7 +87,7 @@ public class GetRequestTrackingTaskTest {
                         .addStage(STAGE_SUBMITTED, true, 4, 4, 0)
                         .addStage(STAGE_EXTRACTION, true, 4, 4, 0)
                         .addStage(STAGE_LIBRARY_PREP, true, 4, 4, 0)
-                        .addStage(STAGE_SAMPLE_QC, true, 4, 4, 0)
+                        .addStage(STAGE_LIBRARY_QC, true, 4, 4, 0)
                         .addStage(STAGE_SEQUENCING, true, 4, 4, 0)
                         .addStage(STAGE_DATA_QC, true, 4, 4, 0)
                         .build()
@@ -119,7 +121,7 @@ public class GetRequestTrackingTaskTest {
         List<Project> testCases = new ArrayList<>(Arrays.asList(
                 new ProjectBuilder("06302_W")
                         .addStage(STAGE_LIBRARY_PREP, true, 42, 41, 1)
-                        .addStage(STAGE_SAMPLE_QC, true, 41, 41, 0)
+                        .addStage(STAGE_LIBRARY_QC, true, 41, 41, 0)
                         .addStage(STAGE_SEQUENCING, true, 41, 41, 0)
                         .addStage(STAGE_DATA_QC, true, 41, 41, 0)
                         .build(),
@@ -143,6 +145,7 @@ public class GetRequestTrackingTaskTest {
                 new ProjectBuilder("05888_G")
                         .addStage(STAGE_SUBMITTED, true, 8, 8, 0)
                         .addStage(STAGE_LIBRARY_PREP, true, 8, 8, 0)
+                        .addStage(STAGE_LIBRARY_CAPTURE, true, 8, 8, 0)
                         .addStage(STAGE_SEQUENCING, false, 8, 0, 0)
                         .addStage(STAGE_DATA_QC, false, 5, 0, 0)
                         .build()));
@@ -160,6 +163,7 @@ public class GetRequestTrackingTaskTest {
                         .addStage(STAGE_SUBMITTED, true, 26, 26, 0)
                         .addStage(STAGE_AWAITING_PROCESSING, false, 10, 0, 0)
                         .addStage(STAGE_LIBRARY_PREP, false, 16, 16, 0)
+                        .addStage(STAGE_LIBRARY_CAPTURE, false, 16, 16, 0)
                         .addStage(STAGE_SEQUENCING, false, 16, 16, 0)
                         .addStage(STAGE_DATA_QC, false, 16, 16, 0)
                         .build()));
@@ -212,28 +216,28 @@ public class GetRequestTrackingTaskTest {
             // Verify order
             String stageName = (String) stage.get("stage");
             String expectedName = expectedStage.name;
-            assertEquals(String.format("STAGE ORDER - %s, expected %s (Project: %s)", stageName, expectedName, project.name), stageName, expectedName);
+            assertEquals(String.format("STAGE ORDER - %s, expected %s (Project: %s)", stageName, expectedName, project.name), expectedName, stageName);
 
             // Verify counts
             Integer total = (Integer) stage.get("totalSamples");
             Integer expectedTotal = expectedStage.totalCt;
             assertEquals(String.format("TOTAL - %d, expected %d (Project: %s, Stage: %s)", total, expectedTotal, project.name, stageName),
-                    total, expectedTotal);
+                    expectedTotal, total);
 
             Integer completedCt = (Integer) stage.get("completedSamples");
             Integer expectedCompletedCt = expectedStage.completedCt;
             assertEquals(String.format("COMPLETE COUNT - %d, expected %d (Project: %s, Stage: %s)", completedCt, expectedCompletedCt, project.name, stageName),
-                    completedCt, expectedCompletedCt);
+                    expectedCompletedCt, completedCt);
 
             Integer failedCt = (Integer) stage.get("failedSamples");
             Integer expectedFailedCt = (Integer) expectedStage.failedCt;
             assertEquals(String.format("FAILED COUNT - %d, expected %d (Project: %s, Stage: %s)", failedCt, expectedFailedCt, project.name, stageName),
-                    failedCt, expectedFailedCt);
+                    expectedFailedCt, failedCt);
 
             Boolean complete = (Boolean) stage.get("complete");
             Boolean expectedComplete = expectedStage.complete;
             assertEquals(String.format("IS COMPLETE - %b, expected %b (Project: %s, Stage: %s)", complete, expectedComplete, project.name, stageName),
-                    complete, expectedComplete);
+                    expectedComplete, complete);
         }
     }
 

@@ -181,11 +181,11 @@ public class GetRequestTrackingTask {
             // Add all data for the root's children at that level. Allows us to fail only the failed branch
             List<WorkflowSample> workflowChildren = new ArrayList<>();
             for(DataRecord record : children){
-                WorkflowSample sample = new WorkflowSample(record, tree.getUser());
+                WorkflowSample sample = new WorkflowSample(record, this.conn);
                 sample.setParent(root);
-                if(STAGE_UNKNOWN.equals(sample.getStage()) || STAGE_AWAITING_PROCESSING.equals(sample.getStage())){
+                if(STAGE_AWAITING_PROCESSING.equals(sample.getStage())){
                     // Update the stage of the sample to the parent stage if it is unknown
-                    if(!STAGE_UNKNOWN.equals(root.getStage())){
+                    if(!STAGE_AWAITING_PROCESSING.equals(root.getStage())){
                         sample.setStage(root.getStage());
                     }
                 }
@@ -212,7 +212,7 @@ public class GetRequestTrackingTask {
      */
     private ProjectSampleTree createProjectSampleTree(DataRecord record, User user) {
         // Initialize input
-        WorkflowSample root = new WorkflowSample(record, user);
+        WorkflowSample root = new WorkflowSample(record, this.conn);
         ProjectSampleTree rootTree = new ProjectSampleTree(root, user);
         rootTree.addSample(root);
 

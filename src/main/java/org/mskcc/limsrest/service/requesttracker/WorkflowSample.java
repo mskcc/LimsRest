@@ -6,6 +6,8 @@ import com.velox.api.user.User;
 import com.velox.sloan.cmo.recmodels.SampleModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.ConnectionLIMS;
+import org.mskcc.limsrest.util.LimsStage;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,8 +15,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
+import static org.mskcc.limsrest.util.StatusTrackerConfig.getLimsStageFromStatus;
 import static org.mskcc.limsrest.util.Utils.*;
-import static org.mskcc.limsrest.service.requesttracker.StatusTrackerConfig.*;
 import static org.mskcc.limsrest.util.Utils.getRecordLongValue;
 import static org.mskcc.limsrest.util.Utils.getRecordStringValue;
 
@@ -35,7 +37,8 @@ public class WorkflowSample extends StageTracker {
     DataRecord record;
     Boolean failed;
     private User user;
-    public WorkflowSample(DataRecord record, User user) {
+
+    public WorkflowSample(DataRecord record, ConnectionLIMS conn) {
         // Workflow samples don't have a size - they are the extension of the root ProjectSample
         setSize(0);
 
@@ -44,10 +47,10 @@ public class WorkflowSample extends StageTracker {
         this.recordName = getRecordStringValue(record, SampleModel.DATA_RECORD_NAME, user);
         this.record = record;
         this.parent = null;
-        this.user = user;
+        this.user = conn.getConnection().getUser();
         this.complete = Boolean.FALSE;
 
-        enrichSample();
+        enrichSample(conn);
     }
 
     public List<WorkflowSample> getChildren() {
@@ -68,15 +71,16 @@ public class WorkflowSample extends StageTracker {
     /**
      * Add values for all sample fields that require a database call
      */
-    public void enrichSample() {
+    public void enrichSample(ConnectionLIMS conn) {
         if (this.record == null || this.user == null) return;
 
         String status = getRecordStringValue(this.record, SampleModel.EXEMPLAR_SAMPLE_STATUS, this.user);
-        String stage = STAGE_UNKNOWN;
+        String stageName = STAGE_AWAITING_PROCESSING;
         try {
-            stage = getStageForStatus(status);
+            LimsStage limsStage = getLimsStageFromStatus(conn, status);
+            stageName = limsStage.getStageName();
         } catch (IllegalArgumentException e) {
-            log.error(String.format("Unable to identify stage for Sample Record %d w/ status '%s'", this.recordId, status));
+            log.error(String.format("Unable to identify stageName for Sample Record %d w/ status '%s'", this.recordId, status));
         }
 
         if (isFailedStatus(status)) {
@@ -88,7 +92,7 @@ public class WorkflowSample extends StageTracker {
         this.status = status;
         super.startTime = getRecordLongValue(this.record, SampleModel.DATE_CREATED, this.user);
         super.updateTime = getRecordLongValue(this.record, SampleModel.DATE_MODIFIED, this.user);
-        super.stage = stage;
+        super.stage = stageName;
     }
 
     public Long getRecordId() {
