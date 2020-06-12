@@ -15,15 +15,14 @@ import org.mskcc.limsrest.ConnectionLIMS;
 public class StatusTrackerConfig {
     // STAGES
     public static final String STAGE_SUBMITTED = "Submitted";
-    public static final String STAGE_EXTRACTION = "Extraction";
-    public static final String STAGE_LIBRARY_PREP = "Library Preparaton";
+    public static final String STAGE_EXTRACTION = "Nucleic Acid Extraction";
+    public static final String STAGE_LIBRARY_PREP = "Library Preparation";
     public static final String STAGE_LIBRARY_CAPTURE = "Library Capture";
-    public static final String STAGE_SAMPLE_QC = "Quality Control";
+    public static final String STAGE_SAMPLE_QC = "Sample QC";
     public static final String STAGE_SEQUENCING = "Sequencing";
     public static final String STAGE_DATA_QC = "Data QC";
     public static final String STAGE_IGO_COMPLETE = "IGO Complete";
     public static final String STAGE_LIBRARY_QC = "Library QC";
-    public static final String STAGE_COVID_19 = "COVID-19 Assay";
     public static final String STAGE_PCR = "Digital PCR";
     public static final String STAGE_ADDING_CMO_INFORMATION = "Adding CMO Information";
     public static final String STAGE_PENDING_USER_DECISION = "Pending User Decision";
@@ -40,10 +39,9 @@ public class StatusTrackerConfig {
     public static final String STAGE_PATHOLOGY = "Pathology";
     public static final String STAGE_Digital_PCR = "Digital PCR";
     public static final String STAGE_RETURNED_TO_USER = "Returned to User";
-    public static final String STAGE_UNKNOWN = "Unknown"; // Use for undetermined, e.g. manual status assignment/new workflow
+    public static final String STAGE_AWAITING_PROCESSING = "Awaiting Processing"; // Use for undetermined, e.g. manual status assignment/new workflow
     // TODO - This should be added, but in a way that it disappears once it is not longer processing
     // TODO - PROCESSING STAGES: "Ready for Processing", "Awaiting Processing", "In Processing", & "Processing Completed"
-    public static final String STAGE_AWAITING_PROCESSING = "awaitingProcessing";    // Stage prior to any workflow
 
     /**
      * Add the order of valid stages here and then the ordering map will be statically initialzed
@@ -57,7 +55,6 @@ public class StatusTrackerConfig {
             STAGE_LIBRARY_CAPTURE,
             STAGE_LIBRARY_QC,
             STAGE_SAMPLE_QC,
-            STAGE_COVID_19,
             STAGE_PCR,
             STAGE_Digital_PCR,
             STAGE_ADDING_CMO_INFORMATION,
@@ -196,7 +193,7 @@ public class StatusTrackerConfig {
             return workflowMap.get(workflowName);
         }
         LOGGER.warn(String.format("Stage (Short Description) for Exemplar status not found: %s", status));
-        return new LimsStage(STAGE_UNKNOWN, false);
+        return new LimsStage(STAGE_AWAITING_PROCESSING, false);
     }
 
     /**
