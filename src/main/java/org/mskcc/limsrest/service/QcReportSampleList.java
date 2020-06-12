@@ -235,7 +235,7 @@ public class QcReportSampleList {
 
             this.recordId = (Long) sampleFields.get("RecordId");
             this.otherSampleId = (String) sampleFields.get("OtherSampleId") ;
-            this.userSampleId = this.otherSampleId.substring(0, this.otherSampleId.indexOf("-IGO-"));
+            this.userSampleId = this.otherSampleId.split("-IGO-")[0];
             this.assayResult = (String) sampleFields.get("AssayResult");
             this.cqN1 = (String) sampleFields.get("CqN1");
             this.cqN2 = (String) sampleFields.get("CqN2");

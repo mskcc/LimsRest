@@ -2,6 +2,7 @@ package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.sloan.cmo.recmodels.RequestModel;
 import org.mskcc.limsrest.service.QcReportSampleList.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -183,14 +184,20 @@ public class GetQcReportSamplesTask extends LimsTask {
     // COVID19 samples can be linked to a request by their OtherSampleId being the concatenation of investigatorId and iLabServiceId
     protected List<CovidSample> getCovidSamples(String dataType) throws Exception {
         List<CovidSample> covidSamples = new ArrayList<>();
-        DataRecord requestRecord = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", this.user).get(0);
 
+        final String query = String.format("RequestId = '%s'",  requestId);
+        List<DataRecord> requestRecordList = dataRecordManager.queryDataRecords("Request", query, this.user);
+        if (requestRecordList.isEmpty()){
+            log.info(requestId + " not found in " + RequestModel.DATA_TYPE_NAME);
+            return covidSamples;
+        }
+        DataRecord requestRecord = requestRecordList.get(0);
         String serviceId = (String) requestRecord.getDataField("IlabRequest", this.user);
 
-        List<DataRecord> reportSamplesByRequest = dataRecordManager.queryDataRecords(dataType, "OtherSampleId", otherSampleIds, this.user);
+        List<DataRecord> reportSamples = dataRecordManager.queryDataRecords(dataType, "OtherSampleId", otherSampleIds, this.user);
 
         CovidSample covidSample;
-        for (DataRecord sampleRecord : reportSamplesByRequest) {
+        for (DataRecord sampleRecord : reportSamples) {
             try {
                 Map<String, Object> sampleFields = sampleRecord.getFields(user);
                     covidSample = new CovidSample(sampleFields, serviceId);
