@@ -48,6 +48,7 @@ public class GetQcReportSamplesTask extends LimsTask {
             getQcSamples(rsl, "QcReportRna");
             getQcSamples(rsl, "QcReportLibrary");
             rsl.setPathologyReportSamples(getPathologySamples("QcDatum"));
+            rsl.setCovidReportSamples(getCovidSamples("Covid19TestProtocol5"));
 
             log.info("Gathering Attachments for " + requestId + ".");
             List<HashMap<String, Object>> attachments = new ArrayList<>();
@@ -178,6 +179,31 @@ public class GetQcReportSamplesTask extends LimsTask {
             return pathologySamples;
         }
     }
+
+    // COVID19 samples can be linked to a request by their OtherSampleId being the concatenation of investigatorId and iLabServiceId
+    protected List<CovidSample> getCovidSamples(String dataType) throws Exception {
+        List<CovidSample> covidSamples = new ArrayList<>();
+        DataRecord requestRecord = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", this.user).get(0);
+
+        String serviceId = (String) requestRecord.getDataField("IlabRequest", this.user);
+
+        List<DataRecord> reportSamplesByRequest = dataRecordManager.queryDataRecords(dataType, "OtherSampleId", otherSampleIds, this.user);
+
+        CovidSample covidSample;
+        for (DataRecord sampleRecord : reportSamplesByRequest) {
+            try {
+                Map<String, Object> sampleFields = sampleRecord.getFields(user);
+                    covidSample = new CovidSample(sampleFields, serviceId);
+                    covidSamples.add(covidSample);
+            } catch (Throwable e) {
+                log.error(e.getMessage(), e);
+                return null;
+            }
+        }
+        log.info(covidSamples.size() + " Samples found in " + dataType + ".");
+        return covidSamples;
+    }
+
 
     protected List<HashMap<String, Object>> getAttachments(String requestId) {
         List<HashMap<String, Object>> attachments = new ArrayList<>();
