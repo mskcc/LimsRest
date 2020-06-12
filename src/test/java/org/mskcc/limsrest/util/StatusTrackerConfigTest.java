@@ -29,11 +29,12 @@ public class StatusTrackerConfigTest {
     @Test
     public void getLimsStageNameFromStatusTest_sampleQC() {
         List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
-                // STAGE_SAMPLE_QC
                 new StageExtractorTester("Completed - Quality Control", "05837_1", "02756_B", "Sample QC", "Sample QC - Completed"),
                 new StageExtractorTester("Failed - Quality Control", "05546_2", "", "Sample QC", "Sample QC - Completed"),
                 new StageExtractorTester("In Process - Quality Control", "05426_2", "", "Sample QC", "Sample QC - Completed"),
-                new StageExtractorTester("Ready for - Quality Control", "Neg-1924", "", "Sample QC", "Sample QC - Completed")
+                new StageExtractorTester("Ready for - Quality Control", "Neg-1924", "", "Sample QC", "Sample QC - Completed"),
+                // Constant Test
+                new StageExtractorTester("Completed - Quality Control", "05837_1", "02756_B", STAGE_SAMPLE_QC, "Sample QC - Completed")
         ));
         assertCorrectLimsStage(testSamples);
     }
@@ -60,7 +61,9 @@ public class StatusTrackerConfigTest {
                 new StageExtractorTester("Ready for - DNA/RNA Simultaneous Extraction", "09687_AQ_1", "09687_AQ", "Nucleic Acid Extraction", "Nucleic Acid Extraction - Completed"),
                 new StageExtractorTester("Completed - RNA Extraction", "06534_C_4", "", "Nucleic Acid Extraction", "Nucleic Acid Extraction - Completed"),
                 new StageExtractorTester("Failed - Blood Extraction", "05257_B_8", "05257_B", "Nucleic Acid Extraction", "Nucleic Acid Extraction - Completed"),
-                new StageExtractorTester("In Process - Covid19 Testing RNA Extraction", "10858_10493", "10858", "Nucleic Acid Extraction", "Nucleic Acid Extraction - Completed")
+                new StageExtractorTester("In Process - Covid19 Testing RNA Extraction", "10858_10493", "10858", "Nucleic Acid Extraction", "Nucleic Acid Extraction - Completed"),
+                // Constant Test
+                new StageExtractorTester("In Process - Covid19 Testing RNA Extraction", "10858_10493", "10858", STAGE_EXTRACTION, "Nucleic Acid Extraction - Completed")
         ));
         assertCorrectLimsStage(testSamples);
     }
@@ -73,7 +76,9 @@ public class StatusTrackerConfigTest {
                 new StageExtractorTester("Completed - Pooling for Whole Exome Capture", "05605_B_1_1_1_1", "04525_J", "Library Capture", "Library Capture - In-Processing"),
                 new StageExtractorTester("Failed - Agilent Capture from KAPA Library", "05428_O_10_1_1", "05428_O", "Library Capture", "Library Capture - Completed"),
                 new StageExtractorTester("In Process - Agilent Capture from KAPA Library", "06049_O_77", "06049_O", "Library Capture", "Library Capture - Completed"),
-                new StageExtractorTester("In Process - Capture from KAPA Library", "10786_D_38", "10786_D", "Library Capture", "Library Capture - Completed")
+                new StageExtractorTester("In Process - Capture from KAPA Library", "10786_D_38", "10786_D", "Library Capture", "Library Capture - Completed"),
+                // Constant Test
+                new StageExtractorTester("In Process - Capture from KAPA Library", "10786_D_38", "10786_D", STAGE_LIBRARY_CAPTURE, "Library Capture - Completed")
         ));
         assertCorrectLimsStage(testSamples);
     }
@@ -137,7 +142,9 @@ public class StatusTrackerConfigTest {
                 new StageExtractorTester("Ready for - PCR Free Whole Genome Library Preparation", "08822_GL_3_1_2", "08822_GL", "Library Preparation", "Library Preparation - Completed"),
                 new StageExtractorTester("Ready for - RNA Normalization Plate Set up", "08822_GV_4_1", "08822_GV", "Library Preparation", "Library Preparation - In-Processing"),
                 new StageExtractorTester("Ready for - TruSeqRNA Library Preparation from cDNA", "Neg-1302_1", "", "Library Preparation", "Library Preparation - Completed"),
-                new StageExtractorTester("Ready for - TruSeqRNA RiboDeplete Library Prep", "06961_6", "06717_E", "Library Preparation", "Library Preparation - Completed")
+                new StageExtractorTester("Ready for - TruSeqRNA RiboDeplete Library Prep", "06961_6", "06717_E", "Library Preparation", "Library Preparation - Completed"),
+                // Constant Test
+                new StageExtractorTester("Ready for - TruSeqRNA RiboDeplete Library Prep", "06961_6", "06717_E", STAGE_LIBRARY_PREP, "Library Preparation - Completed")
         ));
         assertCorrectLimsStage(testSamples);
     }
@@ -160,7 +167,9 @@ public class StatusTrackerConfigTest {
                 new StageExtractorTester("In Process - Pooling of Sample Libraries for Sequencing", "07149_D_1_1_1", "06179_X", "Sequencing", "Sequencing - In-Processing"),
                 new StageExtractorTester("Ready for - Illumina Sequencing", "Pool-10848_B-B1_1", "", "Sequencing", "Sequencing - In-Processing"),
                 new StageExtractorTester("Ready for - Pooling of Sample Libraries by Volume", "07931_2_1_1", "07931", "Sequencing", "Sequencing - In-Processing"),
-                new StageExtractorTester("Ready for - Pooling of Sample Libraries for Sequencing", "09259_H_101_2", "06287_BG", "Sequencing", "Sequencing - In-Processing")
+                new StageExtractorTester("Ready for - Pooling of Sample Libraries for Sequencing", "09259_H_101_2", "06287_BG", "Sequencing", "Sequencing - In-Processing"),
+                // Constant Test
+                new StageExtractorTester("Ready for - Pooling of Sample Libraries for Sequencing", "09259_H_101_2", "06287_BG", STAGE_SEQUENCING, "Sequencing - In-Processing")
         ));
         assertCorrectLimsStage(testSamples);
     }
@@ -171,7 +180,9 @@ public class StatusTrackerConfigTest {
                 new StageExtractorTester("Completed - Library/Pool Quality Control", "06822_11", "", "Library QC", "Library QC - Completed"),
                 new StageExtractorTester("Failed - Library/Pool Quality Control", "06477_D_532_1_1", "", "Library QC", "Library QC - Completed"),
                 new StageExtractorTester("In Process - Library/Pool Quality Control", "Pool-06645-Tube1_3_1", "", "Library QC", "Library QC - Completed"),
-                new StageExtractorTester("Ready for - Library/Pool Quality Control", "06819_F_13", "", "Library QC", "Library QC - Completed")
+                new StageExtractorTester("Ready for - Library/Pool Quality Control", "06819_F_13", "", "Library QC", "Library QC - Completed"),
+                // Constant Test
+                new StageExtractorTester("Ready for - Library/Pool Quality Control", "06819_F_13", "", STAGE_LIBRARY_QC, "Library QC - Completed")
         ));
         assertCorrectLimsStage(testSamples);
     }
@@ -182,7 +193,9 @@ public class StatusTrackerConfigTest {
                 new StageExtractorTester("Completed - COVID-19 Testing QPCR", "10858_62_1_1_1", "", "COVID-19 Assay", "COVID-19 Assay - Completed"),
                 new StageExtractorTester("Completed - Covid19 Testing", "10858_2", "", "COVID-19 Assay", "COVID-19 Assay - Completed"),
                 new StageExtractorTester("In Process - COVID-19 Testing QPCR", "10858_10411_1_1_1", "", "COVID-19 Assay", "COVID-19 Assay - Completed"),
-                new StageExtractorTester("In Process - Covid19 Testing", "10858_1243_1", "10858", "COVID-19 Assay", "COVID-19 Assay - Completed")
+                new StageExtractorTester("In Process - Covid19 Testing", "10858_1243_1", "10858", "COVID-19 Assay", "COVID-19 Assay - Completed"),
+                // Constant Test
+                new StageExtractorTester("In Process - Covid19 Testing", "10858_1243_1", "10858", STAGE_COVID_19_ASSAY, "COVID-19 Assay - Completed")
         ));
         assertCorrectLimsStage(testSamples);
     }
@@ -193,7 +206,9 @@ public class StatusTrackerConfigTest {
                 new StageExtractorTester("Completed - Digital Droplet PCR", "05463_W_6", "04609_R", "Digital PCR", "Digital PCR - Completed"),
                 new StageExtractorTester("Completed - Digital PCR", "06390_3", "06390", "Digital PCR", "Digital PCR - Completed"),
                 new StageExtractorTester("In Process - Digital Droplet PCR", "07788_1_1", "07788", "Digital PCR", "Digital PCR - Completed"),
-                new StageExtractorTester("Ready for - Digital Droplet PCR", "09802_C_14", "08039_CH", "Digital PCR", "Digital PCR - Completed")
+                new StageExtractorTester("Ready for - Digital Droplet PCR", "09802_C_14", "08039_CH", "Digital PCR", "Digital PCR - Completed"),
+                // Constant Test
+                new StageExtractorTester("Ready for - Digital Droplet PCR", "09802_C_14", "08039_CH", STAGE_Digital_PCR, "Digital PCR - Completed")
         ));
         assertCorrectLimsStage(testSamples);
     }
@@ -202,7 +217,9 @@ public class StatusTrackerConfigTest {
     public void getLimsStageNameFromStatusTest_addingCMOInformation() {
         List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
                 new StageExtractorTester("Completed - Adding CMO Information", "05200_J_1", "04430_H", "Adding CMO Information", "Adding CMO Information - Completed"),
-                new StageExtractorTester("In Process - Adding CMO Information", "06575_25", "06575", "Adding CMO Information", "Adding CMO Information - Completed")
+                new StageExtractorTester("In Process - Adding CMO Information", "06575_25", "06575", "Adding CMO Information", "Adding CMO Information - Completed"),
+                // Constant Test
+                new StageExtractorTester("In Process - Adding CMO Information", "06575_25", "06575", STAGE_ADDING_CMO_INFORMATION, "Adding CMO Information - Completed")
         ));
         assertCorrectLimsStage(testSamples);
     }
@@ -213,7 +230,9 @@ public class StatusTrackerConfigTest {
                 new StageExtractorTester("Completed - Pending User Decision", "04926_L_29", "04926_L", "Pending User Decision", "Pending User Decision - Completed"),
                 new StageExtractorTester("Failed - Pending User Decision", "07431_2", "", "Pending User Decision", "Pending User Decision - Completed"),
                 new StageExtractorTester("In Process - Pending User Decision", "06678_C_19_1_2", "06678_C", "Pending User Decision", "Pending User Decision - Completed"),
-                new StageExtractorTester("Ready for - Pending User Decision", "10653_D_1_1_1_1", "09756_D", "Pending User Decision", "Pending User Decision - Completed")
+                new StageExtractorTester("Ready for - Pending User Decision", "10653_D_1_1_1_1", "09756_D", "Pending User Decision", "Pending User Decision - Completed"),
+                // Constant Test
+                new StageExtractorTester("Ready for - Pending User Decision", "10653_D_1_1_1_1", "09756_D", STAGE_PENDING_USER_DECISION, "Pending User Decision - Completed")
         ));
         assertCorrectLimsStage(testSamples);
     }
@@ -221,7 +240,9 @@ public class StatusTrackerConfigTest {
     @Test
     public void getLimsStageNameFromStatusTest_batchPlanning() {
         List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
-                new StageExtractorTester("Completed - Batch Planning", "04926_P_5", "04926_P", "Batch Planning", "Batch Planning - Completed")
+                new StageExtractorTester("Completed - Batch Planning", "04926_P_5", "04926_P", "Batch Planning", "Batch Planning - Completed"),
+                // Constant Test
+                new StageExtractorTester("Completed - Batch Planning", "04926_P_5", "04926_P", STAGE_BATCH_PLANNING, "Batch Planning - Completed")
         ));
         assertCorrectLimsStage(testSamples);
     }
@@ -229,7 +250,9 @@ public class StatusTrackerConfigTest {
     @Test
     public void getLimsStageNameFromStatusTest_createSampleAliquots() {
         List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
-                new StageExtractorTester("Completed - Create Sample Aliquots", "07624_D_75", "07624_D", "Create Sample Aliquots", "Create Sample Aliquots - Completed")
+                new StageExtractorTester("Completed - Create Sample Aliquots", "07624_D_75", "07624_D", "Create Sample Aliquots", "Create Sample Aliquots - Completed"),
+                // Constant Test
+                new StageExtractorTester("Completed - Create Sample Aliquots", "07624_D_75", "07624_D", STAGE_SAMPLE_ALIQUOTS, "Create Sample Aliquots - Completed")
         ));
         assertCorrectLimsStage(testSamples);
     }
@@ -239,7 +262,9 @@ public class StatusTrackerConfigTest {
         List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
                 new StageExtractorTester("Completed - NanoString", "06260_B_9_2", "05654_H", "NanoString", "NanoString - Completed"),
                 new StageExtractorTester("Ready for - NanoString", "10761_1", "10761", "NanoString", "NanoString - Completed"),
-                new StageExtractorTester("In Process - NanoString", "06722_J_19", "06722_J", "NanoString", "NanoString - Completed")
+                new StageExtractorTester("In Process - NanoString", "06722_J_19", "06722_J", "NanoString", "NanoString - Completed"),
+                // Constant Test
+                new StageExtractorTester("In Process - NanoString", "06722_J_19", "06722_J", STAGE_NANOSTRING, "NanoString - Completed")
         ));
         assertCorrectLimsStage(testSamples);
     }
@@ -249,7 +274,10 @@ public class StatusTrackerConfigTest {
         List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
                 new StageExtractorTester("Completed - STR PCR Human", "08822_GL_1_1_1_1", "05971_AI", "STR PCR", "STR PCR - Completed"),
                 new StageExtractorTester("Completed - STR/Fragment Analysis Profiling", "10347_B_1", "", "STR Analysis", "STR Analysis - Completed"),
-                new StageExtractorTester("Ready for - STR/Fragment Analysis Profiling", "Neg-4885", "", "STR Analysis", "STR Analysis - Completed")
+                new StageExtractorTester("Ready for - STR/Fragment Analysis Profiling", "Neg-4885", "", "STR Analysis", "STR Analysis - Completed"),
+                // Constant Test
+                new StageExtractorTester("Completed - STR PCR Human", "08822_GL_1_1_1_1", "05971_AI", STAGE_STR_PCR, "STR PCR - Completed"),
+                new StageExtractorTester("Ready for - STR/Fragment Analysis Profiling", "Neg-4885", "", STAGE_STR_ANALYSIS, "STR Analysis - Completed")
         ));
         assertCorrectLimsStage(testSamples);
     }
@@ -258,7 +286,9 @@ public class StatusTrackerConfigTest {
     public void getLimsStageNameFromStatusTest_snpFingerprinting() {
         List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
                 new StageExtractorTester("In Process - SNP Fingerprinting", "06938_K_10_1_1", "06938_K", "SNP Fingerprinting", "SNP Fingerprinting - Completed"),
-                new StageExtractorTester("Completed - SNP Fingerprinting", "07037_M_1_1", "04430_X", "SNP Fingerprinting", "SNP Fingerprinting - Completed")
+                new StageExtractorTester("Completed - SNP Fingerprinting", "07037_M_1_1", "04430_X", "SNP Fingerprinting", "SNP Fingerprinting - Completed"),
+                // Constant Test
+                new StageExtractorTester("Completed - SNP Fingerprinting", "07037_M_1_1", "04430_X", STAGE_SNP_FINGERPRINTING, "SNP Fingerprinting - Completed")
         ));
         assertCorrectLimsStage(testSamples);
     }
@@ -266,7 +296,9 @@ public class StatusTrackerConfigTest {
     @Test
     public void getLimsStageNameFromStatusTest_sampleReceipt() {
         List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
-                new StageExtractorTester("Completed - Sample Combination for Pooled Submissions", "05332_7", "05114_B", "Sample Receipt", "Sample Receipt - In-Processing")
+                new StageExtractorTester("Completed - Sample Combination for Pooled Submissions", "05332_7", "05114_B", "Sample Receipt", "Sample Receipt - In-Processing"),
+                // Constant Test
+                new StageExtractorTester("Completed - Sample Combination for Pooled Submissions", "05332_7", "05114_B", STAGE_SAMPLE_RECEIPT, "Sample Receipt - In-Processing")
         ));
         assertCorrectLimsStage(testSamples);
     }
@@ -274,7 +306,9 @@ public class StatusTrackerConfigTest {
     @Test
     public void getLimsStageNameFromStatusTest_sampleReplacementContamination() {
         List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
-                new StageExtractorTester("Completed - Sample Replacement/Combination", "06265_H_1", "04971_L", "Sample Replacement/Combination", "Sample Replacement/Combination - Completed")
+                new StageExtractorTester("Completed - Sample Replacement/Combination", "06265_H_1", "04971_L", "Sample Replacement/Combination", "Sample Replacement/Combination - Completed"),
+                // Constant Test
+                new StageExtractorTester("Completed - Sample Replacement/Combination", "06265_H_1", "04971_L", STAGE_SAMPLE_REPLACEMENT_COMBINATION, "Sample Replacement/Combination - Completed")
         ));
         assertCorrectLimsStage(testSamples);
     }
@@ -283,7 +317,9 @@ public class StatusTrackerConfigTest {
     public void getLimsStageNameFromStatusTest_transferTubeSamples() {
         List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
                 new StageExtractorTester("Completed - Transfer Tube Samples to Plates", "05445_D_1", "04298_D", "Transfer Tube Samples to Plates", "Transfer Tube Samples to Plates - Completed"),
-                new StageExtractorTester("Failed - Transfer Tube Samples to Plates", "04540_D_1_1", "04540_D", "Transfer Tube Samples to Plates", "Transfer Tube Samples to Plates - Completed")
+                new StageExtractorTester("Failed - Transfer Tube Samples to Plates", "04540_D_1_1", "04540_D", "Transfer Tube Samples to Plates", "Transfer Tube Samples to Plates - Completed"),
+                // Constant Test
+                new StageExtractorTester("Failed - Transfer Tube Samples to Plates", "04540_D_1_1", "04540_D", STAGE_TRANSFER_TUBE_SAMPLES, "Transfer Tube Samples to Plates - Completed")
         ));
         assertCorrectLimsStage(testSamples);
     }
@@ -292,7 +328,9 @@ public class StatusTrackerConfigTest {
     public void getLimsStageNameFromStatusTest_pathology() {
         List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
                 new StageExtractorTester("Failed - Pathology", "04644_K_22", "04430_X", "Pathology", "Pathology - Completed"),
-                new StageExtractorTester("Ready for - Pathology", "09687_AP_1", "05257_BU", "Pathology", "Pathology - Completed")
+                new StageExtractorTester("Ready for - Pathology", "09687_AP_1", "05257_BU", "Pathology", "Pathology - Completed"),
+                // Constant Test
+                new StageExtractorTester("Ready for - Pathology", "09687_AP_1", "05257_BU", STAGE_PATHOLOGY, "Pathology - Completed")
         ));
         assertCorrectLimsStage(testSamples);
     }
@@ -315,8 +353,8 @@ public class StatusTrackerConfigTest {
             LimsStage actualStage = getLimsStageFromStatus(this.conn, test.status);
             String stageName = actualStage.getStageName();
             String stringifiedName = actualStage.toString();
-            Assert.assertEquals(String.format("FAILED: Status %s -> Stage %s (Actual: %s)", test.status, test.expectedStage, actualStage), stageName, test.expectedStage);
-            Assert.assertEquals(String.format("FAILED: Status %s -> Full Stage Name %s (Actual: %s)", test.status, test.expectedString, stringifiedName), stringifiedName, test.expectedString);
+            Assert.assertEquals(String.format("FAILED: Status %s -> Stage %s (Actual: %s)", test.status, test.expectedStage, actualStage), test.expectedStage, stageName);
+            Assert.assertEquals(String.format("FAILED: Status %s -> Full Stage Name %s (Actual: %s)", test.status, test.expectedString, stringifiedName), test.expectedString, stringifiedName);
         }
     }
 
