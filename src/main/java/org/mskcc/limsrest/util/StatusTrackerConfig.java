@@ -15,22 +15,21 @@ import java.util.*;
 public class StatusTrackerConfig {
     // STAGES
     public static final String STAGE_SUBMITTED = "Submitted";
-    public static final String STAGE_SAMPLE_QC = "Quality Control";
-    public static final String STAGE_EXTRACTION = "Extraction";
-    public static final String STAGE_LIBRARY_PREP = "Library Preparaton";
+    public static final String STAGE_EXTRACTION = "Nucleic Acid Extraction";
+    public static final String STAGE_LIBRARY_PREP = "Library Preparation";
     public static final String STAGE_LIBRARY_CAPTURE = "Library Capture";
+    public static final String STAGE_SAMPLE_QC = "Sample QC";
     public static final String STAGE_SEQUENCING = "Sequencing";
     public static final String STAGE_DATA_QC = "Data QC";
     public static final String STAGE_IGO_COMPLETE = "IGO Complete";
     public static final String STAGE_LIBRARY_QC = "Library QC";
-    public static final String STAGE_COVID_19 = "COVID-19 Assay";
     public static final String STAGE_PCR = "Digital PCR";
     public static final String STAGE_ADDING_CMO_INFORMATION = "Adding CMO Information";
     public static final String STAGE_PENDING_USER_DECISION = "Pending User Decision";
     public static final String STAGE_COVID_19_ASSAY = "COVID-19 Assay";
     public static final String STAGE_BATCH_PLANNING = "Batch Planning";
     public static final String STAGE_SAMPLE_ALIQUOTS = "Create Sample Aliquots";
-    public static final String STAGE_NANO_STRING = "NanoString";
+    public static final String STAGE_NANOSTRING = "NanoString";
     public static final String STAGE_STR_PCR = "STR PCR";
     public static final String STAGE_STR_ANALYSIS = "STR Analysis";
     public static final String STAGE_SNP_FINGERPRINTING = "SNP Fingerprinting";
@@ -40,7 +39,10 @@ public class StatusTrackerConfig {
     public static final String STAGE_PATHOLOGY = "Pathology";
     public static final String STAGE_Digital_PCR = "Digital PCR";
     public static final String STAGE_RETURNED_TO_USER = "Returned to User";
-    public static final String STAGE_UNKNOWN = "Unknown"; // Use for undetermined, e.g. manual status assignment/new workflow
+    public static final String STAGE_AWAITING_PROCESSING = "Awaiting Processing"; // Use for undetermined, e.g. manual status assignment/new workflow
+    // TODO - This should be added, but in a way that it disappears once it is not longer processing
+    // TODO - PROCESSING STAGES: "Ready for Processing", "Awaiting Processing", "In Processing", & "Processing Completed"
+
     /**
      * Add the order of valid stages here and then the ordering map will be statically initialzed
      */
@@ -52,7 +54,7 @@ public class StatusTrackerConfig {
             STAGE_LIBRARY_PREP,
             STAGE_LIBRARY_CAPTURE,
             STAGE_LIBRARY_QC,
-            STAGE_COVID_19,
+            STAGE_SAMPLE_QC,
             STAGE_PCR,
             STAGE_Digital_PCR,
             STAGE_ADDING_CMO_INFORMATION,
@@ -60,7 +62,7 @@ public class StatusTrackerConfig {
             STAGE_COVID_19_ASSAY,
             STAGE_BATCH_PLANNING,
             STAGE_SAMPLE_ALIQUOTS,
-            STAGE_NANO_STRING,
+            STAGE_NANOSTRING,
             STAGE_STR_PCR,
             STAGE_STR_ANALYSIS,
             STAGE_SNP_FINGERPRINTING,
@@ -73,6 +75,7 @@ public class StatusTrackerConfig {
             STAGE_IGO_COMPLETE,
             STAGE_RETURNED_TO_USER
     };
+
     // A Standard ExemplarSampleStatus is composed of a workflow status prefix (below) and workflow name
     public static final String WORKFLOW_STATUS_IN_PROCESS = "In Process - ";
     public static final String WORKFLOW_STATUS_READY_FOR = "Ready for - ";
@@ -164,7 +167,7 @@ public class StatusTrackerConfig {
             return workflowMap.get(workflowName);
         }
         LOGGER.warn(String.format("Stage (Short Description) for Exemplar status not found: %s", status));
-        return new LimsStage(STAGE_UNKNOWN, false);
+        return new LimsStage(STAGE_AWAITING_PROCESSING, false);
     }
 
     /**
