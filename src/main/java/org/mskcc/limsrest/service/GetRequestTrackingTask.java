@@ -78,12 +78,65 @@ public class GetRequestTrackingTask {
             request.addStage(requestStage.getKey(), requestStage.getValue());
         }
 
+        Map<String, Object> projectSummary = getProjectSummary(requestRecord, request.getStages(), user);
+        request.setSummary(projectSummary);
+
         Map<String, Object> apiResponse = new HashMap<>();
         apiResponse.put("request", request.toApiResponse());
         apiResponse.put("requestId", this.requestId);
         apiResponse.put("serviceId", serviceId);
 
         return apiResponse;
+    }
+
+    /**
+     * Returns a projectSummary object
+     *      e.g.
+     *          "summary": {
+     *              "total": 10,
+     *              "RecentDeliveryDate": null,
+     *              "stagesComplete": false,
+     *              "isIgoComplete": false,
+     *              "completed": 9,
+     *              "failed": 0
+     *          }
+     *
+     * @param requestRecord
+     * @param stages
+     * @param user
+     * @return
+     */
+    private Map<String, Object> getProjectSummary(DataRecord requestRecord, Map<String, SampleStageTracker> stages, User user){
+        Map<String, Object> projectStatus = new HashMap<>();
+
+        // IGO Completion is confirmed by delivery, which sets the "RecentDeliveryDate" field
+        final Long mostRecentDeliveryDate = getRecordLongValue(requestRecord, RequestModel.RECENT_DELIVERY_DATE, user);
+        if(mostRecentDeliveryDate != null){
+            projectStatus.put("isIgoComplete", true);
+        } else {
+            projectStatus.put("isIgoComplete", false);
+        }
+        projectStatus.put(RequestModel.RECENT_DELIVERY_DATE, mostRecentDeliveryDate);
+
+        Boolean isStagesComplete = true;
+        Integer numFailed = 0;
+        Integer numComplete = 0;
+        Integer numTotal = 0;
+        SampleStageTracker stage;
+        for (Map.Entry<String, SampleStageTracker> requestStage : stages.entrySet()) {
+            stage = requestStage.getValue();
+            isStagesComplete = isStagesComplete && stage.getComplete();
+            numFailed += stage.getFailedSamplesCount();
+            numTotal = stage.getSize() > numTotal ? stage.getSize() : numTotal;
+            numComplete = stage.getEndingSamples();
+
+        }
+        projectStatus.put("stagesComplete", isStagesComplete);
+        projectStatus.put("completed", numComplete);
+        projectStatus.put("total", numTotal);
+        projectStatus.put("failed", numFailed);
+
+        return projectStatus;
     }
 
     /**
