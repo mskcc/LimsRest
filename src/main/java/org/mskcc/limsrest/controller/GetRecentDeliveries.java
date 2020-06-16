@@ -38,12 +38,16 @@ public class GetRecentDeliveries {
         GetDelivered task = new GetDelivered();
 
         if (!time.equals("NULL") && !investigator.equals("NULL")) {
+            // Request Projects: investigator & timeframe
             task.init(investigator, Integer.parseInt(time), units);
         } else if (!time.equals("NULL")) {
+            // Request Projects: timeframe
             task.init(Integer.parseInt(time), units);
         } else if (!investigator.equals("NULL")) {
+            // Request Projects: investigator (timeframe defaulted to within 2 weeks)
             task.init(investigator);
         } else {
+            // Sequencing Projects, i.e. results in the SeqAnalysisSampleQC w/ a non-Passed/Failed status
             task.init();
         }
 
