@@ -444,14 +444,6 @@ public class GetRequestTrackingTask {
         for (String field : requestDataLongFields) {
             requestMetaData.put(field, getRecordLongValue(requestRecord, field, user));
         }
-
-        // IGO Completion is confirmed by delivery, which sets the "RecentDeliveryDate" field
-        final Long mostRecentDeliveryDate = getRecordLongValue(requestRecord, RequestModel.RECENT_DELIVERY_DATE, user);
-        if(mostRecentDeliveryDate != null){
-            requestMetaData.put("isIgoComplete", true);
-        }
-        requestMetaData.put(RequestModel.RECENT_DELIVERY_DATE, mostRecentDeliveryDate);
-
         return requestMetaData;
     }
 }
