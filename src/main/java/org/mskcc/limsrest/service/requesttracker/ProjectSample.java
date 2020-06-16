@@ -27,16 +27,6 @@ public class ProjectSample {
         this.root = root;
     }
 
-    private WorkflowSample root;
-
-    public ProjectSample(Long recordId) {
-        this.sampleId = recordId;
-        this.complete = true;       // The sample is considered complete until a record is added that is not done
-
-        this.sampleGraph = new HashMap<>();
-        this.stages = new TreeMap<>(new StageComp());
-    }
-
     public boolean isComplete() {
         return complete;
     }
