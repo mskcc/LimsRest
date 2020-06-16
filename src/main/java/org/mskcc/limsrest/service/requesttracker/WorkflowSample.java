@@ -42,12 +42,13 @@ public class WorkflowSample extends StageTracker {
         // Workflow samples don't have a size - they are the extension of the root ProjectSample
         setSize(0);
 
+        this.user = conn.getConnection().getUser();
         this.children = new ArrayList<>();
         this.recordId = record.getRecordId();
-        this.recordName = getRecordStringValue(record, SampleModel.DATA_RECORD_NAME, user);
+        this.recordName = getRecordStringValue(record, SampleModel.DATA_RECORD_NAME, this.user);
         this.record = record;
         this.parent = null;
-        this.user = conn.getConnection().getUser();
+
         this.complete = Boolean.FALSE;
 
         enrichSample(conn);

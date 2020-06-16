@@ -113,7 +113,7 @@ public class ProjectSampleTree {
      */
     public void updateTreeOnLeafStatus(WorkflowSample leaf){
         SampleStageTracker stage = this.stageMap.computeIfAbsent(leaf.getStage(),
-                // TODO - happens whne tree is a single node. Find better fix
+                // Absent when the LIMS tree is a single node in "Awaiting Processing"
                 k -> new SampleStageTracker(STAGE_AWAITING_PROCESSING, 1, 0, 0L, 0L));
 
         // Failed leafs do not modify the completion status
@@ -186,8 +186,6 @@ public class ProjectSampleTree {
         ProjectSample projectSample = new ProjectSample(this.root.getRecordId());
         List<SampleStageTracker> stages = getStages();
         projectSample.addStages(stages);
-
-        // TODO - Edge case where a sample hasn't started a workflow and has only one "Awaiting Processing" stage
 
         Boolean isFailed = root.getFailed();                // A failed root indicates 0 branches w/ a non-failed sample
         // ProjectSample completion is determined by all stages

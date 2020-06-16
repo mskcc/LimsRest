@@ -5,19 +5,27 @@ import com.velox.api.datarecord.DataRecord;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
+import static org.mskcc.limsrest.util.StatusTrackerConfig.StageComp;
 
 /**
  * Representation of each sample in a project. These are the samples IGO's users are aware of,
- *  i.e. User submits a project w/ 12 samples. There are 12 ProjectSamples
+ *      i.e. User submits a project w/ 12 samples. There are 12 ProjectSamples
+ * Notes:
+ *      * Initialized to "complete"
  */
 public class ProjectSample {
     Long sampleId;
     DataRecord record;
     boolean complete;
-    Map<Long, WorkflowSample> sampleGraph;
     Boolean failed;
-    private Map<String, SampleStageTracker> stages;
+    private Map<String, SampleStageTracker> stages;     // Stages present in the project
+    private WorkflowSample root;                        // workflowSamples descend from tree root
+
+    public ProjectSample(Long recordId) {
+        this.sampleId = recordId;
+        this.complete = true;       // The sample is considered complete until a record is added that is not done
+        this.stages = new TreeMap<>(new StageComp());
+    }
 
     public WorkflowSample getRoot() {
         return root;

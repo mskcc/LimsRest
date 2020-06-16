@@ -58,7 +58,6 @@ public class GetRequestTrackingTask {
         }
 
         // Validate request record
-
         final String query = String.format("%s = '%s'", RequestModel.REQUEST_ID, requestId);
         List<DataRecord> requestRecordList = drm.queryDataRecords(RequestModel.DATA_TYPE_NAME, query, user);
         if (requestRecordList.size() != 1) {  // error: request ID not found or more than one found
@@ -73,6 +72,8 @@ public class GetRequestTrackingTask {
         List<ProjectSample> projectSamples = getProjectSamplesFromDataRecord(requestRecord, user);
         request.setSamples(projectSamples);
 
+        // Aggregate Project-Level stage information. Stages are added one-by-one as previous stages (E.g. "submitted")
+        // may have been added and should not be overwritten
         Map<String, SampleStageTracker> projectStages = getProjectStagesFromSamples(projectSamples);
         for (Map.Entry<String, SampleStageTracker> requestStage : projectStages.entrySet()) {
             request.addStage(requestStage.getKey(), requestStage.getValue());
@@ -165,7 +166,7 @@ public class GetRequestTrackingTask {
     }
 
     /**
-     * Populates an input @tree (or subtree) representing a Project Sample using a recursive depth-first search. Will
+     * Populates an input @tree (or subtree) representing a Project Sample using recursive depth-first search, DFS. Will
      * gather the ExemplarSampleStatus of each Sample DataRecord in the workflow to determine the Stages in the workflow
      *
      * Implementation Notes:
@@ -205,7 +206,7 @@ public class GetRequestTrackingTask {
      * @param tree - Tree describing the workflow, which is represented in LIMS as a tree descending from the @root
      * @return
      */
-    private ProjectSampleTree  createWorkflowTree(WorkflowSample root, ProjectSampleTree tree){
+    private ProjectSampleTree createWorkflowTree(WorkflowSample root, ProjectSampleTree tree){
         // TODO - better way to identify which roots could have a Sequencing QC table?
         DataRecord sampleQcRecord = getChildSeqAnalysisSampleQcRecord(root.getRecord(), tree.getUser());
         if(!tree.isPassedDataQc() && sampleQcRecord != null){
@@ -237,7 +238,8 @@ public class GetRequestTrackingTask {
                 WorkflowSample sample = new WorkflowSample(record, this.conn);
                 sample.setParent(root);
                 if(STAGE_AWAITING_PROCESSING.equals(sample.getStage())){
-                    // Update the stage of the sample to the parent stage if it is unknown
+                    // Update the stage of the sample to the parent stage if it is awaitingProcessing. If there is not
+                    // resolved parent, leave as "Awaiting Processing"
                     if(!STAGE_AWAITING_PROCESSING.equals(root.getStage())){
                         sample.setStage(root.getStage());
                     }
@@ -276,8 +278,9 @@ public class GetRequestTrackingTask {
     }
 
     /**
-     * Aggregate SampleStageTracker from all input @projectSamples. The Project Stages summarize the progress of each
-     * Project Sample in the request
+     * Aggregate SampleStageTracker from all input @projectSamples into a Project summary of the progress of each
+     * Project Sample in the request. This aggregation takes from all ProjectSamples in the project and implements
+     * merging logic of the stages
      *
      * @param projectSamples - All samples of a request
      * @return
@@ -291,7 +294,12 @@ public class GetRequestTrackingTask {
     }
 
     /**
-     * Calculates the stage the overall sample is at based on the least advanced path
+     * Calculates the stage the overall sample is at based on the least advanced path and merging across all samples.
+     * On merge event, update the following -
+     *      start/update times
+     *      Total
+     *      failed Samples
+     *      ending Samples
      *
      * @param sampleStages - List of SampleStageTracker instances representing one stage of one sample
      * @return
@@ -305,6 +313,7 @@ public class GetRequestTrackingTask {
         Boolean isFailedStage;
         for (SampleStageTracker sampleStage : sampleStages) {
             stageName = sampleStage.getStage();
+            // Merge Event - Stage added by a previous ProjectSample
             if (stageMap.containsKey(stageName)) {
                 projectStage = stageMap.get(stageName);
                 projectStage.updateStageTimes(sampleStage);
@@ -381,7 +390,6 @@ public class GetRequestTrackingTask {
         total = tracker.get("Total");
         promoted = tracker.get(BankedSampleModel.PROMOTED);
 
-        // TODO - constants
         SampleStageTracker requestStage = new SampleStageTracker(STAGE_SUBMITTED, total, promoted, null, null);
         Boolean submittedComplete = total == promoted;
         if (submittedComplete) {

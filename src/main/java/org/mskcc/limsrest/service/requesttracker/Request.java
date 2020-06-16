@@ -12,9 +12,10 @@ public class Request {
 
     private String requestId;
     private String bankedSampleId;
-    private Map<String, Object> metaData;
     private Map<String, SampleStageTracker> stages;
-    private List<ProjectSample> samples;
+    private List<ProjectSample> samples;                // Tree of samples
+    private Map<String, Object> metaData;               // Summary of metaData
+    private Map<String, Object> summary;                // Summary of overall project status
 
     public Request(String requestId, String bankedSampleId) {
         this.requestId = requestId;
@@ -24,12 +25,13 @@ public class Request {
         this.metaData = new HashMap<>();
     }
 
-    public Map<String, Object> getMetaData() {
-        return metaData;
-    }
 
     public void setMetaData(Map<String, Object> metaData) {
         this.metaData = metaData;
+    }
+
+    public void setSummary(Map<String, Object> summary) {
+        this.summary = summary;
     }
 
     /**
@@ -42,6 +44,10 @@ public class Request {
             log.warn(String.format("Overriding stage: %s recorded for record: %s", stageName, this.requestId));
         }
         this.stages.put(stageName, stage);
+    }
+
+    public Map<String, SampleStageTracker> getStages(){
+        return new HashMap<String, SampleStageTracker>(this.stages);
     }
 
     public List<ProjectSample> getSamples() {
@@ -57,6 +63,7 @@ public class Request {
 
         apiResponse.put("requestId", this.requestId);
         apiResponse.put("bankedSampleId", this.bankedSampleId);
+        apiResponse.put("summary", this.summary);
         apiResponse.put("metaData", this.metaData);
         apiResponse.put("samples", this.samples.stream().map(tracker -> tracker.toApiResponse()).collect(Collectors.toList()));
         apiResponse.put("stages", this.stages.values().stream().map(
