@@ -9,8 +9,10 @@ import java.util.Map;
  * Notes:
  *  - Stages are initialized as complete
  *  - Failed WorkflowSamples are considered to have "completed" that stage and do not set a stage to incomplete
+ *
+ *  @author David Streid
  */
-public class SampleStageTracker extends StageTracker {
+public class SampleStageTracker extends StatusTracker {
     private static Log log = LogFactory.getLog(SampleStageTracker.class);
 
     private Integer endingSamples;      // Number of samples that have completed this stage and moved on to the next
@@ -69,11 +71,11 @@ public class SampleStageTracker extends StageTracker {
     /**
      * Updates Sample times when merging with another sample
      *
-     * @param stageTracker
+     * @param statusTracker
      */
-    public void updateStageTimes(StageTracker stageTracker) {
-        Long startTime = stageTracker.getStartTime();
-        Long updateTime = stageTracker.getUpdateTime();
+    public void updateStageTimes(StatusTracker statusTracker) {
+        Long startTime = statusTracker.getStartTime();
+        Long updateTime = statusTracker.getUpdateTime();
         if (this.startTime > startTime) {
             setStartTime(startTime);
         }

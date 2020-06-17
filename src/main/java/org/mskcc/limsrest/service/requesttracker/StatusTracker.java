@@ -3,7 +3,12 @@ package org.mskcc.limsrest.service.requesttracker;
 import java.util.HashMap;
 import java.util.Map;
 
-public class StageTracker {
+/**
+ * Generic class for monitoring the status of a LIMS entity (E.g. sample/stage)
+ *
+ * @author David Streid
+ */
+public class StatusTracker {
     protected String stage;
     protected Integer size;           // How many records
     protected Boolean complete;

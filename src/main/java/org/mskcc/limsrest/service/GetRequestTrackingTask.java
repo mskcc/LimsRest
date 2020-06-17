@@ -19,6 +19,11 @@ import java.util.stream.Collectors;
 import static org.mskcc.limsrest.util.Utils.*;
 import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 
+/**
+ * Queued task for retrieving tracking status on an input request
+ *
+ * @author David Streid
+ */
 public class GetRequestTrackingTask {
     private static Log log = LogFactory.getLog(GetRequestTrackingTask.class);
     private static Integer SAMPLE_COUNT = 1;

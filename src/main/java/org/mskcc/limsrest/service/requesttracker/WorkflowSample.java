@@ -24,9 +24,11 @@ import static org.mskcc.limsrest.util.Utils.getRecordStringValue;
  * These are the samples that are created as part of a workflow. There can be many of these samples for each
  * ProjectSample as the original ProjectSample creates children from it in LIMS as it goes through the stages of a
  * workflow.
+ *
+ * @author David Streid
  */
 // TODO - does this still need to extend StageTracker?
-public class WorkflowSample extends StageTracker {
+public class WorkflowSample extends StatusTracker {
     private static Log log = LogFactory.getLog(WorkflowSample.class);
 
     Long recordId;

@@ -11,7 +11,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
 
-// Temporary mapping of statuse to their buckets
+/**
+ * Logic for determining and ordering stages from LIMS sample statuses and workflows
+ *
+ * @author David Streid
+ */
 public class StatusTrackerConfig {
     // STAGES
     public static final String STAGE_SUBMITTED = "Submitted";

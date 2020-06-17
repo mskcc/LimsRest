@@ -8,10 +8,13 @@ import java.util.stream.Collectors;
 import static org.mskcc.limsrest.util.StatusTrackerConfig.StageComp;
 
 /**
- * Representation of each sample in a project. These are the samples IGO's users are aware of,
+ * API Representation of each sample in a project. These are the samples IGO's users are aware of,
  *      i.e. User submits a project w/ 12 samples. There are 12 ProjectSamples
  * Notes:
  *      * Initialized to "complete"
+ *      * Should be kept lightweight
+ *
+ * @author David Streid
  */
 public class ProjectSample {
     Long sampleId;

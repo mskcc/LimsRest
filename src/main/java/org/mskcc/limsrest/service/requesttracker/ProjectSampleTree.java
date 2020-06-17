@@ -10,7 +10,10 @@ import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 import static org.mskcc.limsrest.util.Utils.*;
 
 /**
- * Data Model of the tree structure descending from one ProjectSample
+ * Data Model of the tree structure descending from one ProjectSample that is passed into the recursive calls
+ * when doing a DFS/BFS of the project tree in the LIMs
+ *
+ * @author David Streid
  */
 public class ProjectSampleTree {
     private static Log log = LogFactory.getLog(ProjectSampleTree.class);

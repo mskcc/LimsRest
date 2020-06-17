@@ -7,6 +7,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 
+/**
+ * API representation of a Request in the LIMs with tracking data
+ *
+ * @author David Streid
+ */
 public class Request {
     private static Log log = LogFactory.getLog(Request.class);
 
