@@ -19,7 +19,7 @@ public class StatusTrackerConfig {
     public static final String STAGE_LIBRARY_PREP = "Library Preparation";
     public static final String STAGE_LIBRARY_CAPTURE = "Library Capture";
     public static final String STAGE_SAMPLE_QC = "Sample QC";
-    public static final String STAGE_SEQUENCING = "Illumina Sequencing";
+    public static final String STAGE_SEQUENCING = "Sequencing";
     public static final String STAGE_DATA_QC = "Data QC";
     public static final String STAGE_IGO_COMPLETE = "IGO Complete";
     public static final String STAGE_LIBRARY_QC = "Library QC";
