@@ -15,6 +15,7 @@ public class QcReportSampleList {
     public List<ReportSample> libraryReportSamples;
     public List<ReportSample> poolReportSamples;
     public List<PathologySample> pathologyReportSamples;
+    public List<CovidSample> covidReportSamples;
     public List<HashMap<String, Object>> attachments;
 
     public QcReportSampleList() {
@@ -23,12 +24,12 @@ public class QcReportSampleList {
     public QcReportSampleList(String requestId, List<Object> requestSampleIds) {
         this.requestId = requestId;
         this.requestSampleIds = requestSampleIds;
-        dnaReportSamples = new ArrayList<>();;
-        rnaReportSamples = new ArrayList<>();;
-        libraryReportSamples = new ArrayList<>();;
-        poolReportSamples = new ArrayList<>();;
-        pathologyReportSamples = new ArrayList<>();;
-        attachments = new ArrayList<>();;
+        dnaReportSamples = new ArrayList<>();
+        rnaReportSamples = new ArrayList<>();
+        libraryReportSamples = new ArrayList<>();
+        poolReportSamples = new ArrayList<>();
+        pathologyReportSamples = new ArrayList<>();
+        attachments = new ArrayList<>();
     }
 
     public QcReportSampleList(String requestId) {
@@ -81,6 +82,14 @@ public class QcReportSampleList {
 
     public void setPathologyReportSamples(List<PathologySample> pathologyReportSamples) {
         this.pathologyReportSamples = pathologyReportSamples;
+    }
+
+    public List<CovidSample> getCovidReportSamples() {
+        return covidReportSamples;
+    }
+
+    public void setCovidReportSamples(List<CovidSample> covidReportSamples) {
+        this.covidReportSamples = covidReportSamples;
     }
 
     public List<HashMap<String, Object>> getAttachments() {
@@ -172,6 +181,7 @@ public class QcReportSampleList {
             }
 
         }
+
         public static class PoolReportSample extends ReportSample {
             public String tumorOrNormal;
             public Double avgSize;
@@ -201,6 +211,36 @@ public class QcReportSampleList {
             this.recordId = (Long) sampleFields.get("RecordId");
             this.otherSampleId = (String) sampleFields.get("OtherSampleId");
             this.sampleStatus = (String) sampleFields.get("SampleFinalQCStatus");
+        }
+
+
+    }
+
+    public static class CovidSample {
+
+
+        public Long recordId;
+        public String otherSampleId;
+        public String userSampleId;
+        public String assayResult;
+        public String cqN1;
+        public String cqN2;
+        public String cqRP;
+        public Boolean hideFromSampleQC;
+
+        public CovidSample() {
+        }
+
+        public CovidSample(Map<String, Object> sampleFields, String serviceId) {
+
+            this.recordId = (Long) sampleFields.get("RecordId");
+            this.otherSampleId = (String) sampleFields.get("OtherSampleId") ;
+            this.userSampleId = this.otherSampleId.split("-IGO-")[0];
+            this.assayResult = (String) sampleFields.get("AssayResult");
+            this.cqN1 = (String) sampleFields.get("CqN1");
+            this.cqN2 = (String) sampleFields.get("CqN2");
+            this.cqRP = (String) sampleFields.get("CqRP");
+            this.hideFromSampleQC = (Boolean) sampleFields.get("HideFromSampleQC");
         }
 
 
