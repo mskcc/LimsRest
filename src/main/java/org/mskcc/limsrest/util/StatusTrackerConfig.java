@@ -1,5 +1,8 @@
 package org.mskcc.limsrest.util;
 
+import java.rmi.RemoteException;
+import java.util.*;
+
 import com.velox.api.user.User;
 import com.velox.api.util.ServerException;
 import com.velox.api.workflow.Workflow;
@@ -8,10 +11,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
 
-import java.rmi.RemoteException;
-import java.util.*;
-
-// Temporary mapping of statuse to their buckets
+/**
+ * Logic for determining and ordering stages from LIMS sample statuses and workflows
+ *
+ * @author David Streid
+ */
 public class StatusTrackerConfig {
     // STAGES
     public static final String STAGE_SUBMITTED = "Submitted";
@@ -49,8 +53,8 @@ public class StatusTrackerConfig {
     public static final String[] STAGE_ORDER = new String[]{
             // TODO - need to confirm w/ Anna/Ajay
             STAGE_SUBMITTED,
+            STAGE_AWAITING_PROCESSING,
             STAGE_EXTRACTION,
-            STAGE_SAMPLE_QC,
             STAGE_LIBRARY_PREP,
             STAGE_LIBRARY_CAPTURE,
             STAGE_LIBRARY_QC,
@@ -75,6 +79,32 @@ public class StatusTrackerConfig {
             STAGE_IGO_COMPLETE,
             STAGE_RETURNED_TO_USER
     };
+
+    /**
+     * Returns the position of the stage. Returns out-of-bounds index if not present
+     *
+     * @param status
+     * @return
+     */
+    public static int getStageOrder(String status) {
+        for (int i = 0; i < STAGE_ORDER.length; i++) {
+            if (status.equals(STAGE_ORDER[i])) return i;
+        }
+        return STAGE_ORDER.length;
+    }
+
+    /**
+     * Comparator used to sort statuses based on their order
+     */
+    public static class StageComp implements Comparator<String> {
+        @Override
+        public int compare(String s1, String s2) {
+            int p1 = getStageOrder(s1);
+            int p2 = getStageOrder(s2);
+
+            return p1 - p2;
+        }
+    }
 
     // A Standard ExemplarSampleStatus is composed of a workflow status prefix (below) and workflow name
     public static final String WORKFLOW_STATUS_IN_PROCESS = "In Process - ";
@@ -154,8 +184,9 @@ public class StatusTrackerConfig {
 
     /**
      * Returns the LIMs stage as derived from the category field of the workflow the input status maps to
-     * e.g. "Illumina Sequencing" -> LimsStage instance ("Sequencing")
+     *      e.g. "Illumina Sequencing" -> LimsStage instance ("Sequencing")
      *
+     * NOTE - This does NOT return the dataQc stage, which requires
      * @param conn
      * @param status
      * @return
