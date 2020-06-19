@@ -77,11 +77,11 @@ public class Utils {
      * @return
      */
     public static Boolean isSequencingComplete(DataRecord sample, User user) {
-        DataRecord qcRecord = getChildSeqAnalysisSampleQcRecord(sample, user);
-        if (qcRecord == null) {
+        DataRecord[] qcRecord = getChildrenofDataRecord(sample, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
+        if (qcRecord.length > 0) {
             return false;
         }
-        String sequencingStatus = getRecordStringValue(qcRecord, "SeqQCStatus", user);
+        String sequencingStatus = getRecordStringValue(qcRecord[0], SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
         return sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_PASSED) || sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_FAILED);
     }
 
@@ -96,25 +96,6 @@ public class Utils {
             return status.toLowerCase().contains("failed");
         }
         return Boolean.FALSE;
-    }
-
-    /**
-     * Returns the SeqAnalysisSampleQC child of record if it exists. Returns null if no SeqAnalysisSampleQC child
-     *
-     * @param record
-     * @param user
-     * @return
-     */
-    public static DataRecord getChildSeqAnalysisSampleQcRecord(DataRecord record, User user){
-        try {
-            List<DataRecord> seqAnalysisRecords = Arrays.asList(record.getChildrenOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user));
-            if (seqAnalysisRecords.size()>0) {
-                return seqAnalysisRecords.get(0);
-            }
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage());
-        }
-        return null;
     }
 
     /**

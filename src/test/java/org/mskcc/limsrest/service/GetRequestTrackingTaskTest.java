@@ -33,7 +33,7 @@ public class GetRequestTrackingTaskTest {
             "10795",        // Good:    BASIC                           3 IGO-Complete
             "09443_AS",		// Good:    BASIC                           8 IGO-complete
 
-            // "09602_F",		// Bad:    Multiple successful Banches     12 IGO-complete (different number Library Prep & Capture)
+            "09602_F",      // Good:    Multiple successful Banches     12 IGO-complete (different number Library Prep & Capture)
             "09367_K",		// Good:    Failed branches                 1 IGO-Complete
             "07428_AA",     // Good:    Includes extraction             4 IGO-Complete
 
@@ -41,8 +41,8 @@ public class GetRequestTrackingTaskTest {
             "10793",        // Good: 9 Passed, 1 Pending
 
             // Failed/Complete
-            // "06302_W",		// Bad: 1 Failed Library Prep, 41 IGO-Complete
-            // "06302_AG",		// Bad: Not detecting the Data-QC failures (Many samples - should be excluded from most test runs)
+            "06302_W",		// Good: 1 Failed Library Prep, 41 IGO-Complete
+            "06302_AG",		// Good: Pending User Decision
 
             // Failed/Pending
             "05888_G",		// Good: 3 w/ failed Sequencing Branches, 5 "Under-Review"
@@ -73,7 +73,8 @@ public class GetRequestTrackingTaskTest {
                         .addStage(STAGE_DATA_QC, true, 8, 8, 0)
                         .build(),
                 new ProjectBuilder("09602_F")
-                        .addStage(STAGE_LIBRARY_PREP, true, 12, 12, 0)
+                        .addStage(STAGE_LIBRARY_PREP, true, 9, 9, 0)
+                        .addStage(STAGE_LIBRARY_CAPTURE, true, 12, 12, 0)
                         .addStage(STAGE_SEQUENCING, true, 12, 12, 0)
                         .addStage(STAGE_DATA_QC, true, 12, 12, 0)
                         .build(),
@@ -126,7 +127,8 @@ public class GetRequestTrackingTaskTest {
                         .addStage(STAGE_DATA_QC, true, 41, 41, 0)
                         .build(),
                 new ProjectBuilder("06302_AG")
-                        .addStage(STAGE_LIBRARY_PREP, true, 382, 380, 2)
+                        .addStage(STAGE_LIBRARY_PREP, true, 382, 382, 0)
+                        .addStage(STAGE_PENDING_USER_DECISION, true, 2, 1, 1)
                         // TODO - Failed should be 48 & completed 332, but sequencing failures are difficult
                         .addStage(STAGE_SEQUENCING, false, 380, 332, 0)
                         .addStage(STAGE_DATA_QC, false, 380, 332, 48)

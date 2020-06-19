@@ -1,6 +1,8 @@
 package org.mskcc.limsrest.service.requesttracker;
 
+import com.velox.api.datarecord.DataRecord;
 import com.velox.api.user.User;
+import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -11,7 +13,15 @@ import static org.mskcc.limsrest.util.Utils.*;
 
 /**
  * Data Model of the tree structure descending from one ProjectSample that is passed into the recursive calls
- * when doing a DFS/BFS of the project tree in the LIMs
+ * when doing a search of the project tree in the LIMs. This is used to track ProjectSample DURING TRAVERSAL for the
+ * following dynamic fields,
+ *      - Stages encountered (@sampleMap)
+ *      - Data QC Status (@dataQcStatus) -  This status is set by a node in the Data QC Stage and marks whether the
+ *                                          corresponding ProjectSample has passed the DataQC stage. This is unlike
+ *                                          other stages that are
+ *
+ * After traversal, the tree w/ the final values of the dynamic fields are translated into a cleaner representation,
+ * ProjectSample, via @convertToProjectSample
  *
  * @author David Streid
  */
@@ -19,7 +29,8 @@ public class ProjectSampleTree {
     private static Log log = LogFactory.getLog(ProjectSampleTree.class);
 
     private WorkflowSample root;                        // Parent Sample of the tree
-    private String dataQcStatus;                        // Flag set when the sample's seq-QC results has been passed
+    private String dataQcStatus;                        // Last SeqAnalysisSampleQC status encountered, until a "Passed"
+                                                        // status is found, at which point dataQcStatus is never re-set
     private Map<Long, WorkflowSample> sampleMap;        // Map Record IDs to their enriched sample information
     private Map<String, SampleStageTracker> stageMap;   // Map to all stages by their stage name
 
@@ -45,12 +56,23 @@ public class ProjectSampleTree {
         return SEQ_QC_STATUS_FAILED.equalsIgnoreCase(this.dataQcStatus);
     }
 
-    public void setDataQcStatus(String dataQcStatus) {
-        this.dataQcStatus = dataQcStatus;
-    }
-
     public List<WorkflowSample> getSamples() {
         return new ArrayList(sampleMap.values());
+    }
+
+    /**
+     * Only method of setting the dataQcStatus. Performs check to verify that the status is not already Data QC
+     * passed
+     *
+     * @param status
+     */
+    private void setDataQcStatus(String status){
+        if(SEQ_QC_STATUS_PASSED.equals(this.dataQcStatus)){
+            log.warn(String.format("Not re-seting Tree dataQcStatus to %s. Sample has already been DataQC %s",
+                    status, SEQ_QC_STATUS_PASSED));
+            return;
+        }
+        this.dataQcStatus = status;
     }
 
     /**
@@ -90,21 +112,58 @@ public class ProjectSampleTree {
                 stage = new SampleStageTracker(stageName, 1, 0, node.getStartTime(), node.getUpdateTime());
                 this.stageMap.put(stageName, stage);
             }
-
-            // TODO - Move
-            // Data QC is a special case
-            if(STAGE_DATA_QC.equals(stageName) && !isPassedDataQc()){
-                // We determine stage completion for the Data QC stage by whether the tree has passed DataQC
-                stage.setComplete(Boolean.FALSE);
-                if(isFailedDataQC()){
-                    // If the input @node had a Failed Data QC child, the Workflow Sample branch needs to be failed
-                    node.setFailed(Boolean.TRUE);
-                    markFailedBranch(node);
-                }
-
-            }
         } else {
             log.warn(String.format("Unable to determine record '%d' stageName '%s'", node.getRecordId(), stageName));
+        }
+    }
+
+    /**
+     * Updates the DataQcStage of the tree if the input node is at the DataQc stage
+     *
+     * @param node
+     */
+    public void updateDataQcStage(WorkflowSample node){
+        String nodeStage = node.getStage();
+        if(!STAGE_DATA_QC.equals(nodeStage)){
+            // Only records in the DataQc Stage should update the node
+            return;
+        }
+
+        // Attempt to update the Data Qc Status of the tree if the current status isn't Passed
+        boolean isPassedDataQc = isPassedDataQc();
+        if(!isPassedDataQc){
+            updateDataQcStatus(node.getRecord());
+            isPassedDataQc = isPassedDataQc();          // After @updateDataQcStatus, update this flag
+        }
+
+        // Update the Tree Data QC Stage
+        SampleStageTracker dataQcStage = this.stageMap.get(nodeStage);
+        dataQcStage.setComplete(isPassedDataQc);
+
+        // If the input @node had a Failed Data QC child, the Workflow Sample branch needs to be failed
+        if(isFailedDataQC()){
+            node.setFailed(Boolean.TRUE);
+            markFailedBranch(node);
+        }
+    }
+
+    /**
+     * Updates the trees dataQcStatus, which should only happen if the input DataRecord has a SeqAnalysisSample QC child
+     * and that child has a valid Qc Status
+     *
+     * @param record
+     * @return
+     */
+    private void updateDataQcStatus(DataRecord record){
+        DataRecord[] sampleQcRecord = getChildrenofDataRecord(record, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, this.user);
+        if(sampleQcRecord.length == 0){
+            // Only a node in the Data QC stage will have a child instance of the SeqAnalysisSampleQC DataType
+            return;
+        }
+        String seqQcStatus = getRecordStringValue(sampleQcRecord[0], SeqAnalysisSampleQCModel.SEQ_QCSTATUS, this.user);
+        boolean isValidStatus = !"".equals(seqQcStatus);
+        if(isValidStatus){
+            setDataQcStatus(seqQcStatus);
         }
     }
 

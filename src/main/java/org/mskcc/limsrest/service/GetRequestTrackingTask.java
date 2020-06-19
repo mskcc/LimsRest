@@ -212,17 +212,13 @@ public class GetRequestTrackingTask {
      * @return
      */
     private ProjectSampleTree createWorkflowTree(WorkflowSample root, ProjectSampleTree tree){
-        // TODO - better way to identify which roots could have a Sequencing QC table?
-        DataRecord sampleQcRecord = getChildSeqAnalysisSampleQcRecord(root.getRecord(), tree.getUser());
-        if(!tree.isPassedDataQc() && sampleQcRecord != null){
-            // If the input node has a SeqQCStatus record, it is a part of the DataQC stage
-            String sequencingStatus = getRecordStringValue(sampleQcRecord, SeqAnalysisSampleQCModel.SEQ_QCSTATUS, tree.getUser());
-            tree.setDataQcStatus(sequencingStatus);
-            // Stage needs to be reset
-            root.setStage(STAGE_DATA_QC);
+        tree.addStageToTracked(root);   // Update tree Project Sample stages w/ the input Workflow sample's stage
+        
+        if(STAGE_DATA_QC.equals(root.getStage()) && !tree.isPassedDataQc()){
+            // The Data QC stage is updated by a node in Data QC stage. This node can update the entire tree's data
+            // QC status as a ProjectSample is marked Data QC complete if it has any one Data QC node marked passed
+            tree.updateDataQcStage(root);
         }
-
-        tree.addStageToTracked(root);   // Update the overall Project Sample stages w/ the input Workflow sample's stage
 
         // Search each child of the input
         DataRecord[] children = new DataRecord[0];
@@ -256,7 +252,8 @@ public class GetRequestTrackingTask {
 
             for(WorkflowSample sample : workflowChildren){
                 // Update tree w/ each sample
-                log.debug(String.format("Searching children of data record ID: %d", root.getRecordId()));
+                log.debug(String.format("Searching child, %d, of data record ID: %d", sample.getRecord().getRecordId(),
+                        root.getRecordId()));
                 tree = createWorkflowTree(sample, tree);
             }
         }

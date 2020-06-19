@@ -184,8 +184,9 @@ public class StatusTrackerConfig {
 
     /**
      * Returns the LIMs stage as derived from the category field of the workflow the input status maps to
-     * e.g. "Illumina Sequencing" -> LimsStage instance ("Sequencing")
+     *      e.g. "Illumina Sequencing" -> LimsStage instance ("Sequencing")
      *
+     * NOTE - This does NOT return the dataQc stage, which requires
      * @param conn
      * @param status
      * @return

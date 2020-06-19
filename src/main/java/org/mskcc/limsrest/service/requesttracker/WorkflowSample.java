@@ -4,6 +4,7 @@ package org.mskcc.limsrest.service.requesttracker;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.user.User;
 import com.velox.sloan.cmo.recmodels.SampleModel;
+import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
@@ -27,7 +28,6 @@ import static org.mskcc.limsrest.util.Utils.getRecordStringValue;
  *
  * @author David Streid
  */
-// TODO - does this still need to extend StageTracker?
 public class WorkflowSample extends StatusTracker {
     private static Log log = LogFactory.getLog(WorkflowSample.class);
 
@@ -80,8 +80,15 @@ public class WorkflowSample extends StatusTracker {
         String status = getRecordStringValue(this.record, SampleModel.EXEMPLAR_SAMPLE_STATUS, this.user);
         String stageName = STAGE_AWAITING_PROCESSING;
         try {
-            LimsStage limsStage = getLimsStageFromStatus(conn, status);
-            stageName = limsStage.getStageName();
+            // Data QC stage is determined by presence of a SeqQCStatus record, it needs to be re-assigned
+            DataRecord[] sampleQcRecord = getChildrenofDataRecord(this.record, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, this.user);
+            if(sampleQcRecord.length > 0) {
+                stageName = STAGE_DATA_QC;
+            } else {
+                // If no DataQC records are found, assign stage based on the Exemplar Status
+                LimsStage limsStage = getLimsStageFromStatus(conn, status);
+                stageName = limsStage.getStageName();
+            }
         } catch (IllegalArgumentException e) {
             log.error(String.format("Unable to identify stageName for Sample Record %d w/ status '%s'", this.recordId, status));
         }
