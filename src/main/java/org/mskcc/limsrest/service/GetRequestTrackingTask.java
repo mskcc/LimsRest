@@ -6,7 +6,9 @@ import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
-import com.velox.sloan.cmo.recmodels.*;
+import com.velox.sloan.cmo.recmodels.BankedSampleModel;
+import com.velox.sloan.cmo.recmodels.RequestModel;
+import com.velox.sloan.cmo.recmodels.SampleModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
@@ -16,8 +18,8 @@ import java.rmi.RemoteException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.mskcc.limsrest.util.Utils.*;
 import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
+import static org.mskcc.limsrest.util.Utils.*;
 
 /**
  * Queued task for retrieving tracking status on an input request
@@ -155,7 +157,7 @@ public class GetRequestTrackingTask {
      * @throws IoError
      * @throws RemoteException
      */
-    private List<ProjectSample> getProjectSamplesFromDataRecord(DataRecord requestRecord, User user) throws IoError, RemoteException  {
+    private List<ProjectSample> getProjectSamplesFromDataRecord(DataRecord requestRecord, User user) throws IoError, RemoteException {
         // Immediate samples of record represent physical samples. LIMS creates children of these in the workflow
         DataRecord[] samples = requestRecord.getChildrenOfType(SampleModel.DATA_TYPE_NAME, user);
 
@@ -173,7 +175,7 @@ public class GetRequestTrackingTask {
     /**
      * Populates an input @tree (or subtree) representing a Project Sample using recursive depth-first search, DFS. Will
      * gather the ExemplarSampleStatus of each Sample DataRecord in the workflow to determine the Stages in the workflow
-     *
+     * <p>
      * Implementation Notes:
      *  SAMPLES (WorkflowSample)
      *      A sample can be incomplete, complete, & failed-complete. These are determined by a failed and complete flag.
@@ -211,10 +213,10 @@ public class GetRequestTrackingTask {
      * @param tree - Tree describing the workflow, which is represented in LIMS as a tree descending from the @root
      * @return
      */
-    private ProjectSampleTree createWorkflowTree(WorkflowSample root, ProjectSampleTree tree){
+    private ProjectSampleTree createWorkflowTree(WorkflowSample root, ProjectSampleTree tree) {
         tree.addStageToTracked(root);   // Update tree Project Sample stages w/ the input Workflow sample's stage
-        
-        if(STAGE_DATA_QC.equals(root.getStage()) && !tree.isPassedDataQc()){
+
+        if (STAGE_DATA_QC.equals(root.getStage()) && !tree.isPassedDataQc()) {
             // The Data QC stage is updated by a node in Data QC stage. This node can update the entire tree's data
             // QC status as a ProjectSample is marked Data QC complete if it has any one Data QC node marked passed
             tree.updateDataQcStage(root);
@@ -235,13 +237,13 @@ public class GetRequestTrackingTask {
 
             // Add all data for the root's children at that level. Allows us to fail only the failed branch
             List<WorkflowSample> workflowChildren = new ArrayList<>();
-            for(DataRecord record : children){
+            for (DataRecord record : children) {
                 WorkflowSample sample = new WorkflowSample(record, this.conn);
                 sample.setParent(root);
-                if(STAGE_AWAITING_PROCESSING.equals(sample.getStage())){
+                if (STAGE_AWAITING_PROCESSING.equals(sample.getStage())) {
                     // Update the stage of the sample to the parent stage if it is awaitingProcessing. If there is not
                     // resolved parent, leave as "Awaiting Processing"
-                    if(!STAGE_AWAITING_PROCESSING.equals(root.getStage())){
+                    if (!STAGE_AWAITING_PROCESSING.equals(root.getStage())) {
                         sample.setStage(root.getStage());
                     }
                 }
@@ -250,7 +252,7 @@ public class GetRequestTrackingTask {
                 workflowChildren.add(sample);
             }
 
-            for(WorkflowSample sample : workflowChildren){
+            for (WorkflowSample sample : workflowChildren) {
                 // Update tree w/ each sample
                 log.debug(String.format("Searching child, %d, of data record ID: %d", sample.getRecord().getRecordId(),
                         root.getRecordId()));
@@ -287,7 +289,7 @@ public class GetRequestTrackingTask {
      * @param projectSamples - All samples of a request
      * @return
      */
-    public Map<String, SampleStageTracker> getProjectStagesFromSamples(List<ProjectSample> projectSamples){
+    public Map<String, SampleStageTracker> getProjectStagesFromSamples(List<ProjectSample> projectSamples) {
         List<SampleStageTracker> sampleStages = projectSamples.stream()
                 .flatMap(tracker -> tracker.getStages().stream())
                 .collect(Collectors.toList());
@@ -326,7 +328,7 @@ public class GetRequestTrackingTask {
                     projectStage.addEndingSample(SAMPLE_COUNT);
                 }
                 // Incremement the number of failed samples in the aggregated
-                if (isFailedStage){
+                if (isFailedStage) {
                     projectStage.addFailedSample();
                 }
             } else {
@@ -344,7 +346,7 @@ public class GetRequestTrackingTask {
         Boolean complete = true;
         Integer completedCount;
         Collection<SampleStageTracker> trackers = stageMap.values();
-        for(SampleStageTracker tracker : trackers){
+        for (SampleStageTracker tracker : trackers) {
             completedCount = tracker.getEndingSamples() + tracker.getFailedSamplesCount();
             complete = complete && completedCount.equals(tracker.getSize());
             tracker.setComplete(complete);
@@ -446,7 +448,7 @@ public class GetRequestTrackingTask {
      * @param user
      * @return
      */
-    private Map<String, Object> getMetaDataFromRecord(DataRecord requestRecord, User user){
+    private Map<String, Object> getMetaDataFromRecord(DataRecord requestRecord, User user) {
         Map<String, Object> requestMetaData = new HashMap<>();
         for (String field : requestDataStringFields) {
             requestMetaData.put(field, getRecordStringValue(requestRecord, field, user));

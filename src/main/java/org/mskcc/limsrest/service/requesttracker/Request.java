@@ -5,7 +5,8 @@ import org.apache.commons.logging.LogFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
+
+import static org.mskcc.limsrest.util.StatusTrackerConfig.StageComp;
 
 /**
  * API representation of a Request in the LIMs with tracking data
@@ -41,6 +42,7 @@ public class Request {
 
     /**
      * Adds a stage to the request
+     *
      * @param stageName
      * @param stage
      */
@@ -51,7 +53,7 @@ public class Request {
         this.stages.put(stageName, stage);
     }
 
-    public Map<String, SampleStageTracker> getStages(){
+    public Map<String, SampleStageTracker> getStages() {
         return new HashMap<String, SampleStageTracker>(this.stages);
     }
 

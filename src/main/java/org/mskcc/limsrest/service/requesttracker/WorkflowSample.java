@@ -16,10 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
-import static org.mskcc.limsrest.util.StatusTrackerConfig.getLimsStageFromStatus;
 import static org.mskcc.limsrest.util.Utils.*;
-import static org.mskcc.limsrest.util.Utils.getRecordLongValue;
-import static org.mskcc.limsrest.util.Utils.getRecordStringValue;
 
 /**
  * These are the samples that are created as part of a workflow. There can be many of these samples for each
@@ -59,7 +56,8 @@ public class WorkflowSample extends StatusTracker {
     public List<WorkflowSample> getChildren() {
         return children;
     }
-    public void addChild(WorkflowSample child){
+
+    public void addChild(WorkflowSample child) {
         this.children.add(child);
     }
 
@@ -82,7 +80,7 @@ public class WorkflowSample extends StatusTracker {
         try {
             // Data QC stage is determined by presence of a SeqQCStatus record, it needs to be re-assigned
             DataRecord[] sampleQcRecord = getChildrenofDataRecord(this.record, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, this.user);
-            if(sampleQcRecord.length > 0) {
+            if (sampleQcRecord.length > 0) {
                 stageName = STAGE_DATA_QC;
             } else {
                 // If no DataQC records are found, assign stage based on the Exemplar Status

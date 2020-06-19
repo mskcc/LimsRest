@@ -6,15 +6,37 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mskcc.limsrest.ConnectionLIMS;
-import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 
 import java.rmi.RemoteException;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 
 public class GetRequestTrackingTaskTest {
+    public static final Set<String> TEST_THESE_PROJECTS = new HashSet<>(Arrays.asList(
+            // ALL PASSED
+            "10795",        // Good:    BASIC                           3 IGO-Complete
+            "09443_AS",        // Good:    BASIC                           8 IGO-complete
+
+            "09602_F",      // Good:    Multiple successful Banches     12 IGO-complete (different number Library Prep & Capture)
+            "09367_K",        // Good:    Failed branches                 1 IGO-Complete
+            "07428_AA",     // Good:    Includes extraction             4 IGO-Complete
+
+            // Passed/Pending
+            "10793",        // Good: 9 Passed, 1 Pending
+
+            // Failed/Complete
+            "06302_W",        // Good: 1 Failed Library Prep, 41 IGO-Complete
+            "06302_AG",        // Good: Pending User Decision
+
+            // Failed/Pending
+            "05888_G",        // Good: 3 w/ failed Sequencing Branches, 5 "Under-Review"
+
+            // Awaiting Processing - When a sample hasn't been assigned to a workflow
+            "09546_T"      // Single awaitingProcessing Node
+    ));
     ConnectionLIMS conn;
 
     @Before
@@ -26,31 +48,6 @@ public class GetRequestTrackingTaskTest {
     public void tearDown() {
         this.conn.close();
     }
-
-
-    public static final Set<String> TEST_THESE_PROJECTS = new HashSet<>(Arrays.asList(
-            // ALL PASSED
-            "10795",        // Good:    BASIC                           3 IGO-Complete
-            "09443_AS",		// Good:    BASIC                           8 IGO-complete
-
-            "09602_F",      // Good:    Multiple successful Banches     12 IGO-complete (different number Library Prep & Capture)
-            "09367_K",		// Good:    Failed branches                 1 IGO-Complete
-            "07428_AA",     // Good:    Includes extraction             4 IGO-Complete
-
-            // Passed/Pending
-            "10793",        // Good: 9 Passed, 1 Pending
-
-            // Failed/Complete
-            "06302_W",		// Good: 1 Failed Library Prep, 41 IGO-Complete
-            "06302_AG",		// Good: Pending User Decision
-
-            // Failed/Pending
-            "05888_G",		// Good: 3 w/ failed Sequencing Branches, 5 "Under-Review"
-
-            // Awaiting Processing - When a sample hasn't been assigned to a workflow
-            "09546_T"      // Single awaitingProcessing Node
-    ));
-
 
     @Test
     public void passedProjects() throws Exception {
@@ -98,7 +95,7 @@ public class GetRequestTrackingTaskTest {
     }
 
     @Test
-    public void passedPendingProjects()  throws Exception {
+    public void passedPendingProjects() throws Exception {
         /*  Passed/Pending
             "10793"			// Good: 9 Passed, 1 Pending
          */
@@ -114,7 +111,7 @@ public class GetRequestTrackingTaskTest {
     }
 
     @Test
-    public void failedComplete()  throws Exception {
+    public void failedComplete() throws Exception {
         /*  Failed/Complete
             "06302_W",		// Good: 1 Failed Library Prep, 41 IGO-Complete
             "06302_AG",		// Not detecting the Data-QC failures
@@ -139,7 +136,7 @@ public class GetRequestTrackingTaskTest {
     }
 
     @Test
-    public void failedPendingProjects()  throws Exception {
+    public void failedPendingProjects() throws Exception {
         /*  Failed/Pending
             "05888_G",		// Good: 3 w/ failed Sequencing Branches, 5 "Under-Review"
          */
@@ -156,7 +153,7 @@ public class GetRequestTrackingTaskTest {
     }
 
     @Test
-    public void awaitingProcessingProjects()  throws Exception {
+    public void awaitingProcessingProjects() throws Exception {
         /*  Single Awaiting Processing Node - All stages after STAGE_AWAITING_PROCESSING should be incomplete
             "09546_T",			// doesn't load
          */
@@ -179,14 +176,14 @@ public class GetRequestTrackingTaskTest {
      * @param testCases
      */
     private void testProjects(List<Project> testCases) {
-        for(Project project : testCases){
+        for (Project project : testCases) {
             // gate
-            if(TEST_THESE_PROJECTS.contains(project.name)) {
+            if (TEST_THESE_PROJECTS.contains(project.name)) {
                 GetRequestTrackingTask t = new GetRequestTrackingTask(project.name, this.conn);
                 Map<String, Object> requestTracker = new HashMap<>();
                 try {
                     requestTracker = t.execute();
-                } catch (IoError | RemoteException | NotFound e){
+                } catch (IoError | RemoteException | NotFound e) {
                     assertTrue("Exception in task execution", false);
                 }
 
@@ -209,9 +206,9 @@ public class GetRequestTrackingTaskTest {
         Integer numStages = stages.size();
         Integer expectedNumStages = project.stages.size();
         assertEquals(String.format("Incorrect Number of Stages: %d, expected %d (Project: %s)", numStages, expectedNumStages, project.name),
-            numStages, expectedNumStages);
+                numStages, expectedNumStages);
 
-        for(int i = 0; i<project.stages.size(); i++){
+        for (int i = 0; i < project.stages.size(); i++) {
             Map<String, Object> stage = (Map<String, Object>) stages.get(i);
             Stage expectedStage = project.stages.get(i);
 
@@ -232,7 +229,7 @@ public class GetRequestTrackingTaskTest {
                     expectedCompletedCt, completedCt);
 
             Integer failedCt = (Integer) stage.get("failedSamples");
-            Integer expectedFailedCt = (Integer) expectedStage.failedCt;
+            Integer expectedFailedCt = expectedStage.failedCt;
             assertEquals(String.format("FAILED COUNT - %d, expected %d (Project: %s, Stage: %s)", failedCt, expectedFailedCt, project.name, stageName),
                     expectedFailedCt, failedCt);
 
@@ -250,7 +247,7 @@ public class GetRequestTrackingTaskTest {
         List<Stage> stages;         // All stages present in the project
         String name;                // Request ID of the project
 
-        ProjectBuilder(String name){
+        ProjectBuilder(String name) {
             this.name = name;
             this.stages = new ArrayList<>();
         }
@@ -258,14 +255,14 @@ public class GetRequestTrackingTaskTest {
         /**
          * Add a test stage to the ProjectBuilder
          *
-         * @param name          "stage"
-         * @param complete      "complete"
-         * @param total         "totalSamples"
-         * @param completed     "completedSamples"
-         * @param failed        "failedSamples"
+         * @param name      "stage"
+         * @param complete  "complete"
+         * @param total     "totalSamples"
+         * @param completed "completedSamples"
+         * @param failed    "failedSamples"
          * @return
          */
-        ProjectBuilder addStage(String name, Boolean complete, Integer total, Integer completed, Integer failed){
+        ProjectBuilder addStage(String name, Boolean complete, Integer total, Integer completed, Integer failed) {
             Stage stage = new Stage(name, complete, total, completed, failed);
             this.stages.add(stage);
             return this;
@@ -284,7 +281,7 @@ public class GetRequestTrackingTaskTest {
         List<Stage> stages;
         String name;
 
-        Project(String name, List<Stage> stages){
+        Project(String name, List<Stage> stages) {
             this.name = name;
             this.stages = stages;
         }
@@ -300,7 +297,7 @@ public class GetRequestTrackingTaskTest {
         Integer completedCt;
         Integer failedCt;
 
-        Stage(String name, Boolean complete, Integer total, Integer completed, Integer failed){
+        Stage(String name, Boolean complete, Integer total, Integer completed, Integer failed) {
             this.name = name;
             this.complete = complete;
             this.totalCt = total;

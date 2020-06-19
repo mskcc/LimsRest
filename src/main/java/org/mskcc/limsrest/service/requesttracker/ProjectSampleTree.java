@@ -66,8 +66,8 @@ public class ProjectSampleTree {
      *
      * @param status
      */
-    private void setDataQcStatus(String status){
-        if(SEQ_QC_STATUS_PASSED.equals(this.dataQcStatus)){
+    private void setDataQcStatus(String status) {
+        if (SEQ_QC_STATUS_PASSED.equals(this.dataQcStatus)) {
             log.warn(String.format("Not re-seting Tree dataQcStatus to %s. Sample has already been DataQC %s",
                     status, SEQ_QC_STATUS_PASSED));
             return;
@@ -80,12 +80,13 @@ public class ProjectSampleTree {
      *
      * @param sample
      */
-    public void addSample(WorkflowSample sample){
+    public void addSample(WorkflowSample sample) {
         this.sampleMap.put(sample.getRecordId(), sample);
     }
 
     /**
      * Returns ordered list of stages in the ProjectSample
+     *
      * @return
      */
     public List<SampleStageTracker> getStages() {
@@ -98,14 +99,15 @@ public class ProjectSampleTree {
 
     /**
      * Adds stage to known Stages of this tree
+     *
      * @param node
      */
-    public void addStageToTracked(WorkflowSample node){
+    public void addStageToTracked(WorkflowSample node) {
         String stageName = node.getStage();
 
-        if(!"".equals(stageName) && stageName != null){
+        if (!"".equals(stageName) && stageName != null) {
             SampleStageTracker stage;
-            if(this.stageMap.containsKey(stageName)){
+            if (this.stageMap.containsKey(stageName)) {
                 stage = this.stageMap.get(stageName);
                 stage.updateStageTimes(node);
             } else {
@@ -122,16 +124,16 @@ public class ProjectSampleTree {
      *
      * @param node
      */
-    public void updateDataQcStage(WorkflowSample node){
+    public void updateDataQcStage(WorkflowSample node) {
         String nodeStage = node.getStage();
-        if(!STAGE_DATA_QC.equals(nodeStage)){
+        if (!STAGE_DATA_QC.equals(nodeStage)) {
             // Only records in the DataQc Stage should update the node
             return;
         }
 
         // Attempt to update the Data Qc Status of the tree if the current status isn't Passed
         boolean isPassedDataQc = isPassedDataQc();
-        if(!isPassedDataQc){
+        if (!isPassedDataQc) {
             updateDataQcStatus(node.getRecord());
             isPassedDataQc = isPassedDataQc();          // After @updateDataQcStatus, update this flag
         }
@@ -141,7 +143,7 @@ public class ProjectSampleTree {
         dataQcStage.setComplete(isPassedDataQc);
 
         // If the input @node had a Failed Data QC child, the Workflow Sample branch needs to be failed
-        if(isFailedDataQC()){
+        if (isFailedDataQC()) {
             node.setFailed(Boolean.TRUE);
             markFailedBranch(node);
         }
@@ -154,15 +156,15 @@ public class ProjectSampleTree {
      * @param record
      * @return
      */
-    private void updateDataQcStatus(DataRecord record){
+    private void updateDataQcStatus(DataRecord record) {
         DataRecord[] sampleQcRecord = getChildrenofDataRecord(record, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, this.user);
-        if(sampleQcRecord.length == 0){
+        if (sampleQcRecord.length == 0) {
             // Only a node in the Data QC stage will have a child instance of the SeqAnalysisSampleQC DataType
             return;
         }
         String seqQcStatus = getRecordStringValue(sampleQcRecord[0], SeqAnalysisSampleQCModel.SEQ_QCSTATUS, this.user);
         boolean isValidStatus = !"".equals(seqQcStatus);
-        if(isValidStatus){
+        if (isValidStatus) {
             setDataQcStatus(seqQcStatus);
         }
     }
@@ -173,23 +175,23 @@ public class ProjectSampleTree {
      *      - Leaf completion status needs to be set because there are no children to determine completion
      * @param leaf
      */
-    public void updateTreeOnLeafStatus(WorkflowSample leaf){
+    public void updateTreeOnLeafStatus(WorkflowSample leaf) {
         SampleStageTracker stage = this.stageMap.computeIfAbsent(leaf.getStage(),
                 // Absent when the LIMS tree is a single node in "Awaiting Processing"
                 k -> new SampleStageTracker(STAGE_AWAITING_PROCESSING, 1, 0, 0L, 0L));
 
         // Failed leafs do not modify the completion status
-        if(leaf.getFailed()){
+        if (leaf.getFailed()) {
             markFailedBranch(leaf);
         } else {
             // If the sample has been recorded as completed sequencing, then the leaf node is completed
-            if(isPassedDataQc()){
+            if (isPassedDataQc()) {
                 leaf.setComplete(Boolean.TRUE);   // Default leaf completion state is FALSE
                 stage.setComplete(Boolean.TRUE);  // Reset incompleted stages to true since sequencing is the last step
             } else {
                 // Reaching a leaf w/o traversing a node that sets tree to completedSequencing indicates incomplete
                 stage.setComplete(Boolean.FALSE);
-                if(isFailedDataQC()){
+                if (isFailedDataQC()) {
                     /**
                      * If a DFS hasn't found a "passed" "SeqAnalysisSampleQC" child, but did find a failed one in the
                      * tree, then the leaf is failed
@@ -210,12 +212,12 @@ public class ProjectSampleTree {
         leaf.setComplete(true);
         // Fail all nodes in path to failed leaf until reaching root (parent == null) or node w/ non-failed children
         WorkflowSample parent = leaf.getParent();
-        while(parent != null && allChildrenFailed(parent)){
+        while (parent != null && allChildrenFailed(parent)) {
             parent.setFailed(Boolean.TRUE);
             parent = parent.getParent();
         }
         // Record the sample has failed if the parent is null as this means the failed path reached the root
-        if(parent == null){
+        if (parent == null) {
             SampleStageTracker stage = this.stageMap.get(leaf.getStage());
             stage.addFailedSample();
         }
@@ -227,10 +229,10 @@ public class ProjectSampleTree {
      * @param sample
      * @return
      */
-    private boolean allChildrenFailed(WorkflowSample sample){
+    private boolean allChildrenFailed(WorkflowSample sample) {
         List<WorkflowSample> children = sample.getChildren();
-        for(WorkflowSample child : children){
-            if(!child.getFailed()) {
+        for (WorkflowSample child : children) {
+            if (!child.getFailed()) {
                 return false;
             }
         }
@@ -243,7 +245,7 @@ public class ProjectSampleTree {
      * @return
      */
     public ProjectSample convertToProjectSample() {
-        if(this.root == null) return null;
+        if (this.root == null) return null;
 
         ProjectSample projectSample = new ProjectSample(this.root.getRecordId());
         List<SampleStageTracker> stages = getStages();
@@ -252,7 +254,7 @@ public class ProjectSampleTree {
         Boolean isFailed = root.getFailed();                // A failed root indicates 0 branches w/ a non-failed sample
         // ProjectSample completion is determined by all stages
         Boolean isComplete = Boolean.TRUE;
-        for(SampleStageTracker stage : stages){
+        for (SampleStageTracker stage : stages) {
             isComplete = isComplete && stage.getComplete();
         }
 
