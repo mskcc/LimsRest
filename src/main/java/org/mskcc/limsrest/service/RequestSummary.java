@@ -22,7 +22,7 @@ public class RequestSummary {
     private boolean pipelinable;
     private boolean analysisRequested;
     private long recordId;
-    private Integer sampleNumber;
+    private Short sampleNumber;
     private String restStatus;
     private String specialDelivery;
 
@@ -100,7 +100,7 @@ public class RequestSummary {
         investigatorEmail = email;
     }
 
-    public void setSampleNumber(Integer sampleNumber) {
+    public void setSampleNumber(Short sampleNumber) {
         this.sampleNumber = sampleNumber;
     }
 
@@ -162,7 +162,7 @@ public class RequestSummary {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public Integer getSampleNumber() {
+    public Short getSampleNumber() {
         return sampleNumber;
     }
 
