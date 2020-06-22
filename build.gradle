@@ -34,6 +34,12 @@ if (target== 'dev'){
         from "src/test-site-res/resources"
         into "src/main/resources"
     }
+} else if(target == 'local'){
+    copy {
+        from "src/local/resources"
+        into "src/main/resources"
+    }
+    version += 'l'
 } else {
     copy {
         from "src/production/resources"
