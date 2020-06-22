@@ -4,12 +4,15 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
+import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.mskcc.domain.sample.NucleicAcid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.mskcc.limsrest.ConnectionLIMS;
 
 import java.io.BufferedReader;
@@ -25,10 +28,12 @@ import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 public class Utils {
     private final static Log LOGGER = LogFactory.getLog(Utils.class);
 
-    private final static String SEQ_QC_STATUS_PASSED = "passed";
-    private final static String SEQ_QC_STATUS_FAILED = "failed";
-    private final static List<String> TISSUE_SAMPLE_TYPES = Arrays.asList("cells", "plasma", "blood", "tissue", "buffy coat", "blocks/slides", "ffpe sample", "other", "tissue sample");
-    private final static List<String> NUCLEIC_ACID_TYPES = Arrays.asList("dna", "rna", "cdna", "cfdna", "dna,cfdna", "amplicon", "pre-qc rna");
+    public final static String SEQ_QC_STATUS_PASSED = "passed";
+    public final static String SEQ_QC_STATUS_FAILED = "failed";
+    public final static String SEQ_QC_STATUS_PENDING = "not available";
+
+    private final static List<String> TISSUE_SAMPLE_TYPES = Arrays.asList("cells","plasma","blood","tissue","buffy coat","blocks/slides","ffpe sample","other","tissue sample");
+    private final static List<String> NUCLEIC_ACID_TYPES = Arrays.asList("dna","rna","cdna","cfdna","dna,cfdna","amplicon","pre-qc rna");
     private final static List<String> LIBRARY_SAMPLE_TYPES = Arrays.asList("dna library", "cdna library", "gdna library");
     private final static List<String> CAPTURE_SAMPLE_TYPES = Collections.singletonList("capture library");
     private final static List<String> POOLED_SAMPLE_TYPES = Collections.singletonList("pooled library");
@@ -59,6 +64,11 @@ public class Utils {
         }
     }
 
+    public static <T> ResponseEntity<T> getResponseEntity(T input, HttpStatus status) {
+        ResponseEntity<T> resp = new ResponseEntity<T>(input, status);
+        return resp;
+    }
+
     /**
      * Method to check if Sequencing for a sample is complete based on presence of SeqAnalysisSampleQC as child record
      * and status of SeqAnalysisSampleQC as Passed.
@@ -67,31 +77,25 @@ public class Utils {
      * @return
      */
     public static Boolean isSequencingComplete(DataRecord sample, User user) {
-        DataRecord qcRecord = getChildSeqAnalysisSampleQcRecord(sample, user);
-        if (qcRecord == null) {
+        DataRecord[] qcRecord = getChildrenofDataRecord(sample, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
+        if (qcRecord.length > 0) {
             return false;
         }
-        String sequencingStatus = getRecordStringValue(qcRecord, "SeqQCStatus", user);
+        String sequencingStatus = getRecordStringValue(qcRecord[0], SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
         return sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_PASSED) || sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_FAILED);
     }
 
     /**
-     * Returns the SeqAnalysisSampleQC child of record if it exists. Returns null if no SeqAnalysisSampleQC child
+     * Returns whether the input status is a failed one
      *
-     * @param record
-     * @param user
+     * @param status
      * @return
      */
-    private static DataRecord getChildSeqAnalysisSampleQcRecord(DataRecord record, User user) {
-        try {
-            List<DataRecord> seqAnalysisRecords = Arrays.asList(record.getChildrenOfType("SeqAnalysisSampleQC", user));
-            if (seqAnalysisRecords.size() > 0) {
-                return seqAnalysisRecords.get(0);
-            }
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage());
+    public static Boolean isFailedStatus(String status) {
+        if(status != null && status != ""){
+            return status.toLowerCase().contains("failed");
         }
-        return null;
+        return Boolean.FALSE;
     }
 
     /**
@@ -125,7 +129,7 @@ public class Utils {
     }
 
     /**
-     * Safely extracts integer values
+     * Safely retrieves a Long Value from a dataRecord
      *
      * @param record
      * @param key
@@ -134,12 +138,26 @@ public class Utils {
      */
     public static Long getRecordLongValue(DataRecord record, String key, User user) {
         try {
-            if (record.getValue(key, user) != null) {
-                return record.getLongVal(key, user);
-            }
+            return record.getLongVal(key, user);
         } catch (NotFound | RemoteException | NullPointerException e) {
-            LOGGER.error(String.format("Failed to get (Integer) key %s from Data Record: %d", key, record.getRecordId()));
-            return null;
+            LOGGER.error(String.format("Failed to get (Long) key %s from Sample Record: %d", key, record.getRecordId()));
+        }
+        return null;
+    }
+
+    /**
+     * Safely retrieves a Boolean Value from a dataRecord
+     *
+     * @param record
+     * @param key
+     * @param user
+     * @return
+     */
+    public static Boolean getRecordBooleanValue(DataRecord record, String key, User user) {
+        try {
+            return record.getBooleanVal(key, user);
+        } catch (NotFound | RemoteException | NullPointerException e) {
+            LOGGER.error(String.format("Failed to get (Boolean) key %s from Sample Record: %d", key, record.getRecordId()));
         }
         return null;
     }
@@ -371,7 +389,7 @@ public class Utils {
                 long currentRecordId = current.getRecordId();
                 if (isSequencingComplete(current, user)) {
                     // Return the Completed-Sequencing status, NOT currentSampleStatus as this could not unrelated to sequencing
-                    return String.format("%s%s", WORKFLOW_STATUS_COMPLETED, STAGE_SEQUENCING);
+                    return String.format("%s%s", WORKFLOW_STATUS_COMPLETED, "Illumina Sequencing");
                 }
                 if (currentRecordId > recordId && currentStatusOrder > statusOrder && isCompleteStatus(currentSampleStatus)) {
                     sampleStatus = currentSampleStatus;
