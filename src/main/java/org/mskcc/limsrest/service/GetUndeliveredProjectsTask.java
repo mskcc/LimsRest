@@ -45,6 +45,11 @@ public class GetUndeliveredProjectsTask extends LimsTask {
             log.error("Failed to retrieve Projects from Database");
         }
 
+        if(undeliveredRecords.size() == 0){
+            log.error(String.format("No undelivered projects for the past %d days", this.daysToExamine));
+            return new ArrayList<>();
+        }
+
         /*
         AuditLog auditLog = null;
         try {
