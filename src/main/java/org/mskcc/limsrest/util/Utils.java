@@ -4,6 +4,7 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
+import com.velox.sloan.cmo.recmodels.SampleModel;
 import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -78,7 +79,7 @@ public class Utils {
      */
     public static Boolean isSequencingComplete(DataRecord sample, User user) {
         DataRecord[] qcRecord = getChildrenofDataRecord(sample, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
-        if (qcRecord.length > 0) {
+        if (qcRecord.length == 0) {
             return false;
         }
         String sequencingStatus = getRecordStringValue(qcRecord[0], SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
@@ -390,10 +391,14 @@ public class Utils {
      */
     private static String getMostAdvancedSampleStatus(DataRecord sample, String requestId, User user) {
         String sampleId = "";
-        String sampleStatus = "";
+        String sampleStatus = STAGE_AWAITING_PROCESSING;        // Default stage
         String currentSampleType = "";
         String currentSampleStatus = "";
         try {
+            String pendingStatus = getRecordStringValue(sample, SampleModel.EXEMPLAR_SAMPLE_STATUS, user);
+            if(!pendingStatus.isEmpty()){
+                sampleStatus = pendingStatus;
+            }
             sampleId = sample.getStringVal("SampleId", user);
             int statusOrder = -1;
             long recordId = 0;
