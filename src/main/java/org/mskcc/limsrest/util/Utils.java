@@ -146,6 +146,24 @@ public class Utils {
     }
 
     /**
+     * Safely retrieves a Short Value from a dataRecord
+     *
+     * @param record
+     * @param key
+     * @param user
+     * @return
+     */
+    public static Short getRecordShortValue(DataRecord record, String key, User user) {
+        try {
+            return record.getShortVal(key, user);
+        } catch (NotFound | RemoteException | NullPointerException e) {
+            LOGGER.error(String.format("Failed to get (Short) key %s from Sample Record: %d", key, record.getRecordId()));
+        }
+        return null;
+    }
+
+
+    /**
      * Safely retrieves a Boolean Value from a dataRecord
      *
      * @param record

@@ -101,7 +101,7 @@ public class GetUndelivered extends LimsTask {
                 } catch (Exception e) {
                 }
                 try {
-                    rs.setSampleNumber(((Short) requestFields.get("SampleNumber")).intValue());
+                    rs.setSampleNumber(((Short) requestFields.get("SampleNumber")));
                 } catch (Exception e) {
                     log.info(e.getMessage());
                 }

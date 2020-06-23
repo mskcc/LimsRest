@@ -63,7 +63,7 @@ public class GetSampleQc {
                 RequestSummary rs = new RequestSummary(project);
                 HashSet<String> runSet = new HashSet<>();
                 annotateRequestSummary(rs, r, user); // fill in all data at request level except sample number
-                rs.setSampleNumber((new Short(r.getShortVal("SampleNumber", user))).intValue());
+                rs.setSampleNumber((new Short(r.getShortVal("SampleNumber", user))));
 
                 List<DataRecord> qcRecords;
                 qcRecords = dataRecordManager.queryDataRecords("SeqAnalysisSampleQC", "Request = '" + project + "'", user);
