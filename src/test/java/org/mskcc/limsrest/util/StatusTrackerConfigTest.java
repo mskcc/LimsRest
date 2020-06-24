@@ -156,7 +156,6 @@ public class StatusTrackerConfigTest {
                 new StageExtractorTester("Completed - Illumina Sequencing Planning/Denaturing", "Pool-06604_D-Tube1_2_2", "06604_D", "Sequencing", "Sequencing - In-Processing"),
                 new StageExtractorTester("Completed - Illumina Sequencing Setup", "Pool-06604_D-Tube1_2_2_1", "06604_D", "Sequencing", "Sequencing - In-Processing"),
                 new StageExtractorTester("Completed - Illumina Sequencing", "Pool-05363-1081", "", "Sequencing", "Sequencing - In-Processing"),
-                new StageExtractorTester("Completed - Illumina Sequencing Analysis", "Pool-05338_B-1080_4", "", "Sequencing", "Sequencing - In-Processing"),
                 new StageExtractorTester("Completed - Illumina Sequencing Planning/Denaturing", "Pool-05338_B-1080_2", "", "Sequencing", "Sequencing - In-Processing"),
                 new StageExtractorTester("Completed - Illumina Sequencing Setup", "06712_B_2_1", "04298_E", "Sequencing", "Sequencing - In-Processing"),
                 new StageExtractorTester("Completed - Normalization of Pooled Libraries", "05423_1", "", "Sequencing", "Sequencing - In-Processing"),
@@ -173,6 +172,15 @@ public class StatusTrackerConfigTest {
         ));
         assertCorrectLimsStage(testSamples);
     }
+
+    @Test
+    public void getLimsStageNameFromStatusTest_dataQC() {
+        List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
+                new StageExtractorTester("Completed - Illumina Sequencing Analysis", "Pool-05338_B-1080_4", "", "Data QC", "Data QC - Completed")
+                ));
+        assertCorrectLimsStage(testSamples);
+    }
+
 
     @Test
     public void getLimsStageNameFromStatusTest_libraryQC() {
