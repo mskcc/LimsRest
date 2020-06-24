@@ -378,6 +378,7 @@ public class Utils {
     public static String getMostAdvancedLimsStage(DataRecord sample, String requestId, ConnectionLIMS conn) {
         User user = conn.getConnection().getUser();
         String mostAdvancedSampleStatus = getMostAdvancedSampleStatus(sample, requestId, user);
+        System.out.println(mostAdvancedSampleStatus);
         LimsStage stage = getLimsStageFromStatus(conn, mostAdvancedSampleStatus);
         return stage.toString();
     }
@@ -412,7 +413,7 @@ public class Utils {
                 long currentRecordId = current.getRecordId();
                 if (isSequencingComplete(current, user)) {
                     // Return the Completed-Sequencing status, NOT currentSampleStatus as this could not unrelated to sequencing
-                    return String.format("%s%s", WORKFLOW_STATUS_COMPLETED, "Illumina Sequencing");
+                    return String.format("%s%s", WORKFLOW_STATUS_COMPLETED, STAGE_SEQUENCING_ANALYSIS);
                 }
                 if (currentRecordId > recordId && currentStatusOrder > statusOrder && isCompleteStatus(currentSampleStatus)) {
                     sampleStatus = currentSampleStatus;
