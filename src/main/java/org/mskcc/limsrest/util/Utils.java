@@ -378,7 +378,6 @@ public class Utils {
     public static String getMostAdvancedLimsStage(DataRecord sample, String requestId, ConnectionLIMS conn) {
         User user = conn.getConnection().getUser();
         String mostAdvancedSampleStatus = getMostAdvancedSampleStatus(sample, requestId, user);
-        System.out.println(mostAdvancedSampleStatus);
         LimsStage stage = getLimsStageFromStatus(conn, mostAdvancedSampleStatus);
         return stage.toString();
     }
