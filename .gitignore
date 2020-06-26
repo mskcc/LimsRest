@@ -25,6 +25,7 @@ src/production/
 src/test-site-res/
 src/webapp/
 src/main/resources/
+src/local/resources/
 src/integration-test/resources/
 GRADLECALL
 .gradle/
