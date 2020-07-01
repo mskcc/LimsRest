@@ -44,7 +44,7 @@ public class WorkflowSample extends StatusTracker {
         this.user = conn.getConnection().getUser();
         this.children = new ArrayList<>();
         this.recordId = record.getRecordId();
-        this.recordName = getRecordStringValue(record, SampleModel.DATA_RECORD_NAME, this.user);
+        this.recordName = getRecordStringValue(record, SampleModel.SAMPLE_ID, this.user);
         this.record = record;
         this.parent = null;
 
