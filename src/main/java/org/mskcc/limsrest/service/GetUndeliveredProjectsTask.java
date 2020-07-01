@@ -33,6 +33,7 @@ public class GetUndeliveredProjectsTask extends LimsTask {
         User user = conn.getUser();
 
         List<DataRecord> undeliveredRecords = new ArrayList<>();
+        // Unix timestamp is to the millisecond, which is why we multiply by 1000
         String query = String.format("%s IS NULL OR %s >  UNIX_TIMESTAMP(NOW() - INTERVAL %d DAY) * 1000",
             RequestModel.RECENT_DELIVERY_DATE, RequestModel.RECENT_DELIVERY_DATE, this.daysToExamine);
         try {
