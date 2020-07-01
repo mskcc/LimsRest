@@ -54,7 +54,7 @@ public class GetRequestTrackingTask {
         DataRecordManager drm = vConn.getDataRecordManager();
 
         String serviceId = getBankedSampleServiceId(this.requestId, user, drm);
-        Request request = new Request(requestId, serviceId);
+        Request request = new Request(this.requestId, serviceId);
 
         if (serviceId != null && !serviceId.equals("")) {
             // Add "submitted" stage if a serviceID exists
@@ -298,7 +298,7 @@ public class GetRequestTrackingTask {
     }
 
     /**
-     * Calculates the stage the overall sample is at based on the least advanced path and merging across all samples.
+     * Calculates the stage the overall project is at by aggregating the stages of each projectSample in the project.
      * On merge event, update the following -
      *      start/update times
      *      Total
@@ -322,19 +322,18 @@ public class GetRequestTrackingTask {
                 projectStage = stageMap.get(stageName);
                 projectStage.updateStageTimes(sampleStage);
                 projectStage.addStartingSample(SAMPLE_COUNT);
-                isFailedStage = sampleStage.getFailedSamplesCount() > 0;
-                if (sampleStage.getComplete() && !isFailedStage) {
-                    // Only non-failed, completed stages are considered to have "ended" the stage
-                    projectStage.addEndingSample(SAMPLE_COUNT);
-                }
-                // Incremement the number of failed samples in the aggregated
-                if (isFailedStage) {
-                    projectStage.addFailedSample();
-                }
             } else {
-                Integer endingCount = sampleStage.getComplete() ? SAMPLE_COUNT : 0;
-                projectStage = new SampleStageTracker(stageName, SAMPLE_COUNT, endingCount, sampleStage.getStartTime(), sampleStage.getUpdateTime());
+                projectStage = new SampleStageTracker(stageName, SAMPLE_COUNT, 0, sampleStage.getStartTime(), sampleStage.getUpdateTime());
                 stageMap.put(stageName, projectStage);
+            }
+            isFailedStage = sampleStage.getFailedSamplesCount() > 0;
+            if (sampleStage.getComplete() && !isFailedStage) {
+                // Only non-failed, completed stages are considered to have "ended" the stage
+                projectStage.addEndingSample(SAMPLE_COUNT);
+            }
+            // Incremement the number of failed samples in the aggregated
+            if (isFailedStage) {
+                projectStage.addFailedSample();
             }
         }
 
