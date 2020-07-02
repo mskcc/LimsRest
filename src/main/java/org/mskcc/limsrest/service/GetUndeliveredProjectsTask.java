@@ -20,22 +20,14 @@ import static org.mskcc.limsrest.util.Utils.*;
  */
 public class GetUndeliveredProjectsTask extends LimsTask {
     private static Log log = LogFactory.getLog(GetUndeliveredProjectsTask.class);
-    private Integer daysToExamine;
-
-    public GetUndeliveredProjectsTask(Integer daysToExamine){
-        this.daysToExamine = daysToExamine;
-    }
 
     @PreAuthorize("hasRole('READ')")
     @Override
     public List<RequestSummary> execute(VeloxConnection conn) {
-        // Set<DataRecord> undeliveredSet = new HashSet<>();
         User user = conn.getUser();
 
         List<DataRecord> undeliveredRecords = new ArrayList<>();
-        // Unix timestamp is to the millisecond, which is why we multiply by 1000
-        String query = String.format("%s IS NULL OR %s >  UNIX_TIMESTAMP(NOW() - INTERVAL %d DAY) * 1000",
-            RequestModel.RECENT_DELIVERY_DATE, RequestModel.RECENT_DELIVERY_DATE, this.daysToExamine);
+        String query = String.format("%s IS NULL", RequestModel.RECENT_DELIVERY_DATE);
         try {
             undeliveredRecords = conn.getDataRecordManager().queryDataRecords(RequestModel.DATA_TYPE_NAME, query, user);
         } catch (NotFound | RemoteException | IoError e){
@@ -43,7 +35,7 @@ public class GetUndeliveredProjectsTask extends LimsTask {
         }
 
         if(undeliveredRecords.size() == 0){
-            log.error(String.format("No undelivered projects for the past %d days", this.daysToExamine));
+            log.error(String.format("No undelivered projects found. Incredible!"));
             return new ArrayList<>();
         }
         
