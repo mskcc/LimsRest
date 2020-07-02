@@ -38,7 +38,9 @@ public class GetRequestTrackingTask {
             RequestModel.TATFROM_RECEIVING,
             RequestModel.PROJECT_MANAGER,
             RequestModel.LAB_HEAD_EMAIL,
-            RequestModel.INVESTIGATOR
+            RequestModel.INVESTIGATOR,
+            RequestModel.PROJECT_NAME,
+            RequestModel.REQUEST_NAME
     };
     private ConnectionLIMS conn;
     private String requestId;
