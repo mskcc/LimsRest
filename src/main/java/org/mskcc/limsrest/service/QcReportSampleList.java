@@ -201,6 +201,7 @@ public class QcReportSampleList {
         public Long recordId;
         public String otherSampleId;
         public String sampleStatus;
+        public Boolean hideFromSampleQC;
 
         public PathologySample() {
         }
@@ -211,6 +212,8 @@ public class QcReportSampleList {
             this.recordId = (Long) sampleFields.get("RecordId");
             this.otherSampleId = (String) sampleFields.get("OtherSampleId");
             this.sampleStatus = (String) sampleFields.get("SampleFinalQCStatus");
+            this.hideFromSampleQC = (Boolean) sampleFields.get("HideFromSampleQC");
+
         }
 
 
