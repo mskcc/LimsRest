@@ -5,6 +5,7 @@ public class WESSampleData {
     String sampleId;
     String userSampleId;
     String userSampleidHistorical;
+    String altId;
     String duplicateSample;
     String wesSampleid;
     String cmoSampleId;
@@ -13,11 +14,11 @@ public class WESSampleData {
     String dmpPatientId;
     String mrn;
     String sex;
-    String sampleType;
     String sampleClass;
     String tumorType;
     String parentalTumorType;
     String tissueSite;
+    String sourceDnaType;
     String molecularAccessionNum;
     String collectionYear;
     String dateDmpRequest;
@@ -36,22 +37,23 @@ public class WESSampleData {
     Boolean consentPartCStatus;
     String sampleStatus;
     String accessLevel;
-    String clinicalTrial;
     String sequencingSite;
     String piRequestDate;
-    String pipeline;
+    String tempoPipelineQcStatus;
+    String tempoOutputDeliveryDate;
+    String dataCustodian;
     String tissueType;
-    String collaborationCenter;
     String limsSampleRecordId;
     String limsTrackerRecordId;
 
-    public WESSampleData(String sampleId, String userSampleId, String userSampleidHistorical, String duplicateSample, String wesSampleid, String cmoSampleId, String cmoPatientId, String dmpSampleId, String dmpPatientId, String mrn, String sex, String sampleType, String sampleClass, String tumorType,
-                         String parentalTumorType, String tissueSite, String molecularAccessionNum, String collectionYear, String dateDmpRequest, String dmpRequestId, String igoRequestId, String dateIgoReceived, String igoCompleteDate,
+    public WESSampleData(String sampleId, String userSampleId, String userSampleidHistorical, String altId, String duplicateSample, String wesSampleid, String cmoSampleId, String cmoPatientId, String dmpSampleId, String dmpPatientId, String mrn, String sex, String sampleClass, String tumorType,
+                         String parentalTumorType, String tissueSite, String sourceDnaType, String molecularAccessionNum, String collectionYear, String dateDmpRequest, String dmpRequestId, String igoRequestId, String dateIgoReceived, String igoCompleteDate,
                          String applicationRequested, String baitsetUsed, String sequencerType, String projectTitle, String labHead, String ccFund, String scientificPi, Boolean consentPartAStatus, Boolean consentPartCStatus,
-                         String sampleStatus, String accessLevel, String clinicalTrial, String sequencingSite, String piRequestDate, String pipeline, String tissueType, String collaborationCenter, String limsSampleRecordId, String limsTrackerRecordId) {
+                         String sampleStatus, String accessLevel, String sequencingSite, String piRequestDate, String tempoPipelineQcStatus, String tempoOutputDeliveryDate, String dataCustodian, String tissueType, String limsSampleRecordId, String limsTrackerRecordId) {
         this.sampleId = sampleId;
         this.userSampleId = userSampleId;
         this.userSampleidHistorical = userSampleidHistorical;
+        this.altId = altId;
         this.duplicateSample = duplicateSample;
         this.wesSampleid = wesSampleid;
         this.cmoSampleId = cmoSampleId;
@@ -60,11 +62,11 @@ public class WESSampleData {
         this.dmpPatientId = dmpPatientId;
         this.mrn = mrn;
         this.sex = sex;
-        this.sampleType = sampleType;
         this.sampleClass = sampleClass;
         this.tumorType = tumorType;
         this.parentalTumorType = parentalTumorType;
         this.tissueSite = tissueSite;
+        this.sourceDnaType = sourceDnaType;
         this.molecularAccessionNum = molecularAccessionNum;
         this.collectionYear = collectionYear;
         this.dateDmpRequest = dateDmpRequest;
@@ -83,12 +85,12 @@ public class WESSampleData {
         this.consentPartCStatus = consentPartCStatus;
         this.sampleStatus = sampleStatus;
         this.accessLevel = accessLevel;
-        this.clinicalTrial = clinicalTrial;
         this.sequencingSite = sequencingSite;
         this.piRequestDate = piRequestDate;
-        this.pipeline = pipeline;
+        this.tempoPipelineQcStatus = tempoPipelineQcStatus;
+        this.tempoOutputDeliveryDate = tempoOutputDeliveryDate;
+        this.dataCustodian = dataCustodian;
         this.tissueType = tissueType;
-        this.collaborationCenter = collaborationCenter;
         this.limsSampleRecordId = limsSampleRecordId;
         this.limsTrackerRecordId = limsTrackerRecordId;
     }
@@ -114,6 +116,14 @@ public class WESSampleData {
 
     public void setUserSampleidHistorical(String userSampleidHistorical) {
         this.userSampleidHistorical = userSampleidHistorical;
+    }
+
+    public String getAltId() {
+        return altId;
+    }
+
+    public void setAltId(String altId) {
+        this.altId = altId;
     }
 
     public String getDuplicateSample() {
@@ -178,14 +188,6 @@ public class WESSampleData {
 
     public void setSex(String sex) {
         this.sex = sex;
-    }
-
-    public String getSampleType() {
-        return sampleType;
-    }
-
-    public void setSampleType(String sampleType) {
-        this.sampleType = sampleType;
     }
 
     public String getSampleClass() {
@@ -364,14 +366,6 @@ public class WESSampleData {
         this.accessLevel = accessLevel;
     }
 
-    public String getClinicalTrial() {
-        return clinicalTrial;
-    }
-
-    public void setClinicalTrial(String clinicalTrial) {
-        this.clinicalTrial = clinicalTrial;
-    }
-
     public String getSequencingSite() {
         return sequencingSite;
     }
@@ -388,28 +382,12 @@ public class WESSampleData {
         this.piRequestDate = piRequestDate;
     }
 
-    public String getPipeline() {
-        return pipeline;
-    }
-
-    public void setPipeline(String pipeline) {
-        this.pipeline = pipeline;
-    }
-
     public String getTissueType() {
         return tissueType;
     }
 
     public void setTissueType(String tissueType) {
         this.tissueType = tissueType;
-    }
-
-    public String getCollaborationCenter() {
-        return collaborationCenter;
-    }
-
-    public void setCollaborationCenter(String collaborationCenter) {
-        this.collaborationCenter = collaborationCenter;
     }
 
     public String getLimsSampleRecordId() {
@@ -426,5 +404,37 @@ public class WESSampleData {
 
     public void setLimsTrackerRecordId(String limsRecordId) {
         this.limsTrackerRecordId = limsTrackerRecordId;
+    }
+
+    public String getSourceDnaType() {
+        return sourceDnaType;
+    }
+
+    public void setSourceDnaType(String sourceDnaType) {
+        this.sourceDnaType = sourceDnaType;
+    }
+
+    public String getTempoPipelineQcStatus() {
+        return tempoPipelineQcStatus;
+    }
+
+    public void setTempoPipelineQcStatus(String tempoPipelineQcStatus) {
+        this.tempoPipelineQcStatus = tempoPipelineQcStatus;
+    }
+
+    public String getTempoOutputDeliveryDate() {
+        return tempoOutputDeliveryDate;
+    }
+
+    public void setTempoOutputDeliveryDate(String tempoOutputDeliveryDate) {
+        this.tempoOutputDeliveryDate = tempoOutputDeliveryDate;
+    }
+
+    public String getDataCustodian() {
+        return dataCustodian;
+    }
+
+    public void setDataCustodian(String dataCustodian) {
+        this.dataCustodian = dataCustodian;
     }
 }
