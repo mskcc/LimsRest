@@ -125,7 +125,7 @@ public class GetRequestTrackingTaskTest {
                         .build(),
                 new ProjectBuilder("06302_AG")
                         .addStage(STAGE_LIBRARY_PREP, true, 382, 382, 0)
-                        .addStage(STAGE_PENDING_USER_DECISION, true, 2, 1, 1)
+                        .addStage(STAGE_PENDING_USER_DECISION, true, 2, 0, 2)
                         // TODO - Failed should be 48 & completed 332, but sequencing failures are difficult
                         .addStage(STAGE_SEQUENCING, false, 380, 332, 0)
                         .addStage(STAGE_DATA_QC, false, 380, 332, 48)

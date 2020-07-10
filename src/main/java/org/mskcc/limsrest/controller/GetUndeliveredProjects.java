@@ -27,18 +27,10 @@ public class GetUndeliveredProjects {
     }
 
     @GetMapping("/getUndeliveredProjects")
-    public ResponseEntity<List<RequestSummary>> getContent(@RequestParam(value = "time", required = false) String time) {
+    public ResponseEntity<List<RequestSummary>> getContent() {
+        log.info("/getUndeliveredProjects for projects not delivered");
 
-        log.info(String.format("/getUndeliveredProjects for projects in past %s days", time));
-
-        // Standardize input
-        Integer numDays = 7;
-        try {
-            numDays = Integer.parseInt(time);
-        } catch (NumberFormatException e) {
-            log.warn(String.format("Failed to parse time: %s. Using default 7 days", time));
-        }
-        GetUndeliveredProjectsTask t = new GetUndeliveredProjectsTask(numDays);
+        GetUndeliveredProjectsTask t = new GetUndeliveredProjectsTask();
         List<RequestSummary> requestTracker = t.execute(this.conn.getConnection());
         return getResponseEntity(requestTracker, HttpStatus.OK);
     }

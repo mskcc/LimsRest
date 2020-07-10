@@ -38,6 +38,7 @@ public class Utils {
     private final static List<String> LIBRARY_SAMPLE_TYPES = Arrays.asList("dna library", "cdna library", "gdna library");
     private final static List<String> CAPTURE_SAMPLE_TYPES = Collections.singletonList("capture library");
     private final static List<String> POOLED_SAMPLE_TYPES = Collections.singletonList("pooled library");
+    private final static String FAILED_STATUS_TEXT = "failed";
 
     public static void runAndCatchNpe(Runnable runnable) {
         try {
@@ -378,6 +379,9 @@ public class Utils {
     public static String getMostAdvancedLimsStage(DataRecord sample, String requestId, ConnectionLIMS conn) {
         User user = conn.getConnection().getUser();
         String mostAdvancedSampleStatus = getMostAdvancedSampleStatus(sample, requestId, user);
+        if (mostAdvancedSampleStatus.toLowerCase().contains(FAILED_STATUS_TEXT)){
+            return mostAdvancedSampleStatus;
+        }
         LimsStage stage = getLimsStageFromStatus(conn, mostAdvancedSampleStatus);
         return stage.toString();
     }
