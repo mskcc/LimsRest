@@ -36,6 +36,7 @@ public class PromoteBankedSample {
                                              @RequestParam(value = "projectId", defaultValue = "NULL") String project,
                                              @RequestParam(value = "serviceId") String service,
                                              @RequestParam(value = "igoUser") String igoUser,
+                                             @RequestParam(value = "materials", defaultValue = "NULL") String materials,
                                              @RequestParam(value = "dryrun", defaultValue = "false") boolean dryrun) {
         log.info("Starting /promoteBankedSample " + bankedId[0] + " to requestId:" + request + ":"
                 + project + ",serviceId:" + service + ", igoUser: " + igoUser + " dryrun:" + dryrun);
@@ -49,6 +50,9 @@ public class PromoteBankedSample {
         if (!Whitelists.textMatches(igoUser))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("igoUser is not using a valid format. " + Whitelists.textFormatText());
 
+        if (!Whitelists.textMatches(materials))
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("material is not using a valid format. " + Whitelists.textFormatText());
+
         if (!Whitelists.requestMatches(request))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("requestId is not using a valid format. " + Whitelists.requestFormatText());
 
@@ -59,7 +63,7 @@ public class PromoteBankedSample {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("serviceId is not using a valid format. " + Whitelists.serviceFormatText());
 
         PromoteBanked task = new PromoteBanked();
-        task.init(bankedId, project, request, service, igoUser, dryrun);
+        task.init(bankedId, project, request, service, igoUser, materials, dryrun);
         log.info("Starting promote");
         Future<Object> result = conn.submitTask(task);
         try {
@@ -75,8 +79,8 @@ public class PromoteBankedSample {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
-            log.error("Promote error:" + e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage() + "\nTRACE: " + sw.toString());
+            log.error("Promote error:" + e + "\nTRACE: " + sw.toString());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 }

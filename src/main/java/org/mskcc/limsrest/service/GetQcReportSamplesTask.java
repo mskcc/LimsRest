@@ -225,6 +225,7 @@ public class GetQcReportSamplesTask extends LimsTask {
                         HashMap<String, Object> attachmentInfo = new HashMap<>();
                         attachmentInfo.put("recordId", record.getDataField("RecordId", user));
                         attachmentInfo.put("fileName", record.getDataField("FilePath", user));
+                        attachmentInfo.put("hideFromSampleQC", record.getDataField("HideFromSampleQC", user));
                         attachments.add(attachmentInfo);
                     }
                 }
