@@ -18,12 +18,14 @@ import static org.mskcc.limsrest.util.Utils.*;
 public class GetSampleMetadataTask {
     private Log log = LogFactory.getLog(GetSampleMetadata.class);
     private String timestamp;
+    private String projectId;
     private ConnectionLIMS conn;
     private User user;
     private String baitSet = "";
 
-    public GetSampleMetadataTask(String timestamp, ConnectionLIMS conn) {
+    public GetSampleMetadataTask(String timestamp, String projectId, ConnectionLIMS conn) {
         this.timestamp = timestamp;
+        this.projectId = projectId;
         this.conn = conn;
     }
 
@@ -37,7 +39,14 @@ public class GetSampleMetadataTask {
             log.info(" Starting GetSampleMetadata task using timestamp " + timestamp);
             List<DataRecord> requests = new ArrayList<>();
             try {
-                requests = dataRecordManager.queryDataRecords("Request", "CompletedDate > '" + timestamp + "'", user);
+                if (StringUtils.isBlank(projectId)){
+                    requests = dataRecordManager.queryDataRecords("Request", "DateCreated > '" + timestamp + "'", user);
+                }
+                else {
+                    String likeParam = projectId + "_%";
+                    requests = dataRecordManager.queryDataRecords("Request", "RequestId= '" + projectId + "' OR RequestId LIKE '" + likeParam + "'", user);
+                }
+
                 //requests = dataRecordManager.queryDataRecords("Request", "RequestId = '93017_V'", user);//'" + timestamp +"'", user);//for testing requests.size()); AND Status IN ('Completed', 'Completed with Failures')
                 log.info("Total Requests: " + requests.size());
                 for (DataRecord req : requests) {
