@@ -29,7 +29,7 @@ public class GetRequestTrackingTaskTest {
 
             // Failed/Complete
             "06302_W",        // Good: 1 Failed Library Prep, 41 IGO-Complete
-            "06302_AG",        // Good: Pending User Decision
+            // "06302_AG",        // Good: Pending User Decision
 
             // Failed/Pending
             "05888_G",        // Good: 3 w/ failed Sequencing Branches, 5 "Under-Review"
