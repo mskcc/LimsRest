@@ -1,11 +1,11 @@
 package org.mskcc.limsrest.service;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Collections;
-
-import com.fasterxml.jackson.annotation.*;
 
 public class RequestSummary {
     private ArrayList<SampleSummary> samples;
@@ -22,9 +22,13 @@ public class RequestSummary {
     private boolean pipelinable;
     private boolean analysisRequested;
     private long recordId;
+    private Long receivedDate;
     private Short sampleNumber;
     private String restStatus;
     private String specialDelivery;
+    private String labHeadEmail;
+    private String qcAccessEmail;
+    private String dataAccessEmails;
 
     public RequestSummary() {
         this("UNKNOWN");
@@ -36,6 +40,42 @@ public class RequestSummary {
         requestId = request;
         investigator = "UNKNOWN";
         restStatus = "SUCCESS";
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getDataAccessEmails() {
+        return dataAccessEmails;
+    }
+
+    public void setDataAccessEmails(String dataAccessEmails) {
+        this.dataAccessEmails = dataAccessEmails;
+    }
+    
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public Long getReceivedDate() {
+        return receivedDate;
+    }
+
+    public void setReceivedDate(Long receivedDate) {
+        this.receivedDate = receivedDate;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getQcAccessEmail() {
+        return qcAccessEmail;
+    }
+
+    public void setQcAccessEmail(String qcAccessEmail) {
+        this.qcAccessEmail = qcAccessEmail;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getLabHeadEmail() {
+        return labHeadEmail;
+    }
+
+    public void setLabHeadEmail(String labHeadEmail) {
+        this.labHeadEmail = labHeadEmail;
     }
 
     public void setRestStatus(String s) {
