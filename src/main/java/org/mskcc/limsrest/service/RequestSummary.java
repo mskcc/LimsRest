@@ -42,7 +42,7 @@ public class RequestSummary {
         restStatus = "SUCCESS";
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.ALWAYS)
     public String getDataAccessEmails() {
         return dataAccessEmails;
     }
@@ -50,8 +50,8 @@ public class RequestSummary {
     public void setDataAccessEmails(String dataAccessEmails) {
         this.dataAccessEmails = dataAccessEmails;
     }
-    
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+
+    @JsonInclude(JsonInclude.Include.ALWAYS)
     public Long getReceivedDate() {
         return receivedDate;
     }
@@ -60,7 +60,7 @@ public class RequestSummary {
         this.receivedDate = receivedDate;
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.ALWAYS)
     public String getQcAccessEmail() {
         return qcAccessEmail;
     }
@@ -69,7 +69,7 @@ public class RequestSummary {
         this.qcAccessEmail = qcAccessEmail;
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.ALWAYS)
     public String getLabHeadEmail() {
         return labHeadEmail;
     }
