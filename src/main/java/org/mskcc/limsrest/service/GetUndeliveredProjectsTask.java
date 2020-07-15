@@ -51,6 +51,10 @@ public class GetUndeliveredProjectsTask extends LimsTask {
             rs.setRequestType(getRecordStringValue(request, RequestModel.REQUEST_NAME, user));
             rs.setProjectManager(getRecordStringValue(request, RequestModel.PROJECT_MANAGER, user));
             rs.setSampleNumber(getRecordShortValue(request,RequestModel.SAMPLE_NUMBER, user));
+            rs.setDataAccessEmails(getRecordStringValue(request, "DataAccessEmails", user));
+            rs.setQcAccessEmail(getRecordStringValue(request, "QcAccessEmails", user));
+            rs.setLabHeadEmail(getRecordStringValue(request, RequestModel.LAB_HEAD_EMAIL, user));
+            rs.setReceivedDate(getRecordLongValue(request, RequestModel.RECEIVED_DATE, user));
 
             undeliveredRequests.add(rs);
         }
