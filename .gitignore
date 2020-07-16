@@ -20,11 +20,11 @@ out/*
 
 .DS_STORE*
 
-src/dev/
-src/production/
 src/test-site-res/
 src/webapp/
+src/production/resources/
 src/main/resources/
+src/dev/resources/
 src/local/resources/
 src/integration-test/resources/
 GRADLECALL

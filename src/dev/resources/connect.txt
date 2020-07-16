@@ -1,0 +1,10 @@
+lims.host=localhost
+lims.port=
+lims.guid=
+
+lims.user1=
+lims.pword1=
+lims.user2=
+lims.pword2=
+
+# TODO - get credentials
