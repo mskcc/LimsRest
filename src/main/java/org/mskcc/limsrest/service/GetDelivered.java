@@ -4,8 +4,10 @@ import com.velox.api.datarecord.AuditLog;
 import com.velox.api.datarecord.AuditLogEntry;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.sloan.cmo.recmodels.RequestModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.service.requesttracker.Request;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.io.PrintWriter;
@@ -14,6 +16,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import static org.mskcc.limsrest.util.Utils.*;
 
 /**
  * A queued task that finds all requests that have been delivered in a time frame and finds all their samples,
@@ -108,35 +112,16 @@ public class GetDelivered extends LimsTask {
                 Map<String, Object> requestFields = request.getFields(user);
                 String requestId = (String) requestFields.get("RequestId");
                 RequestSummary rs = new RequestSummary(requestId);
-                try {
-                    rs.setInvestigator((String) requestFields.get("Investigator"));
-                } catch (Exception e) {
-                }
-                try {
-                    rs.setPi((String) requestFields.get("LaboratoryHead"));
-                } catch (Exception e) {
-                }
-                try {
-                    rs.setAnalysisRequested((Boolean) requestFields.get("BICAnalysis"));
-                } catch (Exception e) {
-                }
-                try {
-                    rs.setAnalysisType((String) requestFields.get("AnalysisType"));
-                } catch (Exception e) {
-                }
-                try {
-                    rs.setRequestType((String) requestFields.get("RequestName"));
-                } catch (Exception e) {
-                }
-                try {
-                    rs.setProjectManager((String) requestFields.get("ProjectManager"));
-                } catch (Exception e) {
-                }
-                try {
-                    rs.setSampleNumber(((Short) requestFields.get("SampleNumber")));
-                } catch (Exception e) {
-                    log.info(e.getMessage());
-                }
+
+                rs.setInvestigator(getRecordStringValue(request, RequestModel.INVESTIGATOR, user));
+                rs.setPi(getRecordStringValue(request, RequestModel.LABORATORY_HEAD, user));
+                rs.setAnalysisRequested(getRecordBooleanValue(request, RequestModel.BICANALYSIS, user));
+                rs.setAnalysisType(getRecordStringValue(request, "AnalysisType", user));
+                rs.setRequestType(getRecordStringValue(request, RequestModel.REQUEST_NAME, user));
+                rs.setProjectManager(getRecordStringValue(request, RequestModel.PROJECT_MANAGER, user));
+                rs.setSampleNumber(getRecordShortValue(request, RequestModel.SAMPLE_NUMBER, user));
+                rs.setReceivedDate(getRecordLongValue(request, RequestModel.RECEIVED_DATE, user));
+
                 List<DataRecord> childrenOfRequest = childSamples.get(i);
                 List<DataRecord> childrenPlatesOfRequest = childPlates.get(i);
                 List<List<DataRecord>> childPlateSamples = dataRecordManager.getChildrenOfType(childrenPlatesOfRequest, "Sample", user);

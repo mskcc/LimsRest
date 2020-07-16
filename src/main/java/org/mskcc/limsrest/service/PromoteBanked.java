@@ -285,7 +285,7 @@ public class PromoteBanked extends LimsTask {
                     bankedSample.setDataField("RequestId", requestId, user);
                 }
                 log.info(igoUser + "  promoted the banked samples " + sb.toString());
-//                dataRecordManager.storeAndCommit(igoUser + "  promoted the banked samples " + sb.toString() + "into " + requestId, user);
+                dataRecordManager.storeAndCommit(igoUser + "  promoted the banked samples " + sb.toString() + "into " + requestId, user);
             } catch (Exception e) {
                 log.error(e);
 
