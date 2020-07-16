@@ -36,15 +36,15 @@ public class GetSampleMetadataTask {
             VeloxConnection vConn = conn.getConnection();
             user = vConn.getUser();
             DataRecordManager dataRecordManager = vConn.getDataRecordManager();
-            log.info(" Starting GetSampleMetadata task using timestamp " + timestamp);
+            log.info(" Starting GetSampleMetadata task using timestamp: " + timestamp + " and projectId: " + projectId);
             List<DataRecord> requests = new ArrayList<>();
             try {
                 if (StringUtils.isBlank(projectId)){
-                    requests = dataRecordManager.queryDataRecords("Request", "DateCreated > '" + timestamp + "'", user);
+                    requests = dataRecordManager.queryDataRecords("Request", "DateCreated > '" + timestamp + "' AND IsCmoRequest", user);
                 }
                 else {
                     String likeParam = projectId + "_%";
-                    requests = dataRecordManager.queryDataRecords("Request", "RequestId= '" + projectId + "' OR RequestId LIKE '" + likeParam + "'", user);
+                    requests = dataRecordManager.queryDataRecords("Request", "RequestId= '" + projectId + "' OR RequestId LIKE '" + likeParam + "' AND IsCmoRequest", user);
                 }
 
                 //requests = dataRecordManager.queryDataRecords("Request", "RequestId = '93017_V'", user);//'" + timestamp +"'", user);//for testing requests.size()); AND Status IN ('Completed', 'Completed with Failures')
