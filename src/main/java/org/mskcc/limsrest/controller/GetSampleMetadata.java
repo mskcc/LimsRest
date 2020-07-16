@@ -35,7 +35,7 @@ public class GetSampleMetadata {
         if (timestamp==null){
             timestamp= defaultTimeStamp;
         }
-        if (projectId.equalsIgnoreCase("null")){
+        if (projectId==null || projectId.equalsIgnoreCase("null")){
             projectId=null;
         }
         GetSampleMetadataTask task = new GetSampleMetadataTask(timestamp, projectId, conn);
