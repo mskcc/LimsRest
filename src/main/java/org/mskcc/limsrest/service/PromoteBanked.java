@@ -79,6 +79,8 @@ public class PromoteBanked extends LimsTask {
      * on promote for IMPACT & HemePACT
      * <BR>
      * Requested during LIMS meeting 2018-8-28
+     * Automated addition of sequencing requirements on promote for ACCESS. Added 2020-07-17
+     *
      */
     public static void setSeqReq(String recipe, String tumorOrNormal, Map<String, Object> seqRequirementMap) {
         if (!"Tumor".equals(tumorOrNormal) && !"Normal".equals(tumorOrNormal))
@@ -87,24 +89,35 @@ public class PromoteBanked extends LimsTask {
         String seqRunType = "PE100";
         seqRequirementMap.put("SequencingRunType", seqRunType);
 
-        int coverageTarget = 500;
         boolean normal = "Normal".equals(tumorOrNormal);
-        if (normal)
-            coverageTarget = 250;
-        seqRequirementMap.put("CoverageTarget", coverageTarget);
+        int coverageTarget = 0;
+        double requestedReads = 0.0;
 
-        double requestedReads;
         if (recipe.contains("Heme")) {
-            if (normal)
+            if (normal) {
+                coverageTarget = 250;
                 requestedReads = 10.0;
-            else
+            } else {
+                coverageTarget = 500;
                 requestedReads = 20.0;
-        } else { //'M-IMPACT_v1', 'IMPACT468'
-            if (normal)
+            }
+        } else if (recipe.contains("IMPACT")) { //'M-IMPACT_v1', 'IMPACT468'
+            if (normal) {
+                coverageTarget = 250;
                 requestedReads = 7.0;
-            else
+            } else {
+                coverageTarget = 500;
                 requestedReads = 14.0;
+            }
+        } else if (recipe.contains("ACCESS")) {
+            coverageTarget = 1000;
+            if (normal) {
+                requestedReads = 6.0;
+            } else {
+                requestedReads = 60.0;
+            }
         }
+        seqRequirementMap.put("CoverageTarget", coverageTarget);
         seqRequirementMap.put("RequestedReads", requestedReads);
     }
 
@@ -445,7 +458,7 @@ public class PromoteBanked extends LimsTask {
                     rrMapped = Double.parseDouble(depthMatch.group(1));
                 }
                 seqRequirementMap.put("RequestedReads", rrMapped);
-            } else if (recipe.contains("Heme") || recipe.contains("IMPACT")) { // 'M-IMPACT_v1', 'HemePACT_v4'
+            } else if (recipe.contains("Heme") || recipe.contains("IMPACT") || recipe.contains("ACCESS")) { // 'M-IMPACT_v1', 'HemePACT_v4'
                 String tumorOrNormal = (String) bankedFields.getOrDefault("TumorOrNormal", "");
                 setSeqReq(recipe, tumorOrNormal, seqRequirementMap);
             }
