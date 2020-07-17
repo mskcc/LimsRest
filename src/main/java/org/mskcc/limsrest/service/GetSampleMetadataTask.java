@@ -18,12 +18,14 @@ import static org.mskcc.limsrest.util.Utils.*;
 public class GetSampleMetadataTask {
     private Log log = LogFactory.getLog(GetSampleMetadata.class);
     private String timestamp;
+    private String projectId;
     private ConnectionLIMS conn;
     private User user;
     private String baitSet = "";
 
-    public GetSampleMetadataTask(String timestamp, ConnectionLIMS conn) {
+    public GetSampleMetadataTask(String timestamp, String projectId, ConnectionLIMS conn) {
         this.timestamp = timestamp;
+        this.projectId = projectId;
         this.conn = conn;
     }
 
@@ -34,10 +36,20 @@ public class GetSampleMetadataTask {
             VeloxConnection vConn = conn.getConnection();
             user = vConn.getUser();
             DataRecordManager dataRecordManager = vConn.getDataRecordManager();
-            log.info(" Starting GetSampleMetadata task using timestamp " + timestamp);
+            log.info(" Starting GetSampleMetadata task using timestamp: " + timestamp + " and projectId: " + projectId);
             List<DataRecord> requests = new ArrayList<>();
+//            List<String> cmoRecipes = vConn.getDataMgmtServer().getPickListManager(user).getPickListConfig("Metadatadb CMO Recipes").getEntryList();
+//            String recipeValues = "('" + StringUtils.join(cmoRecipes, "','") + "')";
+//            System.out.println(recipeValues);
             try {
-                requests = dataRecordManager.queryDataRecords("Request", "CompletedDate > '" + timestamp + "'", user);
+                if (StringUtils.isBlank(projectId)){
+                    requests = dataRecordManager.queryDataRecords("Request", "DateCreated > '" + timestamp + "' AND IsCmoRequest", user);
+                }
+                else {
+                    String likeParam = projectId + "_%";
+                    requests = dataRecordManager.queryDataRecords("Request", "RequestId= '" + projectId + "' OR RequestId LIKE '" + likeParam + "' AND IsCmoRequest", user);
+                }
+
                 //requests = dataRecordManager.queryDataRecords("Request", "RequestId = '93017_V'", user);//'" + timestamp +"'", user);//for testing requests.size()); AND Status IN ('Completed', 'Completed with Failures')
                 log.info("Total Requests: " + requests.size());
                 for (DataRecord req : requests) {
@@ -71,7 +83,7 @@ public class GetSampleMetadataTask {
                         String tissueSource = (String) getFieldValueForSample(sample, cmoInfoRec, "TissueSource", "TissueSource", "String");
                         String tissueLocation = (String) getFieldValueForSample(sample, cmoInfoRec, "TissueLocation", "TissueLocation", "String");
                         String recipe = (String) getFieldValueForSample(sample, cmoInfoRec, "Recipe", "Recipe", "String");
-                        String baitset = baitSet;
+                        String baitset = getBaitSet(sample, user);;
                         log.info("baitset: " + baitset);
                         String fastqPath = "";
                         String ancestorSample = getOriginSampleId(sample, user);
@@ -88,7 +100,6 @@ public class GetSampleMetadataTask {
             } catch (Exception e) {
                 log.error(e.getMessage());
             }
-
         } catch (Exception e) {
             log.error(e.getMessage());
         }

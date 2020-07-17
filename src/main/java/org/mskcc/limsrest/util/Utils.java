@@ -4,17 +4,19 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
+import com.velox.sloan.cmo.recmodels.SampleCMOInfoRecordsModel;
 import com.velox.sloan.cmo.recmodels.SampleModel;
 import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.mskcc.domain.sample.NucleicAcid;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.mskcc.limsrest.ConnectionLIMS;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -27,14 +29,12 @@ import java.util.*;
 import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 
 public class Utils {
-    private final static Log LOGGER = LogFactory.getLog(Utils.class);
-
     public final static String SEQ_QC_STATUS_PASSED = "passed";
     public final static String SEQ_QC_STATUS_FAILED = "failed";
     public final static String SEQ_QC_STATUS_PENDING = "not available";
-
-    private final static List<String> TISSUE_SAMPLE_TYPES = Arrays.asList("cells","plasma","blood","tissue","buffy coat","blocks/slides","ffpe sample","other","tissue sample");
-    private final static List<String> NUCLEIC_ACID_TYPES = Arrays.asList("dna","rna","cdna","cfdna","dna,cfdna","amplicon","pre-qc rna");
+    private final static Log LOGGER = LogFactory.getLog(Utils.class);
+    private final static List<String> TISSUE_SAMPLE_TYPES = Arrays.asList("cells", "plasma", "blood", "tissue", "buffy coat", "blocks/slides", "ffpe sample", "other", "tissue sample");
+    private final static List<String> NUCLEIC_ACID_TYPES = Arrays.asList("dna", "rna", "cdna", "cfdna", "dna,cfdna", "amplicon", "pre-qc rna");
     private final static List<String> LIBRARY_SAMPLE_TYPES = Arrays.asList("dna library", "cdna library", "gdna library");
     private final static List<String> CAPTURE_SAMPLE_TYPES = Collections.singletonList("capture library");
     private final static List<String> POOLED_SAMPLE_TYPES = Collections.singletonList("pooled library");
@@ -78,7 +78,7 @@ public class Utils {
      * @param sample
      * @return
      */
-    public static Boolean isSequencingComplete(DataRecord sample, User user) {
+    private static Boolean isSequencingComplete(DataRecord sample, User user) {
         DataRecord[] qcRecord = getChildrenofDataRecord(sample, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
         if (qcRecord.length == 0) {
             return false;
@@ -88,13 +88,67 @@ public class Utils {
     }
 
     /**
+     * Method to get BaitSet used for a sample.
+     *
+     * @param sample
+     * @return
+     */
+    public static String getBaitSet(DataRecord sample, User user) {
+        try {
+            DataRecord qcRecord = getChildDataRecordOfType(sample, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
+            if (qcRecord==null) {
+                LOGGER.info(String.format("Seq qc record not found for sample with recordId: %d.", sample.getRecordId()));
+                return "";
+            }
+            return (String)getValueFromDataRecord(qcRecord, "BaitSet", "String", user);
+        } catch (NotFound | RemoteException e) {
+            LOGGER.error(ExceptionUtils.getMessage(e));
+            System.out.println(e);
+            return "";
+        }
+    }
+
+    /**
+     * Method to get children of specified type for Sample.
+     * @param sample
+     * @param childRecordType
+     * @param user
+     * @return
+     */
+    private static DataRecord getChildDataRecordOfType(DataRecord sample, String childRecordType, User user){
+        try {
+            if (sample.getChildrenOfType(childRecordType, user).length > 0) {
+                return sample.getChildrenOfType(childRecordType, user)[0];
+            }
+            Stack<DataRecord> sampleStack = new Stack<>();
+            if (sample.getChildrenOfType("Sample", user).length > 0) {
+                sampleStack.addAll(Arrays.asList(sample.getChildrenOfType("Sample", user)));
+            }
+            do {
+                DataRecord startSample = sampleStack.pop();
+                DataRecord [] seqQcRecs = startSample.getChildrenOfType(childRecordType, user);
+                if (seqQcRecs.length > 0) {
+                    return seqQcRecs[0];
+                }
+                List <DataRecord> childSamples = Arrays.asList(startSample.getChildrenOfType(SampleModel.DATA_TYPE_NAME, user));
+                if (childSamples.size()>0) {
+                    sampleStack.addAll(childSamples);
+                }
+            } while (!sampleStack.isEmpty());
+        } catch (Exception e) {
+            LOGGER.error(String.format("Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d", sample.getRecordId()));
+        }
+        return null;
+    }
+
+    /**
      * Returns whether the input status is a failed one
      *
      * @param status
      * @return
      */
     public static Boolean isFailedStatus(String status) {
-        if(status != null && status != ""){
+        if (status != null && status != "") {
             return status.toLowerCase().contains("failed");
         }
         return Boolean.FALSE;
@@ -379,7 +433,7 @@ public class Utils {
     public static String getMostAdvancedLimsStage(DataRecord sample, String requestId, ConnectionLIMS conn) {
         User user = conn.getConnection().getUser();
         String mostAdvancedSampleStatus = getMostAdvancedSampleStatus(sample, requestId, user);
-        if (mostAdvancedSampleStatus.toLowerCase().contains(FAILED_STATUS_TEXT)){
+        if (mostAdvancedSampleStatus.toLowerCase().contains(FAILED_STATUS_TEXT)) {
             return mostAdvancedSampleStatus;
         }
         LimsStage stage = getLimsStageFromStatus(conn, mostAdvancedSampleStatus);
@@ -400,7 +454,7 @@ public class Utils {
         String currentSampleStatus = "";
         try {
             String pendingStatus = getRecordStringValue(sample, SampleModel.EXEMPLAR_SAMPLE_STATUS, user);
-            if(!pendingStatus.isEmpty()){
+            if (!pendingStatus.isEmpty()) {
                 sampleStatus = pendingStatus;
             }
             sampleId = sample.getStringVal("SampleId", user);
@@ -416,7 +470,7 @@ public class Utils {
                 long currentRecordId = current.getRecordId();
                 if (isSequencingComplete(current, user)) {
                     // Return the Completed-Sequencing status, NOT currentSampleStatus as this could not unrelated to sequencing
-                    return String.format("%s%s", WORKFLOW_STATUS_COMPLETED, STAGE_SEQUENCING_ANALYSIS);
+                    return String.format("%s - %s", WORKFLOW_STATUS_COMPLETED, STAGE_SEQUENCING_ANALYSIS);
                 }
                 if (currentRecordId > recordId && currentStatusOrder > statusOrder && isCompleteStatus(currentSampleStatus)) {
                     sampleStatus = currentSampleStatus;

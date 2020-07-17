@@ -95,8 +95,10 @@ public class GetWESSampleDataTask {
                                     if (isValidRecipeToProcess(sample)) {
                                         DataRecord request = getRelatedRequest(sample);
                                         String sampleId = sample.getStringVal("SampleId", user);
+                                        log.info("Sample ID: " + sampleId);
                                         String userSampleId = dmpTrackRec.getStringVal("i_StudySampleIdentifierInvesti", user);
                                         String userSampleidHistorical = (String) getValueFromDataRecord(dmpTrackRec, "InvestigatorSampleIdHistorical", "String", user);
+                                        String altId = (String) getValueFromDataRecord(sample, "AltId", "String", user);
                                         String duplicateSample = (String) getValueFromDataRecord(dmpTrackRec, "DuplicateSample", "String", user);
                                         String wesSampleid = (String) getValueFromDataRecord(dmpTrackRec, "WesId", "String", user);
                                         String cmoSampleId = cmoInfoRec.getStringVal("CorrectedCMOID", user);
@@ -106,11 +108,12 @@ public class GetWESSampleDataTask {
                                         String dmpPatientId = getCvrDataValue(cvrData, "dmp_patient_lbl");
                                         String mrn = getCvrDataValue(cvrData, "mrn");
                                         String sex = getCvrDataValue(cvrData, "gender");
-                                        String sampleType = (String)getValueFromDataRecord(cmoInfoRec, "SpecimenType", "String", user);
+                                        //String sampleType = (String)getValueFromDataRecord(cmoInfoRec, "SpecimenType", "String", user);
                                         String sampleClass = getCvrDataValue(cvrData, "sample_type");
                                         String tumorType = getCvrDataValue(cvrData, "tumor_type");
                                         String parentalTumorType = getOncotreeTumorType(tumorType);
                                         String tissueSite = getCvrDataValue(cvrData, "primary_site");
+                                        String sourceDnaType = (String) getValueFromDataRecord(dmpTrackRec, "i_SpecimenType", "String", user);
                                         String molAccessionNum = getCvrDataValue(cvrData, "molecular_accession_num");
                                         String dateDmpRequest = (String) getValueFromDataRecord(dmpTrackRec, "i_DateSubmittedtoDMP", "Date", user);
                                         String dmpRequestId = dmpTrackRec.getStringVal("i_RequestReference", user);
@@ -128,19 +131,25 @@ public class GetWESSampleDataTask {
                                         Boolean consentPartCStatus = getConsentStatus(consentCList, dmpPatientId);
                                         String sampleStatus = getMostAdvancedLimsStage(sample, igoRequestId, conn);
                                         log.info("sample status: " + sampleStatus);
-                                        String baitsetUsed = "";
+                                        String baitsetUsed = getBaitSet(sample, user);
+                                        log.info("baitset: " + baitsetUsed);
                                         String accessLevel = "";
-                                        String clinicalTrial = "";
                                         String sequencingSite = "";
                                         String piRequestDate = "";
-                                        String pipeline = "";
+                                        String tempoQcStatus = (String) getValueFromDataRecord(dmpTrackRec, "TempoPipelineStatus", "String", user);
+                                        String tempoOutputDeliveryDate =(String) getValueFromDataRecord(dmpTrackRec, "TempoOutputDeliveryDate", "Date", user);
+                                        String dataCustodian = (String) getValueFromDataRecord(dmpTrackRec, "DataCustodian", "String", user);
                                         String tissueType = "";
-                                        String collaborationCenter = "";
                                         String limsSampleRecordId = String.valueOf(sample.getLongVal("RecordId", user));
                                         String limsTrackerRecordId = String.valueOf(dmpTrackRec.getLongVal("RecordId", user));
-                                        resultList.add(new WESSampleData(sampleId, userSampleId, userSampleidHistorical, duplicateSample, wesSampleid, cmoSampleId, cmoPatientId, dmpSampleId, dmpPatientId, mrn, sex, sampleType, sampleClass, tumorType, parentalTumorType, tissueSite,
-                                                molAccessionNum, collectionYear, dateDmpRequest, dmpRequestId, igoRequestId, dateIgoReceived, igoCompleteDate, applicationRequested, baitsetUsed, sequencerType, projectTitle, labHead, ccFund, scientificPi,
-                                                consentPartAStatus, consentPartCStatus, sampleStatus, accessLevel, clinicalTrial, sequencingSite, piRequestDate, pipeline, tissueType, collaborationCenter, limsSampleRecordId, limsTrackerRecordId));
+                                        resultList.add(new WESSampleData(sampleId, userSampleId, userSampleidHistorical, altId, duplicateSample, wesSampleid,
+                                                cmoSampleId, cmoPatientId, dmpSampleId, dmpPatientId, mrn, sex, sampleClass, tumorType,
+                                                parentalTumorType, tissueSite, sourceDnaType, molAccessionNum, collectionYear, dateDmpRequest,
+                                                dmpRequestId, igoRequestId, dateIgoReceived, igoCompleteDate, applicationRequested, baitsetUsed,
+                                                sequencerType, projectTitle, labHead, ccFund, scientificPi, consentPartAStatus, consentPartCStatus,
+                                                sampleStatus, accessLevel, sequencingSite, piRequestDate, tempoQcStatus,
+                                                tempoOutputDeliveryDate, dataCustodian, tissueType, limsSampleRecordId,
+                                                limsTrackerRecordId));
                                     }
                                 }
                             } else {
@@ -178,6 +187,7 @@ public class GetWESSampleDataTask {
         String sampleId = "";
         String userSampleId = dmpTrackRec.getStringVal("i_StudySampleIdentifierInvesti", user);;
         String userSampleidHistorical = (String) getValueFromDataRecord(dmpTrackRec, "InvestigatorSampleIdHistorical", "String", user);
+        String altId = "";
         String duplicateSample = (String) getValueFromDataRecord(dmpTrackRec,"DuplicateSample", "String", user);
         String wesSampleid = (String) getValueFromDataRecord(dmpTrackRec,"WesId", "String", user);
         String cmoSampleId = "";
@@ -190,11 +200,11 @@ public class GetWESSampleDataTask {
         String dmpPatientId = getCvrDataValue(cvrData, "dmp_patient_lbl");
         String mrn = getCvrDataValue(cvrData, "mrn");
         String sex = getCvrDataValue(cvrData, "gender");
-        String sampleType = "";
         String sampleClass = getCvrDataValue(cvrData, "sample_type");
         String tumorType = getCvrDataValue(cvrData, "tumor_type");
         String parentalTumorType = getOncotreeTumorType(tumorType);
         String tissueSite = getCvrDataValue(cvrData, "primary_site");
+        String sourceDnaType = (String) getValueFromDataRecord(dmpTrackRec, "i_SpecimenType", "String", user);
         String molAccessionNum = getCvrDataValue(cvrData, "molecular_accession_num");
         String dateDmpRequest = (String) getValueFromDataRecord(dmpTrackRec, "i_DateSubmittedtoDMP", "Date", user);
         String dmpRequestId = dmpTrackRec.getStringVal("i_RequestReference", user);
@@ -213,17 +223,22 @@ public class GetWESSampleDataTask {
         Boolean consentPartCStatus = getConsentStatus(consentCList, dmpPatientId);
         String sampleStatus = "";
         String accessLevel = "";
-        String clinicalTrial = "";
         String sequencingSite = "";
         String piRequestDate = "";
-        String pipeline = "";
+        String tempoQcStatus = (String) getValueFromDataRecord(dmpTrackRec, "TempoPipelineStatus", "String", user);
+        String tempoOutputDeliveryDate =(String) getValueFromDataRecord(dmpTrackRec, "TempoOutputDeliveryDate", "Date", user);
+        String dataCustodian = (String) getValueFromDataRecord(dmpTrackRec, "DataCustodian", "String", user);
         String tissueType = "";
-        String collaborationCenter = "";
         String limsSampleRecordId = "";
         String limsTrackerRecordId = String.valueOf(dmpTrackRec.getLongVal("RecordId", user));
-        return new WESSampleData(sampleId, userSampleId, userSampleidHistorical, duplicateSample, wesSampleid, cmoSampleId, cmoPatientId, dmpSampleId, dmpPatientId, mrn, sex, sampleType, sampleClass, tumorType, parentalTumorType, tissueSite,
-                molAccessionNum, collectionYear, dateDmpRequest, dmpRequestId, igoRequestId, dateIgoReceived, igoCompleteDate, applicationRequested, baitsetUsed, sequencerType, projectTitle, labHead, ccFund, scientificPi,
-                consentPartAStatus, consentPartCStatus, sampleStatus, accessLevel, clinicalTrial, sequencingSite, piRequestDate, pipeline, tissueType, collaborationCenter, limsSampleRecordId, limsTrackerRecordId);
+        return new WESSampleData(sampleId, userSampleId, userSampleidHistorical, altId, duplicateSample, wesSampleid,
+                cmoSampleId, cmoPatientId, dmpSampleId, dmpPatientId, mrn, sex, sampleClass, tumorType,
+                parentalTumorType, tissueSite, sourceDnaType, molAccessionNum, collectionYear, dateDmpRequest,
+                dmpRequestId, igoRequestId, dateIgoReceived, igoCompleteDate, applicationRequested, baitsetUsed,
+                sequencerType, projectTitle, labHead, ccFund, scientificPi, consentPartAStatus, consentPartCStatus,
+                sampleStatus, accessLevel, sequencingSite, piRequestDate, tempoQcStatus,
+                tempoOutputDeliveryDate, dataCustodian, tissueType, limsSampleRecordId,
+                limsTrackerRecordId);
     }
 
     /**
