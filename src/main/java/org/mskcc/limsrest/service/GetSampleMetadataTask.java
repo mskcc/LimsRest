@@ -38,6 +38,9 @@ public class GetSampleMetadataTask {
             DataRecordManager dataRecordManager = vConn.getDataRecordManager();
             log.info(" Starting GetSampleMetadata task using timestamp: " + timestamp + " and projectId: " + projectId);
             List<DataRecord> requests = new ArrayList<>();
+//            List<String> cmoRecipes = vConn.getDataMgmtServer().getPickListManager(user).getPickListConfig("Metadatadb CMO Recipes").getEntryList();
+//            String recipeValues = "('" + StringUtils.join(cmoRecipes, "','") + "')";
+//            System.out.println(recipeValues);
             try {
                 if (StringUtils.isBlank(projectId)){
                     requests = dataRecordManager.queryDataRecords("Request", "DateCreated > '" + timestamp + "' AND IsCmoRequest", user);
@@ -80,7 +83,7 @@ public class GetSampleMetadataTask {
                         String tissueSource = (String) getFieldValueForSample(sample, cmoInfoRec, "TissueSource", "TissueSource", "String");
                         String tissueLocation = (String) getFieldValueForSample(sample, cmoInfoRec, "TissueLocation", "TissueLocation", "String");
                         String recipe = (String) getFieldValueForSample(sample, cmoInfoRec, "Recipe", "Recipe", "String");
-                        String baitset = baitSet;
+                        String baitset = getBaitSet(sample, user);;
                         log.info("baitset: " + baitset);
                         String fastqPath = "";
                         String ancestorSample = getOriginSampleId(sample, user);
@@ -97,7 +100,6 @@ public class GetSampleMetadataTask {
             } catch (Exception e) {
                 log.error(e.getMessage());
             }
-
         } catch (Exception e) {
             log.error(e.getMessage());
         }

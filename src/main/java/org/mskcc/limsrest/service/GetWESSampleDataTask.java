@@ -95,6 +95,7 @@ public class GetWESSampleDataTask {
                                     if (isValidRecipeToProcess(sample)) {
                                         DataRecord request = getRelatedRequest(sample);
                                         String sampleId = sample.getStringVal("SampleId", user);
+                                        log.info("Sample ID: " + sampleId);
                                         String userSampleId = dmpTrackRec.getStringVal("i_StudySampleIdentifierInvesti", user);
                                         String userSampleidHistorical = (String) getValueFromDataRecord(dmpTrackRec, "InvestigatorSampleIdHistorical", "String", user);
                                         String altId = (String) getValueFromDataRecord(sample, "AltId", "String", user);
@@ -130,7 +131,8 @@ public class GetWESSampleDataTask {
                                         Boolean consentPartCStatus = getConsentStatus(consentCList, dmpPatientId);
                                         String sampleStatus = getMostAdvancedLimsStage(sample, igoRequestId, conn);
                                         log.info("sample status: " + sampleStatus);
-                                        String baitsetUsed = "";
+                                        String baitsetUsed = getBaitSet(sample, user);
+                                        log.info("baitset: " + baitsetUsed);
                                         String accessLevel = "";
                                         String sequencingSite = "";
                                         String piRequestDate = "";
