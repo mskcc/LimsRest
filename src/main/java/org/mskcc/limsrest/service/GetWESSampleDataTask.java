@@ -99,6 +99,7 @@ public class GetWESSampleDataTask {
                                         String userSampleId = dmpTrackRec.getStringVal("i_StudySampleIdentifierInvesti", user);
                                         String userSampleidHistorical = (String) getValueFromDataRecord(dmpTrackRec, "InvestigatorSampleIdHistorical", "String", user);
                                         String altId = (String) getValueFromDataRecord(sample, "AltId", "String", user);
+                                        log.info("AltId: " + altId);
                                         String duplicateSample = (String) getValueFromDataRecord(dmpTrackRec, "DuplicateSample", "String", user);
                                         String wesSampleid = (String) getValueFromDataRecord(dmpTrackRec, "WesId", "String", user);
                                         String cmoSampleId = cmoInfoRec.getStringVal("CorrectedCMOID", user);
