@@ -7,10 +7,10 @@ import static org.junit.Assert.*;
 public class GetRequestSamplesTaskTest {
 
     @Test
-    public void isIMPACTOrHEMEPACTBeforeIMPACT505() {
-        assertFalse(GetRequestSamplesTask.isIMPACTOrHEMEPACTBeforeIMPACT505(""));
-        assertFalse(GetRequestSamplesTask.isIMPACTOrHEMEPACTBeforeIMPACT505("IMPACT505"));
-        assertTrue(GetRequestSamplesTask.isIMPACTOrHEMEPACTBeforeIMPACT505("IMPACT468"));
-        assertTrue(GetRequestSamplesTask.isIMPACTOrHEMEPACTBeforeIMPACT505("IMPACT410"));
+    public void isIMPACTOrHEMEPACT() {
+        assertFalse(GetRequestSamplesTask.isIMPACTOrHEMEPACT(""));
+        assertTrue(GetRequestSamplesTask.isIMPACTOrHEMEPACT("IMPACT505"));
+        assertTrue(GetRequestSamplesTask.isIMPACTOrHEMEPACT("IMPACT468"));
+        assertTrue(GetRequestSamplesTask.isIMPACTOrHEMEPACT("IMPACT410"));
     }
 }

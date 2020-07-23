@@ -74,7 +74,7 @@ public class GetRequestSamplesTask {
             }
             RequestSampleList rsl = new RequestSampleList(requestId, sampleList);
 
-            if (isIMPACTOrHEMEPACTBeforeIMPACT505(recipe)) {
+            if (isIMPACTOrHEMEPACT(recipe)) {
                 log.info("Adding pooled normals for recipe: " + recipe);
                 rsl.pooledNormals = findPooledNormals(requestId);
             }
@@ -122,10 +122,10 @@ public class GetRequestSamplesTask {
      * @param recipe
      * @return
      */
-    protected static boolean isIMPACTOrHEMEPACTBeforeIMPACT505(String recipe) {
+    protected static boolean isIMPACTOrHEMEPACT(String recipe) {
         if (recipe.isEmpty())
             return false;
-        if ("IMPACT341,IMPACT410,IMPACT410+,IMPACT468,HemePACT_v3,HemePACT_v4".contains(recipe))
+        if ("IMPACT341,IMPACT410,IMPACT410+,IMPACT468,IMPACT505,HemePACT_v3,HemePACT_v4".contains(recipe))
             return true;
         return false;
     }
