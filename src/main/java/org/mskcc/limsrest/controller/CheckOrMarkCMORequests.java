@@ -3,7 +3,7 @@ package org.mskcc.limsrest.controller;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
-import org.mskcc.limsrest.service.cmorequests.CheckAndMarkCMORequestsTask;
+import org.mskcc.limsrest.service.cmorequests.CheckOrMarkCMORequestsTask;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -13,20 +13,20 @@ import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/")
-public class CheckAndMarkCMORequests {
-    private static final Log log = LogFactory.getLog(CheckAndMarkCMORequests.class);
+public class CheckOrMarkCMORequests {
+    private static final Log log = LogFactory.getLog(CheckOrMarkCMORequestsTask.class);
     private ConnectionLIMS conn;
 
-    public CheckAndMarkCMORequests(ConnectionLIMS conn) {
+    public CheckOrMarkCMORequests(ConnectionLIMS conn) {
         this.conn = conn;
     }
 
-    @RequestMapping(value = "/checkAndMarkCMORequests", method = RequestMethod.POST)
-    public String getContent(@RequestParam(value = "projectId", required = false) String projectId,
+    @RequestMapping(value = "/checkOrMarkCMORequests")
+    public String getContent(@RequestParam(value = "projectId", required = false, defaultValue = "NULL") String projectId,
                              HttpServletRequest request) {
 
-        log.info("Starting /CheckAndMarkCMORequests?projectId=" + projectId + " client IP:" + request.getRemoteAddr());
-        CheckAndMarkCMORequestsTask task = new CheckAndMarkCMORequestsTask(conn);
+        log.info("Starting /CheckOrMarkCMORequests?projectId=" + projectId + " client IP:" + request.getRemoteAddr());
+        CheckOrMarkCMORequestsTask task = new CheckOrMarkCMORequestsTask(projectId, conn);
         return task.execute();
     }
 }
