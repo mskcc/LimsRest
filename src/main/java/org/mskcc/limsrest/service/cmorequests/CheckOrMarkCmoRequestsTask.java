@@ -37,7 +37,7 @@ import static org.mskcc.limsrest.util.Utils.getValueFromDataRecord;
  * If projectid is not passed to the end
  */
 
-public class CheckOrMarkCMORequestsTask {
+public class CheckOrMarkCmoRequestsTask {
 
     private static final String CMO_PM_EMAIL = "skicmopm@mskcc.org";
     private static final String IMPACT_RECIPE_VAL = "impact";
@@ -45,7 +45,7 @@ public class CheckOrMarkCMORequestsTask {
     private static final String ACCESS_RECIPE_VAL = "msk-access";
     private static final String WHOLE_EXOME_RECIPE = "WholeExomeSequencing";
 //    private static final List<String> CMO_ANALYST_EMAILS = Arrays.asList("sharmaa1@mskcc.org", "bolipatc@mskcc.org");
-    private Log log = LogFactory.getLog(CheckOrMarkCMORequestsTask.class);
+    private Log log = LogFactory.getLog(CheckOrMarkCmoRequestsTask.class);
     private String projectId;
     private ConnectionLIMS conn;
     private DataRecordManager dataRecordManager;
@@ -55,7 +55,7 @@ public class CheckOrMarkCMORequestsTask {
     private List<String> response = new ArrayList<>();
     private static List<String> cmoAnalysts = Arrays.asList("bergerm1@mskcc.org", "donoghum@mskcc.org", "wonh@mskcc.org"
             , "chavans@mskcc.org", "bandlamc@mskcc.org", "richara4@mskcc.org"); //default emails for unit tests. This will get updated with full list from LIMS when run.
-    public CheckOrMarkCMORequestsTask(String projectId, ConnectionLIMS conn) {
+    public CheckOrMarkCmoRequestsTask(String projectId, ConnectionLIMS conn) {
         this.projectId = projectId;
         this.conn = conn;
     }
