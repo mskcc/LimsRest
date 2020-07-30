@@ -136,8 +136,14 @@ public class CheckOrMarkCMORequestsTask {
                 }
             }
             dataRecordManager.storeAndCommit("Finished running CheckAndMarkCMORequests endpoint.", null, user);
-        } catch (NotFound | IoError | RemoteException | ServerException e) {
-            log.error(String.format("Exception while running CheckAndMarkCMORequests Task:\n%s", ExceptionUtils.getStackTrace(e)));
+        } catch (NotFound nf) {
+            log.error(String.format("NotFound Exception while running CheckAndMarkCMORequests Task:\n%s", ExceptionUtils.getStackTrace(nf)));
+        } catch (RemoteException re) {
+            log.error(String.format("Remote Exception while running CheckAndMarkCMORequests Task:\n%s", ExceptionUtils.getStackTrace(re)));
+        } catch (IoError ioe) {
+            log.error(String.format("IoError while running CheckAndMarkCMORequests Task:\n%s", ExceptionUtils.getStackTrace(ioe)));
+        } catch (ServerException se) {
+            log.error(String.format("Server Exception while running CheckAndMarkCMORequests Task:\n%s", ExceptionUtils.getStackTrace(se)));
         }
         return String.format("IsCmoRequest set true for : %s", response);
     }
@@ -234,8 +240,14 @@ public class CheckOrMarkCMORequestsTask {
                     log.info("Setting Is CMO Request: " + requestId);
                 }
             }
-        } catch (IoError | NotFound | RemoteException | InvalidValue e) {
-            log.error(String.format("Error while setting IsCmoRequest field on Request:\n%s", ExceptionUtils.getStackTrace(e)));
+        } catch (InvalidValue invalidValue) {
+            log.error(String.format("Invalid value Error while setting IsCmoRequest field on Request:\n%s", ExceptionUtils.getStackTrace(invalidValue)));
+        } catch (RemoteException re) {
+            log.error(String.format("Remote Exception error while setting IsCmoRequest field on Request:\n%s", ExceptionUtils.getStackTrace(re)));
+        } catch (IoError ioError) {
+            log.error(String.format("IoError Exception while setting IsCmoRequest field on Request:\n%s", ExceptionUtils.getStackTrace(ioError)));
+        } catch (NotFound notFound) {
+            log.error(String.format("NotFound Exception while setting IsCmoRequest field on Request:\n%s", ExceptionUtils.getStackTrace(notFound)));
         }
     }
 
@@ -261,8 +273,12 @@ public class CheckOrMarkCMORequestsTask {
                     return true;
                 }
             }
-        } catch (NotFound | RemoteException | IoError e) {
-            log.error(String.format("Error while validating if Request is part of existing CMO Study:\n%s", ExceptionUtils.getStackTrace(e)));
+        } catch (IoError ioError) {
+            log.error(String.format("IoError while validating if Request is part of existing CMO Study:\n%s", ExceptionUtils.getStackTrace(ioError)));
+        } catch (RemoteException re) {
+            log.error(String.format("Remote Exception while validating if Request is part of existing CMO Study:\n%s", ExceptionUtils.getStackTrace(re)));
+        } catch (NotFound notFound) {
+            log.error(String.format("NotFound Exception while validating if Request is part of existing CMO Study:\n%s", ExceptionUtils.getStackTrace(notFound)));
         }
         return false;
     }
