@@ -24,16 +24,16 @@ import static org.mskcc.limsrest.util.Utils.getValueFromDataRecord;
 /**
  * End point to check if a request is CMO request or mark Requests as CMO Projects in LIMS based on following rules:
  *
- * 1. all WES recapture
+ * 1. all WES recapture --Done
  * 2. WES (currently: if pipeline option is checked in ilabs, for near future: if CCS/TEMPO pipeline (Opt-in) option is checked in ilabs or in sample intake) --Done
  * 3. all IMPACT --Done
  * 4. all ACCESS --Done
  * 5. all HEMEPACT --Done
  * 6. Any request with skicmopm@mskcc.org listed in ilabs --Done
  * 7. Any request belonging to an existing CMO study (to be added regardless of the platform) --Done
- * 8. Any request with a CMO analyst listed in ilabs (we can provide list of analyst emails) //TO DO
+ * 8. Any request with a CMO analyst listed in ilabs (we can provide list of analyst emails) --Done
  *
- * If the projectid is passed to the endpoint, return if the passed project IsCmoRequest. No updates are done in this case.
+ * If the projectid is passed to the endpoint and project IsCmoRequest, return text indicating that. No updates are done in this case.
  * If projectid is not passed to the end
  */
 
@@ -44,7 +44,7 @@ public class CheckOrMarkCMORequestsTask {
     private static final String HEMEMPACT_RECIPE_VAL = "hemepact";
     private static final String ACCESS_RECIPE_VAL = "msk-access";
     private static final String WHOLE_EXOME_RECIPE = "WholeExomeSequencing";
-    private static final List<String> CMO_ANALYST_EMAILS = Arrays.asList("sharmaa1@mskcc.org", "bolipatc@mskcc.org");
+//    private static final List<String> CMO_ANALYST_EMAILS = Arrays.asList("sharmaa1@mskcc.org", "bolipatc@mskcc.org");
     private Log log = LogFactory.getLog(CheckOrMarkCMORequestsTask.class);
     private String projectId;
     private ConnectionLIMS conn;
@@ -53,7 +53,8 @@ public class CheckOrMarkCMORequestsTask {
     private static List<String> cmoRecipes = Arrays.asList("hemebrainpact_v1","hemepact_v4", "impact410", "impact468",
             "impact505", "msk-access_v1", "wholeexomesequencing");
     private List<String> response = new ArrayList<>();
-
+    private static List<String> cmoAnalysts = Arrays.asList("bergerm1@mskcc.org", "donoghum@mskcc.org", "wonh@mskcc.org"
+            , "chavans@mskcc.org", "bandlamc@mskcc.org", "richara4@mskcc.org"); //default emails for unit tests. This will get updated with full list from LIMS when run.
     public CheckOrMarkCMORequestsTask(String projectId, ConnectionLIMS conn) {
         this.projectId = projectId;
         this.conn = conn;
@@ -65,6 +66,13 @@ public class CheckOrMarkCMORequestsTask {
         user = conn.getConnection().getUser();
         try {
             cmoRecipes = Arrays.asList(dataMgmtServer.getPickListManager(user).getPickListConfig("CMO Request Recipes").getEntryList()
+                    .toString()
+                    .toLowerCase()
+                    .replace("[", "")
+                    .replace("]", "")
+                    .replaceAll(" ", "")
+                    .split(","));
+            cmoAnalysts = Arrays.asList(dataMgmtServer.getPickListManager(user).getPickListConfig("CMO Analysts").getEntryList()
                     .toString()
                     .toLowerCase()
                     .replace("[", "")
@@ -179,7 +187,7 @@ public class CheckOrMarkCMORequestsTask {
     protected static boolean isCmoAnalystEmail(String analystEmail){
         List<String> emails = Arrays.asList(analystEmail.split(","));
         for (String email : emails){
-            if (CMO_ANALYST_EMAILS.contains(email.trim())){
+            if (cmoAnalysts.contains(email.toLowerCase().trim())){
                 return true;
             }
         }

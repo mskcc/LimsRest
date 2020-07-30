@@ -28,7 +28,7 @@ public class CheckOrMarkCMORequestsTaskTests {
 
     @Test
     public void isCmoAnalystEmail_test(){
-        assertTrue(CheckOrMarkCMORequestsTask.isCmoAnalystEmail("bolipatc@mskcc.org"));
+        assertTrue(CheckOrMarkCMORequestsTask.isCmoAnalystEmail("bergerm1@mskcc.org"));
         assertFalse(CheckOrMarkCMORequestsTask.isCmoAnalystEmail("johndoe@mskcc.org"));
     }
 
