@@ -80,7 +80,7 @@ public class GetRequestSamplesTask {
             }
             String requestName = requestDataRecord.getStringVal(RequestModel.REQUEST_NAME, user);
             if (requestName != null && requestName.toUpperCase().contains("RNASEQ")) {
-                setRNASeqStrandedness(rsl, requestName);
+                setRNASeqLibraryTypeAndStrandedness(rsl, requestName);
             }
             rsl.setRecipe(recipe);
             rsl.setPiEmail(requestDataRecord.getStringVal("PIemail", user));
@@ -102,7 +102,7 @@ public class GetRequestSamplesTask {
         }
     }
 
-    protected void setRNASeqStrandedness(RequestSampleList rsl, String requestName) {
+    protected void setRNASeqLibraryTypeAndStrandedness(RequestSampleList rsl, String requestName) {
         // this classification by requestname will not be correct for all historical requests
         // customer has stated they already have all historical values and only need Nov. 2019-on to work
 
@@ -114,6 +114,10 @@ public class GetRequestSamplesTask {
             rsl.setStrand("non-stranded");
         else // as of 2019 IGO has no "stranded-forward" kits.
             rsl.setStrand("stranded-reverse");
+        
+        // The LibraryType field was included in the original Pipelinekickoff codebase and BIC requested that
+        // IGO add it to the endpoint in August 2020
+        rsl.setLibraryType(requestName);
     }
 
     /**
@@ -185,7 +189,8 @@ public class GetRequestSamplesTask {
         public String otherContactEmails;
         public String dataAccessEmails;
         public String qcAccessEmails;
-        public String strand; // only for RNA
+        public String strand; // only for RNASeq
+        public String libraryType; // only for RNASeq
 
         public List<RequestSample> samples;
 
@@ -199,6 +204,10 @@ public class GetRequestSamplesTask {
             this.requestId = requestId;
             this.samples = samples;
         }
+
+        public String getLibraryType() { return libraryType; }
+        public void setLibraryType(String libraryType) { this.libraryType = libraryType; }
+
         public String getStrand() { return strand; }
         public void setStrand(String strand) { this.strand = strand; }
 
@@ -220,26 +229,24 @@ public class GetRequestSamplesTask {
         public void setSamples(List<RequestSample> samples) {
             this.samples = samples;
         }
+
         public String getProjectManagerName() {
             return projectManagerName;
+        }
+        public void setProjectManagerName(String projectManagerName) {
+            this.projectManagerName = projectManagerName;
         }
 
         public String getPiEmail() {
             return piEmail;
         }
-
         public void setPiEmail(String piEmail) {
             this.piEmail = piEmail;
-        }
-
-        public void setProjectManagerName(String projectManagerName) {
-            this.projectManagerName = projectManagerName;
         }
 
         public String getInvestigatorName() {
             return investigatorName;
         }
-
         public void setInvestigatorName(String investigatorName) {
             this.investigatorName = investigatorName;
         }
@@ -247,7 +254,6 @@ public class GetRequestSamplesTask {
         public String getInvestigatorEmail() {
             return investigatorEmail;
         }
-
         public void setInvestigatorEmail(String investigatorEmail) {
             this.investigatorEmail = investigatorEmail;
         }
@@ -255,7 +261,6 @@ public class GetRequestSamplesTask {
         public String getDataAnalystName() {
             return dataAnalystName;
         }
-
         public void setDataAnalystName(String dataAnalystName) {
             this.dataAnalystName = dataAnalystName;
         }
@@ -263,14 +268,13 @@ public class GetRequestSamplesTask {
         public String getDataAnalystEmail() {
             return dataAnalystEmail;
         }
-
         public void setDataAnalystEmail(String dataAnalystEmail) {
             this.dataAnalystEmail = dataAnalystEmail;
         }
+
         public String getLabHeadName() {
             return labHeadName;
         }
-
         public void setLabHeadName(String labHeadName) {
             this.labHeadName = labHeadName;
         }
@@ -278,7 +282,6 @@ public class GetRequestSamplesTask {
         public String getLabHeadEmail() {
             return labHeadEmail;
         }
-
         public void setLabHeadEmail(String labHeadEmail) {
             this.labHeadEmail = labHeadEmail;
         }
@@ -286,17 +289,14 @@ public class GetRequestSamplesTask {
         public String getOtherContactEmails() {
             return otherContactEmails;
         }
-
         public void setOtherContactEmails(String otherContactEmails) {
             this.otherContactEmails = otherContactEmails;
         }
 
         public String getQcAccessEmails() { return qcAccessEmails; }
-
         public void setQcAccessEmails(String qcAccessEmails) { this.qcAccessEmails = qcAccessEmails; }
 
         public String getDataAccessEmails() { return dataAccessEmails; }
-
         public void setDataAccessEmails(String dataAccessEmails) { this.dataAccessEmails = dataAccessEmails; }
     }
 
