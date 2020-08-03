@@ -37,19 +37,18 @@ public class GetSampleMetadataTask {
             user = vConn.getUser();
             DataRecordManager dataRecordManager = vConn.getDataRecordManager();
             log.info(" Starting GetSampleMetadata task using timestamp: " + timestamp + " and projectId: " + projectId);
-            List<DataRecord> requests = new ArrayList<>();
+            List<DataRecord> requests;
 //            List<String> cmoRecipes = vConn.getDataMgmtServer().getPickListManager(user).getPickListConfig("Metadatadb CMO Recipes").getEntryList();
 //            String recipeValues = "('" + StringUtils.join(cmoRecipes, "','") + "')";
 //            System.out.println(recipeValues);
             try {
                 if (StringUtils.isBlank(projectId)){
-                    requests = dataRecordManager.queryDataRecords("Request", "DateCreated > '" + timestamp + "' AND IsCmoRequest", user);
+                    requests = dataRecordManager.queryDataRecords("Request", "DateCreated > '" + timestamp + "' AND IsCmoRequest <> 0", user);
                 }
                 else {
                     String likeParam = projectId + "_%";
-                    requests = dataRecordManager.queryDataRecords("Request", "RequestId= '" + projectId + "' OR RequestId LIKE '" + likeParam + "' AND IsCmoRequest", user);
+                    requests = dataRecordManager.queryDataRecords("Request", "RequestId= '" + projectId + "' OR RequestId LIKE '" + likeParam + "' AND IsCmoRequest <> 0", user);
                 }
-
                 //requests = dataRecordManager.queryDataRecords("Request", "RequestId = '93017_V'", user);//'" + timestamp +"'", user);//for testing requests.size()); AND Status IN ('Completed', 'Completed with Failures')
                 log.info("Total Requests: " + requests.size());
                 for (DataRecord req : requests) {

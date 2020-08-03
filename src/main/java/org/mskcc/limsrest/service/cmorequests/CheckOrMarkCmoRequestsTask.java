@@ -86,8 +86,9 @@ public class CheckOrMarkCmoRequestsTask {
                 assert requests.size()==1;
                 DataRecord request = requests.get(0);
                 String requestId = (String)getValueFromDataRecord(request, RequestModel.REQUEST_ID, "String", user);
+                Object isCmoRequest = request.getValue("IsCmoRequest", user);
                 //check if the request is already marked true
-                if (request.getBooleanVal("IsCmoRequest", user)){
+                if (isCmoRequest != null && (Boolean)isCmoRequest){
                     return String.format("%s is cmo request", requestId);
                 }
                 DataRecord[] samples = request.getChildrenOfType(SampleModel.DATA_TYPE_NAME, user);
