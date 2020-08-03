@@ -43,11 +43,11 @@ public class GetSampleMetadataTask {
 //            System.out.println(recipeValues);
             try {
                 if (StringUtils.isBlank(projectId)){
-                    requests = dataRecordManager.queryDataRecords("Request", "DateCreated > '" + timestamp + "' AND IsCmoRequest <> 0", user);
+                    requests = dataRecordManager.queryDataRecords("Request", "DateCreated > '" + timestamp + "' AND IsCmoRequest = 1", user);
                 }
                 else {
                     String likeParam = projectId + "_%";
-                    requests = dataRecordManager.queryDataRecords("Request", "RequestId= '" + projectId + "' OR RequestId LIKE '" + likeParam + "' AND IsCmoRequest <> 0", user);
+                    requests = dataRecordManager.queryDataRecords("Request", "RequestId= '" + projectId + "' OR RequestId LIKE '" + likeParam + "' AND IsCmoRequest = 1", user);
                 }
                 //requests = dataRecordManager.queryDataRecords("Request", "RequestId = '93017_V'", user);//'" + timestamp +"'", user);//for testing requests.size()); AND Status IN ('Completed', 'Completed with Failures')
                 log.info("Total Requests: " + requests.size());
