@@ -107,7 +107,7 @@ public class CheckOrMarkCmoRequestsTask {
                 return  String.format("%s is not cmo request", requestId);
             }
             // if projectid is not passed to the endpoint, run for all requests in LIMS.
-            List<DataRecord> requests = dataRecordManager.queryDataRecords("Request", "IsCmoRequest <> 0", user);
+            List<DataRecord> requests = dataRecordManager.queryDataRecords("Request", "IsCmoRequest = 0", user);
             log.info("Total Requests: " +  requests.size());
             for (DataRecord request : requests) {
                 DataRecord[] samples = request.getChildrenOfType(SampleModel.DATA_TYPE_NAME, user);
