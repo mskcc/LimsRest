@@ -93,9 +93,9 @@ public class Utils {
      * @param sample
      * @return
      */
-    public static String getBaitSet(DataRecord sample, User user) {
+    public static String getBaitSet(DataRecord sample, String requestId, User user) {
         try {
-            DataRecord qcRecord = getChildDataRecordOfType(sample, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
+            DataRecord qcRecord = getChildDataRecordOfType(sample, requestId, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
             if (qcRecord==null) {
                 LOGGER.info(String.format("Seq qc record not found for sample with recordId: %d.", sample.getRecordId()));
                 return "";
@@ -115,7 +115,7 @@ public class Utils {
      * @param user
      * @return
      */
-    private static DataRecord getChildDataRecordOfType(DataRecord sample, String childRecordType, User user){
+    private static DataRecord getChildDataRecordOfType(DataRecord sample, String requestId, String childRecordType, User user){
         try {
             if (sample.getChildrenOfType(childRecordType, user).length > 0) {
                 return sample.getChildrenOfType(childRecordType, user)[0];
@@ -132,7 +132,12 @@ public class Utils {
                 }
                 List <DataRecord> childSamples = Arrays.asList(startSample.getChildrenOfType(SampleModel.DATA_TYPE_NAME, user));
                 if (childSamples.size()>0) {
-                    sampleStack.addAll(childSamples);
+                    for (DataRecord sam : childSamples){
+                        Object reqId = sam.getValue(SampleModel.REQUEST_ID, user);
+                        if (reqId != null && requestId.equals(reqId.toString())){
+                            sampleStack.addAll(childSamples);
+                        }
+                    }
                 }
             } while (!sampleStack.isEmpty());
         } catch (Exception e) {
@@ -472,7 +477,7 @@ public class Utils {
                     // Return the Completed-Sequencing status, NOT currentSampleStatus as this could not unrelated to sequencing
                     return String.format("%s%s", WORKFLOW_STATUS_COMPLETED, STAGE_SEQUENCING_ANALYSIS);
                 }
-                if (currentRecordId > recordId && currentStatusOrder > statusOrder && isCompleteStatus(currentSampleStatus)) {
+                if (currentRecordId > recordId && currentStatusOrder >= statusOrder && isCompleteStatus(currentSampleStatus)) {
                     sampleStatus = currentSampleStatus;
                     recordId = currentRecordId;
                     statusOrder = currentStatusOrder;

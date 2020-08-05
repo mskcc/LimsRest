@@ -132,7 +132,7 @@ public class GetWESSampleDataTask {
                                         Boolean consentPartCStatus = getConsentStatus(consentCList, dmpPatientId);
                                         String sampleStatus = getMostAdvancedLimsStage(sample, igoRequestId, conn);
                                         log.info("sample status: " + sampleStatus);
-                                        String baitsetUsed = getBaitSet(sample, user);
+                                        String baitsetUsed = getBaitSet(sample, igoRequestId, user);
                                         log.info("baitset: " + baitsetUsed);
                                         String accessLevel = "";
                                         String sequencingSite = "";

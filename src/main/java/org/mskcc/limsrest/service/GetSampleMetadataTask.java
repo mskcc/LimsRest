@@ -62,7 +62,7 @@ public class GetSampleMetadataTask {
                         baitSet = ""; // set baitset to empty before the search for each sample begins.
                         DataRecord cmoInfoRec = getRelatedCmoInfoRec(sample);
                         String mrn = getRandomValue();
-                        String cmoPatientId = (String) getFieldValueForSample(sample, cmoInfoRec, "CorrectedInvestPatientId", "PatientId", "String");
+                        String cmoPatientId = (String) getFieldValueForSample(sample, cmoInfoRec, "CmoPatientId", "PatientId", "String");
                         String cmoSampleId = (String) getFieldValueForSample(sample, cmoInfoRec, "CorrectedCMOID", "OtherSampleId", "String");
                         log.info(cmoSampleId);
                         String igoId = sample.getStringVal("SampleId", user);
@@ -82,7 +82,7 @@ public class GetSampleMetadataTask {
                         String sampleOrigin = (String) getFieldValueForSample(sample, cmoInfoRec, "SampleOrigin", "SampleOrigin", "String");
                         String tissueSource = (String) getFieldValueForSample(sample, cmoInfoRec, "TissueSource", "TissueSource", "String");
                         String tissueLocation = (String) getFieldValueForSample(sample, cmoInfoRec, "TissueLocation", "TissueLocation", "String");
-                        String baitset = getBaitSet(sample, user);;
+                        String baitset = getBaitSet(sample, requestId, user);;
                         log.info("baitset: " + baitset);
                         String fastqPath = "";
                         String ancestorSample = getOriginSampleId(sample, user);
