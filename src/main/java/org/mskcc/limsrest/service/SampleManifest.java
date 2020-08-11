@@ -132,6 +132,12 @@ public class SampleManifest {
         public List<Integer> flowCellLanes = new ArrayList<>();
         public List<String> fastqs;
 
+        public Run(String runId, String flowCellId, String runDate) {
+            this.runId = runId;
+            this.flowCellId = flowCellId;
+            this.runDate = runDate;
+        }
+
         public Run(String runMode, String runId, String flowCellId, String readLength, String runDate) {
             this.runMode = runMode;
             this.runId = runId;

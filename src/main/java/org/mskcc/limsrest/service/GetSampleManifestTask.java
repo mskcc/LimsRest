@@ -419,16 +419,14 @@ public class GetSampleManifestTask {
     }
 
     protected SampleManifest fastqsOnlyManifest(SampleManifest sampleManifest, Set<String> runFailedQC) {
-        List<String> fastqs = FastQPathFinder.search(sampleManifest.getIgoId(), runFailedQC);
+        List<SampleManifest.Run> runs = FastQPathFinder.searchForFastqs(sampleManifest.getIgoId(), runFailedQC);
 
-        SampleManifest.Run run = new SampleManifest.Run(fastqs);
         SampleManifest.Library library = new SampleManifest.Library();
-        library.runs = new ArrayList<SampleManifest.Run>();
-        library.runs.add(run);
+        library.runs = runs;
         List<SampleManifest.Library> libraries = new ArrayList<>();
         libraries.add(library);
-
         sampleManifest.setLibraries(libraries);
+
         return sampleManifest;
     }
 
@@ -547,7 +545,7 @@ public class GetSampleManifestTask {
      */
     public static class FastQPathFinder {
 
-        public static List<String> search(String igoId, Set<String> runFailedQC) {
+        public static List<SampleManifest.Run> searchForFastqs(String igoId, Set<String> runFailedQC) {
             String url = "http://delphi.mskcc.org:8080/ngs-stats/rundone/fastqsbyigoid/" + igoId;
             log.info("Finding fastqs for igoID: " + igoId);
             try {
@@ -562,15 +560,38 @@ public class GetSampleManifestTask {
                     log.info("NO fastqs found for Igo ID: " + igoId);
                     return null;
                 }
+
                 log.info("Fastq files found: " + fastqList.size());
-                List<String> result = new ArrayList<>();
+                List<ArchivedFastq> passedFastqs = new ArrayList<>();
                 for (ArchivedFastq f : fastqList) {
                     if (!runFailedQC.contains(f.runBaseDirectory))
-                        result.add(f.fastq);
+                        passedFastqs.add(f);
                     else
                         log.info("Ignoring failed fastq: " + f);
                 }
-                return result;
+
+                // for passed fastqs separate into each run and get flowcell information
+                HashMap<String, SampleManifest.Run> runMap = new HashMap<>();
+                for (ArchivedFastq fastq : passedFastqs) {
+                    if (runMap.containsKey(fastq.run)) {  // if the run already exists just add the fastq path
+                        SampleManifest.Run run = runMap.get(fastq.run);
+                        run.fastqs.add(fastq.fastq);
+                    } else {
+                        // TODO
+                        // TODO break up string like "JAX_0454_AHHWKVBBXY"
+                        // TODO
+                        String runId = "";
+                        String flowCellId = "";
+                        String runDate = fastq.fastqLastModified.toString(); // 2020-07-31
+                        SampleManifest.Run run = new SampleManifest.Run(runId, flowCellId, runDate);
+                        run.fastqs = new ArrayList<>();
+                        run.fastqs.add(fastq.fastq);
+
+                        runMap.put(fastq.run, run);
+                    }
+                }
+
+                return new ArrayList(runMap.values());
             } catch (Exception e) {
                 log.error("FASTQ Search error:" + e.getMessage());
                 return null;
