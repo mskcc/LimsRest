@@ -23,7 +23,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
- *
+ * Traverse the LIMS & ngs_stats database to find all sample level metadata required.
  */
 public class GetSampleManifestTask {
     private static Log log = LogFactory.getLog(GetSampleManifestTask.class);
@@ -110,24 +110,10 @@ public class GetSampleManifestTask {
 
         SampleManifest sampleManifest = getSampleLevelFields(igoId, samples, sample, dataRecordManager, user);
 
+        sampleManifest.setTubeId(getTubeId(sample, user));
+        
         if (!isPipelineRecipe(recipe)) {
-            log.info("Returning fastqs only for IGO ID: " + igoId);
-            // query Picard QC records for bait set & "Failed" fastqs.
-            // (exclude failed less stringent than include only passed)
-            List<DataRecord> qcs = sample.getDescendantsOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
-            Set<String> runFailedQC = new HashSet<>();
-            String baitSet = null;
-            for (DataRecord dr : qcs) {
-                String qcResult = dr.getStringVal(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
-                if ("Failed".equals(qcResult)) {
-                    String run = dr.getStringVal(SeqAnalysisSampleQCModel.SEQUENCER_RUN_FOLDER, user);
-                    runFailedQC.add(run);
-                    log.info("Failed sample & run: " + run);
-                }
-                baitSet = dr.getStringVal(SeqAnalysisSampleQCModel.BAIT_SET, user);
-            }
-            sampleManifest.setBaitSet(baitSet);
-            return fastqsOnlyManifest(sampleManifest, runFailedQC);
+            return getFastqsAndCheckTheirQCStatus(igoId, user, sample, sampleManifest);
         }
 
         addIGOQcRecommendations(sampleManifest, sample, user);
@@ -155,7 +141,7 @@ public class GetSampleManifestTask {
         }
 
         if (baitSet == null || baitSet.isEmpty())
-            System.err.println("Missing bait set: " + igoId);
+            log.warn("Missing bait set: " + igoId);
         sampleManifest.setBaitSet(baitSet);
 
         List<DataRecord> aliquots = sample.getDescendantsOfType("Sample", user);
@@ -306,6 +292,39 @@ public class GetSampleManifestTask {
             }
         }
         return sampleManifest;
+    }
+
+    private String getTubeId(DataRecord sample, User user) throws IoError, RemoteException, NotFound {
+        log.info("Looking up tube ID of the original sample received.");
+        List<DataRecord> parentSample = sample.getParentsOfType("Sample", user);
+        while (parentSample.size() > 0) { // keep checking if there is a parent of type sample until there is not
+            sample = parentSample.get(0);
+            parentSample = sample.getParentsOfType("Sample", user);
+        }
+        String tubeId = sample.getStringVal("TubeBarcode", user);
+        log.info("Located Tube ID: " + tubeId);
+        return tubeId;
+    }
+
+    private SampleManifest getFastqsAndCheckTheirQCStatus(String igoId, User user, DataRecord sample, SampleManifest sampleManifest) throws RemoteException, NotFound {
+        log.info("Returning baitset & fastqs only for IGO ID: " + igoId);
+        // query Picard QC records for bait set & "Failed" fastqs.
+        // (exclude failed, less stringent than include only passed)
+        List<DataRecord> qcs = sample.getDescendantsOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
+        Set<String> runFailedQC = new HashSet<>();
+        String baitSet = null;
+        for (DataRecord dr : qcs) {
+            String qcResult = dr.getStringVal(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
+            if ("Failed".equals(qcResult)) {
+                String run = dr.getStringVal(SeqAnalysisSampleQCModel.SEQUENCER_RUN_FOLDER, user);
+                runFailedQC.add(run);
+                log.info("Failed sample & run: " + run);
+            }
+            baitSet = dr.getStringVal(SeqAnalysisSampleQCModel.BAIT_SET, user);
+        }
+        sampleManifest.setBaitSet(baitSet);
+
+        return fastqsOnlyManifest(sampleManifest, runFailedQC);
     }
 
     /**
@@ -701,6 +720,4 @@ public class GetSampleManifestTask {
         }
         return onlyMostRecentDemux;
     }
-
-
 }
