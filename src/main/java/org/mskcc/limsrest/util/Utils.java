@@ -4,7 +4,6 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
-import com.velox.sloan.cmo.recmodels.SampleCMOInfoRecordsModel;
 import com.velox.sloan.cmo.recmodels.SampleModel;
 import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.lang3.StringUtils;
@@ -96,11 +95,11 @@ public class Utils {
     public static String getBaitSet(DataRecord sample, String requestId, User user) {
         try {
             DataRecord qcRecord = getChildDataRecordOfType(sample, requestId, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
-            if (qcRecord==null) {
+            if (qcRecord == null) {
                 LOGGER.info(String.format("Seq qc record not found for sample with recordId: %d.", sample.getRecordId()));
                 return "";
             }
-            return (String)getValueFromDataRecord(qcRecord, "BaitSet", "String", user);
+            return (String) getValueFromDataRecord(qcRecord, "BaitSet", "String", user);
         } catch (NotFound | RemoteException e) {
             LOGGER.error(ExceptionUtils.getMessage(e));
             System.out.println(e);
@@ -110,32 +109,38 @@ public class Utils {
 
     /**
      * Method to get children of specified type for Sample.
+     *
      * @param sample
      * @param childRecordType
      * @param user
      * @return
      */
-    private static DataRecord getChildDataRecordOfType(DataRecord sample, String requestId, String childRecordType, User user){
+    private static DataRecord getChildDataRecordOfType(DataRecord sample, String requestId, String childRecordType, User user) {
         try {
-            if (sample.getChildrenOfType(childRecordType, user).length > 0) {
+            Object sampleRequestId = sample.getValue(SampleModel.REQUEST_ID, user);
+            if (sampleRequestId != null && sampleRequestId.toString().equalsIgnoreCase(requestId) && sample.getChildrenOfType(childRecordType, user).length > 0) {
                 return sample.getChildrenOfType(childRecordType, user)[0];
             }
             Stack<DataRecord> sampleStack = new Stack<>();
-            if (sample.getChildrenOfType("Sample", user).length > 0) {
-                sampleStack.addAll(Arrays.asList(sample.getChildrenOfType("Sample", user)));
+            DataRecord[] childSamples = sample.getChildrenOfType(SampleModel.DATA_TYPE_NAME, user);
+            for (DataRecord childSample : childSamples) {
+                Object childSampleRequestId = childSample.getValue(SampleModel.REQUEST_ID, user);
+                if(childSampleRequestId !=null && requestId.equalsIgnoreCase(childSampleRequestId.toString())){
+                    sampleStack.add(childSample);
+                }
             }
             do {
                 DataRecord startSample = sampleStack.pop();
-                DataRecord [] seqQcRecs = startSample.getChildrenOfType(childRecordType, user);
+                DataRecord[] seqQcRecs = startSample.getChildrenOfType(childRecordType, user);
                 if (seqQcRecs.length > 0) {
                     return seqQcRecs[0];
                 }
-                List <DataRecord> childSamples = Arrays.asList(startSample.getChildrenOfType(SampleModel.DATA_TYPE_NAME, user));
-                if (childSamples.size()>0) {
-                    for (DataRecord sam : childSamples){
+                List<DataRecord> childSampleRecords = Arrays.asList(startSample.getChildrenOfType(SampleModel.DATA_TYPE_NAME, user));
+                if (childSampleRecords.size() > 0) {
+                    for (DataRecord sam : childSamples) {
                         Object reqId = sam.getValue(SampleModel.REQUEST_ID, user);
-                        if (reqId != null && requestId.equals(reqId.toString())){
-                            sampleStack.addAll(childSamples);
+                        if (reqId != null && requestId.equals(reqId.toString())) {
+                            sampleStack.add(sam);
                         }
                     }
                 }
