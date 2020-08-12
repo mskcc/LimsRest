@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.rmi.RemoteException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -570,19 +571,17 @@ public class GetSampleManifestTask {
                         log.info("Ignoring failed fastq: " + f);
                 }
 
-                // for passed fastqs separate into each run and get flowcell information
+                // for remaining fastqs separate list into each run and get flowcell information and run date
                 HashMap<String, SampleManifest.Run> runMap = new HashMap<>();
                 for (ArchivedFastq fastq : passedFastqs) {
                     if (runMap.containsKey(fastq.run)) {  // if the run already exists just add the fastq path
                         SampleManifest.Run run = runMap.get(fastq.run);
                         run.fastqs.add(fastq.fastq);
                     } else {
-                        // TODO
-                        // TODO break up string like "JAX_0454_AHHWKVBBXY"
-                        // TODO
-                        String runId = "";
-                        String flowCellId = "";
-                        String runDate = fastq.fastqLastModified.toString(); // 2020-07-31
+                        String runId = fastq.getRunId();
+                        String flowCellId = fastq.getFlowCellId();
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                        String runDate = dateFormat.format(fastq.fastqLastModified); // 2020-07-31
                         SampleManifest.Run run = new SampleManifest.Run(runId, flowCellId, runDate);
                         run.fastqs = new ArrayList<>();
                         run.fastqs.add(fastq.fastq);
