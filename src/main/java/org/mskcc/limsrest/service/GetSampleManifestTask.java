@@ -111,7 +111,7 @@ public class GetSampleManifestTask {
         SampleManifest sampleManifest = getSampleLevelFields(igoId, samples, sample, dataRecordManager, user);
 
         sampleManifest.setTubeId(getTubeId(sample, user));
-        
+
         if (!isPipelineRecipe(recipe)) {
             return getFastqsAndCheckTheirQCStatus(igoId, user, sample, sampleManifest);
         }
