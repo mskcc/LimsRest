@@ -69,7 +69,7 @@ configurations {
 }
 
 dependencies {
-    compile 'org.mskcc.common:common-domain:2.13.0'
+    compile 'org.mskcc.common:common-domain:2.14'
 
     compile "io.springfox:springfox-swagger-ui:2.9.2"
     compile "io.springfox:springfox-swagger2:2.9.2"
