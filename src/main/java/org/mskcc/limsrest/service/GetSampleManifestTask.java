@@ -19,10 +19,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.rmi.RemoteException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
- *
+ * Traverse the LIMS & ngs_stats database to find all sample level metadata required.
  */
 public class GetSampleManifestTask {
     private static Log log = LogFactory.getLog(GetSampleManifestTask.class);
@@ -109,24 +110,10 @@ public class GetSampleManifestTask {
 
         SampleManifest sampleManifest = getSampleLevelFields(igoId, samples, sample, dataRecordManager, user);
 
+        sampleManifest.setTubeId(getTubeId(sample, user));
+
         if (!isPipelineRecipe(recipe)) {
-            log.info("Returning fastqs only for IGO ID: " + igoId);
-            // query Picard QC records for bait set & "Failed" fastqs.
-            // (exclude failed less stringent than include only passed)
-            List<DataRecord> qcs = sample.getDescendantsOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
-            Set<String> runFailedQC = new HashSet<>();
-            String baitSet = null;
-            for (DataRecord dr : qcs) {
-                String qcResult = dr.getStringVal(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
-                if ("Failed".equals(qcResult)) {
-                    String run = dr.getStringVal(SeqAnalysisSampleQCModel.SEQUENCER_RUN_FOLDER, user);
-                    runFailedQC.add(run);
-                    log.info("Failed sample & run: " + run);
-                }
-                baitSet = dr.getStringVal(SeqAnalysisSampleQCModel.BAIT_SET, user);
-            }
-            sampleManifest.setBaitSet(baitSet);
-            return fastqsOnlyManifest(sampleManifest, runFailedQC);
+            return getFastqsAndCheckTheirQCStatus(igoId, user, sample, sampleManifest);
         }
 
         addIGOQcRecommendations(sampleManifest, sample, user);
@@ -154,7 +141,7 @@ public class GetSampleManifestTask {
         }
 
         if (baitSet == null || baitSet.isEmpty())
-            System.err.println("Missing bait set: " + igoId);
+            log.warn("Missing bait set: " + igoId);
         sampleManifest.setBaitSet(baitSet);
 
         List<DataRecord> aliquots = sample.getDescendantsOfType("Sample", user);
@@ -307,6 +294,39 @@ public class GetSampleManifestTask {
         return sampleManifest;
     }
 
+    private String getTubeId(DataRecord sample, User user) throws IoError, RemoteException, NotFound {
+        log.info("Looking up tube ID of the original sample received.");
+        List<DataRecord> parentSample = sample.getParentsOfType("Sample", user);
+        while (parentSample.size() > 0) { // keep checking if there is a parent of type sample until there is not
+            sample = parentSample.get(0);
+            parentSample = sample.getParentsOfType("Sample", user);
+        }
+        String tubeId = sample.getStringVal("TubeBarcode", user);
+        log.info("Located Tube ID: " + tubeId);
+        return tubeId;
+    }
+
+    private SampleManifest getFastqsAndCheckTheirQCStatus(String igoId, User user, DataRecord sample, SampleManifest sampleManifest) throws RemoteException, NotFound {
+        log.info("Returning baitset & fastqs only for IGO ID: " + igoId);
+        // query Picard QC records for bait set & "Failed" fastqs.
+        // (exclude failed, less stringent than include only passed)
+        List<DataRecord> qcs = sample.getDescendantsOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
+        Set<String> runFailedQC = new HashSet<>();
+        String baitSet = null;
+        for (DataRecord dr : qcs) {
+            String qcResult = dr.getStringVal(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
+            if ("Failed".equals(qcResult)) {
+                String run = dr.getStringVal(SeqAnalysisSampleQCModel.SEQUENCER_RUN_FOLDER, user);
+                runFailedQC.add(run);
+                log.info("Failed sample & run: " + run);
+            }
+            baitSet = dr.getStringVal(SeqAnalysisSampleQCModel.BAIT_SET, user);
+        }
+        sampleManifest.setBaitSet(baitSet);
+
+        return fastqsOnlyManifest(sampleManifest, runFailedQC);
+    }
+
     /**
      * 05428_O has samples sequenced on two runs, one of those runs - JAX_0004 has no lane information present in the LIMS
      * although it does have passed QC LIMS records for that run
@@ -419,16 +439,14 @@ public class GetSampleManifestTask {
     }
 
     protected SampleManifest fastqsOnlyManifest(SampleManifest sampleManifest, Set<String> runFailedQC) {
-        List<String> fastqs = FastQPathFinder.search(sampleManifest.getIgoId(), runFailedQC);
+        List<SampleManifest.Run> runs = FastQPathFinder.searchForFastqs(sampleManifest.getIgoId(), runFailedQC);
 
-        SampleManifest.Run run = new SampleManifest.Run(fastqs);
         SampleManifest.Library library = new SampleManifest.Library();
-        library.runs = new ArrayList<SampleManifest.Run>();
-        library.runs.add(run);
+        library.runs = runs;
         List<SampleManifest.Library> libraries = new ArrayList<>();
         libraries.add(library);
-
         sampleManifest.setLibraries(libraries);
+
         return sampleManifest;
     }
 
@@ -547,7 +565,7 @@ public class GetSampleManifestTask {
      */
     public static class FastQPathFinder {
 
-        public static List<String> search(String igoId, Set<String> runFailedQC) {
+        public static List<SampleManifest.Run> searchForFastqs(String igoId, Set<String> runFailedQC) {
             String url = "http://delphi.mskcc.org:8080/ngs-stats/rundone/fastqsbyigoid/" + igoId;
             log.info("Finding fastqs for igoID: " + igoId);
             try {
@@ -562,15 +580,36 @@ public class GetSampleManifestTask {
                     log.info("NO fastqs found for Igo ID: " + igoId);
                     return null;
                 }
+
                 log.info("Fastq files found: " + fastqList.size());
-                List<String> result = new ArrayList<>();
+                List<ArchivedFastq> passedFastqs = new ArrayList<>();
                 for (ArchivedFastq f : fastqList) {
                     if (!runFailedQC.contains(f.runBaseDirectory))
-                        result.add(f.fastq);
+                        passedFastqs.add(f);
                     else
                         log.info("Ignoring failed fastq: " + f);
                 }
-                return result;
+
+                // for remaining fastqs separate list into each run and get flowcell information and run date
+                HashMap<String, SampleManifest.Run> runMap = new HashMap<>();
+                for (ArchivedFastq fastq : passedFastqs) {
+                    if (runMap.containsKey(fastq.run)) {  // if the run already exists just add the fastq path
+                        SampleManifest.Run run = runMap.get(fastq.run);
+                        run.fastqs.add(fastq.fastq);
+                    } else {
+                        String runId = fastq.getRunId();
+                        String flowCellId = fastq.getFlowCellId();
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                        String runDate = dateFormat.format(fastq.fastqLastModified); // 2020-07-31
+                        SampleManifest.Run run = new SampleManifest.Run(runId, flowCellId, runDate);
+                        run.fastqs = new ArrayList<>();
+                        run.fastqs.add(fastq.fastq);
+
+                        runMap.put(fastq.run, run);
+                    }
+                }
+
+                return new ArrayList(runMap.values());
             } catch (Exception e) {
                 log.error("FASTQ Search error:" + e.getMessage());
                 return null;
@@ -681,6 +720,4 @@ public class GetSampleManifestTask {
         }
         return onlyMostRecentDemux;
     }
-
-
 }
