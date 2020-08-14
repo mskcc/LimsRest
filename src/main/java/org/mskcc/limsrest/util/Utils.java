@@ -92,9 +92,9 @@ public class Utils {
      * @param sample
      * @return
      */
-    public static String getBaitSet(DataRecord sample, String requestId, User user) {
+    public static String getBaitSet(DataRecord sample, User user) {
         try {
-            DataRecord qcRecord = getChildDataRecordOfType(sample, requestId, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
+            DataRecord qcRecord = getChildDataRecordOfType(sample, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
             if (qcRecord == null) {
                 LOGGER.info(String.format("Seq qc record not found for sample with recordId: %d.", sample.getRecordId()));
                 return "";
@@ -114,17 +114,17 @@ public class Utils {
      * @param user
      * @return
      */
-    private static DataRecord getChildDataRecordOfType(DataRecord sample, String requestId, String childRecordType, User user) {
+    private static DataRecord getChildDataRecordOfType(DataRecord sample, String childRecordType, User user) {
         try {
-            Object sampleRequestId = sample.getValue(SampleModel.REQUEST_ID, user);
-            if (sampleRequestId != null && sampleRequestId.toString().equalsIgnoreCase(requestId) && sample.getChildrenOfType(childRecordType, user).length > 0) {
+            Object requestId = sample.getValue(SampleModel.REQUEST_ID, user);
+            if (sample.getChildrenOfType(childRecordType, user).length > 0) {
                 return sample.getChildrenOfType(childRecordType, user)[0];
             }
             Stack<DataRecord> sampleStack = new Stack<>();
             DataRecord[] childSamples = sample.getChildrenOfType(SampleModel.DATA_TYPE_NAME, user);
             for (DataRecord childSample : childSamples) {
                 Object childSampleRequestId = childSample.getValue(SampleModel.REQUEST_ID, user);
-                if(childSampleRequestId !=null && requestId.equalsIgnoreCase(childSampleRequestId.toString())){
+                if(childSampleRequestId !=null && requestId!= null && requestId.toString().equalsIgnoreCase(childSampleRequestId.toString())){
                     sampleStack.add(childSample);
                 }
             }
