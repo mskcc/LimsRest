@@ -101,8 +101,7 @@ public class Utils {
             }
             return (String) getValueFromDataRecord(qcRecord, "BaitSet", "String", user);
         } catch (NotFound | RemoteException e) {
-            LOGGER.error(ExceptionUtils.getMessage(e));
-            System.out.println(e);
+            LOGGER.error(ExceptionUtils.getStackTrace(e));
             return "";
         }
     }
@@ -137,7 +136,7 @@ public class Utils {
                 }
                 List<DataRecord> childSampleRecords = Arrays.asList(startSample.getChildrenOfType(SampleModel.DATA_TYPE_NAME, user));
                 if (childSampleRecords.size() > 0) {
-                    for (DataRecord sam : childSamples) {
+                    for (DataRecord sam : childSampleRecords) {
                         Object reqId = sam.getValue(SampleModel.REQUEST_ID, user);
                         if (reqId != null && requestId.equals(reqId.toString())) {
                             sampleStack.add(sam);
@@ -145,8 +144,12 @@ public class Utils {
                     }
                 }
             } while (!sampleStack.isEmpty());
-        } catch (Exception e) {
-            LOGGER.error(String.format("Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d", sample.getRecordId()));
+        } catch (RemoteException e) {
+            LOGGER.error(String.format("RemoteException -> Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(e)));
+        } catch (IoError ioError) {
+            LOGGER.error(String.format("IoError -> Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(ioError)));
+        } catch (NotFound notFound) {
+            LOGGER.error(String.format("NotFound -> Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(notFound)));
         }
         return null;
     }
