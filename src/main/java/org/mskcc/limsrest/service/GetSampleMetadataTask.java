@@ -48,7 +48,7 @@ public class GetSampleMetadataTask {
                 else {
                     String likeParam = projectId.split("_")[0] + "_%";
                     requests = dataRecordManager.queryDataRecords("Request", "RequestId= '" + projectId + "' OR RequestId LIKE '" + likeParam + "' AND IsCmoRequest = 1", user);
-                    //requests = dataRecordManager.queryDataRecords("Request", "RequestId= '05457_F' AND IsCmoRequest = 1", user);
+                    //requests = dataRecordManager.queryDataRecords("Request", "RequestId= '06345_B' AND IsCmoRequest = 1", user);
                 }
                 log.info("Total Requests: " + requests.size());
                 for (DataRecord req : requests) {
@@ -64,7 +64,7 @@ public class GetSampleMetadataTask {
                         String mrn = getRandomValue();
                         String cmoPatientId = (String) getFieldValueForSample(sample, cmoInfoRec, "CmoPatientId", "PatientId", "String");
                         String cmoSampleId = (String) getFieldValueForSample(sample, cmoInfoRec, "CorrectedCMOID", "OtherSampleId", "String");
-                        log.info(cmoSampleId);
+                        log.info("CMO Sample ID: " + cmoSampleId);
                         String igoId = sample.getStringVal("SampleId", user);
                         String investigatorSampleId = (String) getFieldValueForSample(sample, cmoInfoRec, "UserSampleID", "UserSampleID", "String");
                         String species = (String) getFieldValueForSample(sample, cmoInfoRec, "Species", "Species", "String");
@@ -170,7 +170,7 @@ public class GetSampleMetadataTask {
             Object fieldValue;
             if (cmoInfoRecord != null) {
                 fieldValue = getValueFromDataRecord(cmoInfoRecord, cmoInfoFieldName, fieldType, user);
-                log.info(fieldValue.toString());
+                log.info(String.format("%s : %s",cmoInfoFieldName, fieldValue.toString()));
                 if (fieldValue != "") {
                     return fieldValue;
                 }
