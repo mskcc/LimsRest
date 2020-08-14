@@ -2,13 +2,14 @@ package org.mskcc.limsrest.service.promote;
 
 import com.velox.api.datarecord.*;
 import com.velox.api.user.User;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.BankedSample;
 
 import java.rmi.RemoteException;
 
 public class BankedSampleSaver implements RecordSaver {
-    private static final Logger LOGGER = Logger.getLogger(BankedSampleSaver.class);
+    private static final Log LOGGER = LogFactory.getLog(BankedSampleSaver.class);
 
     @Override
     public void save(BankedSample bankedSample, DataRecordManager dataRecordManager, User user) {

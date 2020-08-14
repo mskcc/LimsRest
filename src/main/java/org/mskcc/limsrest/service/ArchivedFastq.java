@@ -14,6 +14,26 @@ public class ArchivedFastq {
 
     public ArchivedFastq() {}
 
+    public String getRunId() {
+        return run.substring(0, run.lastIndexOf("_"));
+    }
+
+    /**
+     * Extract flowcell from run - JAX_0454_AHHWKVBBXY, TOMS_5394_000000000-J2FY2, JOHNSAWYERS_0239_000000000-G5TVF
+     * @return
+     */
+    public String getFlowCellId() {
+        if (run == null || run.length() < 10)
+            return "";
+
+        if (run.contains("_000000000")) {
+            return run.substring(run.length() - 5,run.length());
+        } else {
+            int lastUnderscore = run.lastIndexOf('_');
+            return run.substring(lastUnderscore + 2,run.length());
+        }
+    }
+
     @Override
     public String toString() {
         return "ArchivedFastq{" +

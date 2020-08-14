@@ -31,6 +31,7 @@ public class SampleManifest {
     private String collectionYear;
     private String sex;
     private String species;
+    private String tubeId;
     private String cfDNA2dBarcode;
 
     private String baitSet;
@@ -132,6 +133,12 @@ public class SampleManifest {
         public List<Integer> flowCellLanes = new ArrayList<>();
         public List<String> fastqs;
 
+        public Run(String runId, String flowCellId, String runDate) {
+            this.runId = runId;
+            this.flowCellId = flowCellId;
+            this.runDate = runDate;
+        }
+
         public Run(String runMode, String runId, String flowCellId, String readLength, String runDate) {
             this.runMode = runMode;
             this.runId = runId;
@@ -164,6 +171,10 @@ public class SampleManifest {
     }
 
     public SampleManifest() {}
+
+    public String getTubeId() { return tubeId; }
+
+    public void setTubeId(String tubeId) { this.tubeId = tubeId; }
 
     public String getCfDNA2dBarcode() { return cfDNA2dBarcode; }
 
@@ -287,18 +298,25 @@ public class SampleManifest {
     public String toString() {
         return "SampleManifest{" +
                 "igoId='" + igoId + '\'' +
+                ", cmoInfoIgoId='" + cmoInfoIgoId + '\'' +
                 ", cmoSampleName='" + cmoSampleName + '\'' +
+                ", sampleName='" + sampleName + '\'' +
+                ", cmoSampleClass='" + cmoSampleClass + '\'' +
                 ", cmoPatientId='" + cmoPatientId + '\'' +
                 ", investigatorSampleId='" + investigatorSampleId + '\'' +
                 ", oncoTreeCode='" + oncoTreeCode + '\'' +
                 ", tumorOrNormal='" + tumorOrNormal + '\'' +
                 ", tissueLocation='" + tissueLocation + '\'' +
+                ", specimenType='" + specimenType + '\'' +
                 ", sampleOrigin='" + sampleOrigin + '\'' +
                 ", preservation='" + preservation + '\'' +
                 ", collectionYear='" + collectionYear + '\'' +
                 ", sex='" + sex + '\'' +
                 ", species='" + species + '\'' +
+                ", tubeId='" + tubeId + '\'' +
+                ", cfDNA2dBarcode='" + cfDNA2dBarcode + '\'' +
                 ", baitSet='" + baitSet + '\'' +
+                ", qcReports=" + qcReports +
                 ", libraries=" + libraries +
                 '}';
     }
