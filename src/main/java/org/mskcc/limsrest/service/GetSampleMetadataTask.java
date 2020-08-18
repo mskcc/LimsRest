@@ -82,7 +82,7 @@ public class GetSampleMetadataTask {
                         String sampleOrigin = (String) getFieldValueForSample(sample, cmoInfoRec, "SampleOrigin", "SampleOrigin", "String");
                         String tissueSource = (String) getFieldValueForSample(sample, cmoInfoRec, "TissueSource", "TissueSource", "String");
                         String tissueLocation = (String) getFieldValueForSample(sample, cmoInfoRec, "TissueLocation", "TissueLocation", "String");
-                        String baitset = getBaitSet(sample, requestId, user);;
+                        String baitset = getBaitSet(sample, user);;
                         log.info("baitset: " + baitset);
                         String fastqPath = "";
                         String ancestorSample = getOriginSampleId(sample, user);

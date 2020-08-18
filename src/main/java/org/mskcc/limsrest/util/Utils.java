@@ -128,6 +128,9 @@ public class Utils {
                     sampleStack.add(childSample);
                 }
             }
+            if (sampleStack.isEmpty()){
+                return null;
+            }
             do {
                 DataRecord startSample = sampleStack.pop();
                 DataRecord[] seqQcRecs = startSample.getChildrenOfType(childRecordType, user);
