@@ -91,6 +91,7 @@ dependencies {
     compile 'com.velox.internalproducts:sapiogeneric:15.0.0-LIMS10.6.1'
     compile 'com.velox.internalproducts:sapioutils:15.0.0-LIMS10.6.1'
     compile 'com.velox.internalproducts:sapio-commons:15.0.0-LIMS10.6.1'
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.0'
 
     compile fileTree (dir: 'libs', include: '*.jar')
 

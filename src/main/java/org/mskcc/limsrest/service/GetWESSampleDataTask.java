@@ -6,9 +6,11 @@ import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.servermanager.PickListManager;
 import com.velox.api.user.User;
+import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.tomcat.util.ExceptionUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mskcc.limsrest.ConnectionLIMS;
@@ -28,6 +30,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 import java.util.*;
 
+import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
+import static org.apache.tomcat.util.ExceptionUtils.*;
 import static org.mskcc.limsrest.util.Utils.*;
 
 /**
@@ -58,6 +62,7 @@ public class GetWESSampleDataTask {
 
     public List<WESSampleData> execute() {
         long start = System.currentTimeMillis();
+        List<WESSampleData> resultList = new ArrayList<>();
         try {
             VeloxConnection vConn = conn.getConnection();
             user = vConn.getUser();
@@ -74,7 +79,6 @@ public class GetWESSampleDataTask {
                 log.error(e.getMessage(), e);
                 return null;
             }
-            List<WESSampleData> resultList = new ArrayList<>();
             JSONObject consentAList = getConsentStatusDataValues("parta");
             JSONObject consentCList = getConsentStatusDataValues("partc");
             if (!dmpTrackerRecords.isEmpty()) {
@@ -97,6 +101,7 @@ public class GetWESSampleDataTask {
                                         String sampleId = sample.getStringVal("SampleId", user);
                                         log.info("Sample ID: " + sampleId);
                                         String userSampleId = dmpTrackRec.getStringVal("i_StudySampleIdentifierInvesti", user);
+                                        log.info("User Sample ID:" + userSampleId);
                                         String userSampleidHistorical = (String) getValueFromDataRecord(dmpTrackRec, "InvestigatorSampleIdHistorical", "String", user);
                                         String altId = (String) getValueFromDataRecord(sample, "AltId", "String", user);
                                         log.info("AltId: " + altId);
@@ -109,7 +114,6 @@ public class GetWESSampleDataTask {
                                         String dmpPatientId = getCvrDataValue(cvrData, "dmp_patient_lbl");
                                         String mrn = getCvrDataValue(cvrData, "mrn");
                                         String sex = getCvrDataValue(cvrData, "gender");
-                                        //String sampleType = (String)getValueFromDataRecord(cmoInfoRec, "SpecimenType", "String", user);
                                         String sampleClass = getCvrDataValue(cvrData, "sample_type");
                                         String tumorType = getCvrDataValue(cvrData, "tumor_type");
                                         String parentalTumorType = getOncotreeTumorType(tumorType);
@@ -143,6 +147,7 @@ public class GetWESSampleDataTask {
                                         String tissueType = "";
                                         String limsSampleRecordId = String.valueOf(sample.getLongVal("RecordId", user));
                                         String limsTrackerRecordId = String.valueOf(dmpTrackRec.getLongVal("RecordId", user));
+                                        log.info("Lims Tracker Rec ID: " + limsTrackerRecordId);
                                         resultList.add(new WESSampleData(sampleId, userSampleId, userSampleidHistorical, altId, duplicateSample, wesSampleid,
                                                 cmoSampleId, cmoPatientId, dmpSampleId, dmpPatientId, mrn, sex, sampleClass, tumorType,
                                                 parentalTumorType, tissueSite, sourceDnaType, molAccessionNum, collectionYear, dateDmpRequest,
@@ -166,10 +171,24 @@ public class GetWESSampleDataTask {
             }
             log.info("Results found: " + resultList.size() + " Elapsed time (ms): " + (System.currentTimeMillis() - start));
             return resultList;
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-            return null;
+        } catch (RemoteException e) {
+            log.info(String.format("RemoteException while running GetWESSampleDataTask with timestamp %s:\n%s", timestamp, getStackTrace(e)));
+        } catch (NoSuchAlgorithmException e) {
+            log.info(String.format("NoSuchAlgorithmException while running GetWESSampleDataTask with timestamp %s:\n%s", timestamp, getStackTrace(e)));
+        } catch (KeyManagementException e) {
+            log.info(String.format("KeyManagementException while running GetWESSampleDataTask with timestamp %s:\n%s", timestamp, getStackTrace(e)));
+        } catch (MalformedURLException e) {
+            log.info(String.format("MalformedURLException while running GetWESSampleDataTask with timestamp %s:\n%s", timestamp, getStackTrace(e)));
+        } catch (NotFound notFound) {
+            log.info(String.format("NotFound while running GetWESSampleDataTask with timestamp %s:\n%s", timestamp, getStackTrace(notFound)));;
+        } catch (IOException e) {
+            log.info(String.format("IOException while running GetWESSampleDataTask with timestamp %s:\n%s", timestamp, getStackTrace(e)));
+        } catch (IoError ioError) {
+            log.info(String.format("ioError while running GetWESSampleDataTask with timestamp %s:\n%s", timestamp, getStackTrace(ioError)));
+        } catch (ServerException e) {
+            log.info(String.format("ServerException while running GetWESSampleDataTask with timestamp %s:\n%s", timestamp, getStackTrace(e)));
         }
+        return resultList;
     }
 
     /**
