@@ -51,8 +51,13 @@ public class GetReadyForIllumina {
                             results.add(createRunSummaryForSampleInPool(librarySample, summary, user)); //pass the summary Object with preset pool level information "createRunSummaryForSampleInPool" method to add sample level information
                         }
                     } else{
-                        RunSummary summary = new RunSummary("DEFAULT", "DEFAULT"); // if sample is not pool, then it is Library sample and work with it.
-                        results.add(createRunSummaryForNonPooledSamples(sample,summary, user));
+                        RunSummary defaultSummary = new RunSummary("DEFAULT", "DEFAULT"); // if sample is not pool, then it is Library sample and work with it.
+                        try {
+                            results.add(createRunSummaryForNonPooledSamples(sample, defaultSummary, user));
+                        } catch (IllegalStateException e){
+                            // Continue processing remaining data records
+                            log.error(e.getMessage());
+                        }
                     }
                 }
             }
@@ -247,7 +252,8 @@ public class GetReadyForIllumina {
     private RunSummary createRunSummaryForNonPooledSamples(DataRecord unpooledSample, RunSummary summary, User user)
             throws NotFound, RemoteException, IoError, InvalidValue {
         Map<String, Object> sampleFieldValues = unpooledSample.getFields(user);
-        summary.setSampleId((String) sampleFieldValues.get("SampleId"));
+        String sampleId = (String) sampleFieldValues.get("SampleId");
+        summary.setSampleId(sampleId);
         summary.setOtherSampleId((String) sampleFieldValues.getOrDefault("OtherSampleId", ""));
         summary.setRequestId((String) sampleFieldValues.getOrDefault("RequestId", ""));
         summary.setTubeBarcode((String) sampleFieldValues.getOrDefault("MicronicTubeBarcode", ""));
@@ -266,9 +272,12 @@ public class GetReadyForIllumina {
         summary.setRecipe(getRecipeForSample(unpooledSample, user));
         summary.setPlateId((String) sampleFieldValues.getOrDefault("RelatedRecord23", ""));
         String indexAndBarcode = getSampleLibraryIndexIdAndBarcode(unpooledSample, user);
-        if (indexAndBarcode !=null && indexAndBarcode.split(",").length==2)
+        if (indexAndBarcode !=null && indexAndBarcode.split(",").length==2){
             summary.setBarcodeId(indexAndBarcode.split(",")[0]);
-        summary.setBarcodeSeq(indexAndBarcode.split(",")[1]);
+            summary.setBarcodeSeq(indexAndBarcode.split(",")[1]);
+        } else {
+            throw new IllegalStateException(String.format("Failed to retrieve barcode ID & Seq from IGO Sample Id: %s. Not adding summary.", sampleId));
+        }
         summary.setReadNum(getRequestedReadsForSample(unpooledSample, user).toString());
         String plannedSequencer = getPlannedSequencerForSample(unpooledSample, user);
         if (plannedSequencer != null)
