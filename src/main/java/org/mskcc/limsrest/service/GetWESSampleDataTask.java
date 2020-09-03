@@ -110,7 +110,7 @@ public class GetWESSampleDataTask {
                                 for (DataRecord sample: allSamplesSharingCmoInfoRec){
                                     log.info("processing sample: " + sample.getStringVal("SampleId", user)+ ", recipe: "+ sample.getStringVal("Recipe", user));
                                     DataRecord request = getRelatedRequest(sample);
-                                    if (isValidRequestToProcess(sample)) {
+                                    if (isValidRecipeToProcess(sample)) {
                                         String sampleId = sample.getStringVal("SampleId", user);
                                         log.info("DMP Record with related IGO Samples.");
                                         log.info("Sample ID: " + sampleId);
