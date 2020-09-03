@@ -88,20 +88,13 @@ public class GetWESSampleDataTask {
             JSONObject consentAList = getConsentStatusDataValues("parta");
             JSONObject consentCList = getConsentStatusDataValues("partc");
             if (!dmpTrackerRecords.isEmpty()) {
-                Object userId = null;
                 for (DataRecord dmpTrackRec : dmpTrackerRecords) {
-                    boolean userIdMatch = false;
-                    userId = dmpTrackRec.getValue("i_StudySampleIdentifierInvesti", user);
-                    if (userId != null && userId.toString().contains("P-0002731-T02-WES")){
-                        userIdMatch=true;
-                        log.info("Found user ID: " + userId.toString());
-                    }
                     List<DataRecord> sampleCmoInfoRecs = new ArrayList<>();
                     if (dmpTrackRec.getValue("i_StudySampleIdentifierInvesti", user) != null) {
                         sampleCmoInfoRecs = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "UserSampleID = '" + dmpTrackRec.getStringVal("i_StudySampleIdentifierInvesti", user) + "'", user);
                         log.info("sample cmo info query end");
                     }
-                    if (sampleCmoInfoRecs.size() > 0 && userIdMatch) {
+                    if (sampleCmoInfoRecs.size() > 0) {
                         for (DataRecord cmoInfoRec : sampleCmoInfoRecs) {
                             DataRecord parentSamp = cmoInfoRec.getParentsOfType("Sample", user).get(0);
                             List<DataRecord> allSamplesSharingCmoInfoRec = getChildSamplesWithRequestAsParent(parentSamp);
