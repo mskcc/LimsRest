@@ -310,10 +310,9 @@ public class Utils {
      * Method to get Main Tumor Type using Tumor Type Name eg: Breast Cancer or Pancreatic cancer etc.
      *
      * @param url
-     * @param tumorType
      * @return String
      */
-    private static String getOncotreeTumorTypeUsingName(URL url, String tumorType) {
+    private static String getOncotreeTumorTypeUsingName(URL url) {
         HttpURLConnection con = null;
         StringBuilder response = new StringBuilder();
         JSONArray oncotreeResponseData = null;
@@ -334,7 +333,7 @@ public class Utils {
                 return mainType != null ? mainType.toString() : "";
             }
         } catch (Exception e) {
-            LOGGER.info(String.format("Error while querying oncotree api for name search. Will attempt to search using oncotree api for code search:\n%s", e.getMessage()));
+            LOGGER.info(String.format("Error while querying oncotree api for name search using url %s. Will attempt to search using oncotree api for code search:\n%s", url, e.getMessage()));
             return "";
         }
         return "";
@@ -373,7 +372,7 @@ public class Utils {
                 }
             }
         } catch (Exception e) {
-            LOGGER.info(String.format("Error while querying oncotree api using code search. Cannot find Main tumor type.\n%s", e.getMessage()));
+            LOGGER.info(String.format("Error while querying oncotree api using code search using url %s. Cannot find Main tumor type.\n%s", url, e.getMessage()));
             return "";
         }
         return "";
@@ -391,7 +390,7 @@ public class Utils {
             // In LIMS tumor types entry is not controlled. Sometimes tumor type as tumor name is entered and other times tumor type code is entered.
             // First query oncotree using api for name search
             URL url = new URL("http://oncotree.mskcc.org/api/tumorTypes/search/name/" + tumorType.split("/")[0].replace(" ", "%20") + "?exactMatch=false");
-            mainTumorType = getOncotreeTumorTypeUsingName(url, tumorType);
+            mainTumorType = getOncotreeTumorTypeUsingName(url);
             // If name search returns nothing, then query oncotree using api for code search
             if (StringUtils.isBlank(mainTumorType)) {
                 URL url2 = new URL("http://oncotree.mskcc.org/api/tumorTypes/search/code/" + tumorType.split("/")[0].replace(" ", "%20") + "?exactMatch=true");
