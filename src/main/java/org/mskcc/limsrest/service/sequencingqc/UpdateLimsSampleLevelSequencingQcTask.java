@@ -41,7 +41,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
     private String runId;
 
     public UpdateLimsSampleLevelSequencingQcTask(String runId, ConnectionLIMS conn) {
-        this.runId = runId;
+        this.runId = getVersionLessRunId(runId);
         this.conn = conn;
     }
 
@@ -83,6 +83,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                     log.info(String.format("Existing %s datatype Record ID: %d", existingQc.getDataTypeName(), existingQc.getRecordId()));
                     // remove SeqQcStatus Key,Value from new values so that it does not overwrite existing value.
                     qcDataVals.remove("SeqQCStatus");
+                    qcDataVals.put(SampleModel.SAMPLE_ID, igoId);
                     existingQc.setFields(qcDataVals, user);
                     statsAdded.putIfAbsent(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), "");
                     statsAdded.put(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), qcDataVals.toString());
@@ -98,7 +99,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                     statsAdded.put(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), qcDataVals.toString());
                 }
             }
-            dataRecordManager.storeAndCommit(String.format("Added new %s records for Sequencing Run %s", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, runId), null, user);
+            dataRecordManager.storeAndCommit(String.format("Added/updated new %s records for Sequencing Run %s", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, runId), null, user);
         } catch (Exception e) {
             log.info(String.format("Error while querying ngs-stats endpoint using runId %s.\n%s:%s", this.runId, ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e)));
         }
@@ -377,5 +378,14 @@ public class UpdateLimsSampleLevelSequencingQcTask {
             log.error(String.format("%s-> Error while getting related Library Samples for run %s:\n%s", ExceptionUtils.getRootCauseMessage(notFound), runId, ExceptionUtils.getStackTrace(notFound)));
         }
         return null;
+    }
+
+    /**
+     * Method to get Run Name without Version Number
+     * @param runName
+     * @return
+     */
+    private String getVersionLessRunId(String runName){
+        return runName.replaceFirst("_[A-Z][0-9]+$", "");
     }
 }
