@@ -41,7 +41,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
     private String runId;
 
     public UpdateLimsSampleLevelSequencingQcTask(String runId, ConnectionLIMS conn) {
-        this.runId = getVersionLessRunId(runId);
+        this.runId = runId;
         this.conn = conn;
     }
 
@@ -172,7 +172,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         String otherSampleId = getIgoSampleName(String.valueOf(statsData.get("sample")));
         String request = String.valueOf(statsData.get("request"));
         String baitSet = String.valueOf(statsData.get("bait_SET"));
-        String sequencerRunFolder = String.valueOf(statsData.get("run"));
+        String sequencerRunFolder = getVersionLessRunId(String.valueOf(statsData.get("run")));
         String seqQCStatus = inital_qc_status;
         long readsExamined = statsData.get("read_PAIRS_EXAMINED") != JSONObject.NULL ? Long.parseLong(String.valueOf(statsData.get("read_PAIRS_EXAMINED"))) : 0;
         long totalReads = statsData.get("TOTAL_READS") != JSONObject.NULL ? Long.parseLong(String.valueOf(statsData.get("TOTAL_READS"))) : 0;
@@ -181,11 +181,9 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         long unpairedReads = statsData.get("unpairedReads") != JSONObject.NULL ? Long.parseLong(String.valueOf(statsData.get("unpairedReads"))) : 0;
         double meanCoverage = statsData.get("mean_COVERAGE") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("mean_COVERAGE"))) : 0.0;
         double meanTargetCoverage = statsData.get("mean_TARGET_COVERAGE") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("mean_TARGET_COVERAGE"))) : 0.0;
-        double percentTarget100X = statsData.get("pct_100X") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("pct_100X"))) : 0.0;
-        double percentTarget10X = statsData.get("pct_10X") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("pct_10X"))) : 0.0;
-        double percentTarget30X = statsData.get("pct_30X") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("pct_30X"))) : 0.0;
-        double percentTarget40X = statsData.get("pct_40X") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("pct_40X"))) : 0.0;
-        double percentTarget80X = statsData.get("pct_80X") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("pct_80X"))) : 0.0;
+        double percentTarget100X = statsData.get("pct_TARGET_BASES_100X") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("pct_TARGET_BASES_100X"))) : 0.0;
+        double percentTarget30X = statsData.get("pct_TARGET_BASES_30X") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("pct_TARGET_BASES_30X"))) : 0.0;
+        double percentTarget10X = statsData.get("pct_TARGET_BASES_10X") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("pct_TARGET_BASES_10X"))) : 0.0;
         double percentAdapters = statsData.get("pct_ADAPTER") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("pct_ADAPTER"))) : 0.0;
         double percentCodingBases = statsData.get("pct_CODING_BASES") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("pct_CODING_BASES"))) : 0.0;
         double percentExcBaseQ = statsData.get("pct_EXC_BASEQ") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("pct_EXC_BASEQ"))) : 0.0;
@@ -206,12 +204,11 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         SampleSequencingQc qc = new SampleSequencingQc(sampleId, otherSampleId, request,
                 baitSet, sequencerRunFolder, seqQCStatus, readsExamined,
                 totalReads, unmappedDupes, readPairDupes, unpairedReads, meanCoverage,
-                meanTargetCoverage, percentTarget100X, percentTarget10X, percentTarget30X,
-                percentTarget40X, percentTarget80X, percentAdapters, percentCodingBases,
-                percentExcBaseQ, percentExcDupe, percentExcMapQ, percentExcTotal,
-                percentIntergenicBases, percentIntronicBases, percentMrnaBases,
-                percentOffBait, percentRibosomalBases, percentUtrBases, percentDuplication,
-                zeroCoveragePercent, mskq, genomeTerritory, gRefOxoQ);
+                meanTargetCoverage, percentTarget100X, percentTarget30X, percentTarget10X,
+                percentAdapters, percentCodingBases, percentExcBaseQ, percentExcDupe,
+                percentExcMapQ, percentExcTotal, percentIntergenicBases, percentIntronicBases,
+                percentMrnaBases, percentOffBait, percentRibosomalBases, percentUtrBases,
+                percentDuplication, zeroCoveragePercent, mskq, genomeTerritory, gRefOxoQ);
         return qc.getSequencingQcValues();
     }
 

@@ -561,12 +561,10 @@ public class Utils {
         Pattern alphabetPattern = Pattern.compile(IGO_ID_WITH_ALPHABETS_PATTERN);
         Pattern withoutAlphabetPattern = Pattern.compile(IGO_ID_WITHOUT_ALPHABETS_PATTERN);
         if (alphabetPattern.matcher(sampleId).matches()){
-            System.out.println("matches alphabet pattern.");
             String[] sampleIdValues =  sampleId.split("_");
             return String.join("_", Arrays.copyOfRange(sampleIdValues,0,3));
         }
         if(withoutAlphabetPattern.matcher(sampleId).matches()){
-            System.out.println("matches non-alphabet pattern.");
             String[] sampleIdValues =  sampleId.split("_");
             return String.join("_", Arrays.copyOfRange(sampleIdValues,0,2));
         }

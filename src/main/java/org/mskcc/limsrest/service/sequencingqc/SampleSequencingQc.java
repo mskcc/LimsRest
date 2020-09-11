@@ -19,10 +19,8 @@ public class SampleSequencingQc {
     double meanCoverage;
     double meanTargetCoverage;
     double percentTarget100X;
-    double percentTarget10X;
     double percentTarget30X;
-    double percentTarget40X;
-    double percentTarget80X;
+    double percentTarget10X;
     double percentAdapters;
     double percentCodingBases;
     double percentExcBaseQ;
@@ -44,12 +42,11 @@ public class SampleSequencingQc {
     public SampleSequencingQc(String sampleId, String otherSampleId, String request,
                               String baitSet, String sequencerRunFolder, String seqQCStatus, long readsExamined,
                               long totalReads, long unmappedDupes, long readPairDupes, long unpairedReads, double meanCoverage,
-                              double meanTargetCoverage, double percentTarget100X, double percentTarget10X, double percentTarget30X,
-                              double percentTarget40X, double percentTarget80X, double percentAdapters, double percentCodingBases,
-                              double percentExcBaseQ, double percentExcDupe, double percentExcMapQ, double percentExcTotal,
-                              double percentIntergenicBases, double percentIntronicBases, double percentMrnaBases,
-                              double percentOffBait, double percentRibosomalBases, double percentUtrBases, double percentDuplication,
-                              double zeroCoveragePercent, double mskq, long genomeTerritory, double gRefOxoQ) {
+                              double meanTargetCoverage, double percentTarget100X, double percentTarget30X, double percentTarget10X,
+                              double percentAdapters, double percentCodingBases, double percentExcBaseQ, double percentExcDupe,
+                              double percentExcMapQ, double percentExcTotal, double percentIntergenicBases, double percentIntronicBases,
+                              double percentMrnaBases, double percentOffBait, double percentRibosomalBases, double percentUtrBases,
+                              double percentDuplication, double zeroCoveragePercent, double mskq, long genomeTerritory, double gRefOxoQ) {
         this.sampleId = sampleId;
         this.otherSampleId = otherSampleId;
         this.request = request;
@@ -64,10 +61,8 @@ public class SampleSequencingQc {
         this.meanCoverage = meanCoverage;
         this.meanTargetCoverage = meanTargetCoverage;
         this.percentTarget100X = percentTarget100X;
-        this.percentTarget10X = percentTarget10X;
         this.percentTarget30X = percentTarget30X;
-        this.percentTarget40X = percentTarget40X;
-        this.percentTarget80X = percentTarget80X;
+        this.percentTarget10X = percentTarget10X;
         this.percentAdapters = percentAdapters;
         this.percentCodingBases = percentCodingBases;
         this.percentExcBaseQ = percentExcBaseQ;
@@ -213,22 +208,6 @@ public class SampleSequencingQc {
 
     public void setPercentTarget30X(double percentTarget30X) {
         this.percentTarget30X = percentTarget30X;
-    }
-
-    public double getPercentTarget40X() {
-        return percentTarget40X;
-    }
-
-    public void setPercentTarget40X(double percentTarget40X) {
-        this.percentTarget40X = percentTarget40X;
-    }
-
-    public double getPercentTarget80X() {
-        return percentTarget80X;
-    }
-
-    public void setPercentTarget80X(double percentTarget80X) {
-        this.percentTarget80X = percentTarget80X;
     }
 
     public double getPercentAdapters() {
@@ -383,8 +362,6 @@ public class SampleSequencingQc {
         qcValues.put("MeanCoverage", this.meanCoverage);
         qcValues.put("MeanTargetCoverage", this.meanTargetCoverage);
         qcValues.put("PercentTarget100X", this.percentTarget100X);
-        qcValues.put("PercentTarget80X", this.percentTarget80X);
-        qcValues.put("PercentTarget40X", this.percentTarget40X);
         qcValues.put("PercentTarget30X", this.percentTarget30X);
         qcValues.put("PercentTarget10X", this.percentTarget10X);
         qcValues.put("PercentAdapters", this.percentAdapters);
