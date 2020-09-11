@@ -1,5 +1,6 @@
 package org.mskcc.limsrest.controller.sequencingqc;
 
+import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
@@ -13,6 +14,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
+/**
+ * Endpoint to Add/Update Sequencing QC Stats to LIMS SeqAnalysisSampleQC DataType. The endpoint is planned to run as
+ * soon as new Sequencing Stats are posted to NGS-STATS database.
+ */
 @RestController
 @RequestMapping("/")
 public class UpdateLimsSampleLevelSequencingQc {
