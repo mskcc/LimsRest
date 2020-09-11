@@ -259,7 +259,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         List<DataRecord> seqAnalysisSampleQCs;
         try {
             log.info(String.format("Searching for existing %s records for %s and %s combination",SeqAnalysisSampleQCModel.DATA_TYPE_NAME, otherSampleId, runId));
-            if(otherSampleId.contains(POOLEDNORMAL_IDENTIFIER) && igoId.contains(POOLEDNORMAL_IDENTIFIER)){
+            if(igoId.contains(POOLEDNORMAL_IDENTIFIER) || igoId.contains(CONTROL_IDENTIFIER) || otherSampleId.contains(POOLEDNORMAL_IDENTIFIER)){
                 String[] igoIdVals = igoId.split("_");
                 String barcode = igoIdVals[igoIdVals.length-1];
                 DataRecord librarySample = getPooledNormalLibrarySample(librarySamples, barcode);
