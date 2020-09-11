@@ -3,6 +3,7 @@ package org.mskcc.limsrest.util;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
+import com.velox.api.plugin.PluginLogger;
 import com.velox.api.user.User;
 import com.velox.sloan.cmo.recmodels.SampleModel;
 import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
@@ -24,6 +25,8 @@ import java.net.URL;
 import java.rmi.RemoteException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 
@@ -38,6 +41,8 @@ public class Utils {
     private final static List<String> CAPTURE_SAMPLE_TYPES = Collections.singletonList("capture library");
     private final static List<String> POOLED_SAMPLE_TYPES = Collections.singletonList("pooled library");
     private final static String FAILED_STATUS_TEXT = "failed";
+    private final String IGO_ID_WITHOUT_ALPHABETS_PATTERN = "^[0-9]+_[0-9]+.*$";  // sample id without alphabets
+    private final String IGO_ID_WITH_ALPHABETS_PATTERN = "^[0-9]+_[A-Z]+_[0-9]+.*$";  // sample id without alphabets
 
     public static void runAndCatchNpe(Runnable runnable) {
         try {
@@ -545,4 +550,57 @@ public class Utils {
         return 0;
     }
 
+    /**
+     * Method to get base Sample ID when aliquot annotation is present.
+     * Example: for sample id 012345_1_1_2, base sample id is 012345_1
+     * Example2: for sample id 012345_B_1_1_2, base sample id is 012345_B_1
+     * @param sampleId
+     * @return
+     */
+    public String getBaseSampleId(String sampleId){
+        Pattern alphabetPattern = Pattern.compile(IGO_ID_WITH_ALPHABETS_PATTERN);
+        Pattern withoutAlphabetPattern = Pattern.compile(IGO_ID_WITHOUT_ALPHABETS_PATTERN);
+        if (alphabetPattern.matcher(sampleId).matches()){
+            String[] sampleIdValues =  sampleId.split("_");
+            return String.join("_", Arrays.copyOfRange(sampleIdValues,0,3));
+        }
+        if(withoutAlphabetPattern.matcher(sampleId).matches()){
+            String[] sampleIdValues =  sampleId.split("_");
+            return String.join("_", Arrays.copyOfRange(sampleIdValues,0,2));
+        }
+        return sampleId;
+    }
+
+    /**
+     * This method will return the first DataRecord(s) with DATA_TYPE_NAME equal to @param targetDataType found in the
+     * parent tree upstream. The targetDataType DataRecord is usually present as a child on one of the parents in the
+     * hierarchy tree. @param parentDataType must either be same as @param record or @param record must be directly
+     * under a DataRecord with DATA_TYPE_NAME equal to @param parentDataType.
+     * @param record
+     * @param parentDataType
+     * @param targetDataType
+     * @return
+     */
+    public List<DataRecord> getRecordsOfTypeFromParents(DataRecord record, String parentDataType, String targetDataType, User user) {
+        List<DataRecord> records = new ArrayList<>();
+        try {
+            if (record.getChildrenOfType(targetDataType, user).length > 0){
+                return Arrays.asList(record.getChildrenOfType(targetDataType, user));
+            }
+            Stack<DataRecord> recordsStack = new Stack<>();
+            List<DataRecord> parentRecords = record.getParentsOfType(parentDataType, user);
+            recordsStack.addAll(parentRecords);
+            while (!recordsStack.isEmpty()){
+                DataRecord poppedRecord = recordsStack.pop();
+                if (poppedRecord.getChildrenOfType(targetDataType, user).length > 0){
+                    return Arrays.asList(poppedRecord.getChildrenOfType(targetDataType, user));
+                }
+                recordsStack.addAll(poppedRecord.getParentsOfType(parentDataType, user));
+            }
+        } catch (IoError | RemoteException e) {
+            LOGGER.error(String.format("%s -> Error while getting %s records for %s record with Record Id %d,\n%s",
+                    ExceptionUtils.getRootCause(e), targetDataType, record.getDataTypeName(), record.getRecordId(), ExceptionUtils.getStackTrace(e)));
+        }
+        return records;
+    }
 }
