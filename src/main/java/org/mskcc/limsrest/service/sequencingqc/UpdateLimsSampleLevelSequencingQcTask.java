@@ -16,8 +16,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
 import org.mskcc.limsrest.ConnectionLIMS;
+import org.mskcc.limsrest.util.BasicMail;
 import org.mskcc.limsrest.util.Utils;
 
+import javax.mail.MessagingException;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -35,6 +37,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
     String appPropertyFile = "/app.properties";
     String inital_qc_status = "Under-Review";
     Utils utils = new Utils();
+    BasicMail email = new BasicMail();
     private Log log = LogFactory.getLog(UpdateLimsSampleLevelSequencingQcTask.class);
     private ConnectionLIMS conn;
     User user;
@@ -100,8 +103,14 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 }
             }
             dataRecordManager.storeAndCommit(String.format("Added/updated new %s records for Sequencing Run %s", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, runId), null, user);
+            email.send("sharmaa1@mskcc.org", "zzPDL_SKI_IGO_DATA@mskcc.org", "localhost.mskcc.org", String.format("Added Sequencing stats for run %s", runId), String.format("Added Sequencing stats for %d samples on run %s", statsAdded.size(), runId));
         } catch (Exception e) {
-            log.info(String.format("Error while querying ngs-stats endpoint using runId %s.\n%s:%s", this.runId, ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e)));
+            log.error(String.format("Error while querying ngs-stats endpoint using runId %s.\n%s:%s", this.runId, ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e)));
+            try {
+                email.send("sharmaa1@mskcc.org", "zzPDL_SKI_IGO_DATA@mskcc.org", "localhost.mskcc.org", "Failed to add Run " + runId + " Stats to LIMS", ExceptionUtils.getMessage(e));
+            } catch (MessagingException ex) {
+                log.error(String.format("Failed to send error email.\n%s", ExceptionUtils.getStackTrace(e)));
+            }
         }
         log.info(String.format("Added/Updated total %d %s records for Sequencing Run %s",statsAdded.size(), SeqAnalysisSampleQCModel.DATA_TYPE_NAME, runId));
         return statsAdded;
@@ -116,7 +125,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         Properties properties = new Properties();
         String delphiRestUrl;
         try {
-            properties.load(new FileReader(getResourceFile(appPropertyFile)));
+            properties.load(new FileReader(getResourceFile(appPropertyFile).replaceAll("%23", "#")));
             delphiRestUrl = properties.getProperty("delphiRestUrl");
         } catch (IOException e) {
             log.error(String.format("Error while parsing properties file:\n%s,%s", ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getStackTrace(e)));
