@@ -7,7 +7,6 @@ public class SampleSequencingQc {
 
     String sampleId;
     String otherSampleId;
-    String altId;
     String request;
     String baitSet;
     String sequencerRunFolder;
