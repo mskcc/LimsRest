@@ -1,6 +1,5 @@
 package org.mskcc.limsrest.controller.sequencingqc;
 
-import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
@@ -12,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -31,17 +31,23 @@ public class UpdateLimsSampleLevelSequencingQc {
     @GetMapping("/updateLimsSampleLevelSequencingQc")
     public Map<String, String> getContent(@RequestParam(value = "runId") String runId) {
         if (StringUtils.isBlank(runId)){
-            log.info(String.format("Invalid RUN ID: '%s'", runId));
-            return null;
+            final String error = String.format("Invalid RUN ID: '%s'", runId);
+            Map<String, String> resp = new HashMap<>();
+            resp.put("error", error);
+            log.info(error);
+            return resp;
         }
 
         UpdateLimsSampleLevelSequencingQcTask task = new UpdateLimsSampleLevelSequencingQcTask(runId, conn);
-        log.info(String.format("Starting to update Sequencing Analysis Sample-Level QC in LIMS for run: %s", runId));
+        log.info(String.format("Starting to Add/Update SeqAnalysisSampleQC in LIMS for run: %s", runId));
         try {
             return task.execute();
         } catch (Exception e) {
-            log.error(ExceptionUtils.getStackTrace(e));
-            return null;
+            Map<String, String> resp = new HashMap<>();
+            String err = String.format("%s -> Error while updating Run Stats: %s", ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getStackTrace(e));
+            resp.put("error", err);
+            log.info(err);
+            return resp;
         }
     }
 }
