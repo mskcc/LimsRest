@@ -6,20 +6,20 @@ import org.apache.commons.logging.LogFactory;
 import java.util.Map;
 
 /**
- * Represents a Tracked Stage in IGO's project tracker
+ * Represents a Tracked Stage in IGO's project tracker at either the sample-level (size 1) or request level (size >= 1)
  * Notes:
  * - Stages are initialized as complete
  * - Failed WorkflowSamples are considered to have "completed" that stage and do not set a stage to incomplete
  *
  * @author David Streid
  */
-public class SampleStageTracker extends StatusTracker {
-    private static Log log = LogFactory.getLog(SampleStageTracker.class);
+public class StageTracker extends StatusTracker {
+    private static Log log = LogFactory.getLog(StageTracker.class);
 
     private Integer endingSamples;      // Number of samples that have completed this stage and moved on to the next
     private Integer failedSamples;      // Number of failed samples at this stage (considered incomplete)
 
-    public SampleStageTracker(String stage, Integer size, Integer endingSamples, Long startTime, Long updateTime) {
+    public StageTracker(String stage, Integer size, Integer endingSamples, Long startTime, Long updateTime) {
         this.complete = Boolean.TRUE;   // Stages default to complete. Only an update can set to incomplete
         this.endingSamples = endingSamples;
         this.failedSamples = 0;

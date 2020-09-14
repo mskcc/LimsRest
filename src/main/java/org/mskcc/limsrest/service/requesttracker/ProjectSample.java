@@ -21,7 +21,7 @@ public class ProjectSample {
     DataRecord record;
     boolean complete;
     Boolean failed;
-    private Map<String, SampleStageTracker> stages;     // Stages present in the project
+    private Map<String, StageTracker> stages;     // Stages present in the project
     private WorkflowSample root;                        // workflowSamples descend from tree root
 
     public ProjectSample(Long recordId) {
@@ -54,7 +54,7 @@ public class ProjectSample {
         this.failed = failed;
     }
 
-    public List<SampleStageTracker> getStages() {
+    public List<StageTracker> getStages() {
         return new ArrayList(stages.values());
     }
 
@@ -64,11 +64,11 @@ public class ProjectSample {
      *
      * @param stages
      */
-    public void addStages(List<SampleStageTracker> stages) {
+    public void addStages(List<StageTracker> stages) {
         stages.forEach(
                 (stage) -> {
                     this.stages.merge(
-                            stage.getStage(), stage, (SampleStageTracker currentStage, SampleStageTracker updateStage) -> {
+                            stage.getStage(), stage, (StageTracker currentStage, StageTracker updateStage) -> {
                                 currentStage.updateStageTimes(updateStage);
                                 return currentStage;
                             });
