@@ -111,7 +111,7 @@ public class ProjectSampleTree {
                 stage = this.stageMap.get(stageName);
                 stage.updateStageTimes(node);
             } else {
-                stage = new StageTracker(stageName, 1, 0, node.getStartTime(), node.getUpdateTime());
+                stage = new StageTracker(stageName, StageTracker.SAMPLE_COUNT, 0, node.getStartTime(), node.getUpdateTime());
                 this.stageMap.put(stageName, stage);
             }
         } else {
@@ -178,7 +178,7 @@ public class ProjectSampleTree {
     public void updateTreeOnLeafStatus(WorkflowSample leaf) {
         StageTracker stage = this.stageMap.computeIfAbsent(leaf.getStage(),
                 // Absent when the LIMS tree is a single node in "Awaiting Processing"
-                k -> new StageTracker(STAGE_AWAITING_PROCESSING, 1, 0, 0L, 0L));
+                k -> new StageTracker(STAGE_AWAITING_PROCESSING, StageTracker.SAMPLE_COUNT, 0, 0L, 0L));
 
         // Failed leafs do not modify the completion status
         if (leaf.getFailed()) {

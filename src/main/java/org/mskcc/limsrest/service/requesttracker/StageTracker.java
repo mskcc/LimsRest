@@ -15,6 +15,7 @@ import java.util.Map;
  */
 public class StageTracker extends StatusTracker {
     private static Log log = LogFactory.getLog(StageTracker.class);
+    public static final Integer SAMPLE_COUNT = 1; // Default size for a sample, i.e. single tracked sample has size: 1
 
     private Integer endingSamples;      // Number of samples that have completed this stage and moved on to the next
     private Integer failedSamples;      // Number of failed samples at this stage (considered incomplete)

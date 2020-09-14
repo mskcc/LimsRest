@@ -18,6 +18,7 @@ import java.rmi.RemoteException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.mskcc.limsrest.service.requesttracker.StageTracker.SAMPLE_COUNT;
 import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 import static org.mskcc.limsrest.util.Utils.*;
 
@@ -28,7 +29,6 @@ import static org.mskcc.limsrest.util.Utils.*;
  */
 public class GetRequestTrackingTask {
     private static Log log = LogFactory.getLog(GetRequestTrackingTask.class);
-    private static final Integer SAMPLE_COUNT = 1; // Default size for a sample, i.e. single tracked sample has size: 1
 
     private static String[] requestDataLongFields = new String[]{RequestModel.RECEIVED_DATE};
     private static String[] requestDataStringFields = new String[]{
