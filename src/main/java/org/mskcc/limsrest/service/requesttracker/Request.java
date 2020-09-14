@@ -54,7 +54,12 @@ public class Request {
     }
 
     public Map<String, SampleStageTracker> getStages() {
-        return new HashMap<String, SampleStageTracker>(this.stages);
+        Map<String, SampleStageTracker> cloned = new TreeMap<>(new StageComp());
+        for(Map.Entry<String, SampleStageTracker> entry : this.stages.entrySet()){
+            cloned.put(entry.getKey(), entry.getValue());
+        }
+        return cloned;
+
     }
 
     public List<ProjectSample> getSamples() {

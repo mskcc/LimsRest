@@ -133,16 +133,16 @@ public class GetRequestTrackingTask {
 
         Boolean isStagesComplete = true;
         Integer numFailed = 0;
-        Integer numComplete = 0;
         Integer numTotal = 0;
         SampleStageTracker stage;
+        Integer numComplete = 0;
         for (Map.Entry<String, SampleStageTracker> requestStage : stages.entrySet()) {
             stage = requestStage.getValue();
             isStagesComplete = isStagesComplete && stage.getComplete();
             numFailed += stage.getFailedSamplesCount();
             numTotal = stage.getSize() > numTotal ? stage.getSize() : numTotal;
+            // Reset numComplete as the # of ending samples in last stage (stages is ordered)
             numComplete = stage.getEndingSamples();
-
         }
         projectStatus.put("stagesComplete", isStagesComplete);
         projectStatus.put("completed", numComplete);
