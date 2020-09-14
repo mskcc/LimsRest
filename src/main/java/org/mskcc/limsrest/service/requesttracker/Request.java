@@ -18,7 +18,7 @@ public class Request {
 
     private String requestId;
     private String bankedSampleId;
-    private Map<String, SampleStageTracker> stages;
+    private Map<String, StageTracker> stages;
     private List<ProjectSample> samples;                // Tree of samples
     private Map<String, Object> metaData;               // Summary of metaData
     private Map<String, Object> summary;                // Summary of overall project status
@@ -46,16 +46,16 @@ public class Request {
      * @param stageName
      * @param stage
      */
-    public void addStage(String stageName, SampleStageTracker stage) {
+    public void addStage(String stageName, StageTracker stage) {
         if (this.stages.containsKey(stageName)) {
             log.warn(String.format("Overriding stage: %s recorded for record: %s", stageName, this.requestId));
         }
         this.stages.put(stageName, stage);
     }
 
-    public Map<String, SampleStageTracker> getStages() {
-        Map<String, SampleStageTracker> cloned = new TreeMap<>(new StageComp());
-        for(Map.Entry<String, SampleStageTracker> entry : this.stages.entrySet()){
+    public Map<String, StageTracker> getStages() {
+        Map<String, StageTracker> cloned = new TreeMap<>(new StageComp());
+        for(Map.Entry<String, StageTracker> entry : this.stages.entrySet()){
             cloned.put(entry.getKey(), entry.getValue());
         }
         return cloned;

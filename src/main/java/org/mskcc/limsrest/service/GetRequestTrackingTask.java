@@ -18,6 +18,7 @@ import java.rmi.RemoteException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.mskcc.limsrest.service.requesttracker.StageTracker.SAMPLE_COUNT;
 import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 import static org.mskcc.limsrest.util.Utils.*;
 
@@ -28,7 +29,6 @@ import static org.mskcc.limsrest.util.Utils.*;
  */
 public class GetRequestTrackingTask {
     private static Log log = LogFactory.getLog(GetRequestTrackingTask.class);
-    private static Integer SAMPLE_COUNT = 1;
 
     private static String[] requestDataLongFields = new String[]{RequestModel.RECEIVED_DATE};
     private static String[] requestDataStringFields = new String[]{
@@ -65,7 +65,7 @@ public class GetRequestTrackingTask {
             // Add "submitted" stage if a serviceID exists
             // TODO - Why is this the case (QA: "06302_W")
             // TODO - Place in thread as this can be executed independently
-            SampleStageTracker submittedStage = getSubmittedStage(serviceId, user, drm);
+            StageTracker submittedStage = getSubmittedStage(serviceId, user, drm);
             request.addStage(STAGE_SUBMITTED, submittedStage);
         }
 
@@ -86,8 +86,8 @@ public class GetRequestTrackingTask {
 
         // Aggregate Project-Level stage information. Stages are added one-by-one as previous stages (E.g. "submitted")
         // may have been added and should not be overwritten
-        Map<String, SampleStageTracker> projectStages = getProjectStagesFromSamples(projectSamples);
-        for (Map.Entry<String, SampleStageTracker> requestStage : projectStages.entrySet()) {
+        Map<String, StageTracker> projectStages = getProjectStagesFromSamples(projectSamples);
+        for (Map.Entry<String, StageTracker> requestStage : projectStages.entrySet()) {
             request.addStage(requestStage.getKey(), requestStage.getValue());
         }
 
@@ -119,7 +119,7 @@ public class GetRequestTrackingTask {
      * @param user
      * @return
      */
-    private Map<String, Object> getProjectSummary(DataRecord requestRecord, Map<String, SampleStageTracker> stages, User user){
+    private Map<String, Object> getProjectSummary(DataRecord requestRecord, Map<String, StageTracker> stages, User user){
         Map<String, Object> projectStatus = new HashMap<>();
 
         // IGO Completion is confirmed by delivery, which sets the "RecentDeliveryDate" field
@@ -134,9 +134,9 @@ public class GetRequestTrackingTask {
         Boolean isStagesComplete = true;
         Integer numFailed = 0;
         Integer numTotal = 0;
-        SampleStageTracker stage;
+        StageTracker stage;
         Integer numComplete = 0;
-        for (Map.Entry<String, SampleStageTracker> requestStage : stages.entrySet()) {
+        for (Map.Entry<String, StageTracker> requestStage : stages.entrySet()) {
             stage = requestStage.getValue();
             isStagesComplete = isStagesComplete && stage.getComplete();
             numFailed += stage.getFailedSamplesCount();
@@ -294,11 +294,11 @@ public class GetRequestTrackingTask {
      * @param projectSamples - All samples of a request
      * @return
      */
-    public Map<String, SampleStageTracker> getProjectStagesFromSamples(List<ProjectSample> projectSamples) {
-        List<SampleStageTracker> sampleStages = projectSamples.stream()
+    public Map<String, StageTracker> getProjectStagesFromSamples(List<ProjectSample> projectSamples) {
+        List<StageTracker> sampleStages = projectSamples.stream()
                 .flatMap(tracker -> tracker.getStages().stream())
                 .collect(Collectors.toList());
-        Map<String, SampleStageTracker> requestStagesMap = aggregateStages(sampleStages);
+        Map<String, StageTracker> requestStagesMap = aggregateStages(sampleStages);
         return requestStagesMap;
     }
 
@@ -313,14 +313,14 @@ public class GetRequestTrackingTask {
      * @param sampleStages - List of SampleStageTracker instances representing one stage of one sample
      * @return
      */
-    public Map<String, SampleStageTracker> aggregateStages(List<SampleStageTracker> sampleStages) {
-        Map<String, SampleStageTracker> stageMap = new TreeMap<>(new StageComp());
+    public Map<String, StageTracker> aggregateStages(List<StageTracker> sampleStages) {
+        Map<String, StageTracker> stageMap = new TreeMap<>(new StageComp());
         if (sampleStages.size() == 0) return stageMap;
 
         String stageName;
-        SampleStageTracker projectStage;    // SampleStageTracker of the project created from aggregated sampleStages
+        StageTracker projectStage;    // SampleStageTracker of the project created from aggregated sampleStages
         Boolean isFailedStage;
-        for (SampleStageTracker sampleStage : sampleStages) {
+        for (StageTracker sampleStage : sampleStages) {
             stageName = sampleStage.getStage();
             // Merge Event - Stage added by a previous ProjectSample
             if (stageMap.containsKey(stageName)) {
@@ -328,7 +328,7 @@ public class GetRequestTrackingTask {
                 projectStage.updateStageTimes(sampleStage);
                 projectStage.addStartingSample(SAMPLE_COUNT);
             } else {
-                projectStage = new SampleStageTracker(stageName, SAMPLE_COUNT, 0, sampleStage.getStartTime(), sampleStage.getUpdateTime());
+                projectStage = new StageTracker(stageName, SAMPLE_COUNT, 0, sampleStage.getStartTime(), sampleStage.getUpdateTime());
                 stageMap.put(stageName, projectStage);
             }
             isFailedStage = sampleStage.getFailedSamplesCount() > 0;
@@ -349,8 +349,8 @@ public class GetRequestTrackingTask {
          */
         Boolean complete = true;
         Integer completedCount;
-        Collection<SampleStageTracker> trackers = stageMap.values();
-        for (SampleStageTracker tracker : trackers) {
+        Collection<StageTracker> trackers = stageMap.values();
+        for (StageTracker tracker : trackers) {
             completedCount = tracker.getEndingSamples() + tracker.getFailedSamplesCount();
             complete = complete && completedCount.equals(tracker.getSize());
             tracker.setComplete(complete);
@@ -367,7 +367,7 @@ public class GetRequestTrackingTask {
      * @param drm
      * @return
      */
-    private SampleStageTracker getSubmittedStage(String serviceId, User user, DataRecordManager drm) {
+    private StageTracker getSubmittedStage(String serviceId, User user, DataRecordManager drm) {
         Map<String, Integer> tracker = new HashMap<>();
 
         String query = String.format("%s = '%s'", BankedSampleModel.SERVICE_ID, serviceId);
@@ -398,7 +398,7 @@ public class GetRequestTrackingTask {
         total = tracker.get("Total");
         promoted = tracker.get(BankedSampleModel.PROMOTED);
 
-        SampleStageTracker requestStage = new SampleStageTracker(STAGE_SUBMITTED, total, promoted, null, null);
+        StageTracker requestStage = new StageTracker(STAGE_SUBMITTED, total, promoted, null, null);
         Boolean submittedComplete = total == promoted;
         if (submittedComplete) {
             requestStage.setComplete(Boolean.TRUE);
