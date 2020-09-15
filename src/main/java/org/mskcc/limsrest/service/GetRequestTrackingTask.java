@@ -11,6 +11,7 @@ import com.velox.sloan.cmo.recmodels.RequestModel;
 import com.velox.sloan.cmo.recmodels.SampleModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.junit.platform.commons.util.StringUtils;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.requesttracker.*;
 
@@ -79,10 +80,18 @@ public class GetRequestTrackingTask {
         DataRecord requestRecord = requestRecordList.get(0);
 
         Map<String, Object> metaData = getMetaDataFromRecord(requestRecord, user);
-        request.setMetaData(metaData);
 
         List<ProjectSample> projectSamples = getProjectSamplesFromDataRecord(requestRecord, user);
         request.setSamples(projectSamples);
+
+        // Certain fields can only be collected after the ProjectSample has been created
+        Set<String> sourceProjects = projectSamples.stream()
+                .map(sample -> sample.getRoot().getSourceRequest())
+                .filter(sampleId -> !StringUtils.isBlank(sampleId))
+                .collect(Collectors.toSet());
+        metaData.put("sourceProjects", sourceProjects.toArray());
+
+        request.setMetaData(metaData);
 
         // Aggregate Project-Level stage information. Stages are added one-by-one as previous stages (E.g. "submitted")
         // may have been added and should not be overwritten
