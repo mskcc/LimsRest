@@ -7,6 +7,7 @@ import com.velox.sloan.cmo.recmodels.SampleModel;
 import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.junit.platform.commons.util.StringUtils;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.util.LimsStage;
 
@@ -14,6 +15,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 import static org.mskcc.limsrest.util.Utils.*;
@@ -30,6 +33,7 @@ public class WorkflowSample extends StatusTracker {
 
     Long recordId;
     String recordName;
+    String sourceSampleId;
     String status;
     WorkflowSample parent;     // TODO - Can this ever be multiple?
     List<WorkflowSample> children;
@@ -76,6 +80,7 @@ public class WorkflowSample extends StatusTracker {
         if (this.record == null || this.user == null) return;
 
         String status = getRecordStringValue(this.record, SampleModel.EXEMPLAR_SAMPLE_STATUS, this.user);
+        this.sourceSampleId = getRecordStringValue(this.record, SampleModel.SOURCE_LIMS_ID, this.user);
         String stageName = STAGE_AWAITING_PROCESSING;
         try {
             // Data QC stage is determined by presence of a SeqQCStatus record, it needs to be re-assigned
@@ -125,7 +130,25 @@ public class WorkflowSample extends StatusTracker {
 
     public void setRecord(DataRecord record) {
         this.record = record;
+    }
 
+    /**
+     * Returns the source request of the workflow sample
+     *
+     * @return - Source Request ID, e.g. "06302_AG"
+     */
+    public String getSourceRequest() {
+        // Source sample ID has suffix, e.g. "06302_X_1358_1_1". We need to parse out the project, e.g. "06302_X"
+        if(!StringUtils.isBlank(this.sourceSampleId)){
+            String pattern = "\\d{5}_[A-Z,a-z]{1,2}";
+            Pattern r = Pattern.compile(pattern);
+            Matcher m = r.matcher(this.sourceSampleId);
+            if(m.find()){
+                return m.group(0);
+            }
+            return "INVALID";
+        }
+        return "";
     }
 
     public Map<String, Object> toApiResponse() {
@@ -139,6 +162,7 @@ public class WorkflowSample extends StatusTracker {
         Map<String, Object> attributesMap = super.toApiResponse();
         attributesMap.put("status", this.status);
         attributesMap.put("failed", this.failed);
+        attributesMap.put("sourceSampleId", this.sourceSampleId);
         apiMap.put("attributes", attributesMap);
 
         return apiMap;
