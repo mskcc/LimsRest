@@ -3,9 +3,13 @@ package org.mskcc.limsrest.service;
 import com.velox.api.datarecord.*;
 import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.sloan.cmo.recmodels.SampleModel;
+import com.velox.sloan.cmo.recmodels.SeqRequirementModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
+
+import org.mskcc.limsrest.util.Utils;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.rmi.RemoteException;
@@ -23,6 +27,7 @@ public class GetReadyForIllumina {
     public GetReadyForIllumina(ConnectionLIMS conn) {
         this.conn = conn;
     }
+    Utils utils = new Utils();
 
     @PreAuthorize("hasRole('READ')")
     public List<RunSummary> execute() {
@@ -279,6 +284,12 @@ public class GetReadyForIllumina {
             throw new IllegalStateException(String.format("Failed to retrieve barcode ID & Seq from IGO Sample Id: %s. Not adding summary.", sampleId));
         }
         summary.setReadNum(getRequestedReadsForSample(unpooledSample, user).toString());
+        List<DataRecord> seqReqrmts = utils.getRecordsOfTypeFromParents(unpooledSample, SampleModel.DATA_TYPE_NAME, SeqRequirementModel.DATA_TYPE_NAME, user);
+        if (seqReqrmts.size()>0){
+            DataRecord seqReq = seqReqrmts.get(0);
+            summary.setReadTotal(seqReq.getValue(SeqRequirementModel.READ_TOTAL, user) != null ? seqReq.getLongVal(SeqRequirementModel.READ_TOTAL, user): 0);
+            summary.setRemainingReads(seqReq.getValue("RemainingReads", user) != null ? seqReq.getLongVal("RemainingReads", user) : 0);
+        }
         String plannedSequencer = getPlannedSequencerForSample(unpooledSample, user);
         if (plannedSequencer != null)
             summary.setSequencer(plannedSequencer);
@@ -317,6 +328,12 @@ public class GetReadyForIllumina {
         String indexAndBarcode = getSampleLibraryIndexIdAndBarcode(sampleInPool, user);
         if (indexAndBarcode !=null && indexAndBarcode.split(",").length==2)
             summary.setBarcodeId(indexAndBarcode.split(",")[0]);
+        List<DataRecord> seqReqrmts = utils.getRecordsOfTypeFromParents(sampleInPool, SampleModel.DATA_TYPE_NAME, SeqRequirementModel.DATA_TYPE_NAME, user);
+        if (seqReqrmts.size()>0){
+            DataRecord seqReq = seqReqrmts.get(0);
+            summary.setReadTotal(seqReq.getValue(SeqRequirementModel.READ_TOTAL, user) != null ? seqReq.getLongVal(SeqRequirementModel.READ_TOTAL, user): 0);
+            summary.setRemainingReads(seqReq.getValue("RemainingReads", user) != null ? seqReq.getLongVal("RemainingReads", user) : 0);
+        }
         summary.setBarcodeSeq(indexAndBarcode.split(",")[1]);
         summary.setReadNum(getRequestedReadsForSample(sampleInPool, user).toString());
         String plannedSequencer = getPlannedSequencerForSample(sampleInPool, user);

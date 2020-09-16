@@ -19,6 +19,8 @@ public class RunSummary{
    private String investigator;
    private String recipe;
    private String readNum;
+   private long readTotal;
+   private long remainingReads;
    private String requestId;
    private String runType;
    private String sequencer;
@@ -53,6 +55,8 @@ public class RunSummary{
         species = "";
         status = "";
         numberRequestedReads = 0;
+        readTotal = 0;
+        remainingReads = 0;
         startDate = 0;
         lanes = new LinkedList<Long>();
 	    receivedDate = 0;
@@ -310,6 +314,24 @@ public class RunSummary{
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public double getAltConcentration(){
     return altConcentration;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public long getReadTotal() {
+        return readTotal;
+    }
+
+    public void setReadTotal(long readTotal) {
+        this.readTotal = readTotal;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public long getRemainingReads() {
+        return remainingReads;
+    }
+
+    public void setRemainingReads(long remainingReads) {
+        this.remainingReads = remainingReads;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
