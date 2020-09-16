@@ -29,6 +29,9 @@ import java.net.URL;
 import java.rmi.RemoteException;
 import java.util.*;
 
+import static org.mskcc.limsrest.util.Utils.getBaseSampleId;
+import static org.mskcc.limsrest.util.Utils.getRecordsOfTypeFromParents;
+
 public class UpdateLimsSampleLevelSequencingQcTask {
     private final static List<String> POOLED_SAMPLE_TYPES = Collections.singletonList("pooled library");
     private final String POOLEDNORMAL_IDENTIFIER = "POOLEDNORMAL";
@@ -36,7 +39,6 @@ public class UpdateLimsSampleLevelSequencingQcTask {
     DataRecordManager dataRecordManager;
     String appPropertyFile = "/app.properties";
     String inital_qc_status = "Under-Review";
-    Utils utils = new Utils();
     BasicMail email = new BasicMail();
     private Log log = LogFactory.getLog(UpdateLimsSampleLevelSequencingQcTask.class);
     private ConnectionLIMS conn;
@@ -338,7 +340,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
     private DataRecord getLibrarySample(List<DataRecord> relatedLibrarySamples, String sampleId) {
         try {
             for (DataRecord sample : relatedLibrarySamples){
-                String baseId = utils.getBaseSampleId(sample.getStringVal(SampleModel.SAMPLE_ID, user));
+                String baseId = getBaseSampleId(sample.getStringVal(SampleModel.SAMPLE_ID, user));
                 if(baseId.equalsIgnoreCase(sampleId)){
                     return sample;
                 }
@@ -369,7 +371,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 Object sampleId = sam.getStringVal(SampleModel.SAMPLE_ID, user);
                 Object otherSampleId = sam.getStringVal(SampleModel.OTHER_SAMPLE_ID, user);
                 if ((sampleId != null && sampleId.toString().contains(POOLEDNORMAL_IDENTIFIER)) || (otherSampleId != null && otherSampleId.toString().contains(POOLEDNORMAL_IDENTIFIER))){
-                   List<DataRecord> indexBarcodeRecs = utils.getRecordsOfTypeFromParents(sam, SampleModel.DATA_TYPE_NAME, IndexBarcodeModel.DATA_TYPE_NAME, user);
+                   List<DataRecord> indexBarcodeRecs = getRecordsOfTypeFromParents(sam, SampleModel.DATA_TYPE_NAME, IndexBarcodeModel.DATA_TYPE_NAME, user);
                    if (!indexBarcodeRecs.isEmpty()){
                        log.info(indexBarcodeRecs.get(0).getDataTypeName());
                        log.info("Total indexbarcode records for pooled normal: " + indexBarcodeRecs.size());

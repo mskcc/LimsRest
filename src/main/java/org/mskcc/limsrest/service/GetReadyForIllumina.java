@@ -16,6 +16,8 @@ import java.rmi.RemoteException;
 import java.rmi.ServerException;
 import java.util.*;
 
+import static org.mskcc.limsrest.util.Utils.getRecordsOfTypeFromParents;
+
 /**
  * A queued task that takes shows all samples that need planned for Illumina runs. This endpoint will return the sample level information for individual Library samples and pooled Library samples.
  * The information is important for Pool planning for sequencing and making important pooling decisions.
@@ -27,7 +29,6 @@ public class GetReadyForIllumina {
     public GetReadyForIllumina(ConnectionLIMS conn) {
         this.conn = conn;
     }
-    Utils utils = new Utils();
 
     @PreAuthorize("hasRole('READ')")
     public List<RunSummary> execute() {
@@ -284,7 +285,7 @@ public class GetReadyForIllumina {
             throw new IllegalStateException(String.format("Failed to retrieve barcode ID & Seq from IGO Sample Id: %s. Not adding summary.", sampleId));
         }
         summary.setReadNum(getRequestedReadsForSample(unpooledSample, user).toString());
-        List<DataRecord> seqReqrmts = utils.getRecordsOfTypeFromParents(unpooledSample, SampleModel.DATA_TYPE_NAME, SeqRequirementModel.DATA_TYPE_NAME, user);
+        List<DataRecord> seqReqrmts = getRecordsOfTypeFromParents(unpooledSample, SampleModel.DATA_TYPE_NAME, SeqRequirementModel.DATA_TYPE_NAME, user);
         if (seqReqrmts.size()>0){
             DataRecord seqReq = seqReqrmts.get(0);
             summary.setReadTotal(seqReq.getValue(SeqRequirementModel.READ_TOTAL, user) != null ? seqReq.getLongVal(SeqRequirementModel.READ_TOTAL, user): 0);
@@ -328,7 +329,7 @@ public class GetReadyForIllumina {
         String indexAndBarcode = getSampleLibraryIndexIdAndBarcode(sampleInPool, user);
         if (indexAndBarcode !=null && indexAndBarcode.split(",").length==2)
             summary.setBarcodeId(indexAndBarcode.split(",")[0]);
-        List<DataRecord> seqReqrmts = utils.getRecordsOfTypeFromParents(sampleInPool, SampleModel.DATA_TYPE_NAME, SeqRequirementModel.DATA_TYPE_NAME, user);
+        List<DataRecord> seqReqrmts = getRecordsOfTypeFromParents(sampleInPool, SampleModel.DATA_TYPE_NAME, SeqRequirementModel.DATA_TYPE_NAME, user);
         if (seqReqrmts.size()>0){
             DataRecord seqReq = seqReqrmts.get(0);
             summary.setReadTotal(seqReq.getValue(SeqRequirementModel.READ_TOTAL, user) != null ? seqReq.getLongVal(SeqRequirementModel.READ_TOTAL, user): 0);
