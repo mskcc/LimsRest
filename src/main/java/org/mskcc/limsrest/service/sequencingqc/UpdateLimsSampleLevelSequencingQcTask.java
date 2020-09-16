@@ -72,7 +72,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 // first find the library sample that is parent of Pool Sample that went on Sequencer.
                 DataRecord librarySample = getLibrarySample(relatedLibrarySamples, sampleId);
                 assert librarySample != null;
-                log.info(String.format("Found Library Sample with Sample ID : %s", librarySample.getStringVal("SampleId", user)));
+                log.info(String.format("Found Library Sample with Sample ID : %s", librarySample.getValue(SampleModel.SAMPLE_ID, user)));
                 String igoId = librarySample.getStringVal(SampleModel.SAMPLE_ID, user);
                 Object altId = Utils.getValueFromDataRecord(librarySample, "AltId", "String", user);
                 //add AltId to the values to be updated.
@@ -304,13 +304,17 @@ public class UpdateLimsSampleLevelSequencingQcTask {
             List<DataRecord> illuminaSeqExperiments = dataRecordManager.queryDataRecords(IlluminaSeqExperimentModel.DATA_TYPE_NAME,IlluminaSeqExperimentModel.SEQUENCER_RUN_FOLDER + " LIKE '%" + runId + "%'", user);
             for (DataRecord exp : illuminaSeqExperiments) {
                 List<DataRecord> relatedSamples = exp.getDescendantsOfType(SampleModel.DATA_TYPE_NAME, user);
+                log.info(String.format("Total Related Samples for IlluminaSeq Run %s: %d", runId, relatedSamples.size()));
                 Stack<DataRecord> sampleStack = new Stack<>();
                 sampleStack.addAll(relatedSamples);
                 do {
                     DataRecord stackSample = sampleStack.pop();
                     Object sampleType = stackSample.getValue(SampleModel.EXEMPLAR_SAMPLE_TYPE, user);
-                    if (sampleType != null && !POOLED_SAMPLE_TYPES.contains(sampleType.toString().toLowerCase())) {
+                    Object samId = stackSample.getValue(SampleModel.SAMPLE_ID, user);
+                    log.info("Sample Type: " + sampleType);
+                    if (!samId.toString().toLowerCase().startsWith("pool") || (sampleType != null && !POOLED_SAMPLE_TYPES.contains(sampleType.toString().toLowerCase()))) {
                         String sampleId = stackSample.getStringVal(SampleModel.SAMPLE_ID, user);
+                        log.info("Adding sample to Library Samples List: " + sampleId);
                         if (addedSampleIds.add(sampleId)) {
                             flowCellSamples.add(stackSample);
                         }
@@ -319,7 +323,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                     }
                 }while (!sampleStack.isEmpty());
             }
-        } catch (NotFound | RemoteException | IoError notFound) {
+        } catch (NotFound | RemoteException | IoError | NullPointerException notFound) {
             log.error(String.format("%s-> Error while getting related Library Samples for run %s:\n%s", ExceptionUtils.getRootCauseMessage(notFound), runId, ExceptionUtils.getStackTrace(notFound)));
         }
         return flowCellSamples;
