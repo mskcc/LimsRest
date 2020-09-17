@@ -20,6 +20,7 @@ import org.mskcc.limsrest.util.BasicMail;
 import static org.mskcc.limsrest.util.Utils.*;
 
 import javax.mail.MessagingException;
+import javax.validation.constraints.Null;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -63,7 +64,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 log.error(String.format("Found no NGS-STATS for run with run id %s using url %s", runId, getStatsUrl()));
             }
             //get all the Library samples that are present on the run
-            List<DataRecord> relatedLibrarySamples = getRelatedSamples(runId);
+            List<DataRecord> relatedLibrarySamples = getRelatedLibrarySamples(runId);
             log.info(String.format("Total Related Library Samples for run %s: %d", runId, relatedLibrarySamples.size()));
             //loop through stats data and add/update lims SeqAnalysisSampleQc records
             for (String key : data.keySet()) {
@@ -73,7 +74,10 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 String sampleId = String.valueOf(qcDataVals.get("SampleId"));
                 // first find the library sample that is parent of Pool Sample that went on Sequencer.
                 DataRecord librarySample = getLibrarySample(relatedLibrarySamples, sampleId);
-                assert librarySample != null;
+                if(librarySample == null){
+                    log.error("Could not find related Library Sample for Sample with Stats SampleId: " + sampleId);
+                    continue;
+                }
                 log.info(String.format("Found Library Sample with Sample ID : %s", librarySample.getValue(SampleModel.SAMPLE_ID, user)));
                 String igoId = librarySample.getStringVal(SampleModel.SAMPLE_ID, user);
                 Object altId = getValueFromDataRecord(librarySample, "AltId", "String", user);
@@ -105,14 +109,16 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 }
             }
             dataRecordManager.storeAndCommit(String.format("Added/updated new %s records for Sequencing Run %s", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, runId), null, user);
-            email.send("sharmaa1@mskcc.org", "zzPDL_SKI_IGO_DATA@mskcc.org", "localhost.mskcc.org", String.format("Added Sequencing stats for run %s", runId), String.format("Added Sequencing stats for %d samples on run %s", statsAdded.size(), runId));
+            //Emails do not work on igo-lims02 VM because of mail package conflict with MySQL. This will be implemented when fixed.
+            //email.send("sharmaa1@mskcc.org", "zzPDL_SKI_IGO_DATA@mskcc.org", "localhost.mskcc.org", String.format("Added Sequencing stats for run %s", runId), String.format("Added Sequencing stats for %d samples on run %s", statsAdded.size(), runId));
         } catch (Exception e) {
             log.error(String.format("Error while querying ngs-stats endpoint using runId %s.\n%s:%s", this.runId, ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e)));
-            try {
-                email.send("sharmaa1@mskcc.org", "zzPDL_SKI_IGO_DATA@mskcc.org", "localhost.mskcc.org", "Failed to add Run " + runId + " Stats to LIMS", ExceptionUtils.getMessage(e));
-            } catch (MessagingException ex) {
-                log.error(String.format("Failed to send error email.\n%s", ExceptionUtils.getStackTrace(e)));
-            }
+            //Emails do not work on igo-lims02 VM because of mail package conflict with MySQL. This will be implemented when fixed.
+//            try {
+//                email.send("sharmaa1@mskcc.org", "zzPDL_SKI_IGO_DATA@mskcc.org", "localhost.mskcc.org", "Failed to add Run " + runId + " Stats to LIMS", ExceptionUtils.getMessage(e));
+//            } catch (MessagingException ex) {
+//                log.error(String.format("Failed to send error email.\n%s", ExceptionUtils.getStackTrace(e)));
+//            }
         }
         log.info(String.format("Added/Updated total %d %s records for Sequencing Run %s",statsAdded.size(), SeqAnalysisSampleQCModel.DATA_TYPE_NAME, runId));
         return statsAdded;
@@ -180,6 +186,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
      */
     private Map<String, Object> getQcValues(JSONObject statsData) {
         String sampleId = getIgoId(String.valueOf(statsData.get("sample")));
+        log.info("QC Vals Sample ID: " + sampleId);
         String otherSampleId = getIgoSampleName(String.valueOf(statsData.get("sample")));
         String request = String.valueOf(statsData.get("request"));
         String baitSet = String.valueOf(statsData.get("bait_SET"));
@@ -231,7 +238,16 @@ public class UpdateLimsSampleLevelSequencingQcTask {
      * @return
      */
     private String getIgoId(String id) {
+        log.info("Stats IGO ID: " + id);
         List<String> idVals = Arrays.asList(id.split("_IGO_"));
+        if (id.contains(POOLEDNORMAL_IDENTIFIER) || id.contains(CONTROL_IDENTIFIER)){
+            if(idVals.size() == 2){
+                String pooledNormalName = idVals.get(0);
+                String [] barcodeVals = idVals.get(1).split("_");
+                String barcode = barcodeVals[barcodeVals.length-1];
+                return pooledNormalName + "_" + barcode;
+            }
+        }
         if (idVals.size() == 2) {
             return idVals.get(1);
         } else {
@@ -241,7 +257,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
 
     /**
      * Method to extract SampleId (IGO_ID) sampleId value in qc data. Qc data sample name is concatenation of
-     * OtherSampleId , _IGO_, SampleID.
+     * OtherSampleId , _IGO_, SampleID. And for POOLEDNORMALS it is 'POOLEDNORMAL', _IGO_, RECIPE, i7 barcode.
      *
      * @param id
      * @return
@@ -299,7 +315,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
      * @param runId
      * @return
      */
-    private List<DataRecord> getRelatedSamples(String runId) {
+    private List<DataRecord> getRelatedLibrarySamples(String runId) {
         Set<String> addedSampleIds = new HashSet<>();
         List<DataRecord> flowCellSamples = new ArrayList<>();
         try {
@@ -332,7 +348,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
     }
 
     /**
-     * Method to get a Library Sample from List of Library Samples related to the Sequencing Run.
+     * Method to get a Library Sample from List of Library Samples related to the Sequencing Run with matching SampleId.
      *
      * @param relatedLibrarySamples
      * @return
@@ -344,7 +360,8 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 if(baseId.equalsIgnoreCase(sampleId)){
                     return sample;
                 }
-                if(baseId.toUpperCase().contains(POOLEDNORMAL_IDENTIFIER) || baseId.toUpperCase().contains(CONTROL_IDENTIFIER)){
+                if((sampleId.contains(POOLEDNORMAL_IDENTIFIER) && baseId.toUpperCase().contains(POOLEDNORMAL_IDENTIFIER))
+                        || (sampleId.contains(CONTROL_IDENTIFIER) && baseId.toUpperCase().contains(CONTROL_IDENTIFIER))){
                     String[] pooleNormalIdVals = sampleId.split("_");
                     assert pooleNormalIdVals.length > 1;
                     String barcode = pooleNormalIdVals[pooleNormalIdVals.length-1];
@@ -367,26 +384,28 @@ public class UpdateLimsSampleLevelSequencingQcTask {
      */
     private DataRecord getPooledNormalLibrarySample(List<DataRecord> relatedLibrarySamples, String barcode) {
         try {
+            log.info("Given POOLEDNORMAL barcode: " + barcode);
             for (DataRecord sam : relatedLibrarySamples) {
                 Object sampleId = sam.getStringVal(SampleModel.SAMPLE_ID, user);
                 Object otherSampleId = sam.getStringVal(SampleModel.OTHER_SAMPLE_ID, user);
                 if ((sampleId != null && sampleId.toString().contains(POOLEDNORMAL_IDENTIFIER)) || (otherSampleId != null && otherSampleId.toString().contains(POOLEDNORMAL_IDENTIFIER))){
                    List<DataRecord> indexBarcodeRecs = getRecordsOfTypeFromParents(sam, SampleModel.DATA_TYPE_NAME, IndexBarcodeModel.DATA_TYPE_NAME, user);
                    if (!indexBarcodeRecs.isEmpty()){
-                       log.info(indexBarcodeRecs.get(0).getDataTypeName());
-                       log.info("Total indexbarcode records for pooled normal: " + indexBarcodeRecs.size());
-                       log.info("IndexBarcode SampleId size: " + indexBarcodeRecs.get(0).getStringVal("SampleId", user));
                        Object samBarcode = indexBarcodeRecs.get(0).getValue(IndexBarcodeModel.INDEX_TAG, user);
+                       log.info(indexBarcodeRecs.get(0).getDataTypeName());
+                       log.info("IndexBarcode SampleId: " + indexBarcodeRecs.get(0).getStringVal("SampleId", user));
+                       log.info("Assigned Index Barcode POOLEDNORMAL: " + samBarcode);
                        if (samBarcode != null){
                            String i7Barcode = samBarcode.toString().split("-")[0];
                            if(i7Barcode.equalsIgnoreCase(barcode)){
+                               log.info("Found Library Sample for Pooled Normal");
                                return sam;
                            }
                        }
                    }
                 }
             }
-        } catch (NotFound | RemoteException notFound) {
+        } catch (NotFound | RemoteException | NullPointerException notFound) {
             log.error(String.format("%s-> Error while getting related Library Samples for run %s:\n%s", ExceptionUtils.getRootCauseMessage(notFound), runId, ExceptionUtils.getStackTrace(notFound)));
         }
         return null;
