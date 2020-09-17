@@ -17,7 +17,7 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.util.BasicMail;
-import org.mskcc.limsrest.util.Utils;
+import static org.mskcc.limsrest.util.Utils.*;
 
 import javax.mail.MessagingException;
 import java.io.BufferedReader;
@@ -76,7 +76,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 assert librarySample != null;
                 log.info(String.format("Found Library Sample with Sample ID : %s", librarySample.getValue(SampleModel.SAMPLE_ID, user)));
                 String igoId = librarySample.getStringVal(SampleModel.SAMPLE_ID, user);
-                Object altId = Utils.getValueFromDataRecord(librarySample, "AltId", "String", user);
+                Object altId = getValueFromDataRecord(librarySample, "AltId", "String", user);
                 //add AltId to the values to be updated.
                 qcDataVals.putIfAbsent("AltId", altId);
                 //check if there is an are existing SeqAnalysisSampleQc record. If present update it.
