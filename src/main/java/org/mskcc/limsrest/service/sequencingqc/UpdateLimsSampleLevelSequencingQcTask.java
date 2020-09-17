@@ -392,7 +392,9 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                    List<DataRecord> indexBarcodeRecs = getRecordsOfTypeFromParents(sam, SampleModel.DATA_TYPE_NAME, IndexBarcodeModel.DATA_TYPE_NAME, user);
                    if (!indexBarcodeRecs.isEmpty()){
                        Object samBarcode = indexBarcodeRecs.get(0).getValue(IndexBarcodeModel.INDEX_TAG, user);
-                       log.info("Assigned Index Barcode at sample level: " + samBarcode);
+                       log.info(indexBarcodeRecs.get(0).getDataTypeName());
+                       log.info("IndexBarcode SampleId: " + indexBarcodeRecs.get(0).getStringVal("SampleId", user));
+                       log.info("Assigned Index Barcode POOLEDNORMAL: " + samBarcode);
                        if (samBarcode != null){
                            String i7Barcode = samBarcode.toString().split("-")[0];
                            if(i7Barcode.equalsIgnoreCase(barcode)){
