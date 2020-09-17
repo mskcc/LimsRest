@@ -240,16 +240,15 @@ public class UpdateLimsSampleLevelSequencingQcTask {
     private String getIgoId(String id) {
         log.info("Stats IGO ID: " + id);
         List<String> idVals = Arrays.asList(id.split("_IGO_"));
-        if (id.contains(POOLEDNORMAL_IDENTIFIER) || id.contains(CONTROL_IDENTIFIER)){
-            if(idVals.size() == 2){
+        if (idVals.size() == 2) {
+            String igoId = idVals.get(1);
+            if (igoId.contains(POOLEDNORMAL_IDENTIFIER) || igoId.contains(CONTROL_IDENTIFIER)){
                 String pooledNormalName = idVals.get(0);
                 String [] barcodeVals = idVals.get(1).split("_");
                 String barcode = barcodeVals[barcodeVals.length-1];
                 return pooledNormalName + "_" + barcode;
             }
-        }
-        if (idVals.size() == 2) {
-            return idVals.get(1);
+            return igoId;
         } else {
             throw new IllegalArgumentException(String.format("Cannot extract IGO ID from given Sample Name value %s in QC data.", id));
         }
