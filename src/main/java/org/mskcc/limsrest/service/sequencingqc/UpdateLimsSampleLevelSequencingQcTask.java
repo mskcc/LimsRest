@@ -64,7 +64,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 log.error(String.format("Found no NGS-STATS for run with run id %s using url %s", runId, getStatsUrl()));
             }
             //get all the Library samples that are present on the run
-            List<DataRecord> relatedLibrarySamples = getRelatedSamples(runId);
+            List<DataRecord> relatedLibrarySamples = getRelatedLibrarySamples(runId);
             log.info(String.format("Total Related Library Samples for run %s: %d", runId, relatedLibrarySamples.size()));
             //loop through stats data and add/update lims SeqAnalysisSampleQc records
             for (String key : data.keySet()) {
@@ -315,7 +315,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
      * @param runId
      * @return
      */
-    private List<DataRecord> getRelatedSamples(String runId) {
+    private List<DataRecord> getRelatedLibrarySamples(String runId) {
         Set<String> addedSampleIds = new HashSet<>();
         List<DataRecord> flowCellSamples = new ArrayList<>();
         try {
@@ -348,7 +348,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
     }
 
     /**
-     * Method to get a Library Sample from List of Library Samples related to the Sequencing Run.
+     * Method to get a Library Sample from List of Library Samples related to the Sequencing Run with matching SampleId.
      *
      * @param relatedLibrarySamples
      * @return
