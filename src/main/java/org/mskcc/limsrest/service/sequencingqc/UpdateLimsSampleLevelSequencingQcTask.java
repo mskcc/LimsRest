@@ -84,7 +84,8 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 //add AltId to the values to be updated.
                 qcDataVals.putIfAbsent("AltId", altId);
                 //check if there is an are existing SeqAnalysisSampleQc record. If present update it.
-                DataRecord existingQc = getExistingSequencingQcRecord(relatedLibrarySamples,sampleName, igoId, runId);
+                String versionLessRunId = getVersionLessRunId(runId);
+                DataRecord existingQc = getExistingSequencingQcRecord(relatedLibrarySamples,sampleName, igoId, versionLessRunId);
                 if (existingQc != null) {
                     log.info(String.format("Updating values on existing %s record with OtherSampleId %s, and Record Id %d, values are : %s",
                             SeqAnalysisSampleQCModel.DATA_TYPE_NAME, existingQc.getStringVal(SampleModel.OTHER_SAMPLE_ID, user),
@@ -343,6 +344,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         } catch (NotFound | RemoteException | IoError | NullPointerException notFound) {
             log.error(String.format("%s-> Error while getting related Library Samples for run %s:\n%s", ExceptionUtils.getRootCauseMessage(notFound), runId, ExceptionUtils.getStackTrace(notFound)));
         }
+        log.info("Linked library Samples: " + addedSampleIds.toString());
         return flowCellSamples;
     }
 
@@ -359,6 +361,9 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 if(baseId.equalsIgnoreCase(sampleId)){
                     return sample;
                 }
+                // Older SampleId values started with "CTRL" for POOLEDNORMAL control Samples. With last update, the control Samples now
+                // start with actual control sample type eg "FFPEPOOLEDNORMAL, MOUSEPOOLEDNORMAL etc." we need to validate both old and new pattern
+                // for POOLEDNORMAL control samples.
                 if((sampleId.contains(POOLEDNORMAL_IDENTIFIER) && baseId.toUpperCase().contains(POOLEDNORMAL_IDENTIFIER))
                         || (sampleId.contains(CONTROL_IDENTIFIER) && baseId.toUpperCase().contains(CONTROL_IDENTIFIER))){
                     String[] pooleNormalIdVals = sampleId.split("_");
