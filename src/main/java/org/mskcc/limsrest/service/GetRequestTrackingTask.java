@@ -131,14 +131,11 @@ public class GetRequestTrackingTask {
     private Map<String, Object> getProjectSummary(DataRecord requestRecord, Map<String, StageTracker> stages, User user){
         Map<String, Object> projectStatus = new HashMap<>();
 
-        // IGO Completion is confirmed by delivery, which sets the "RecentDeliveryDate" field
         final Long mostRecentDeliveryDate = getRecordLongValue(requestRecord, RequestModel.RECENT_DELIVERY_DATE, user);
-        if(mostRecentDeliveryDate != null){
-            projectStatus.put("isIgoComplete", true);
-        } else {
-            projectStatus.put("isIgoComplete", false);
-        }
+        final Long completedDate = getRecordLongValue(requestRecord, RequestModel.COMPLETED_DATE, user);
         projectStatus.put(RequestModel.RECENT_DELIVERY_DATE, mostRecentDeliveryDate);
+        projectStatus.put(RequestModel.COMPLETED_DATE, completedDate);
+        projectStatus.put("isIgoComplete", isIgoComplete(requestRecord, user));
 
         Boolean isStagesComplete = true;
         Integer numFailed = 0;
@@ -159,6 +156,30 @@ public class GetRequestTrackingTask {
         projectStatus.put("failed", numFailed);
 
         return projectStatus;
+    }
+
+    /**
+     * Returns whether a project is considered IGO-complete
+     *      Extraction Requests - 1) Status: "Completed", 2) Non-null Completed Date
+     *      Other - Non-null Recent Delivery Date
+     *
+     * @param record
+     * @param user
+     * @return
+     */
+    private boolean isIgoComplete(DataRecord record, User user){
+        final Long mostRecentDeliveryDate = getRecordLongValue(record, RequestModel.RECENT_DELIVERY_DATE, user);
+        if(mostRecentDeliveryDate != null){
+            return true;
+        }
+
+        // Extraction requests are determined complete by having a "Completed" status w/ a completion date
+        final String recordName = getRecordStringValue(record, RequestModel.DATA_RECORD_NAME, user);
+        final Long completedDate = getRecordLongValue(record, RequestModel.COMPLETED_DATE, user);
+        final String status = getRecordStringValue(record, "Status", user);
+        return recordName.toLowerCase().contains("extraction") &&
+            completedDate != null &&
+            status.toLowerCase().contains("completed");
     }
 
     /**
