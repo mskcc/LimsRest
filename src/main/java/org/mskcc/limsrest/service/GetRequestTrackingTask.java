@@ -159,7 +159,8 @@ public class GetRequestTrackingTask {
     }
 
     /**
-     * Returns whether a project is considered IGO-complete
+     * Returns whether a project is considered IGO-complete.
+     * Criteria:
      *      Extraction Requests - 1) Status: "Completed", 2) Non-null Completed Date
      *      Other - Non-null Recent Delivery Date
      *
@@ -167,19 +168,19 @@ public class GetRequestTrackingTask {
      * @param user
      * @return
      */
-    private boolean isIgoComplete(DataRecord record, User user){
-        final Long mostRecentDeliveryDate = getRecordLongValue(record, RequestModel.RECENT_DELIVERY_DATE, user);
-        if(mostRecentDeliveryDate != null){
+    private boolean isIgoComplete(DataRecord record, User user) {
+        Long mostRecentDeliveryDate = getRecordLongValue(record, RequestModel.RECENT_DELIVERY_DATE, user);
+        if (mostRecentDeliveryDate != null) {
             return true;
         }
 
         // Extraction requests are determined complete by having a "Completed" status w/ a completion date
-        final String recordName = getRecordStringValue(record, RequestModel.DATA_RECORD_NAME, user);
-        final Long completedDate = getRecordLongValue(record, RequestModel.COMPLETED_DATE, user);
-        final String status = getRecordStringValue(record, "Status", user);
+        String recordName = getRecordStringValue(record, RequestModel.DATA_RECORD_NAME, user);
+        Long completedDate = getRecordLongValue(record, RequestModel.COMPLETED_DATE, user);
+        String status = getRecordStringValue(record, "Status", user);
         return recordName.toLowerCase().contains("extraction") &&
-            completedDate != null &&
-            status.toLowerCase().contains("completed");
+                completedDate != null &&
+                status.toLowerCase().contains("completed");
     }
 
     /**
