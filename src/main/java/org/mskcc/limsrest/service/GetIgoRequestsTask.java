@@ -65,6 +65,9 @@ public class GetIgoRequestsTask extends LimsTask {
             rs.setPi(getRecordStringValue(request, RequestModel.LABORATORY_HEAD, user));
             rs.setRequestType(getRecordStringValue(request, RequestModel.REQUEST_NAME, user));
             rs.setReceivedDate(getRecordLongValue(request, RequestModel.RECEIVED_DATE, user));
+            rs.setRecentDeliveryDate(getRecordLongValue(request, RequestModel.RECENT_DELIVERY_DATE, user));
+            rs.setCompletedDate(getRecordLongValue(request, RequestModel.COMPLETED_DATE, user));
+
             requests.add(rs);
         }
 
