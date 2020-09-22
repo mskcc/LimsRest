@@ -14,7 +14,8 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.mskcc.limsrest.util.Utils.*;
+import static org.mskcc.limsrest.util.Utils.getRecordLongValue;
+import static org.mskcc.limsrest.util.Utils.getRecordStringValue;
 
 public class GetIgoRequestsTask extends LimsTask {
     private static Log log = LogFactory.getLog(GetIgoRequestsTask.class);
@@ -22,7 +23,7 @@ public class GetIgoRequestsTask extends LimsTask {
     private Long days;
     private Boolean igoComplete;
 
-    public GetIgoRequestsTask(Long days, Boolean igoComplete){
+    public GetIgoRequestsTask(Long days, Boolean igoComplete) {
         this.days = days;
         this.igoComplete = igoComplete;
     }
@@ -35,7 +36,7 @@ public class GetIgoRequestsTask extends LimsTask {
 
     private String getQuery() {
         long searchPoint = getSearchPoint();
-        if(this.igoComplete){
+        if (this.igoComplete) {
             return String.format("%s > %d OR %s > %d", RequestModel.RECENT_DELIVERY_DATE, searchPoint,
                     RequestModel.COMPLETED_DATE, searchPoint);
         }
@@ -50,7 +51,7 @@ public class GetIgoRequestsTask extends LimsTask {
         List<DataRecord> records = new ArrayList<>();
         try {
             records = conn.getDataRecordManager().queryDataRecords(RequestModel.DATA_TYPE_NAME, query, user);
-        } catch ( IoError | RemoteException | NotFound e){
+        } catch (IoError | RemoteException | NotFound e) {
             log.error(String.format("Failed to query DataRecords w/ query: %s", query));
             return new ArrayList<>();
         }
