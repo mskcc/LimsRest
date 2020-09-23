@@ -21,6 +21,7 @@ public class RequestSummary {
     private String analysisType;
     private boolean pipelinable;
     private boolean analysisRequested;
+    private Boolean isCmoRequest = Boolean.FALSE;
     private long recordId;
     private Long receivedDate;
     private Short sampleNumber;
@@ -40,6 +41,21 @@ public class RequestSummary {
         requestId = request;
         investigator = "UNKNOWN";
         restStatus = "SUCCESS";
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public boolean getAutorunnable() {
+        return pipelinable;
+    }
+
+    public Boolean getIsCmoRequest() { return isCmoRequest; }
+
+    public void setIsCmoRequest(Boolean cmoRequest) {
+        if (cmoRequest == null)
+            isCmoRequest = Boolean.FALSE;
+        else {
+            this.isCmoRequest = cmoRequest;
+        }
     }
 
     @JsonInclude(JsonInclude.Include.ALWAYS)
@@ -184,11 +200,6 @@ public class RequestSummary {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getPiEmail() {
         return piEmail;
-    }
-
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public boolean getAutorunnable() {
-        return pipelinable;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
