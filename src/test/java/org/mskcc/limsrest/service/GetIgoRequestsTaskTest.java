@@ -66,6 +66,8 @@ public class GetIgoRequestsTaskTest {
         return validatedRecords;
     }
 
+    // DON'T DELETE THESE TESTS. They are run when the logic for determining isIgoComplete changes
+    /*
     @Test
     public void getIgoRequestsTask_matchesIsIgoCompleteUtil_incomplete() {
         Boolean isComplete = Boolean.FALSE;
@@ -91,5 +93,6 @@ public class GetIgoRequestsTaskTest {
                     isIgoComplete(record.getValue(), conn.getConnection().getUser()));
         }
     }
+    */
 }
 
