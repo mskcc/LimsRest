@@ -1,6 +1,7 @@
 package org.mskcc.limsrest.service;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.velox.sloan.cmo.recmodels.RequestModel;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,6 +11,8 @@ import java.util.List;
 public class RequestSummary {
     private ArrayList<SampleSummary> samples;
     private LinkedList<Long> deliveryDates;
+    private Long recentDeliveryDate;
+    private Long completedDate;
     private String cmoProjectId;
     private String requestId;
     private String requestType;
@@ -163,6 +166,24 @@ public class RequestSummary {
     public List<Long> getDeliveryDate() {
         Collections.sort(deliveryDates);
         return deliveryDates;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public Long getCompletedDate() {
+        return completedDate;
+    }
+
+    public void setCompletedDate(Long completedDate) {
+        this.completedDate = completedDate;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public Long getRecentDeliveryDate() {
+        return recentDeliveryDate;
+    }
+
+    public void setRecentDeliveryDate(Long mostRecentDeliveryDate) {
+        this.recentDeliveryDate = mostRecentDeliveryDate;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
