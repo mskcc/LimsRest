@@ -159,31 +159,6 @@ public class GetRequestTrackingTask {
     }
 
     /**
-     * Returns whether a project is considered IGO-complete.
-     * Criteria:
-     *      Extraction Requests - 1) Status: "Completed", 2) Non-null Completed Date
-     *      Other - Non-null Recent Delivery Date
-     *
-     * @param record
-     * @param user
-     * @return
-     */
-    private boolean isIgoComplete(DataRecord record, User user) {
-        Long mostRecentDeliveryDate = getRecordLongValue(record, RequestModel.RECENT_DELIVERY_DATE, user);
-        if (mostRecentDeliveryDate != null) {
-            return true;
-        }
-
-        // Extraction requests are determined complete by having a "Completed" status w/ a completion date
-        String recordName = getRecordStringValue(record, RequestModel.DATA_RECORD_NAME, user);
-        Long completedDate = getRecordLongValue(record, RequestModel.COMPLETED_DATE, user);
-        String status = getRecordStringValue(record, "Status", user);
-        return recordName.toLowerCase().contains("extraction") &&
-                completedDate != null &&
-                status.toLowerCase().contains("completed");
-    }
-
-    /**
      * Traverse the tree of each "Sample" DataType child of the input @requestRecord. This tree is converted into
      * a ProjectSample data model that represents the tree
      *

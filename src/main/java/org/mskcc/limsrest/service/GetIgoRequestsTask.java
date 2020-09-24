@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.mskcc.limsrest.util.Utils.getRecordLongValue;
 import static org.mskcc.limsrest.util.Utils.getRecordStringValue;
+import static org.mskcc.limsrest.util.StatusTrackerConfig.isIgoComplete;
 
 public class GetIgoRequestsTask extends LimsTask {
     private static Log log = LogFactory.getLog(GetIgoRequestsTask.class);
@@ -37,7 +38,15 @@ public class GetIgoRequestsTask extends LimsTask {
     private String getQuery() {
         long searchPoint = getSearchPoint();
         if (this.igoComplete) {
-            return String.format("%s > %d OR %s > %d", RequestModel.RECENT_DELIVERY_DATE, searchPoint,
+            /** IGO completion is determined by,
+             *      1) Request having a recentDelivery date (Sequencing project marked for delivery)
+             *      2) Request having a completed date (all other requests)
+             *
+             * NOTE - This should be in sync w/ @StatusTrackerConfig::isIgoComplete. If changing this, uncomment
+             * @getIgoRequestsTask_matchesIsIgoCompleteUtil_* tests in GetIgoRequestsTaskTest
+             */
+            return String.format("%s > %d OR %s > %d",
+                    RequestModel.RECENT_DELIVERY_DATE, searchPoint,
                     RequestModel.COMPLETED_DATE, searchPoint);
         }
         return String.format("%s IS NULL AND %s IS NULL", RequestModel.RECENT_DELIVERY_DATE, RequestModel.COMPLETED_DATE);
@@ -68,7 +77,7 @@ public class GetIgoRequestsTask extends LimsTask {
             rs.setReceivedDate(getRecordLongValue(request, RequestModel.RECEIVED_DATE, user));
             rs.setRecentDeliveryDate(getRecordLongValue(request, RequestModel.RECENT_DELIVERY_DATE, user));
             rs.setCompletedDate(getRecordLongValue(request, RequestModel.COMPLETED_DATE, user));
-
+            rs.setIsIgoComplete(isIgoComplete(request, user));
             requests.add(rs);
         }
 
