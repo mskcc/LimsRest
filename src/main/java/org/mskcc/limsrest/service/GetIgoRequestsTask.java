@@ -45,9 +45,9 @@ public class GetIgoRequestsTask extends LimsTask {
              * NOTE - This should be in sync w/ @StatusTrackerConfig::isIgoComplete. If changing this, uncomment
              * @getIgoRequestsTask_matchesIsIgoCompleteUtil_* tests in GetIgoRequestsTaskTest
              */
-            return String.format("%s > %d OR %s > %d",
+            return String.format("%s > %d OR (%s > %d AND lower(%s) LIKE '%%extraction%%')",
                     RequestModel.RECENT_DELIVERY_DATE, searchPoint,
-                    RequestModel.COMPLETED_DATE, searchPoint);
+                    RequestModel.COMPLETED_DATE, searchPoint, RequestModel.REQUEST_TYPE);
         }
         return String.format("%s IS NULL AND %s IS NULL", RequestModel.RECENT_DELIVERY_DATE, RequestModel.COMPLETED_DATE);
     }

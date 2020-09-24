@@ -12,6 +12,7 @@ import com.velox.sloan.cmo.recmodels.RequestModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
+import org.mskcc.limsrest.service.requesttracker.Request;
 
 import static org.mskcc.limsrest.util.Utils.getRecordLongValue;
 import static org.mskcc.limsrest.util.Utils.getRecordStringValue;
@@ -118,6 +119,8 @@ public class StatusTrackerConfig {
      *      Extraction Requests - 1) Status: "Completed", 2) Non-null Completed Date
      *      Other - Non-null Recent Delivery Date
      *
+     * NOTE - This should be in sync w/ @StatusTrackerConfig::isIgoComplete. If changing this, uncomment
+     * @getIgoRequestsTask_matchesIsIgoCompleteUtil_* tests in GetIgoRequestsTaskTest
      * @param record
      * @param user
      * @return
@@ -128,9 +131,10 @@ public class StatusTrackerConfig {
             return true;
         }
 
-        // Other requests are considered complete if they have a completion date
+        // Extraction requests ONLY are considered complete if they have a completion date
         Long completedDate = getRecordLongValue(record, RequestModel.COMPLETED_DATE, user);
-        return completedDate != null;
+        String requestType = getRecordStringValue(record, RequestModel.REQUEST_TYPE, user);
+        return (completedDate != null) && requestType.toLowerCase().contains("extraction");
     }
 
 
