@@ -22,7 +22,7 @@ import java.util.Map;
 import static org.mskcc.limsrest.util.StatusTrackerConfig.isIgoComplete;
 
 public class GetIgoRequestsTaskTest {
-    public final Long DAYS_RANGE = 100l;
+    public final Long DAYS_RANGE = 365l;
     ConnectionLIMS conn;
 
     @Before

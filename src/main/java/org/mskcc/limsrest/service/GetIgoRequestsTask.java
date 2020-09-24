@@ -35,21 +35,34 @@ public class GetIgoRequestsTask extends LimsTask {
         return now - offset;
     }
 
+    /**
+     * Returns the query to use to retrieve the IGO request
+     *
+     * NOTE - This should be in sync w/ @StatusTrackerConfig::isIgoComplete. If changing this, uncomment
+     * @getIgoRequestsTask_matchesIsIgoCompleteUtil_* tests in GetIgoRequestsTaskTest
+     * @return
+     */
     private String getQuery() {
         long searchPoint = getSearchPoint();
         if (this.igoComplete) {
-            /** IGO completion is determined by,
-             *      1) Request having a recentDelivery date (Sequencing project marked for delivery)
-             *      2) Request having a completed date (all other requests)
-             *
-             * NOTE - This should be in sync w/ @StatusTrackerConfig::isIgoComplete. If changing this, uncomment
-             * @getIgoRequestsTask_matchesIsIgoCompleteUtil_* tests in GetIgoRequestsTaskTest
+            /** IGO completion Criteria:
+             *      1) Request w/ RECENT_DELIVERY_DATE date (Sequencing project marked for delivery)
+             *      2) Extraction Request having a COMPLETED_DATE (all other requests)
              */
-            return String.format("%s > %d OR %s > %d",
+            return String.format("%s > %d OR (%s > %d AND lower(%s) LIKE '%%extraction%%')",
                     RequestModel.RECENT_DELIVERY_DATE, searchPoint,
-                    RequestModel.COMPLETED_DATE, searchPoint);
+                    RequestModel.COMPLETED_DATE, searchPoint, RequestModel.REQUEST_NAME);
         }
-        return String.format("%s IS NULL AND %s IS NULL", RequestModel.RECENT_DELIVERY_DATE, RequestModel.COMPLETED_DATE);
+        /** IGO incomplete Criteria:
+         *      1) No RECENT_DELIVERY_DATE (Sequencing project NOT marked for delivery)
+         *      2) Extraction requests w/o a COMPLETED_DATE
+         * NOTE: DATE_CREATED is used because sometimes ReceivedDate can be null
+         */
+        return String.format("%s > %d AND NOT ((%s IS NOT NULL) OR (%s IS NOT NULL AND %s LIKE '%%extraction%%'))",
+                RequestModel.DATE_CREATED, searchPoint,
+                RequestModel.RECENT_DELIVERY_DATE,
+                RequestModel.COMPLETED_DATE,
+                RequestModel.REQUEST_NAME);
     }
 
     @PreAuthorize("hasRole('READ')")

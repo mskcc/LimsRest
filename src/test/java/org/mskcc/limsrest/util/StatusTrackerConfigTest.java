@@ -364,7 +364,8 @@ public class StatusTrackerConfigTest {
         DataRecordManager drm = vConn.getDataRecordManager();
 
         Map<String, Boolean> testCases = new HashMap<>();
-        testCases.put("09716_I", Boolean.TRUE);     // Has "Completed Date"
+        testCases.put("07527_J", Boolean.TRUE);     // Extraction request w/ "Completed Date"
+        testCases.put("09657", Boolean.TRUE);       // RNA Extraction request w/ "Completed Date"
         testCases.put("09443_S", Boolean.TRUE);     // Has "Most Recent Delivery Date"
         testCases.put("09348_B", Boolean.FALSE);    // Has neither
 
@@ -385,7 +386,7 @@ public class StatusTrackerConfigTest {
                 Assert.assertTrue(String.format("Data Record %s is ambiguous or doesn't exist. Update test"), false);
             }
 
-            Assert.assertEquals(expectedResult, isIgoComplete(records.get(0), user));
+            Assert.assertEquals(String.format("Request Id: %s should have been %b", requestId, expectedResult), expectedResult, isIgoComplete(records.get(0), user));
         }
     }
 
