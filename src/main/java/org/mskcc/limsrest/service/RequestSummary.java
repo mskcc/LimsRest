@@ -33,6 +33,7 @@ public class RequestSummary {
     private String labHeadEmail;
     private String qcAccessEmail;
     private String dataAccessEmails;
+    private Boolean isIgoComplete;
 
     public RequestSummary() {
         this("UNKNOWN");
@@ -95,6 +96,15 @@ public class RequestSummary {
 
     public void setLabHeadEmail(String labHeadEmail) {
         this.labHeadEmail = labHeadEmail;
+    }
+
+    @JsonInclude(JsonInclude.Include.ALWAYS)
+    public Boolean getIsIgoComplete() {
+        return this.isIgoComplete;
+    }
+
+    public void setIsIgoComplete(Boolean isIgoComplete) {
+        this.isIgoComplete = isIgoComplete;
     }
 
     public void setRestStatus(String s) {

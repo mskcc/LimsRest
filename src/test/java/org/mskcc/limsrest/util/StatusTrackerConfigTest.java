@@ -1,14 +1,20 @@
 package org.mskcc.limsrest.util;
 
+import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.datarecord.IoError;
+import com.velox.api.datarecord.NotFound;
+import com.velox.api.user.User;
+import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.sloan.cmo.recmodels.RequestModel;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mskcc.limsrest.ConnectionLIMS;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.rmi.RemoteException;
+import java.util.*;
 
 import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 
@@ -177,7 +183,7 @@ public class StatusTrackerConfigTest {
     public void getLimsStageNameFromStatusTest_dataQC() {
         List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
                 new StageExtractorTester("Completed - Illumina Sequencing Analysis", "Pool-05338_B-1080_4", "", "Data QC", "Data QC - Completed")
-                ));
+        ));
         assertCorrectLimsStage(testSamples);
     }
 
@@ -348,6 +354,38 @@ public class StatusTrackerConfigTest {
         // All stages should map to a non-blank name. Some may be overriden by the workflow mapping
         for (String stage : STAGE_ORDER) {
             Assert.assertNotEquals(String.format("Stage %s had a blank mapping", stage), "", stage);
+        }
+    }
+
+    @Test
+    public void isIgoComplete_test() {
+        VeloxConnection vConn = conn.getConnection();
+        User user = vConn.getUser();
+        DataRecordManager drm = vConn.getDataRecordManager();
+
+        Map<String, Boolean> testCases = new HashMap<>();
+        testCases.put("09716_I", Boolean.TRUE);     // Has "Completed Date"
+        testCases.put("09443_S", Boolean.TRUE);     // Has "Most Recent Delivery Date"
+        testCases.put("09348_B", Boolean.FALSE);    // Has neither
+
+        for (Map.Entry<String, Boolean> test : testCases.entrySet()) {
+            String requestId = test.getKey();
+            Boolean expectedResult = test.getValue();
+
+            List<DataRecord> records = new ArrayList<>();
+            try {
+                records = drm.queryDataRecords(RequestModel.DATA_TYPE_NAME, String.format("RequestId = '%s'", requestId), user);
+            } catch (NotFound e) {
+                Assert.assertTrue(String.format("Data Record for request Id: %s doesn't exist. Update test", requestId), false);
+            } catch (IoError | RemoteException e) {
+                Assert.assertTrue(String.format("Error getting Data Record for request Id: %s", requestId), false);
+            }
+
+            if (records.size() != 1) {
+                Assert.assertTrue(String.format("Data Record %s is ambiguous or doesn't exist. Update test"), false);
+            }
+
+            Assert.assertEquals(expectedResult, isIgoComplete(records.get(0), user));
         }
     }
 
