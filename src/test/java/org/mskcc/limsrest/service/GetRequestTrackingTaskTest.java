@@ -170,6 +170,27 @@ public class GetRequestTrackingTaskTest {
         testProjects(testCases);
     }
 
+    @Test
+    public void isIgoComplete_extraction() {
+        String EXTRACTION_ID = "07527_J";
+        GetRequestTrackingTask t = new GetRequestTrackingTask(EXTRACTION_ID, this.conn);
+        Map<String, Object> requestTracker = new HashMap<>();
+        try {
+            requestTracker = t.execute();
+        } catch (IoError | RemoteException | NotFound e) {
+            assertTrue("Exception in task execution", false);
+        }
+
+        Map<String, Object> request = (Map<String, Object>) requestTracker.get("request");
+        Map<String, Object> summary = (Map<String, Object>) request.get("summary");
+        final Long completedDate = (Long) summary.get("CompletedDate");
+        final Boolean isIgoComplete = (Boolean) summary.get("isIgoComplete");
+
+        final Long expectedCompletedDate = 1570468879097L;
+        assertEquals(String.format("Completion date should be %d", expectedCompletedDate), expectedCompletedDate, completedDate);
+        assertTrue("Extraction request should be IGO-Complete", isIgoComplete);
+    }
+
     /**
      * Runner for testing input projects
      *

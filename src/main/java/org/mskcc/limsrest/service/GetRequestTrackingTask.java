@@ -131,14 +131,11 @@ public class GetRequestTrackingTask {
     private Map<String, Object> getProjectSummary(DataRecord requestRecord, Map<String, StageTracker> stages, User user){
         Map<String, Object> projectStatus = new HashMap<>();
 
-        // IGO Completion is confirmed by delivery, which sets the "RecentDeliveryDate" field
         final Long mostRecentDeliveryDate = getRecordLongValue(requestRecord, RequestModel.RECENT_DELIVERY_DATE, user);
-        if(mostRecentDeliveryDate != null){
-            projectStatus.put("isIgoComplete", true);
-        } else {
-            projectStatus.put("isIgoComplete", false);
-        }
+        final Long completedDate = getRecordLongValue(requestRecord, RequestModel.COMPLETED_DATE, user);
         projectStatus.put(RequestModel.RECENT_DELIVERY_DATE, mostRecentDeliveryDate);
+        projectStatus.put(RequestModel.COMPLETED_DATE, completedDate);
+        projectStatus.put("isIgoComplete", isIgoComplete(requestRecord, user));
 
         Boolean isStagesComplete = true;
         Integer numFailed = 0;

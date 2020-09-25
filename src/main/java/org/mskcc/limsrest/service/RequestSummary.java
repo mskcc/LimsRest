@@ -1,6 +1,7 @@
 package org.mskcc.limsrest.service;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.velox.sloan.cmo.recmodels.RequestModel;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,6 +11,8 @@ import java.util.List;
 public class RequestSummary {
     private ArrayList<SampleSummary> samples;
     private LinkedList<Long> deliveryDates;
+    private Long recentDeliveryDate;
+    private Long completedDate;
     private String cmoProjectId;
     private String requestId;
     private String requestType;
@@ -21,6 +24,7 @@ public class RequestSummary {
     private String analysisType;
     private boolean pipelinable;
     private boolean analysisRequested;
+    private Boolean isCmoRequest = Boolean.FALSE;
     private long recordId;
     private Long receivedDate;
     private Short sampleNumber;
@@ -29,6 +33,7 @@ public class RequestSummary {
     private String labHeadEmail;
     private String qcAccessEmail;
     private String dataAccessEmails;
+    private Boolean isIgoComplete;
 
     public RequestSummary() {
         this("UNKNOWN");
@@ -40,6 +45,21 @@ public class RequestSummary {
         requestId = request;
         investigator = "UNKNOWN";
         restStatus = "SUCCESS";
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public boolean getAutorunnable() {
+        return pipelinable;
+    }
+
+    public Boolean getIsCmoRequest() { return isCmoRequest; }
+
+    public void setIsCmoRequest(Boolean cmoRequest) {
+        if (cmoRequest == null)
+            isCmoRequest = Boolean.FALSE;
+        else {
+            this.isCmoRequest = cmoRequest;
+        }
     }
 
     @JsonInclude(JsonInclude.Include.ALWAYS)
@@ -76,6 +96,15 @@ public class RequestSummary {
 
     public void setLabHeadEmail(String labHeadEmail) {
         this.labHeadEmail = labHeadEmail;
+    }
+
+    @JsonInclude(JsonInclude.Include.ALWAYS)
+    public Boolean getIsIgoComplete() {
+        return this.isIgoComplete;
+    }
+
+    public void setIsIgoComplete(Boolean isIgoComplete) {
+        this.isIgoComplete = isIgoComplete;
     }
 
     public void setRestStatus(String s) {
@@ -150,6 +179,24 @@ public class RequestSummary {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public Long getCompletedDate() {
+        return completedDate;
+    }
+
+    public void setCompletedDate(Long completedDate) {
+        this.completedDate = completedDate;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public Long getRecentDeliveryDate() {
+        return recentDeliveryDate;
+    }
+
+    public void setRecentDeliveryDate(Long mostRecentDeliveryDate) {
+        this.recentDeliveryDate = mostRecentDeliveryDate;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public boolean getAnalysisRequested() {
         return analysisRequested;
     }
@@ -184,11 +231,6 @@ public class RequestSummary {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getPiEmail() {
         return piEmail;
-    }
-
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public boolean getAutorunnable() {
-        return pipelinable;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

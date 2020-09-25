@@ -63,7 +63,8 @@ public class GetSampleQc {
                 RequestSummary rs = new RequestSummary(project);
                 HashSet<String> runSet = new HashSet<>();
                 annotateRequestSummary(rs, r, user); // fill in all data at request level except sample number
-                rs.setSampleNumber((new Short(r.getShortVal("SampleNumber", user))));
+                if (r.getValue("SampleNumber", user) != null)
+                    rs.setSampleNumber(r.getShortVal("SampleNumber", user));
 
                 List<DataRecord> qcRecords;
                 qcRecords = dataRecordManager.queryDataRecords("SeqAnalysisSampleQC", "Request = '" + project + "'", user);
@@ -334,6 +335,7 @@ public class GetSampleQc {
             runAndCatchNpe(() -> rs.setPiEmail((String) requestFields.get("LabHeadEmail")));
             runAndCatchNpe(() -> rs.setInvestigatorEmail((String) requestFields.get("Investigatoremail")));
             runAndCatchNpe(() -> rs.setAutorunnable((Boolean) requestFields.get("BicAutorunnable")));
+            runAndCatchNpe(() -> rs.setIsCmoRequest((Boolean)requestFields.get("IsCmoRequest")));
             runAndCatchNpe(() -> rs.setAnalysisRequested((Boolean) requestFields.get("BICAnalysis")));
             runAndCatchNpe(() -> rs.setAnalysisType((String) requestFields.get("AnalysisType")));
             runAndCatchNpe(() -> rs.setCmoProject((String) requestFields.get("CMOProjectID")));

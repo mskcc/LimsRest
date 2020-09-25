@@ -3,13 +3,19 @@ package org.mskcc.limsrest.util;
 import java.rmi.RemoteException;
 import java.util.*;
 
+import com.velox.api.datarecord.DataRecord;
 import com.velox.api.user.User;
 import com.velox.api.util.ServerException;
 import com.velox.api.workflow.Workflow;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.sloan.cmo.recmodels.RequestModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
+import org.mskcc.limsrest.service.requesttracker.Request;
+
+import static org.mskcc.limsrest.util.Utils.getRecordLongValue;
+import static org.mskcc.limsrest.util.Utils.getRecordStringValue;
 
 /**
  * Logic for determining and ordering stages from LIMS sample statuses and workflows
@@ -106,6 +112,31 @@ public class StatusTrackerConfig {
             return p1 - p2;
         }
     }
+
+    /**
+     * Returns whether a project is considered IGO-complete.
+     * Criteria:
+     *      Extraction Requests - 1) Status: "Completed", 2) Non-null Completed Date
+     *      Other - Non-null Recent Delivery Date
+     *
+     * NOTE - This should be in sync w/ @StatusTrackerConfig::isIgoComplete. If changing this, uncomment
+     * @getIgoRequestsTask_matchesIsIgoCompleteUtil_* tests in GetIgoRequestsTaskTest
+     * @param record
+     * @param user
+     * @return
+     */
+    public static boolean isIgoComplete(DataRecord record, User user) {
+        Long mostRecentDeliveryDate = getRecordLongValue(record, RequestModel.RECENT_DELIVERY_DATE, user);
+        if (mostRecentDeliveryDate != null) {
+            return true;
+        }
+
+        // Extraction requests ONLY are considered complete if they have a completion date
+        Long completedDate = getRecordLongValue(record, RequestModel.COMPLETED_DATE, user);
+        String requestType = getRecordStringValue(record, RequestModel.REQUEST_NAME, user);
+        return (completedDate != null) && requestType.toLowerCase().contains("extraction");
+    }
+
 
     // A Standard ExemplarSampleStatus is composed of a workflow status prefix (below) and workflow name
     public static final String WORKFLOW_STATUS_IN_PROCESS = "In Process - ";
