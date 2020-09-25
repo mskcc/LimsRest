@@ -5,6 +5,8 @@ import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.plugin.PluginLogger;
 import com.velox.api.user.User;
+import com.velox.sloan.cmo.recmodels.FlowCellLaneModel;
+import com.velox.sloan.cmo.recmodels.FlowCellModel;
 import com.velox.sloan.cmo.recmodels.SampleModel;
 import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.lang3.StringUtils;
@@ -25,7 +27,6 @@ import java.net.URL;
 import java.rmi.RemoteException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
@@ -602,5 +603,30 @@ public class Utils {
                     ExceptionUtils.getRootCause(e), targetDataType, record.getDataTypeName(), record.getRecordId(), ExceptionUtils.getStackTrace(e)));
         }
         return records;
+    }
+
+    /**
+     * Method to get Pooled Samples related to Sequencing experiment.
+     * @param seqExperiments
+     * @param runId
+     * @param user
+     * @return
+     */
+    public static List<DataRecord> getSamplesRelatedToSeqExperiment(List<DataRecord> seqExperiments, String runId, User user){
+        List<DataRecord> relatedSamples = new ArrayList<>();
+        try{
+            for (DataRecord exp : seqExperiments){
+                DataRecord [] flowCells = exp.getChildrenOfType(FlowCellModel.DATA_TYPE_NAME, user);
+                for (DataRecord fc : flowCells){
+                    DataRecord [] flowCellLanes = fc.getChildrenOfType(FlowCellLaneModel.DATA_TYPE_NAME, user);
+                    for (DataRecord fcl : flowCellLanes){
+                        relatedSamples.addAll(fcl.getParentsOfType(SampleModel.DATA_TYPE_NAME, user));
+                    }
+                }
+            }
+        } catch (IoError | RemoteException e) {
+            LOGGER.error(String.format("%s Exception while retrieveing flowcell lanes for sequencing run %s: %s", ExceptionUtils.getRootCause(e), runId, ExceptionUtils.getStackTrace(e)));
+        }
+        return relatedSamples;
     }
 }

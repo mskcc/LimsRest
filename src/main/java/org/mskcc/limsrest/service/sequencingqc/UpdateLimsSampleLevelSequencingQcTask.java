@@ -19,8 +19,6 @@ import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.util.BasicMail;
 import static org.mskcc.limsrest.util.Utils.*;
 
-import javax.mail.MessagingException;
-import javax.validation.constraints.Null;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -84,7 +82,11 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 //add AltId to the values to be updated.
                 qcDataVals.putIfAbsent("AltId", altId);
                 //check if there is an are existing SeqAnalysisSampleQc record. If present update it.
-                DataRecord existingQc = getExistingSequencingQcRecord(relatedLibrarySamples,sampleName, igoId, runId);
+                String versionLessRunId = getVersionLessRunId(runId);
+                DataRecord existingQc = getExistingSequencingQcRecord(relatedLibrarySamples,sampleName, igoId, versionLessRunId);
+                if (existingQc == null){
+                    log.info(String.format("Existing %s record not found for Sample with Id %s", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, igoId));
+                }
                 if (existingQc != null) {
                     log.info(String.format("Updating values on existing %s record with OtherSampleId %s, and Record Id %d, values are : %s",
                             SeqAnalysisSampleQCModel.DATA_TYPE_NAME, existingQc.getStringVal(SampleModel.OTHER_SAMPLE_ID, user),
@@ -240,16 +242,15 @@ public class UpdateLimsSampleLevelSequencingQcTask {
     private String getIgoId(String id) {
         log.info("Stats IGO ID: " + id);
         List<String> idVals = Arrays.asList(id.split("_IGO_"));
-        if (id.contains(POOLEDNORMAL_IDENTIFIER) || id.contains(CONTROL_IDENTIFIER)){
-            if(idVals.size() == 2){
+        if (idVals.size() == 2) {
+            String igoId = idVals.get(1);
+            if (igoId.contains(POOLEDNORMAL_IDENTIFIER) || igoId.contains(CONTROL_IDENTIFIER)){
                 String pooledNormalName = idVals.get(0);
                 String [] barcodeVals = idVals.get(1).split("_");
                 String barcode = barcodeVals[barcodeVals.length-1];
                 return pooledNormalName + "_" + barcode;
             }
-        }
-        if (idVals.size() == 2) {
-            return idVals.get(1);
+            return igoId;
         } else {
             throw new IllegalArgumentException(String.format("Cannot extract IGO ID from given Sample Name value %s in QC data.", id));
         }
@@ -282,13 +283,13 @@ public class UpdateLimsSampleLevelSequencingQcTask {
     private DataRecord getExistingSequencingQcRecord(List<DataRecord> librarySamples, String otherSampleId, String igoId,  String runId) {
         List<DataRecord> seqAnalysisSampleQCs;
         try {
-            log.info(String.format("Searching for existing %s records for %s and %s combination",SeqAnalysisSampleQCModel.DATA_TYPE_NAME, otherSampleId, runId));
+            log.info(String.format("Searching for existing %s records for %s, %s and %s combination",SeqAnalysisSampleQCModel.DATA_TYPE_NAME,igoId, otherSampleId, runId));
             if(igoId.contains(POOLEDNORMAL_IDENTIFIER) || igoId.contains(CONTROL_IDENTIFIER) || otherSampleId.contains(POOLEDNORMAL_IDENTIFIER)){
                 String[] igoIdVals = igoId.split("_");
                 String barcode = igoIdVals[igoIdVals.length-1];
                 DataRecord librarySample = getPooledNormalLibrarySample(librarySamples, barcode);
                 assert librarySample != null;
-                if (librarySample.getChildrenOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user).length > 0 ){
+                if (librarySample.getChildrenOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user) != null && librarySample.getChildrenOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user).length > 0 ){
                     DataRecord qcrec = librarySample.getChildrenOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user)[0];
                     log.info(String.format("Found %s record with recordid: %d for poolenormal sample.", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcrec.getRecordId()));
                     return qcrec;
@@ -320,30 +321,32 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         List<DataRecord> flowCellSamples = new ArrayList<>();
         try {
             List<DataRecord> illuminaSeqExperiments = dataRecordManager.queryDataRecords(IlluminaSeqExperimentModel.DATA_TYPE_NAME,IlluminaSeqExperimentModel.SEQUENCER_RUN_FOLDER + " LIKE '%" + runId + "%'", user);
-            for (DataRecord exp : illuminaSeqExperiments) {
-                List<DataRecord> relatedSamples = exp.getDescendantsOfType(SampleModel.DATA_TYPE_NAME, user);
-                log.info(String.format("Total Related Samples for IlluminaSeq Run %s: %d", runId, relatedSamples.size()));
-                Stack<DataRecord> sampleStack = new Stack<>();
-                sampleStack.addAll(relatedSamples);
-                do {
-                    DataRecord stackSample = sampleStack.pop();
-                    Object sampleType = stackSample.getValue(SampleModel.EXEMPLAR_SAMPLE_TYPE, user);
-                    Object samId = stackSample.getValue(SampleModel.SAMPLE_ID, user);
-                    log.info("Sample Type: " + sampleType);
-                    if (!samId.toString().toLowerCase().startsWith("pool") || (sampleType != null && !POOLED_SAMPLE_TYPES.contains(sampleType.toString().toLowerCase()))) {
-                        String sampleId = stackSample.getStringVal(SampleModel.SAMPLE_ID, user);
-                        log.info("Adding sample to Library Samples List: " + sampleId);
-                        if (addedSampleIds.add(sampleId)) {
-                            flowCellSamples.add(stackSample);
-                        }
-                    } else {
-                        sampleStack.addAll(stackSample.getParentsOfType(SampleModel.DATA_TYPE_NAME, user));
-                    }
-                }while (!sampleStack.isEmpty());
+            List<DataRecord> relatedSamples = getSamplesRelatedToSeqExperiment(illuminaSeqExperiments, runId, user);
+            log.info(String.format("Total Related Samples for IlluminaSeq Run %s: %d", runId, relatedSamples.size()));
+            Stack<DataRecord> sampleStack = new Stack<>();
+            if (relatedSamples.isEmpty()){
+                return flowCellSamples;
             }
+            sampleStack.addAll(relatedSamples);
+            do {
+                DataRecord stackSample = sampleStack.pop();
+                Object sampleType = stackSample.getValue(SampleModel.EXEMPLAR_SAMPLE_TYPE, user);
+                Object samId = stackSample.getValue(SampleModel.SAMPLE_ID, user);
+                log.info("Sample Type: " + sampleType);
+                if (!samId.toString().toLowerCase().startsWith("pool") || (sampleType != null && !POOLED_SAMPLE_TYPES.contains(sampleType.toString().toLowerCase()))) {
+                    String sampleId = stackSample.getStringVal(SampleModel.SAMPLE_ID, user);
+                    log.info("Adding sample to Library Samples List: " + sampleId);
+                    if (addedSampleIds.add(sampleId)) {
+                        flowCellSamples.add(stackSample);
+                    }
+                } else {
+                    sampleStack.addAll(stackSample.getParentsOfType(SampleModel.DATA_TYPE_NAME, user));
+                }
+            }while (!sampleStack.isEmpty());
         } catch (NotFound | RemoteException | IoError | NullPointerException notFound) {
             log.error(String.format("%s-> Error while getting related Library Samples for run %s:\n%s", ExceptionUtils.getRootCauseMessage(notFound), runId, ExceptionUtils.getStackTrace(notFound)));
         }
+        log.info(String.format("Total Samples related to run %d , Sample Ids: %s", flowCellSamples.size(), Arrays.toString(addedSampleIds.toArray())));
         return flowCellSamples;
     }
 
@@ -360,6 +363,9 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 if(baseId.equalsIgnoreCase(sampleId)){
                     return sample;
                 }
+                // Older SampleId values started with "CTRL" for POOLEDNORMAL control Samples. With last update, the control Samples now
+                // start with actual control sample type eg "FFPEPOOLEDNORMAL, MOUSEPOOLEDNORMAL etc." we need to validate both old and new pattern
+                // for POOLEDNORMAL control samples.
                 if((sampleId.contains(POOLEDNORMAL_IDENTIFIER) && baseId.toUpperCase().contains(POOLEDNORMAL_IDENTIFIER))
                         || (sampleId.contains(CONTROL_IDENTIFIER) && baseId.toUpperCase().contains(CONTROL_IDENTIFIER))){
                     String[] pooleNormalIdVals = sampleId.split("_");
