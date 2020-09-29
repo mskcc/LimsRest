@@ -18,21 +18,21 @@ public class GetRequestTrackingTaskTest {
     public static final Set<String> TEST_THESE_PROJECTS = new HashSet<>(Arrays.asList(
             // ALL PASSED
             "10795",        // Good:    BASIC                           3 IGO-Complete
-            "09443_AS",        // Good:    BASIC                           8 IGO-complete
+            "09443_AS",     // Good:    BASIC                           8 IGO-complete
 
             "09602_F",      // Good:    Multiple successful Banches     12 IGO-complete (different number Library Prep & Capture)
-            "09367_K",        // Good:    Failed branches                 1 IGO-Complete
+            "09367_K",      // Good:    Failed branches                 1 IGO-Complete
             "07428_AA",     // Good:    Includes extraction             4 IGO-Complete
-
+            "06302_Z",      // Good:    Submitted Stage has non-promoted record
             // Passed/Pending
             "10793",        // Good: 9 Passed, 1 Pending
 
             // Failed/Complete
-            "06302_W",        // Good: 1 Failed Library Prep, 41 IGO-Complete
-            // "06302_AG",        // Good: Pending User Decision
+            "06302_W",      // Good: 1 Failed Library Prep, 41 IGO-Complete
+            // "06302_AG",  // TAKES A LONG TIME TO TEST: Pending User Decision
 
             // Failed/Pending
-            "05888_G",        // Good: 3 w/ failed Sequencing Branches, 5 "Under-Review"
+            "05888_G",      // Good: 3 w/ failed Sequencing Branches, 5 "Under-Review"
 
             // Awaiting Processing - When a sample hasn't been assigned to a workflow
             "09546_T"      // Single awaitingProcessing Node
@@ -88,6 +88,13 @@ public class GetRequestTrackingTaskTest {
                         .addStage(STAGE_LIBRARY_QC, true, 4, 4, 0)
                         .addStage(STAGE_SEQUENCING, true, 4, 4, 0)
                         .addStage(STAGE_DATA_QC, true, 4, 4, 0)
+                        .build(),
+                new ProjectBuilder("06302_Z")
+                        .addStage(STAGE_SUBMITTED, true, 57, 56, 0)
+                        .addStage(STAGE_EXTRACTION, true, 56, 56, 0)
+                        .addStage(STAGE_LIBRARY_PREP, true, 56, 56, 0)
+                        .addStage(STAGE_SEQUENCING, true, 56, 56, 0)
+                        .addStage(STAGE_DATA_QC, true, 56, 56, 0)
                         .build()
         ));
 
@@ -174,15 +181,14 @@ public class GetRequestTrackingTaskTest {
     public void isIgoComplete_extraction() {
         String EXTRACTION_ID = "07527_J";
         GetRequestTrackingTask t = new GetRequestTrackingTask(EXTRACTION_ID, this.conn);
-        Map<String, Object> requestTracker = new HashMap<>();
+        Map<String, Object> requestInfo = new HashMap<>();
         try {
-            requestTracker = t.execute();
+            requestInfo = t.execute();
         } catch (IoError | RemoteException | NotFound e) {
             assertTrue("Exception in task execution", false);
         }
 
-        Map<String, Object> request = (Map<String, Object>) requestTracker.get("request");
-        Map<String, Object> summary = (Map<String, Object>) request.get("summary");
+        Map<String, Object> summary = (Map<String, Object>) requestInfo.get("summary");
         final Long completedDate = (Long) summary.get("CompletedDate");
         final Boolean isIgoComplete = (Boolean) summary.get("isIgoComplete");
 
@@ -201,15 +207,14 @@ public class GetRequestTrackingTaskTest {
             // gate
             if (TEST_THESE_PROJECTS.contains(project.name)) {
                 GetRequestTrackingTask t = new GetRequestTrackingTask(project.name, this.conn);
-                Map<String, Object> requestTracker = new HashMap<>();
+                Map<String, Object> requestInfo = new HashMap<>();
                 try {
-                    requestTracker = t.execute();
+                    requestInfo = t.execute();
                 } catch (IoError | RemoteException | NotFound e) {
                     assertTrue("Exception in task execution", false);
                 }
 
-                Map<String, Object> request = (Map<String, Object>) requestTracker.get("request");
-                testProjectStages(request, project);
+                testProjectStages(requestInfo, project);
             }
         }
     }

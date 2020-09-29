@@ -17,15 +17,13 @@ public class Request {
     private static Log log = LogFactory.getLog(Request.class);
 
     private String requestId;
-    private String bankedSampleId;
     private Map<String, StageTracker> stages;
     private List<ProjectSample> samples;                // Tree of samples
     private Map<String, Object> metaData;               // Summary of metaData
     private Map<String, Object> summary;                // Summary of overall project status
 
-    public Request(String requestId, String bankedSampleId) {
+    public Request(String requestId) {
         this.requestId = requestId;
-        this.bankedSampleId = bankedSampleId;
         this.samples = new ArrayList<>();
         this.stages = new TreeMap<>(new StageComp());
         this.metaData = new HashMap<>();
@@ -74,7 +72,6 @@ public class Request {
         Map<String, Object> apiResponse = new HashMap<>();
 
         apiResponse.put("requestId", this.requestId);
-        apiResponse.put("bankedSampleId", this.bankedSampleId);
         apiResponse.put("summary", this.summary);
         apiResponse.put("metaData", this.metaData);
         apiResponse.put("samples", this.samples.stream().map(tracker -> tracker.toApiResponse()).collect(Collectors.toList()));
