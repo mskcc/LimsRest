@@ -405,12 +405,7 @@ public class GetRequestTrackingTask {
         promoted = tracker.get(BankedSampleModel.PROMOTED);
 
         StageTracker requestStage = new StageTracker(STAGE_SUBMITTED, total, promoted, null, null);
-        Boolean submittedComplete = total == promoted;
-        if (submittedComplete) {
-            requestStage.setComplete(Boolean.TRUE);
-        } else {
-            requestStage.setComplete(Boolean.FALSE);
-        }
+        requestStage.setComplete(Boolean.TRUE);
 
         return requestStage;
     }
