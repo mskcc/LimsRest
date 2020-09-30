@@ -60,7 +60,7 @@ public class GetRequestTrackingTask {
         DataRecordManager drm = vConn.getDataRecordManager();
 
         String serviceId = getBankedSampleServiceId(this.requestId, user, drm);
-        Request request = new Request(this.requestId, serviceId);
+        Request request = new Request(this.requestId);
 
         if (serviceId != null && !serviceId.equals("")) {
             // Add "submitted" stage if a serviceID exists
@@ -79,18 +79,10 @@ public class GetRequestTrackingTask {
         }
         DataRecord requestRecord = requestRecordList.get(0);
 
-        Map<String, Object> metaData = getMetaDataFromRecord(requestRecord, user);
-
         List<ProjectSample> projectSamples = getProjectSamplesFromDataRecord(requestRecord, user);
         request.setSamples(projectSamples);
 
-        // Certain fields can only be collected after the ProjectSample has been created
-        Set<String> sourceProjects = projectSamples.stream()
-                .map(sample -> sample.getRoot().getSourceRequest())
-                .filter(sampleId -> !StringUtils.isBlank(sampleId))
-                .collect(Collectors.toSet());
-        metaData.put("sourceProjects", sourceProjects.toArray());
-
+        Map<String, Object> metaData = getMetaDataFromRecord(requestRecord, this.requestId, serviceId, projectSamples, user);
         request.setMetaData(metaData);
 
         // Aggregate Project-Level stage information. Stages are added one-by-one as previous stages (E.g. "submitted")
@@ -103,12 +95,7 @@ public class GetRequestTrackingTask {
         Map<String, Object> projectSummary = getProjectSummary(requestRecord, request.getStages(), user);
         request.setSummary(projectSummary);
 
-        Map<String, Object> apiResponse = new HashMap<>();
-        apiResponse.put("request", request.toApiResponse());
-        apiResponse.put("requestId", this.requestId);
-        apiResponse.put("serviceId", serviceId);
-
-        return apiResponse;
+        return request.toApiResponse();
     }
 
     /**
@@ -128,7 +115,7 @@ public class GetRequestTrackingTask {
      * @param user
      * @return
      */
-    private Map<String, Object> getProjectSummary(DataRecord requestRecord, Map<String, StageTracker> stages, User user){
+    private Map<String, Object> getProjectSummary(DataRecord requestRecord, Map<String, StageTracker> stages, User user) {
         Map<String, Object> projectStatus = new HashMap<>();
 
         final Long mostRecentDeliveryDate = getRecordLongValue(requestRecord, RequestModel.RECENT_DELIVERY_DATE, user);
@@ -454,14 +441,25 @@ public class GetRequestTrackingTask {
      * @param user
      * @return
      */
-    private Map<String, Object> getMetaDataFromRecord(DataRecord requestRecord, User user) {
-        Map<String, Object> requestMetaData = new HashMap<>();
+    private Map<String, Object> getMetaDataFromRecord(DataRecord requestRecord, String requestId, String serviceId, List<ProjectSample> projectSamples, User user) {
+        Map<String, Object> metaData = new HashMap<>();
         for (String field : requestDataStringFields) {
-            requestMetaData.put(field, getRecordStringValue(requestRecord, field, user));
+            metaData.put(field, getRecordStringValue(requestRecord, field, user));
         }
         for (String field : requestDataLongFields) {
-            requestMetaData.put(field, getRecordLongValue(requestRecord, field, user));
+            metaData.put(field, getRecordLongValue(requestRecord, field, user));
         }
-        return requestMetaData;
+
+        metaData.put("requestId", requestId);
+        metaData.put("serviceId", serviceId);
+
+        // Certain fields can only be collected after the ProjectSample has been created
+        Set<String> sourceProjects = projectSamples.stream()
+                .map(sample -> sample.getRoot().getSourceRequest())
+                .filter(sampleId -> !StringUtils.isBlank(sampleId))
+                .collect(Collectors.toSet());
+        metaData.put("sourceProjects", sourceProjects.toArray());
+
+        return metaData;
     }
 }
