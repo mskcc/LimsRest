@@ -402,10 +402,11 @@ public class GetRequestTrackingTask {
         }
 
         total = tracker.get("Total");
-        promoted = tracker.get(BankedSampleModel.PROMOTED);
-
+        promoted = tracker.computeIfAbsent(BankedSampleModel.PROMOTED, k -> 0);
         StageTracker requestStage = new StageTracker(STAGE_SUBMITTED, total, promoted, null, null);
-        requestStage.setComplete(Boolean.TRUE);
+
+        // Submitted stage is complete if at least one sample has been promoted
+        requestStage.setComplete(promoted > 0);
 
         return requestStage;
     }
