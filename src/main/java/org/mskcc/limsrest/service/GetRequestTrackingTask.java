@@ -451,7 +451,7 @@ public class GetRequestTrackingTask {
         }
 
         metaData.put("requestId", requestId);
-        metaData.put("bankedSampleId", serviceId);
+        metaData.put("serviceId", serviceId);
 
         // Certain fields can only be collected after the ProjectSample has been created
         Set<String> sourceProjects = projectSamples.stream()
