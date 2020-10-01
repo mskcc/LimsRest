@@ -42,7 +42,6 @@ public class Utils {
     private final static List<String> CAPTURE_SAMPLE_TYPES = Collections.singletonList("capture library");
     private final static List<String> POOLED_SAMPLE_TYPES = Collections.singletonList("pooled library");
     private final static String FAILED_STATUS_TEXT = "failed";
-    private final static String SEQUENCING_ANALYSIS_STATUS = "Illumina Sequencing Analysis";
     private final static String IGO_ID_WITHOUT_ALPHABETS_PATTERN = "^[0-9]+_[0-9]+.*$";  // sample id without alphabets
     private final static String IGO_ID_WITH_ALPHABETS_PATTERN = "^[0-9]+_[A-Z]+_[0-9]+.*$";  // sample id without alphabets
 
@@ -468,7 +467,7 @@ public class Utils {
     public static String getMostAdvancedLimsStage(DataRecord sample, String requestId, ConnectionLIMS conn) {
         User user = conn.getConnection().getUser();
         String mostAdvancedSampleStatus = getMostAdvancedSampleStatus(sample, requestId, user);
-        if (mostAdvancedSampleStatus.toLowerCase().contains(FAILED_STATUS_TEXT) && mostAdvancedSampleStatus.contains(SEQUENCING_ANALYSIS_STATUS)) {
+        if (mostAdvancedSampleStatus.toLowerCase().contains(FAILED_STATUS_TEXT) && mostAdvancedSampleStatus.contains(STAGE_SEQUENCING_ANALYSIS)) {
             return mostAdvancedSampleStatus;
         }
         if (mostAdvancedSampleStatus.toLowerCase().contains(FAILED_STATUS_TEXT)) {
