@@ -3,7 +3,6 @@ package org.mskcc.limsrest.util;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
-import com.velox.api.plugin.PluginLogger;
 import com.velox.api.user.User;
 import com.velox.sloan.cmo.recmodels.FlowCellLaneModel;
 import com.velox.sloan.cmo.recmodels.FlowCellModel;
