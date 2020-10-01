@@ -42,6 +42,7 @@ public class Utils {
     private final static List<String> CAPTURE_SAMPLE_TYPES = Collections.singletonList("capture library");
     private final static List<String> POOLED_SAMPLE_TYPES = Collections.singletonList("pooled library");
     private final static String FAILED_STATUS_TEXT = "failed";
+    private final static String SEQUENCING_ANALYSIS_STATUS = "Illumina Sequencing Analysis";
     private final static String IGO_ID_WITHOUT_ALPHABETS_PATTERN = "^[0-9]+_[0-9]+.*$";  // sample id without alphabets
     private final static String IGO_ID_WITH_ALPHABETS_PATTERN = "^[0-9]+_[A-Z]+_[0-9]+.*$";  // sample id without alphabets
 
@@ -90,6 +91,19 @@ public class Utils {
         }
         String sequencingStatus = getRecordStringValue(qcRecord[0], SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
         return sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_PASSED) || sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_FAILED);
+    }
+
+    /**
+     * Method to check if Sample failed "Sequencing Data QC" based on presence of SeqAnalysisSampleQC as child record
+     * and status of SeqAnalysisSampleQC as Failed.
+     *
+     * @param sample
+     * @return
+     */
+    private static Boolean hasFailedSequencingDataQc(DataRecord sample, User user){
+        DataRecord [] qcRecrod = getChildrenofDataRecord(sample, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
+        String sequencingStatus = getRecordStringValue(qcRecrod[0], SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
+        return sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_FAILED);
     }
 
     /**
@@ -454,6 +468,9 @@ public class Utils {
     public static String getMostAdvancedLimsStage(DataRecord sample, String requestId, ConnectionLIMS conn) {
         User user = conn.getConnection().getUser();
         String mostAdvancedSampleStatus = getMostAdvancedSampleStatus(sample, requestId, user);
+        if (mostAdvancedSampleStatus.toLowerCase().contains(FAILED_STATUS_TEXT) && mostAdvancedSampleStatus.contains(SEQUENCING_ANALYSIS_STATUS)) {
+            return mostAdvancedSampleStatus;
+        }
         if (mostAdvancedSampleStatus.toLowerCase().contains(FAILED_STATUS_TEXT)) {
             return mostAdvancedSampleStatus;
         }
@@ -490,6 +507,10 @@ public class Utils {
                 int currentStatusOrder = getSampleTypeOrder(currentSampleType.toLowerCase());
                 long currentRecordId = current.getRecordId();
                 if (isSequencingComplete(current, user)) {
+                    // Check if Sample has failed Sequencing analysis
+                    if (hasFailedSequencingDataQc(current, user)){
+                        return String.format("%s%s", WORKFLOW_STATUS_FAILED, STAGE_SEQUENCING_ANALYSIS);
+                    }
                     // Return the Completed-Sequencing status, NOT currentSampleStatus as this could not unrelated to sequencing
                     return String.format("%s%s", WORKFLOW_STATUS_COMPLETED, STAGE_SEQUENCING_ANALYSIS);
                 }
