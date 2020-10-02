@@ -4,11 +4,13 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
 import com.velox.api.datarecord.*;
+import com.velox.api.user.User;
 import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.utilities.SloanCMOUtils;
 import com.velox.sloan.cmo.utilities.UuidGenerator;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.*;
@@ -120,6 +122,77 @@ public class PromoteBanked extends LimsTask {
         seqRequirementMap.put("CoverageTarget", coverageTarget);
         seqRequirementMap.put("RequestedReads", requestedReads);
     }
+
+
+    /**
+     * Get Requested Reads and Coverage values from Reference values defined in LIMS DataType 'ApplicationReadCoverageRef'
+     * @param recipe
+     * @param tumorOrNormal
+     * @param panelName
+     * @param runType
+     * @param species
+     * @param applicationReadCoverageRefs
+     * @return
+     */
+    public Map<String, Object> getRequestedReadsForCoverage(Object recipe, Object tumorOrNormal, Object panelName, Object runType, Object species, Object coverage, List<DataRecord> applicationReadCoverageRefs){
+        Map<String, Object> readCoverage = new HashMap<>();
+        try {
+        if (Objects.isNull(recipe) || Objects.isNull(tumorOrNormal)){
+            log.error(String.format("Cannot set Read/Coverage values because of missing data on Banked Sample, Recipe -> %s, TumorNormal -> %s", recipe, tumorOrNormal));
+            return readCoverage;
+        }
+        for (DataRecord ref : applicationReadCoverageRefs){
+            Map<String, Object> refVals = ref.getFields(user);
+            Object refRecipe = refVals.get("PlatformApplication");
+            Object refTumorNormal = refVals.get("TumorNormal");
+            Object refPanelName = refVals.get("CapturePanel");
+            Object refRunType = refVals.get("SequencingRunType");
+            Object refCoverage = refVals.get("Coverage");
+            if (Objects.equals(recipe, refRecipe) && Objects.equals(tumorOrNormal, refTumorNormal) && Objects.equals(panelName, refPanelName) && Objects.equals(runType, refRunType) && Objects.equals(coverage, refCoverage)){
+                readCoverage.put("SequencingRunType", refRunType);
+                readCoverage.put("Coverage", refCoverage);
+                Object human = "Human";
+                Object mouse = "Mouse";
+                if(species != null) {
+                    if (Objects.equals(human, species)) {
+                        readCoverage.put("RequestedReads", refVals.get("MillionReadsHuman"));
+                    }
+                    if (Objects.equals(mouse, species)) {
+                        readCoverage.put("RequestedReads", refVals.get("MillionReadsMouse"));
+                    }
+                }
+                else{
+                    readCoverage.put("RequestedReads", refVals.get("MillionReadsHuman"));
+                }
+            }
+        }
+        } catch (RemoteException e) {
+            log.info(String.format("%s error while fetching ReadCoverage values. %s", ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getStackTrace(e)));
+        }
+        return readCoverage;
+    }
+
+
+    /**
+     * Method to check if the Requested Reads value should come from 'ApplicationReadCoverageRef' table in LIMS.
+     * @param recipe
+     * @param applicationReadCoverageRefs
+     * @return
+     */
+    public boolean needReadCoverageReference(String recipe, List<DataRecord> applicationReadCoverageRefs){
+        try{
+            for (DataRecord rec : applicationReadCoverageRefs){
+                Object refRecipe = rec.getValue("PlatformApplication", user);
+                if (Objects.equals(refRecipe, recipe)){
+                    return true;
+                }
+            }
+        }catch (RemoteException | NotFound e) {
+            log.info(String.format("%s error while fetching ReadCoverage values. %s", ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getStackTrace(e)));
+        }
+        return false;
+    }
+
 
     public void init(String[] bankedIds, String projectId, String requestId, String serviceId, String igoUser, String materials, boolean dryrun) {
         this.bankedIds = bankedIds;
@@ -458,13 +531,16 @@ public class PromoteBanked extends LimsTask {
                     rrMapped = Double.parseDouble(depthMatch.group(1));
                 }
                 seqRequirementMap.put("RequestedReads", rrMapped);
-            } else if (recipe.contains("Heme") || recipe.contains("IMPACT") || recipe.contains("ACCESS")) { // 'M-IMPACT_v1', 'HemePACT_v4'
-                String tumorOrNormal = (String) bankedFields.getOrDefault("TumorOrNormal", "");
-                setSeqReq(recipe, tumorOrNormal, seqRequirementMap);
             }
+            //check if requested reads should come from Reference table 'ApplicationReadCoverageRef' in LIMS.
+            List<DataRecord> readCoverageRefs = dataRecordManager.queryDataRecords("ApplicationReadCoverageRef", null, user);
+            if (needReadCoverageReference(recipe, readCoverageRefs)){
+                // if true update Reads Coverage values from the 'ApplicationReadCoverageRef' in LIMS.
 
-            if ("WholeExomeSequencing".equalsIgnoreCase(recipe)) {
-                setSeqReqForWES(requestedReads, seqRequirementMap);
+                // <--TO DO--> Check with LISA where the PanelName value should come from.
+                seqRequirementMap.putAll(getRequestedReadsForCoverage(recipe, bankedFields.getOrDefault("TumorOrNormal", null),
+                        req.getValue("PanelName", user), bankedFields.getOrDefault("RunType", null), bankedFields.getOrDefault("Species", null),
+                        bankedFields.getOrDefault("RequestedCoverage", null), readCoverageRefs));
             }
             promotedSampleRecord.addChild("SeqRequirement", seqRequirementMap, user);
         } catch (NullPointerException npe) {
