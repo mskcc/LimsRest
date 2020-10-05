@@ -13,6 +13,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.util.IGOTools;
+import org.mskcc.limsrest.util.Utils;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -108,7 +109,7 @@ public class GetSampleManifestTask {
         if ("Fingerprinting".equals(recipe))
             return new SampleManifest();
 
-        SampleManifest sampleManifest = getSampleLevelFields(igoId, samples, sample, dataRecordManager, user);
+        SampleManifest sampleManifest = setSampleCMOLevelFields(igoId, sample, samples, dataRecordManager, user);
 
         sampleManifest.setTubeId(getTubeId(sample, user));
 
@@ -387,55 +388,20 @@ public class GetSampleManifestTask {
         }
     }
 
-    protected SampleManifest getSampleLevelFields(String igoId, List<DataRecord> samples, DataRecord sample,
-                                                  DataRecordManager dataRecordManager, User user)
-            throws NotFound, RemoteException, IoError {
-        // try to find the CMO Sample Level record if it exists, if not use the sample level fields.
-
-        String cmoInfoIgoId = getCMOSampleIGOID(sample, igoId, dataRecordManager, 0, user);
-        // 06302_R_1 has no sampleCMOInfoRecord so use the same fields at the sample level
-        log.info("Searching for CMO info record by IGO ID:" + cmoInfoIgoId);
-        List<DataRecord> sampleCMOInfoRecords = dataRecordManager.queryDataRecords("SampleCMOInfoRecords", "SampleId = '" + cmoInfoIgoId +  "'", user);
-        DataRecord cmoInfo;  // assign the dataRecord to query either sample table or samplecmoinforecords
-        if (sampleCMOInfoRecords.size() == 0) {
+    protected SampleManifest setSampleCMOLevelFields(String igoId, DataRecord sample, List<DataRecord> samples,
+                                                     DataRecordManager dataRecordManager, User user) throws NotFound, RemoteException {
+        List<DataRecord> cmoRecords = Utils.getRecordsOfTypeFromParents(sample, "Sample", "SampleCMOInfoRecords", user);
+        DataRecord cmoInfo;
+        String cmoInfoIgoId = "";
+        if (cmoRecords == null) {
             log.info("No CMO info record found, using sample level fields for IGO ID: " + igoId);
             cmoInfo = samples.get(0);
         } else {
-            cmoInfo = sampleCMOInfoRecords.get(0);
+            cmoInfo = cmoRecords.get(0);
+            cmoInfoIgoId = cmoInfo.getStringVal("SampleId", user);
+            log.info("Found CMO Sample record linked to IGO ID " + cmoInfoIgoId);
         }
-        return getSampleLevelFields(igoId, cmoInfoIgoId, cmoInfo, user);
-    }
-
-    // source IGO ID field often has '0', blank or null
-    // this recursive function could just be a while loop
-    private String getCMOSampleIGOID(DataRecord sample, String igoId, DataRecordManager dataRecordManager, int depth, User user)
-            throws NotFound, RemoteException, IoError {
-        // for example sample: 10049_B_1->10049_1_1 source LIMS sample ID
-        // Also possible parent's parent has the CMO Info record: 07724_D_8->07724_B_8->07724_8
-        // or no CMO level record exists: 06230_C_5
-        String sourceSampleID = sample.getStringVal("SourceLimsId", user);
-        // exit recursion by these conditions
-        if (sourceSampleID == null || sourceSampleID.isEmpty() || sourceSampleID.equals("0"))
-            return igoId;
-        if (depth >= 5) {
-            log.info("Likely self-referencial sample: " + igoId);
-            return igoId;
-        }
-        else {
-            String baseIGOID = IGOTools.baseIgoSampleId(sourceSampleID);
-            log.info("Searching sample table for: " + baseIGOID);
-            List<DataRecord> samples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + baseIGOID + "'", user);
-            if (samples.size() == 0) {
-                // Some samples in LIMS such as 06048_P_15, 06194_F_2
-                // have source samples like 06048_F_11_1 where no 06048_F_11 exists in the LIMS
-                samples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sourceSampleID + "'", user);
-            }
-            if (samples.size() == 0) {
-                // 06194_E_1 lists source sample ID 06194_D_1 which does not exist in the LIMS!
-                return sourceSampleID;
-            }
-            return getCMOSampleIGOID(samples.get(0), baseIGOID, dataRecordManager, ++depth, user);
-        }
+        return setSampleLevelFields(igoId, cmoInfoIgoId, cmoInfo, user);
     }
 
     protected SampleManifest fastqsOnlyManifest(SampleManifest sampleManifest, Set<String> runFailedQC) {
@@ -463,7 +429,7 @@ public class GetSampleManifestTask {
         return new SampleManifest.Library(libraryIgoId, libraryVolume, libraryConcentration, dnaInputNg);
     }
 
-    protected SampleManifest getSampleLevelFields(String igoId, String cmoInfoIgoId, DataRecord cmoInfo, User user) throws NotFound, RemoteException {
+    protected SampleManifest setSampleLevelFields(String igoId, String cmoInfoIgoId, DataRecord cmoInfo, User user) throws NotFound, RemoteException {
         SampleManifest s = new SampleManifest();
         s.setIgoId(igoId);
         s.cmoInfoIgoId = cmoInfoIgoId;

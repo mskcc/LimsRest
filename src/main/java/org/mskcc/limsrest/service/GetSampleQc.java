@@ -333,6 +333,7 @@ public class GetSampleQc {
             runAndCatchNpe(() -> rs.setPi((String) requestFields.get("LaboratoryHead")));
             runAndCatchNpe(() -> rs.setInvestigator((String) requestFields.get("Investigator")));
             runAndCatchNpe(() -> rs.setPiEmail((String) requestFields.get("LabHeadEmail")));
+            runAndCatchNpe(() -> rs.setDataAccessEmails((String) requestFields.get("DataAccessEmails")));
             runAndCatchNpe(() -> rs.setInvestigatorEmail((String) requestFields.get("Investigatoremail")));
             runAndCatchNpe(() -> rs.setAutorunnable((Boolean) requestFields.get("BicAutorunnable")));
             runAndCatchNpe(() -> rs.setIsCmoRequest((Boolean)requestFields.get("IsCmoRequest")));
@@ -341,11 +342,7 @@ public class GetSampleQc {
             runAndCatchNpe(() -> rs.setCmoProject((String) requestFields.get("CMOProjectID")));
             runAndCatchNpe(() -> rs.setProjectManager((String) requestFields.get("ProjectManager")));
         } catch (Throwable e) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            log.info(e.getMessage());
-            log.info(sw.toString());
+            log.error(e);
             rs.setInvestigator("Annotation failed:" + e.getMessage());
         }
     }
