@@ -214,11 +214,12 @@ public class GetRequestTrackingTask {
     private ProjectSampleTree createWorkflowTree(WorkflowSample root, ProjectSampleTree tree) {
         tree.addStageToTracked(root);   // Update tree Project Sample stages w/ the input Workflow sample's stage
 
-        if (STAGE_DATA_QC.equals(root.getStage()) && !tree.isPassedDataQc()) {
+        if (STAGE_DATA_QC.equals(root.getStage()) && !tree.isQcIgoComplete()) {
             // The Data QC stage is updated by a node in Data QC stage. This node can update the entire tree's data
             // QC status as a ProjectSample is marked Data QC complete if it has any one Data QC node marked passed
             tree.updateDataQcStage(root);
         }
+        // TODO - Add logic for when this is in the extraction stage
 
         // Search each child of the input
         DataRecord[] children = new DataRecord[0];
