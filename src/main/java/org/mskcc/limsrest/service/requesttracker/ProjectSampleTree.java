@@ -48,11 +48,11 @@ public class ProjectSampleTree {
         return root;
     }
 
-    public Boolean isQcIgoComplete() {
+    public boolean isQcIgoComplete() {
         return QcStatus.IGO_COMPLETE.toString().equalsIgnoreCase(this.dataQcStatus);
     }
 
-    public Boolean isFailedDataQC() {
+    public boolean isFailedDataQC() {
         return SEQ_QC_STATUS_FAILED.equalsIgnoreCase(this.dataQcStatus);
     }
 
