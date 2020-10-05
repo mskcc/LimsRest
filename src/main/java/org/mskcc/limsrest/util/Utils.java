@@ -87,8 +87,13 @@ public class Utils {
         if (qcRecord.length == 0) {
             return false;
         }
+
+        DataRecord record = qcRecord[0];
+        Boolean isComplete = isQcStatusIgoComplete(record, user);
         String sequencingStatus = getRecordStringValue(qcRecord[0], SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
-        return sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_PASSED) || sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_FAILED);
+        Boolean isFailed = sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_FAILED);
+
+        return isComplete || isFailed;
     }
 
     /**
