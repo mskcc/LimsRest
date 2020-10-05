@@ -11,12 +11,10 @@ import org.junit.platform.commons.util.StringUtils;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.util.LimsStage;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 import static org.mskcc.limsrest.util.Utils.*;
@@ -34,6 +32,7 @@ public class WorkflowSample extends StatusTracker {
     Long recordId;
     String recordName;
     String sourceSampleId;
+    String childSampleId;
     String status;
     WorkflowSample parent;     // TODO - Can this ever be multiple?
     List<WorkflowSample> children;
@@ -71,6 +70,14 @@ public class WorkflowSample extends StatusTracker {
 
     public void setFailed(Boolean failed) {
         this.failed = failed;
+    }
+
+    public String getChildSampleId() {
+        return this.childSampleId;
+    }
+
+    public void setChildSampleId(String childSampleId) {
+        this.childSampleId = childSampleId;
     }
 
     /**
@@ -137,18 +144,43 @@ public class WorkflowSample extends StatusTracker {
      *
      * @return - Source Request ID, e.g. "06302_AG"
      */
-    public String getSourceRequest() {
+    public String getRequestFromSampleId(String sampleId) {
         // Source sample ID has suffix, e.g. "06302_X_1358_1_1". We need to parse out the project, e.g. "06302_X"
-        if(!StringUtils.isBlank(this.sourceSampleId)){
+        if(!StringUtils.isBlank(sampleId)){
             String pattern = "\\d{5}_[A-Z,a-z]{1,2}";
             Pattern r = Pattern.compile(pattern);
-            Matcher m = r.matcher(this.sourceSampleId);
+            Matcher m = r.matcher(sampleId);
             if(m.find()){
                 return m.group(0);
             }
             return "INVALID";
         }
         return "";
+    }
+
+    /**
+     * Retrieves a list of the child requestIds for all samples in the subtree of this instance of a WorkflowSample
+     * @return - All the child RequestIds (taken from SampleIds) descended from this
+     */
+    public List<String> getChildRequestIds() {
+        List<String> childSampleIds = new ArrayList<>();
+        Queue<WorkflowSample> queue = new LinkedList<>();
+        queue.add(this);
+
+        WorkflowSample nxt;
+        while(queue.size() > 0){
+            nxt = queue.remove();
+            childSampleIds.add(nxt.getChildSampleId());
+            queue.addAll(nxt.getChildren());
+        }
+
+        return childSampleIds.stream()
+                      .map(sampleId -> getRequestFromSampleId(sampleId))
+                      .collect(Collectors.toList());
+    }
+
+    public String getSourceRequestId() {
+        return getRequestFromSampleId(this.sourceSampleId);
     }
 
     public Map<String, Object> toApiResponse() {
@@ -163,6 +195,7 @@ public class WorkflowSample extends StatusTracker {
         attributesMap.put("status", this.status);
         attributesMap.put("failed", this.failed);
         attributesMap.put("sourceSampleId", this.sourceSampleId);
+        attributesMap.put("childSampleId", this.childSampleId);
         apiMap.put("attributes", attributesMap);
 
         return apiMap;
