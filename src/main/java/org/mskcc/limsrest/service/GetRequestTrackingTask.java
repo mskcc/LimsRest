@@ -478,11 +478,11 @@ public class GetRequestTrackingTask {
         metaData.put("serviceId", serviceId);
 
         // Certain fields can only be collected after the ProjectSample has been created
-        Set<String> sourceProjects = projectSamples.stream()
+        Set<String> sourceRequests = projectSamples.stream()
                 .map(sample -> sample.getRoot().getSourceRequestId())
                 .filter(sampleId -> !StringUtils.isBlank(sampleId))
                 .collect(Collectors.toSet());
-        metaData.put("sourceProjects", sourceProjects.toArray());
+        metaData.put("sourceRequests", sourceRequests.toArray());
 
         // Certain fields can only be collected after the ProjectSample has been created
         Set<String> childRequests = projectSamples.stream()

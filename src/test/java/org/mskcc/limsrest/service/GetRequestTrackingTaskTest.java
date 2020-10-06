@@ -227,7 +227,7 @@ public class GetRequestTrackingTaskTest {
     }
 
     @Test
-    public void sourceProject() {
+    public void sourceRequest() {
         String childRequestId = "06302_AB";
         String expectedSourceRequestId = "06302_AA";
         GetRequestTrackingTask t = new GetRequestTrackingTask(childRequestId, this.conn);
@@ -239,9 +239,9 @@ public class GetRequestTrackingTaskTest {
         }
 
         Map<String, Object> metaData = (Map<String, Object>) requestInfo.get("metaData");
-        Object[] sourceProjectList = (Object[]) metaData.get("sourceProjects");
-        assertEquals(String.format("%s should have one source request", childRequestId), sourceProjectList.length, 1);
-        String actualSourceRequest = (String) sourceProjectList[0];
+        Object[] sourceRequestList = (Object[]) metaData.get("sourceRequests");
+        assertEquals(String.format("%s should have one source request", childRequestId), sourceRequestList.length, 1);
+        String actualSourceRequest = (String) sourceRequestList[0];
         assertEquals(String.format("%s's source request should be %s", childRequestId, expectedSourceRequestId), actualSourceRequest, expectedSourceRequestId);
     }
 
