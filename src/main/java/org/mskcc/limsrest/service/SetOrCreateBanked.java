@@ -43,6 +43,7 @@ public class SetOrCreateBanked extends LimsTask {
     String micronicTubeBarcode;
     String barcodeId;
     String recipe;
+    String capturePanel;
     String runType;
     String serviceId;
     String sampleType;
@@ -56,6 +57,7 @@ public class SetOrCreateBanked extends LimsTask {
     String colPosition;
     String plateId;
     String requestedReads;
+    String requestedCoverage;
     Double estimatedPurity;
     float vol;
     double concentration;
@@ -86,6 +88,7 @@ public class SetOrCreateBanked extends LimsTask {
             String barcodeId,
             String barcodePosition,
             String recipe,
+            String capturePanel,
             String runType,
             String serviceId,
             String tubeId,
@@ -96,6 +99,7 @@ public class SetOrCreateBanked extends LimsTask {
             String colPos,
             String plateId,
             String requestedReads,
+            String requestedCoverage,
             String cellCount,
             String sequencingReadLength,
             String numTubes,
@@ -135,6 +139,7 @@ public class SetOrCreateBanked extends LimsTask {
         this.micronicTubeBarcode = micronicTubeBarcode;
         this.barcodeId = barcodeId;
         this.recipe = recipe;
+        this.capturePanel = capturePanel;
         this.runType = runType;
         this.sequencingReadLength = sequencingReadLength;
         this.serviceId = serviceId;
@@ -145,6 +150,7 @@ public class SetOrCreateBanked extends LimsTask {
         this.colPosition = colPos;
         this.plateId = plateId;
         this.requestedReads = requestedReads;
+        this.requestedCoverage = requestedCoverage;
         this.estimatedPurity = estimatedPurity;
         this.vol = vol;
         this.concentration = concentration;
@@ -252,6 +258,9 @@ public class SetOrCreateBanked extends LimsTask {
             if (!"NULL".equals(recipe)) {
                 bankedFields.put("Recipe", recipe);
             }
+            if (!"NULL".equals(capturePanel)) {
+                bankedFields.put("CapturePanel", capturePanel);
+            }
             if (!"NULL".equals(runType)) {
                 bankedFields.put("RunType", runType);
             }
@@ -293,6 +302,9 @@ public class SetOrCreateBanked extends LimsTask {
             }
             if (requestedReads != null && !"".equals(requestedReads)) {
                 bankedFields.put("RequestedReads", requestedReads);
+            }
+            if (requestedCoverage != null && !"".equals(requestedCoverage)) {
+                bankedFields.put("RequestedCoverage", requestedCoverage);
             }
             if (estimatedPurity != null && !"".equals(estimatedPurity)) {
                 bankedFields.put("EstimatedPurity", estimatedPurity);
