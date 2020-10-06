@@ -146,11 +146,11 @@ public class WorkflowSample extends StatusTracker {
      */
     public String getRequestFromSampleId(String sampleId) {
         // Source sample ID has suffix, e.g. "06302_X_1358_1_1". We need to parse out the project, e.g. "06302_X"
-        if(!StringUtils.isBlank(sampleId)){
+        if (!StringUtils.isBlank(sampleId)) {
             String pattern = "\\d{5}_[A-Z,a-z]{1,2}";
             Pattern r = Pattern.compile(pattern);
             Matcher m = r.matcher(sampleId);
-            if(m.find()){
+            if (m.find()) {
                 return m.group(0);
             }
             return "INVALID";
@@ -160,6 +160,7 @@ public class WorkflowSample extends StatusTracker {
 
     /**
      * Retrieves a list of the child requestIds for all samples in the subtree of this instance of a WorkflowSample
+     *
      * @return - All the child RequestIds (taken from SampleIds) descended from this
      */
     public List<String> getChildRequestIds() {
@@ -167,16 +168,17 @@ public class WorkflowSample extends StatusTracker {
         Queue<WorkflowSample> queue = new LinkedList<>();
         queue.add(this);
 
+        // BFS of samples descending from root sample
         WorkflowSample nxt;
-        while(queue.size() > 0){
+        while (queue.size() > 0) {
             nxt = queue.remove();
             childSampleIds.add(nxt.getChildSampleId());
             queue.addAll(nxt.getChildren());
         }
 
         return childSampleIds.stream()
-                      .map(sampleId -> getRequestFromSampleId(sampleId))
-                      .collect(Collectors.toList());
+                .map(sampleId -> getRequestFromSampleId(sampleId))
+                .collect(Collectors.toList());
     }
 
     public String getSourceRequestId() {

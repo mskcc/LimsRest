@@ -239,7 +239,7 @@ public class GetRequestTrackingTask {
             // Add all data for the root's children at that level. Allows us to fail only the failed branch
             List<WorkflowSample> workflowChildren = new ArrayList<>();
             for (DataRecord record : children) {
-                if(isWorkflowSampleInProject(record, this.requestId, this.user)){
+                if (isWorkflowSampleInProject(record, this.requestId, this.user)) {
                     WorkflowSample sample = new WorkflowSample(record, this.conn);
                     sample.setParent(root);
                     if (STAGE_AWAITING_PROCESSING.equals(sample.getStage())) {
