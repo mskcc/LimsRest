@@ -24,6 +24,7 @@ public class GetRequestTrackingTaskTest {
             "09367_K",      // Good:    Failed branches                 1 IGO-Complete
             "07428_AA",     // Good:    Includes extraction             4 IGO-Complete
             "06302_Z",      // Good:    Submitted Stage has non-promoted record
+
             // Passed/Pending
             "10793",        // Good: 9 Passed, 1 Pending
 
@@ -110,8 +111,8 @@ public class GetRequestTrackingTaskTest {
                 new ProjectBuilder("10793")
                         .addStage(STAGE_SUBMITTED, true, 10, 10, 0)
                         .addStage(STAGE_LIBRARY_PREP, true, 10, 10, 0)
-                        .addStage(STAGE_SEQUENCING, false, 10, 9, 0)
-                        .addStage(STAGE_DATA_QC, false, 10, 9, 0)
+                        .addStage(STAGE_SEQUENCING, false, 10, 0, 0)  // Passed, not complete
+                        .addStage(STAGE_DATA_QC, false, 10, 0, 0)
                         .build()));
 
         testProjects(testCases);
