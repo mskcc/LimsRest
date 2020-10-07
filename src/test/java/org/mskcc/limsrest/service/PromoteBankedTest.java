@@ -1,7 +1,15 @@
 package org.mskcc.limsrest.service;
 
 import com.google.common.collect.ImmutableMap;
+import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.datarecord.IoError;
+import com.velox.api.datarecord.NotFound;
+import com.velox.api.user.User;
+import com.velox.sapioutils.client.standalone.VeloxConnection;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.assertj.core.api.Assertions;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -9,25 +17,36 @@ import org.mskcc.domain.Recipe;
 import org.mskcc.domain.RequestSpecies;
 import org.mskcc.domain.sample.BankedSample;
 import org.mskcc.domain.sample.CmoSampleInfo;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.cmoinfo.CorrectedCmoSampleIdGenerator;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
+import java.rmi.RemoteException;
+import java.util.*;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import static org.mskcc.domain.Recipe.*;
 
 public class PromoteBankedTest {
 
     private PromoteBanked promoteBanked;
     private CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator;
+    private ConnectionLIMS conn;
+    private List<DataRecord> readCoverageRefs;
+    private DataRecordManager dataRecordManager;
+    private User user;
 
     @Before
     public void setup() {
         correctedCmoSampleIdGenerator = Mockito.mock(CorrectedCmoSampleIdGenerator.class);
-
+            // Connection needed to query the existing tango workflow manager
+        this.conn = new ConnectionLIMS("tango.mskcc.org", 1099, "fe74d8e1-c94b-4002-a04c-eb5c492704ba", "test-runner", "password1");
+        dataRecordManager= conn.getConnection().getDataRecordManager();
+        user = conn.getConnection().getUser();
+        try {
+            readCoverageRefs = dataRecordManager.queryDataRecords("ApplicationReadCoverageRef", "ReferenceOnly != 1", user);
+        } catch (NotFound | IoError | RemoteException e) {
+            System.out.println(String.format("%s -> Error while running PromoteBankedTests: %s", ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getStackTrace(e)));
+        }
         List<String> humanRecipes = Arrays.asList(
                 IMPACT_341.getValue(),
                 IMPACT_410.getValue(),
@@ -38,7 +57,6 @@ public class PromoteBankedTest {
                 HEME_PACT_V_4.getValue(),
                 MSK_ACCESS_V1.getValue()
         );
-
         promoteBanked = new PromoteBanked();
     }
 
@@ -214,5 +232,27 @@ public class PromoteBankedTest {
     public void selectLarger() {
         double result = PromoteBanked.selectLarger("30-40 million");
         assertEquals(40.0, result, 0.001);
+    }
+
+    @Test
+    public void needReadCoverageReferenceTest() throws RemoteException {
+        assertTrue(promoteBanked.needReadCoverageReference("MSK-ACCESS_v1", readCoverageRefs, user));
+        assertTrue(promoteBanked.needReadCoverageReference("WholeExomeSequencing", readCoverageRefs, user));
+        assertTrue(promoteBanked.needReadCoverageReference("IMPACT505", readCoverageRefs, user));
+        assertFalse(promoteBanked.needReadCoverageReference("10X_Genomics_GeneExpression-3", readCoverageRefs, user));
+        assertFalse(promoteBanked.needReadCoverageReference("10X_Genomics_GeneExpression-5", readCoverageRefs, user));
+    }
+
+    @Test
+    public void getRequestedReadsForCoverageTest(){
+        Map<String, Object> seqReq = promoteBanked.getRequestedReadsForCoverage("WholeExomeSequencing", "Tumor", "EXOME_human_IDT_FP_v4", "PE100", "Human", "100", readCoverageRefs, user);
+        assertEquals(seqReq.get("RequestedReads"), 33l);
+        assertEquals(seqReq.get("CoverageTarget"), "100");
+        assertEquals(seqReq.get("SequencingRunType"), "PE100");
+    }
+
+    @After
+    public void destroy(){
+        conn.close();
     }
 }
