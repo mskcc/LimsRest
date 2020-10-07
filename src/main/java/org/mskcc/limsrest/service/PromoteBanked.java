@@ -137,8 +137,8 @@ public class PromoteBanked extends LimsTask {
     public Map<String, Object> getRequestedReadsForCoverage(Object recipe, Object tumorOrNormal, Object panelName, Object runType, Object species, Object coverage, List<DataRecord> applicationReadCoverageRefs){
         Map<String, Object> readCoverage = new HashMap<>();
         try {
-        if (Objects.isNull(recipe) || Objects.isNull(tumorOrNormal)){
-            log.error(String.format("Cannot set Read/Coverage values because of missing data on Banked Sample, Recipe -> %s, TumorNormal -> %s", recipe, tumorOrNormal));
+        if (Objects.isNull(recipe)){
+            log.error(String.format("Cannot set Read/Coverage values because of missing Recipe value on Banked Sample, Recipe -> %s", recipe, tumorOrNormal));
             return readCoverage;
         }
         for (DataRecord ref : applicationReadCoverageRefs){
@@ -148,20 +148,19 @@ public class PromoteBanked extends LimsTask {
             Object refPanelName = refVals.get("CapturePanel");
             Object refRunType = refVals.get("SequencingRunType");
             Object refCoverage = refVals.get("Coverage");
-            if (Objects.equals(recipe, refRecipe) && Objects.equals(tumorOrNormal, refTumorNormal) && Objects.equals(panelName, refPanelName) && Objects.equals(runType, refRunType) && Objects.equals(coverage, refCoverage)){
+            if (Objects.equals(recipe, refRecipe) && Objects.equals(tumorOrNormal, refTumorNormal) && Objects.equals(panelName, refPanelName) && Objects.equals(runType, refRunType) && Objects.equals(coverage, refCoverage)) {
                 readCoverage.put("SequencingRunType", refRunType);
                 readCoverage.put("Coverage", refCoverage);
                 Object human = "Human";
                 Object mouse = "Mouse";
-                if(species != null) {
+                if (species != null) {
                     if (Objects.equals(human, species)) {
                         readCoverage.put("RequestedReads", refVals.get("MillionReadsHuman"));
                     }
                     if (Objects.equals(mouse, species)) {
                         readCoverage.put("RequestedReads", refVals.get("MillionReadsMouse"));
                     }
-                }
-                else{
+                } else {
                     readCoverage.put("RequestedReads", refVals.get("MillionReadsHuman"));
                 }
             }
@@ -364,8 +363,10 @@ public class PromoteBanked extends LimsTask {
                 }
                 int offset = 1;
                 HashMap<String, DataRecord> plateId2Plate = new HashMap<>();
+                //check if requested reads should come from Reference table 'ApplicationReadCoverageRef' in LIMS.
+                List<DataRecord> readCoverageRefs = dataRecordManager.queryDataRecords("ApplicationReadCoverageRef", null, user);
                 for (DataRecord bankedSample : bankedList) {
-                    createRecords(bankedSample, req, requestId, barcodeId2Sequence, plateId2Plate, existentIds, maxId, offset);
+                    createRecords(bankedSample, req, requestId, barcodeId2Sequence, plateId2Plate, existentIds, maxId, offset, readCoverageRefs);
                     offset++;
                     bankedSample.setDataField("Promoted", Boolean.TRUE, user);
                     bankedSample.setDataField("RequestId", requestId, user);
@@ -416,7 +417,7 @@ public class PromoteBanked extends LimsTask {
 
     public void createRecords(DataRecord bankedSampleRecord, DataRecord req, String requestId,
                               HashMap<String, String> barcodeId2Sequence, HashMap<String, DataRecord> plateId2Plate,
-                              HashSet<String> existentIds, int maxExistentId, int offset)
+                              HashSet<String> existentIds, int maxExistentId, int offset, List<DataRecord> readCoverageRefs)
             throws LimsException, InvalidValue, AlreadyExists, NotFound, IoError, RemoteException, ServerException {
         try {
             AuditLog auditLog = user.getAuditLog();
@@ -532,14 +533,11 @@ public class PromoteBanked extends LimsTask {
                 }
                 seqRequirementMap.put("RequestedReads", rrMapped);
             }
-            //check if requested reads should come from Reference table 'ApplicationReadCoverageRef' in LIMS.
-            List<DataRecord> readCoverageRefs = dataRecordManager.queryDataRecords("ApplicationReadCoverageRef", null, user);
+            // Check if Coverage to Reads conversion is required.
             if (needReadCoverageReference(recipe, readCoverageRefs)){
                 // if true update Reads Coverage values from the 'ApplicationReadCoverageRef' in LIMS.
-
-                // <--TO DO--> Check with LISA where the PanelName value should come from.
                 seqRequirementMap.putAll(getRequestedReadsForCoverage(recipe, bankedFields.getOrDefault("TumorOrNormal", null),
-                        req.getValue("PanelName", user), bankedFields.getOrDefault("RunType", null), bankedFields.getOrDefault("Species", null),
+                        bankedFields.getOrDefault("CapturePanel", null), bankedFields.getOrDefault("RunType", null), bankedFields.getOrDefault("Species", null),
                         bankedFields.getOrDefault("RequestedCoverage", null), readCoverageRefs));
             }
             promotedSampleRecord.addChild("SeqRequirement", seqRequirementMap, user);
