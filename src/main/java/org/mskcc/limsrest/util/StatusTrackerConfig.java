@@ -119,7 +119,7 @@ public class StatusTrackerConfig {
      *      Extraction Requests - 1) Status: "Completed", 2) Non-null Completed Date
      *      Other - Non-null Recent Delivery Date
      *
-     * NOTE - This should be in sync w/ @StatusTrackerConfig::isIgoComplete. If changing this, uncomment
+     * NOTE - This should be in sync w/ @ToggleSampleQcStatus::setSeqAnalysisSampleQcStatus. If changing this, uncomment
      * @getIgoRequestsTask_matchesIsIgoCompleteUtil_* tests in GetIgoRequestsTaskTest
      * @param record
      * @param user
