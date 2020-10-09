@@ -180,6 +180,7 @@ public class ProjectSampleTree {
         }
 
         for (DataRecord sampleQcRecord : sampleQcRecords) {
+            // Check to see if one of the @sampleQcRecords has already marked the ProjectSample as IGO-Complete
             if (!isQcIgoComplete()) {
                 Boolean isIgoComplete = isQcStatusIgoComplete(sampleQcRecord, this.user);
                 if (isIgoComplete) {
