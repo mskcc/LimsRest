@@ -1,14 +1,16 @@
 package org.mskcc.limsrest.service.requesttracker;
 
-import java.util.*;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.user.User;
 import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.service.assignedprocess.QcStatus;
+
+import java.rmi.RemoteException;
+import java.util.*;
+
 import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
-import static org.mskcc.limsrest.util.StatusTrackerConfig.isQcStatusIgoComplete;
 import static org.mskcc.limsrest.util.Utils.*;
 
 /**
@@ -157,23 +159,43 @@ public class ProjectSampleTree {
      * @return
      */
     private void updateDataQcStatus(DataRecord record) {
-        DataRecord[] sampleQcRecords = getChildrenofDataRecord(record, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, this.user);
-        if (sampleQcRecords.length == 0) {
+
+        List<DataRecord> sampleQcRecords = new ArrayList<>();
+        try {
+            /**
+             * A Sample DataRecord can have a SeqAnalysisSampleQCModel child AND have children Sample DataRecords that
+             * also have SeqAnalysisSampleQCModel children. Therefore, we need to grab all descendant
+             * SeqAnalysisSampleQCModel from the input Sample DataRecord, @record, and check to see if any of them
+             * have been marked as IGO-Complete. This is because as long as one child has successfully completed the
+             * sequencing workflow, this WorkflowSample should be marked as Complete and NOT failed
+             */
+            sampleQcRecords = record.getDescendantsOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, this.user);
+        } catch (RemoteException e) {
+            log.error(String.format("Unable to retrieve sampleQcRecords from %d", record.getRecordId()));
+        }
+
+        if (sampleQcRecords.size() == 0) {
             // Only a node in the Data QC stage will have a child instance of the SeqAnalysisSampleQC DataType
             return;
         }
 
-        DataRecord sampleQcRecord = sampleQcRecords[0];
-        Boolean isIgoComplete = isQcStatusIgoComplete(sampleQcRecord, this.user);
-        if(isIgoComplete){
-            // Mark "IGO-Complete" because this is not a valid @SEQ_QCSTATUS value. LIMS differentiates a "Passed" &
-            // "IGO-Complete" DataQc record by their "DateIgoComplete" value, not their @SEQ_QCSTATUS value
-            setDataQcStatus(QcStatus.IGO_COMPLETE.toString());
-        } else {
-            String seqQcStatus = getRecordStringValue(sampleQcRecord, SeqAnalysisSampleQCModel.SEQ_QCSTATUS, this.user);
-            boolean isValidStatus = !"".equals(seqQcStatus);
-            if (isValidStatus) {
-                setDataQcStatus(seqQcStatus);
+        for (DataRecord sampleQcRecord : sampleQcRecords) {
+            if (!isQcIgoComplete()) {
+                Boolean isIgoComplete = isQcStatusIgoComplete(sampleQcRecord, this.user);
+                if (isIgoComplete) {
+                    /**
+                     * Mark "IGO-Complete" because this is not a valid @SEQ_QCSTATUS value. LIMS differentiates a
+                     * "Passed" & "IGO-Complete" DataQc record by their "DateIgoComplete" value, not their @SEQ_QCSTATUS
+                     * value
+                     */
+                    setDataQcStatus(QcStatus.IGO_COMPLETE.toString());
+                } else {
+                    String seqQcStatus = getRecordStringValue(sampleQcRecord, SeqAnalysisSampleQCModel.SEQ_QCSTATUS, this.user);
+                    boolean isValidStatus = !"".equals(seqQcStatus);
+                    if (isValidStatus) {
+                        setDataQcStatus(seqQcStatus);
+                    }
+                }
             }
         }
     }
