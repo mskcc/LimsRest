@@ -76,37 +76,66 @@ public class Utils {
     }
 
     /**
+     * Method to check if Sequencing for a sample is Passed Complete based on presence of SeqAnalysisSampleQC as child record
+     * and status of SeqAnalysisSampleQC as Passed on any record and IgoComplete set to True.
+     * @param qcRecords
+     * @param user
+     * @return
+     */
+    private static boolean isSequencingPassedComplete(List<DataRecord>qcRecords, User user){
+        try{
+            for (DataRecord rec: qcRecords){
+                Object qcStatus = rec.getValue(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
+                if (qcStatus!= null && qcStatus.toString().equalsIgnoreCase(SEQ_QC_STATUS_PASSED) && isQcStatusIgoComplete(rec, user)){
+                    return true;
+                }
+            }
+        }catch (Exception e){
+            String msg = String.format("%s -> Error while checking Sequencing QC status equals 'Passed'", ExceptionUtils.getRootCause(e), ExceptionUtils.getStackTrace(e));
+            LOGGER.error(msg);
+        }
+        return false;
+    }
+
+    /**
+     * Method to check if Sequencing for a sample is Failed Complete based on presence of SeqAnalysisSampleQC as child record
+     * and status of SeqAnalysisSampleQC as Failed on any record and IgoComplete set to True.
+     * @param qcRecords
+     * @param user
+     * @return
+     */
+    private static boolean isSequencingFailedComplete(List<DataRecord>qcRecords, User user){
+        try{
+            for (DataRecord rec: qcRecords){
+                Object qcStatus = rec.getValue(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
+                if (qcStatus!= null && qcStatus.toString().equalsIgnoreCase(SEQ_QC_STATUS_FAILED) && isQcStatusIgoComplete(rec, user)){
+                    return true;
+                }
+            }
+        }catch (Exception e){
+            String msg = String.format("%s -> Error while checking Sequencing QC status equals 'Passed'", ExceptionUtils.getRootCause(e), ExceptionUtils.getStackTrace(e));
+            LOGGER.error(msg);
+        }
+        return false;
+    }
+
+    /**
      * Method to check if Sequencing for a sample is complete based on presence of SeqAnalysisSampleQC as child record
      * and status of SeqAnalysisSampleQC as Passed.
      *
      * @param sample
      * @return
      */
-    private static Boolean isSequencingComplete(DataRecord sample, User user) {
+    private static Boolean isSequencingComplete(DataRecord sample, User user){
         DataRecord[] qcRecord = getChildrenofDataRecord(sample, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
         if (qcRecord.length == 0) {
             return false;
         }
-
         DataRecord record = qcRecord[0];
         Boolean isComplete = isQcStatusIgoComplete(record, user);
         String sequencingStatus = getRecordStringValue(qcRecord[0], SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
         Boolean isFailed = sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_FAILED);
-
         return isComplete || isFailed;
-    }
-
-    /**
-     * Method to check if Sample failed "Sequencing Data QC" based on presence of SeqAnalysisSampleQC as child record
-     * and status of SeqAnalysisSampleQC as Failed.
-     *
-     * @param sample
-     * @return
-     */
-    private static Boolean hasFailedSequencingDataQc(DataRecord sample, User user){
-        DataRecord [] qcRecrod = getChildrenofDataRecord(sample, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
-        String sequencingStatus = getRecordStringValue(qcRecrod[0], SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
-        return sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_FAILED);
     }
 
     /**
@@ -511,11 +540,14 @@ public class Utils {
                 long currentRecordId = current.getRecordId();
                 if (isSequencingComplete(current, user)) {
                     // Check if Sample has failed Sequencing analysis
-                    if (hasFailedSequencingDataQc(current, user)){
+                    List<DataRecord> seqQcRecords = current.getDescendantsOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
+                    if (isSequencingPassedComplete(seqQcRecords, user)){
+                        // Return the Completed-Sequencing status, NOT currentSampleStatus as this could not unrelated to sequencing
+                        return String.format("%s%s", WORKFLOW_STATUS_COMPLETED, STAGE_SEQUENCING_ANALYSIS);
+                    }
+                    if (isSequencingFailedComplete(seqQcRecords, user)){
                         return String.format("%s%s", WORKFLOW_STATUS_FAILED, STAGE_SEQUENCING_ANALYSIS);
                     }
-                    // Return the Completed-Sequencing status, NOT currentSampleStatus as this could not unrelated to sequencing
-                    return String.format("%s%s", WORKFLOW_STATUS_COMPLETED, STAGE_SEQUENCING_ANALYSIS);
                 }
                 if (currentRecordId > recordId && currentStatusOrder >= statusOrder && isCompleteStatus(currentSampleStatus)) {
                     sampleStatus = currentSampleStatus;
