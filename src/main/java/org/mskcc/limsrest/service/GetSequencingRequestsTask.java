@@ -35,46 +35,6 @@ public class GetSequencingRequestsTask extends LimsTask {
         this.includeFailed = includeFailed;
     }
 
-    private long getSearchPoint() {
-        long now = System.currentTimeMillis();
-        long offset = days * 24 * 60 * 60 * 1000;
-        return now - offset;
-    }
-
-    /**
-     * Returns the query to use to retrieve the IGO request
-     * NOTE - This should be in sync w/ @StatusTrackerConfig::isIgoComplete. If modifying, uncomment and rerun tests
-     * @getIgoRequestsTask_matchesIsIgoCompleteUtil_* tests in GetIgoRequestsTaskTest
-     *
-     * @return
-     */
-    private String getSeqAnalysisSampleQcQuery() {
-        long searchPoint = getSearchPoint();
-        if (this.igoComplete) {
-            return String.format("%s > %d AND PassedQc = TRUE", SeqAnalysisSampleQCModel.DATE_CREATED, searchPoint);
-        }
-        if (this.includeFailed) {
-            return String.format("%s > %d AND PassedQc = FALSE", SeqAnalysisSampleQCModel.DATE_CREATED, searchPoint);
-        }
-        return String.format("%s > %d AND PassedQc = FALSE AND %s != \"Failed\"",
-                SeqAnalysisSampleQCModel.DATE_CREATED, searchPoint, SeqAnalysisSampleQCModel.SEQ_QCSTATUS);
-    }
-
-    /**
-     * Returns the query to use to retrieve the IGO requests based on @igoComplete
-     *
-     * @return Request Query
-     */
-    private String getRequestQuery(String requestId) {
-        if (this.igoComplete) {
-            // If IGO-Complete, the recent-delivery date should not be null
-            return String.format("%s = '%s' and %s IS NOT NULL", RequestModel.REQUEST_ID, requestId,
-                    RequestModel.RECENT_DELIVERY_DATE);
-        }
-        // If incomplete, then there should not be a recent delivery date
-        return String.format("%s = '%s' and %s IS NULL", RequestModel.REQUEST_ID, requestId, RequestModel.RECENT_DELIVERY_DATE);
-    }
-
     @PreAuthorize("hasRole('READ')")
     @Override
     public List<RequestSummary> execute(VeloxConnection conn) {
@@ -136,5 +96,45 @@ public class GetSequencingRequestsTask extends LimsTask {
         }
 
         return requests;
+    }
+
+    private long getSearchPoint() {
+        long now = System.currentTimeMillis();
+        long offset = days * 24 * 60 * 60 * 1000;
+        return now - offset;
+    }
+
+    /**
+     * Returns the query to use to retrieve the IGO request
+     * NOTE - This should be in sync w/ @StatusTrackerConfig::isIgoComplete. If modifying, uncomment and rerun tests
+     * @getIgoRequestsTask_matchesIsIgoCompleteUtil_* tests in GetIgoRequestsTaskTest
+     *
+     * @return
+     */
+    private String getSeqAnalysisSampleQcQuery() {
+        long searchPoint = getSearchPoint();
+        if (this.igoComplete) {
+            return String.format("%s > %d AND PassedQc = TRUE", SeqAnalysisSampleQCModel.DATE_CREATED, searchPoint);
+        }
+        if (this.includeFailed) {
+            return String.format("%s > %d AND PassedQc = FALSE", SeqAnalysisSampleQCModel.DATE_CREATED, searchPoint);
+        }
+        return String.format("%s > %d AND PassedQc = FALSE AND %s != \"Failed\"",
+                SeqAnalysisSampleQCModel.DATE_CREATED, searchPoint, SeqAnalysisSampleQCModel.SEQ_QCSTATUS);
+    }
+
+    /**
+     * Returns the query to use to retrieve the IGO requests based on @igoComplete
+     *
+     * @return Request Query
+     */
+    private String getRequestQuery(String requestId) {
+        if (this.igoComplete) {
+            // If IGO-Complete, the recent-delivery date should not be null
+            return String.format("%s = '%s' and %s IS NOT NULL", RequestModel.REQUEST_ID, requestId,
+                    RequestModel.RECENT_DELIVERY_DATE);
+        }
+        // If incomplete, then there should not be a recent delivery date
+        return String.format("%s = '%s' and %s IS NULL", RequestModel.REQUEST_ID, requestId, RequestModel.RECENT_DELIVERY_DATE);
     }
 }
