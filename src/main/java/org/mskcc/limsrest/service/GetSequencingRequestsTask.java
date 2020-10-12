@@ -7,6 +7,7 @@ import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
 import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.sloan.cmo.recmodels.FlowCellLaneModel;
 import com.velox.sloan.cmo.recmodels.RequestModel;
 import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.logging.Log;
@@ -40,12 +41,13 @@ public class GetSequencingRequestsTask extends LimsTask {
     public List<RequestSummary> execute(VeloxConnection conn) {
         DataRecordManager dataRecordManager = conn.getDataRecordManager();
         User user = conn.getUser();
-        String seqAnalysisSampleQcQuery = getSeqAnalysisSampleQcQuery();
+        String flowCellLaneQuery = getFlowCellLaneQuery();
         List<DataRecord> records = new ArrayList<>();
         try {
-            records = dataRecordManager.queryDataRecords(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, seqAnalysisSampleQcQuery, user);
+            records = dataRecordManager.queryDataRecords(FlowCellLaneModel.DATA_TYPE_NAME, flowCellLaneQuery, user);
         } catch (IoError | RemoteException | NotFound e) {
-            log.error(String.format("Failed to query DataRecords w/ query: %s", seqAnalysisSampleQcQuery));
+            log.error(String.format("Failed to query DataRecords w/ query: '%s' on %s", flowCellLaneQuery,
+                    FlowCellLaneModel.DATA_TYPE_NAME));
             return new ArrayList<>();
         }
 
@@ -62,11 +64,10 @@ public class GetSequencingRequestsTask extends LimsTask {
                 try {
                     String possibleReqId = getRecordStringValue(sample, RequestModel.REQUEST_ID, user);
                     if (!reqIds.contains(possibleReqId)) {
-                        log.info("Adding " + possibleReqId);
+                        log.info(String.format("Adding RequestID: %s", possibleReqId));
                         reqIds.add(possibleReqId);
                     }
-                } catch (NullPointerException npe) {
-                }
+                } catch (NullPointerException e) {}
             }
         }
         List<DataRecord> requestRecords = new LinkedList<>();
@@ -76,7 +77,8 @@ public class GetSequencingRequestsTask extends LimsTask {
                 List<DataRecord> requestRecord = dataRecordManager.queryDataRecords(RequestModel.DATA_TYPE_NAME, requestQuery, user);
                 requestRecords.addAll(requestRecord);
             } catch (RemoteException | NotFound | IoError e) {
-                log.error(String.format("Failed to query Samples w/ query: %s", requestQuery));
+                log.error(String.format("Failed to query Samples w/ query: '%s' on %s", requestQuery,
+                        RequestModel.DATA_TYPE_NAME));
             }
         }
 
@@ -111,16 +113,9 @@ public class GetSequencingRequestsTask extends LimsTask {
      *
      * @return
      */
-    private String getSeqAnalysisSampleQcQuery() {
+    private String getFlowCellLaneQuery() {
         long searchPoint = getSearchPoint();
-        if (this.igoComplete) {
-            return String.format("%s > %d AND PassedQc = TRUE", SeqAnalysisSampleQCModel.DATE_CREATED, searchPoint);
-        }
-        if (this.includeFailed) {
-            return String.format("%s > %d AND PassedQc = FALSE", SeqAnalysisSampleQCModel.DATE_CREATED, searchPoint);
-        }
-        return String.format("%s > %d AND PassedQc = FALSE AND %s != \"Failed\"",
-                SeqAnalysisSampleQCModel.DATE_CREATED, searchPoint, SeqAnalysisSampleQCModel.SEQ_QCSTATUS);
+        return String.format("%s > %d", FlowCellLaneModel.DATE_CREATED, searchPoint);
     }
 
     /**
