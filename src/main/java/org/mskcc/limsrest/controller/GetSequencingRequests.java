@@ -47,10 +47,9 @@ public class GetSequencingRequests {
     @GetMapping("/getSequencingRequests")
     public ResponseEntity<Map<String, Object>> getContent(@RequestParam(value = "days", defaultValue = "7") String days,
                                                           @RequestParam(value = "complete", defaultValue = "true") String complete,
-                                                          @RequestParam(value = "includeFailed", defaultValue = "false") String includeFailed,
                                                           HttpServletRequest request) {
-        String.format("Starting /getSequencingRequests?days=%s&igoComplete=%s&includeFailed=%s client IP: %s",
-                days, complete, includeFailed, request.getRemoteAddr());
+        String.format("Starting /getSequencingRequests?days=%s&igoComplete=%s client IP: %s",
+                days, complete, request.getRemoteAddr());
 
         Map<String, Object> resp = new HashMap<>();
 
@@ -66,7 +65,6 @@ public class GetSequencingRequests {
         }
 
         Boolean igoComplete = Boolean.parseBoolean(complete);
-        Boolean includeFailedRequests = Boolean.parseBoolean(includeFailed);
         if (numDays < 0) {
             String clientMessage = String.format("Requested days must be greater than 0. Received Days: %s", days);
             resp.put("message", clientMessage);
@@ -74,7 +72,7 @@ public class GetSequencingRequests {
             return getResponseEntity(resp, HttpStatus.BAD_REQUEST);
         }
 
-        GetSequencingRequestsTask task = new GetSequencingRequestsTask(numDays, igoComplete, includeFailedRequests);
+        GetSequencingRequestsTask task = new GetSequencingRequestsTask(numDays, igoComplete);
         List<RequestSummary> requests = task.execute(this.conn.getConnection());
         resp.put("status", "Success");
         resp.put("requests", requests);

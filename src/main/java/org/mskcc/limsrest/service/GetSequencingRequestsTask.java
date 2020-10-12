@@ -26,14 +26,12 @@ import static org.mskcc.limsrest.util.Utils.getRecordStringValue;
 public class GetSequencingRequestsTask extends LimsTask {
     private static Log log = LogFactory.getLog(GetIgoRequestsTask.class);
 
-    private Long days;
-    private Boolean igoComplete;
-    private Boolean includeFailed;
+    private Long days;                  // Number of days since sequencing
+    private Boolean igoComplete;        // Whether to determine requests that have been marked IGO-COMPLETE
 
-    public GetSequencingRequestsTask(Long days, Boolean igoComplete, Boolean includeFailed) {
+    public GetSequencingRequestsTask(Long days, Boolean igoComplete) {
         this.days = days;
         this.igoComplete = igoComplete;
-        this.includeFailed = includeFailed;
     }
 
     @PreAuthorize("hasRole('READ')")
