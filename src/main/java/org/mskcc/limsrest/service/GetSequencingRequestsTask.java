@@ -9,7 +9,6 @@ import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.FlowCellLaneModel;
 import com.velox.sloan.cmo.recmodels.RequestModel;
-import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -65,7 +64,8 @@ public class GetSequencingRequestsTask extends LimsTask {
                         log.info(String.format("Adding RequestID: %s", possibleReqId));
                         reqIds.add(possibleReqId);
                     }
-                } catch (NullPointerException e) {}
+                } catch (NullPointerException e) {
+                }
             }
         }
         List<DataRecord> requestRecords = new LinkedList<>();
@@ -105,11 +105,10 @@ public class GetSequencingRequestsTask extends LimsTask {
     }
 
     /**
-     * Returns the query to use to retrieve the IGO request
-     * NOTE - This should be in sync w/ @StatusTrackerConfig::isIgoComplete. If modifying, uncomment and rerun tests
-     * @getIgoRequestsTask_matchesIsIgoCompleteUtil_* tests in GetIgoRequestsTaskTest
+     * Returns the query to use to retrieve the samples that have been sequenced, which should all have a FlowCellLane
+     * child record
      *
-     * @return
+     * @return Query for FlowCellLaneModel
      */
     private String getFlowCellLaneQuery() {
         long searchPoint = getSearchPoint();

@@ -33,14 +33,12 @@ public class GetSequencingRequests {
     /**
      * Retrieves sequencing requests, which are requests that have a sample w/ a SeqAnalysisSampleQCModel DataRecord in
      * their hierarchy
-     *  E.g.
-     *      { days: 7, complete: true }         Return completed requests from past week (failed doesn't matter)
-     *      { complete: false, failed: true }   Return incomplete requests INCLUDING those with failed samples
-     *      { complete: false, failed: false }  Return incomplete requests EXCLUDING those with failed samples
+     *      E.g.
+     *          { days: 14, complete: true }     Return completed requests from past two weeks
+     *          { complete: false }             Return incomplete requests (default: from past week)
      *
      * @param days          Number of days from which to query for sequencingrequests
      * @param complete      Whether to return completed sequencing requests
-     * @param includeFailed Whether to included samples w/ failed SeqAnalysisSampleQCModel records
      * @param request
      * @return
      */

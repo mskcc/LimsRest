@@ -4,20 +4,13 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
-import com.velox.sloan.cmo.recmodels.FlowCellLaneModel;
-import com.velox.sloan.cmo.recmodels.RequestModel;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import javax.validation.constraints.AssertTrue;
-import javax.xml.crypto.Data;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyList;
 import static org.mockito.Mockito.when;
 
 public class GetSequencingRequestsTaskTest {
