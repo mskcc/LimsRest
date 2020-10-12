@@ -34,7 +34,7 @@ public class GetSequencingRequests {
      * Retrieves sequencing requests, which are requests that have a sample w/ a SeqAnalysisSampleQCModel DataRecord in
      * their hierarchy
      *      E.g.
-     *          { days: 14, complete: true }     Return completed requests from past two weeks
+     *          { days: 14, complete: true }    Return completed requests from past two weeks
      *          { complete: false }             Return incomplete requests (default: from past week)
      *
      * @param days          Number of days from which to query for sequencingrequests
