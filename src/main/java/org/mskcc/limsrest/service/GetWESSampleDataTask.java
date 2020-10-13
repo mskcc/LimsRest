@@ -9,14 +9,11 @@ import com.velox.api.user.User;
 import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.RequestModel;
-import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.tomcat.util.ExceptionUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mskcc.limsrest.ConnectionLIMS;
-import org.mskcc.limsrest.service.requesttracker.Request;
 import org.mskcc.limsrest.service.sampletracker.WESSampleData;
 
 import javax.net.ssl.*;
@@ -34,7 +31,6 @@ import java.security.cert.X509Certificate;
 import java.util.*;
 
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
-import static org.apache.tomcat.util.ExceptionUtils.*;
 import static org.mskcc.limsrest.util.Utils.*;
 
 /**
