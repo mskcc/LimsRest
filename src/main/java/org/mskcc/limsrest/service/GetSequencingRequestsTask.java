@@ -116,7 +116,7 @@ public class GetSequencingRequestsTask extends LimsTask {
     }
 
     /**
-     * Returns the query to use to retrieve the IGO requests based on @igoComplete
+     * Returns the query to use to retrieve the IGO requests based on @delivered
      *
      * @return Request Query
      */

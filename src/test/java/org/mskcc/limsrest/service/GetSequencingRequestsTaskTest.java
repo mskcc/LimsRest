@@ -17,9 +17,9 @@ public class GetSequencingRequestsTaskTest {
     @Test
     public void queriesRequestsWithFlowCellSamples() {
         Long numDays = 7L;
-        Boolean igoComplete = Boolean.TRUE;
+        Boolean delivered = Boolean.TRUE;
 
-        GetSequencingRequestsTask task = new GetSequencingRequestsTask(numDays, igoComplete);
+        GetSequencingRequestsTask task = new GetSequencingRequestsTask(numDays, delivered);
         VeloxConnection conn = Mockito.mock(VeloxConnection.class);
         User user = Mockito.mock(User.class);
         DataRecord sample = Mockito.mock(DataRecord.class);
