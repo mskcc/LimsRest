@@ -112,6 +112,13 @@ public class Utils {
                     return true;
                 }
             }
+            // check if the status is actually failed but igoComplete is not marked true.
+            for (DataRecord rec: qcRecords){
+                Object qcStatus = rec.getValue(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
+                if (qcStatus!= null && qcStatus.toString().equalsIgnoreCase(SEQ_QC_STATUS_FAILED)){
+                    return true;
+                }
+            }
         }catch (Exception e){
             String msg = String.format("%s -> Error while checking Sequencing QC status equals 'Passed'", ExceptionUtils.getRootCause(e), ExceptionUtils.getStackTrace(e));
             LOGGER.error(msg);
@@ -216,34 +223,23 @@ public class Utils {
     }
 
     /**
-     * * Method to get a list of child records of specified DataType under a Sample.
+     * Method to get a list of child records of specified DataType under a Sample.
      * @param sample
      * @param childRecordType
      * @param user
      * @return
      */
     private static List<DataRecord> getChildDataRecordsOfType(DataRecord sample, String childRecordType, User user){
+        List<DataRecord> records = new ArrayList<>();
         try {
             Object requestId = sample.getValue(SampleModel.REQUEST_ID, user);
-            if (sample.getChildrenOfType(childRecordType, user).length > 0) {
-                return sample.getDescendantsOfType(childRecordType, user);
-            }
             Stack<DataRecord> sampleStack = new Stack<>();
-            DataRecord[] childSamples = sample.getChildrenOfType(SampleModel.DATA_TYPE_NAME, user);
-            for (DataRecord childSample : childSamples) {
-                Object childSampleRequestId = childSample.getValue(SampleModel.REQUEST_ID, user);
-                if(childSampleRequestId !=null && requestId!= null && requestId.toString().equalsIgnoreCase(childSampleRequestId.toString())){
-                    sampleStack.add(childSample);
-                }
-            }
-            if (sampleStack.isEmpty()){
-                return null;
-            }
+            sampleStack.add(sample);
             do {
                 DataRecord startSample = sampleStack.pop();
-                DataRecord[] seqQcRecs = startSample.getChildrenOfType(childRecordType, user);
-                if (seqQcRecs.length > 0) {
-                    return startSample.getDescendantsOfType(childRecordType, user);
+                DataRecord[] childRecs = startSample.getChildrenOfType(childRecordType, user);
+                if (childRecs.length > 0) {
+                    records.addAll(Arrays.asList(childRecs));
                 }
                 List<DataRecord> childSampleRecords = Arrays.asList(startSample.getChildrenOfType(SampleModel.DATA_TYPE_NAME, user));
                 if (childSampleRecords.size() > 0) {
@@ -262,7 +258,7 @@ public class Utils {
         } catch (NotFound notFound) {
             LOGGER.error(String.format("NotFound -> Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(notFound)));
         }
-        return new ArrayList<>();
+        return records;
     }
 
 
@@ -597,7 +593,7 @@ public class Utils {
                 long currentRecordId = current.getRecordId();
                 if (isSequencingComplete(current, user)) {
                     // Check if Sample has failed Sequencing analysis
-                    List<DataRecord> seqQcRecords = current.getDescendantsOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
+                    List<DataRecord> seqQcRecords =  getChildDataRecordsOfType(current, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
                     if (isSequencingPassedComplete(seqQcRecords, user)){
                         // Return the Completed-Sequencing status, NOT currentSampleStatus as this could not unrelated to sequencing
                         return String.format("%s%s", WORKFLOW_STATUS_COMPLETED, STAGE_SEQUENCING_ANALYSIS);
