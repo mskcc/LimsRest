@@ -38,16 +38,16 @@ public class GetSequencingRequests {
      *          { complete: false }             Return incomplete requests (default: from past week)
      *
      * @param days          Number of days from which to query for sequencingrequests
-     * @param complete      Whether to return completed sequencing requests
+     * @param delivered     Whether to return delivered sequencing requests
      * @param request
      * @return
      */
     @GetMapping("/getSequencingRequests")
     public ResponseEntity<Map<String, Object>> getContent(@RequestParam(value = "days", defaultValue = "7") String days,
-                                                          @RequestParam(value = "complete", defaultValue = "true") String complete,
+                                                          @RequestParam(value = "delivered", defaultValue = "true") String delivered,
                                                           HttpServletRequest request) {
         String.format("Starting /getSequencingRequests?days=%s&igoComplete=%s client IP: %s",
-                days, complete, request.getRemoteAddr());
+                days, delivered, request.getRemoteAddr());
 
         Map<String, Object> resp = new HashMap<>();
 
@@ -62,7 +62,7 @@ public class GetSequencingRequests {
             return getResponseEntity(resp, HttpStatus.BAD_REQUEST);
         }
 
-        Boolean igoComplete = Boolean.parseBoolean(complete);
+        Boolean isDelivered = Boolean.parseBoolean(delivered);
         if (numDays < 0) {
             String clientMessage = String.format("Requested days must be greater than 0. Received Days: %s", days);
             resp.put("message", clientMessage);
@@ -70,7 +70,7 @@ public class GetSequencingRequests {
             return getResponseEntity(resp, HttpStatus.BAD_REQUEST);
         }
 
-        GetSequencingRequestsTask task = new GetSequencingRequestsTask(numDays, igoComplete);
+        GetSequencingRequestsTask task = new GetSequencingRequestsTask(numDays, isDelivered);
         List<RequestSummary> requests = task.execute(this.conn.getConnection());
         resp.put("status", "Success");
         resp.put("requests", requests);

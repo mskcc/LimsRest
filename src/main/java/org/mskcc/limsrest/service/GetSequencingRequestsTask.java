@@ -25,12 +25,12 @@ import static org.mskcc.limsrest.util.Utils.getRecordStringValue;
 public class GetSequencingRequestsTask extends LimsTask {
     private static Log log = LogFactory.getLog(GetIgoRequestsTask.class);
 
-    private Long days;                  // Number of days since sequencing
-    private Boolean igoComplete;        // Whether to determine requests that have been marked IGO-COMPLETE
+    private Long days;          // Number of days since sequencing
+    private Boolean delivered;  // Whether to determine requests that have been marked IGO-COMPLETE
 
-    public GetSequencingRequestsTask(Long days, Boolean igoComplete) {
+    public GetSequencingRequestsTask(Long days, Boolean delivered) {
         this.days = days;
-        this.igoComplete = igoComplete;
+        this.delivered = delivered;
     }
 
     @PreAuthorize("hasRole('READ')")
@@ -88,9 +88,9 @@ public class GetSequencingRequestsTask extends LimsTask {
             rs.setInvestigator(getRecordStringValue(request, RequestModel.INVESTIGATOR, user));
             rs.setPi(getRecordStringValue(request, RequestModel.LABORATORY_HEAD, user));
             rs.setRequestType(getRecordStringValue(request, RequestModel.REQUEST_NAME, user));
-            rs.setReceivedDate(getRecordLongValue(request, RequestModel.RECEIVED_DATE, user));
+            // rs.setReceivedDate(getRecordLongValue(request, RequestModel.RECEIVED_DATE, user));
             rs.setRecentDeliveryDate(getRecordLongValue(request, RequestModel.RECENT_DELIVERY_DATE, user));
-            rs.setCompletedDate(getRecordLongValue(request, RequestModel.COMPLETED_DATE, user));
+            // rs.setCompletedDate(getRecordLongValue(request, RequestModel.COMPLETED_DATE, user));
             rs.setIsIgoComplete(isIgoComplete(request, user));
             requests.add(rs);
         }
@@ -121,7 +121,7 @@ public class GetSequencingRequestsTask extends LimsTask {
      * @return Request Query
      */
     private String getRequestQuery(String requestId) {
-        if (this.igoComplete) {
+        if (this.delivered) {
             // If IGO-Complete, the recent-delivery date should not be null
             return String.format("%s = '%s' and %s IS NOT NULL", RequestModel.REQUEST_ID, requestId,
                     RequestModel.RECENT_DELIVERY_DATE);
