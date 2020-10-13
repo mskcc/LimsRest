@@ -141,6 +141,7 @@ public class GetRequestTrackingTaskTest {
                         .addStage(STAGE_LIBRARY_PREP, true, 10, 10, 0)
                         .addStage(STAGE_SEQUENCING, false, 10, 0, 0)  // Passed, not complete
                         .addStage(STAGE_DATA_QC, false, 10, 0, 0)
+                        .addPendingStage(STAGE_SEQUENCING)
                         .build()));
 
         testProjects(testCases);
@@ -165,6 +166,7 @@ public class GetRequestTrackingTaskTest {
                         // TODO - Failed should be 48 & completed 332, but sequencing failures are difficult
                         .addStage(STAGE_SEQUENCING, false, 380, 332, 0)
                         .addStage(STAGE_DATA_QC, false, 380, 332, 48)
+                        .addPendingStage(STAGE_SEQUENCING)
                         .build()
         ));
 
@@ -183,6 +185,7 @@ public class GetRequestTrackingTaskTest {
                         .addStage(STAGE_LIBRARY_CAPTURE, true, 8, 8, 0)
                         .addStage(STAGE_SEQUENCING, false, 8, 0, 0)
                         .addStage(STAGE_DATA_QC, false, 5, 0, 0)
+                        .addPendingStage(STAGE_SEQUENCING)
                         .build()));
 
         testProjects(testCases);
@@ -201,6 +204,7 @@ public class GetRequestTrackingTaskTest {
                         .addStage(STAGE_LIBRARY_CAPTURE, false, 16, 16, 0)
                         .addStage(STAGE_SEQUENCING, false, 16, 16, 0)
                         .addStage(STAGE_DATA_QC, false, 16, 16, 0)
+                        .addPendingStage(STAGE_AWAITING_PROCESSING)
                         .build()));
 
         testProjects(testCases);
@@ -331,6 +335,12 @@ public class GetRequestTrackingTaskTest {
             assertEquals(String.format("IS COMPLETE - %b, expected %b (Project: %s, Stage: %s)", complete, expectedComplete, project.name, stageName),
                     expectedComplete, complete);
         }
+
+        Map<String, Object> summary = (Map<String, Object>) requestTracker.get("summary");
+        String actualPendingStage = (String) summary.get("pendingStage");
+        String expectedPendingStage = project.pendingStage;
+        assertEquals(String.format("PENDING STAGE - %s, expected %s (Project: %s)", actualPendingStage, expectedPendingStage, project.name),
+                expectedPendingStage, actualPendingStage);
     }
 
     /**
@@ -339,10 +349,12 @@ public class GetRequestTrackingTaskTest {
     private class ProjectBuilder {
         List<Stage> stages;         // All stages present in the project
         String name;                // Request ID of the project
+        String pendingStage;
 
         ProjectBuilder(String name) {
             this.name = name;
             this.stages = new ArrayList<>();
+            this.pendingStage = STAGE_COMPLETE; // Default pending stage to complete
         }
 
         /**
@@ -361,8 +373,13 @@ public class GetRequestTrackingTaskTest {
             return this;
         }
 
+        ProjectBuilder addPendingStage(String stage){
+            this.pendingStage = stage;
+            return this;
+        }
+
         Project build() {
-            Project project = new Project(this.name, this.stages);
+            Project project = new Project(this.name, this.stages, this.pendingStage);
             return project;
         }
     }
@@ -373,10 +390,12 @@ public class GetRequestTrackingTaskTest {
     private class Project {
         List<Stage> stages;
         String name;
+        String pendingStage;
 
-        Project(String name, List<Stage> stages) {
+        Project(String name, List<Stage> stages, String pendingStage) {
             this.name = name;
             this.stages = stages;
+            this.pendingStage = pendingStage;
         }
     }
 
