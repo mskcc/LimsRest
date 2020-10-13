@@ -131,8 +131,14 @@ public class GetRequestTrackingTask {
         Integer numTotal = 0;
         StageTracker stage;
         Integer numComplete = 0;
+        String pendingStageName = STAGE_COMPLETE;
+        String stageName;
         for (Map.Entry<String, StageTracker> requestStage : stages.entrySet()) {
+            stageName = requestStage.getKey();
             stage = requestStage.getValue();
+            if(pendingStageName.equals(STAGE_COMPLETE) && !stage.getComplete()){
+                pendingStageName = stageName;
+            }
             isStagesComplete = isStagesComplete && stage.getComplete();
             numFailed += stage.getFailedSamplesCount();
             numTotal = stage.getSize() > numTotal ? stage.getSize() : numTotal;
@@ -143,6 +149,7 @@ public class GetRequestTrackingTask {
         projectStatus.put("completed", numComplete);
         projectStatus.put("total", numTotal);
         projectStatus.put("failed", numFailed);
+        projectStatus.put("pendingStage", pendingStageName);
 
         return projectStatus;
     }
