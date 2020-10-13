@@ -39,8 +39,6 @@ public class GetRequestTrackingTask {
             RequestModel.TATFROM_RECEIVING,
             RequestModel.PROJECT_MANAGER,
             RequestModel.LAB_HEAD_EMAIL,
-            "QcAccessEmails",
-            "DataAccessEmails",
             RequestModel.INVESTIGATOR,
             RequestModel.PROJECT_NAME,
             RequestModel.REQUEST_NAME,
