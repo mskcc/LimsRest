@@ -25,10 +25,10 @@ import static org.mskcc.limsrest.util.Utils.getRecordStringValue;
 public class GetSequencingRequestsTask extends LimsTask {
     private static Log log = LogFactory.getLog(GetIgoRequestsTask.class);
 
-    private Long days;          // Number of days since sequencing
+    private Integer days;       // Number of days since sequencing
     private Boolean delivered;  // Whether to determine requests that have been marked IGO-COMPLETE
 
-    public GetSequencingRequestsTask(Long days, Boolean delivered) {
+    public GetSequencingRequestsTask(Integer days, Boolean delivered) {
         this.days = days;
         this.delivered = delivered;
     }
