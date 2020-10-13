@@ -146,20 +146,26 @@ public class Utils {
      */
     public static String getBaitSet(DataRecord sample, User user) {
         try {
-            DataRecord qcRecord = getChildDataRecordOfType(sample, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
-            if (qcRecord == null) {
+            List<DataRecord> qcRecords = getChildDataRecordsOfType(sample, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
+            if (qcRecords.isEmpty()) {
                 LOGGER.info(String.format("Seq qc record not found for sample with recordId: %d.", sample.getRecordId()));
                 return "";
             }
-            return (String) getValueFromDataRecord(qcRecord, "BaitSet", "String", user);
+            for (DataRecord qcRec : qcRecords){
+                Object baitset = qcRec.getValue(SeqAnalysisSampleQCModel.BAIT_SET, user);
+                if (baitset != null){
+                    return baitset.toString();
+                }
+            }
         } catch (NotFound | RemoteException e) {
-            LOGGER.error(ExceptionUtils.getStackTrace(e));
+            LOGGER.error(String.format("%s -> Error while fetching the baitset: %s", ExceptionUtils.getRootCause(e), ExceptionUtils.getStackTrace(e)));
             return "";
         }
+        return "";
     }
 
     /**
-     * Method to get children of specified type for Sample.
+     * Method to get child record of specified DataType under a Sample.
      *
      * @param sample
      * @param childRecordType
@@ -208,6 +214,57 @@ public class Utils {
         }
         return null;
     }
+
+    /**
+     * * Method to get a list of child records of specified DataType under a Sample.
+     * @param sample
+     * @param childRecordType
+     * @param user
+     * @return
+     */
+    private static List<DataRecord> getChildDataRecordsOfType(DataRecord sample, String childRecordType, User user){
+        try {
+            Object requestId = sample.getValue(SampleModel.REQUEST_ID, user);
+            if (sample.getChildrenOfType(childRecordType, user).length > 0) {
+                return sample.getDescendantsOfType(childRecordType, user);
+            }
+            Stack<DataRecord> sampleStack = new Stack<>();
+            DataRecord[] childSamples = sample.getChildrenOfType(SampleModel.DATA_TYPE_NAME, user);
+            for (DataRecord childSample : childSamples) {
+                Object childSampleRequestId = childSample.getValue(SampleModel.REQUEST_ID, user);
+                if(childSampleRequestId !=null && requestId!= null && requestId.toString().equalsIgnoreCase(childSampleRequestId.toString())){
+                    sampleStack.add(childSample);
+                }
+            }
+            if (sampleStack.isEmpty()){
+                return null;
+            }
+            do {
+                DataRecord startSample = sampleStack.pop();
+                DataRecord[] seqQcRecs = startSample.getChildrenOfType(childRecordType, user);
+                if (seqQcRecs.length > 0) {
+                    return startSample.getDescendantsOfType(childRecordType, user);
+                }
+                List<DataRecord> childSampleRecords = Arrays.asList(startSample.getChildrenOfType(SampleModel.DATA_TYPE_NAME, user));
+                if (childSampleRecords.size() > 0) {
+                    for (DataRecord sam : childSampleRecords) {
+                        Object reqId = sam.getValue(SampleModel.REQUEST_ID, user);
+                        if (reqId != null && requestId.equals(reqId.toString())) {
+                            sampleStack.add(sam);
+                        }
+                    }
+                }
+            } while (!sampleStack.isEmpty());
+        } catch (RemoteException e) {
+            LOGGER.error(String.format("RemoteException -> Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(e)));
+        } catch (IoError ioError) {
+            LOGGER.error(String.format("IoError -> Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(ioError)));
+        } catch (NotFound notFound) {
+            LOGGER.error(String.format("NotFound -> Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(notFound)));
+        }
+        return new ArrayList<>();
+    }
+
 
     /**
      * Returns whether the input status is a failed one
