@@ -149,18 +149,18 @@ public class Utils {
      * Method to get BaitSet used for a sample.
      *
      * @param sample
+     * @param qcRecords
      * @return
      */
-    public static String getBaitSet(DataRecord sample, User user) {
+    public static String getBaitSet(DataRecord sample, List<DataRecord> qcRecords, User user) {
         try {
-            List<DataRecord> qcRecords = getChildDataRecordsOfType(sample, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
             if (qcRecords.isEmpty()) {
                 LOGGER.info(String.format("Seq qc record not found for sample with recordId: %d.", sample.getRecordId()));
                 return "";
             }
             for (DataRecord qcRec : qcRecords){
                 Object baitset = qcRec.getValue(SeqAnalysisSampleQCModel.BAIT_SET, user);
-                if (baitset != null){
+                if (baitset != null && !StringUtils.isBlank(baitset.toString())){
                     return baitset.toString();
                 }
             }
@@ -229,7 +229,7 @@ public class Utils {
      * @param user
      * @return
      */
-    private static List<DataRecord> getChildDataRecordsOfType(DataRecord sample, String childRecordType, User user){
+    public static List<DataRecord> getChildDataRecordsOfType(DataRecord sample, String childRecordType, User user){
         List<DataRecord> records = new ArrayList<>();
         try {
             Object requestId = sample.getValue(SampleModel.REQUEST_ID, user);
