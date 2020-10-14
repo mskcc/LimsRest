@@ -88,6 +88,7 @@ public class GetWESSampleDataTask {
             JSONObject consentAList = getConsentStatusDataValues("parta");
             JSONObject consentCList = getConsentStatusDataValues("partc");
             if (!dmpTrackerRecords.isEmpty()) {
+                int totalProcessed = 0;
                 for (DataRecord dmpTrackRec : dmpTrackerRecords) {
                     List<DataRecord> sampleCmoInfoRecs = new ArrayList<>();
                     if (dmpTrackRec.getValue("i_StudySampleIdentifierInvesti", user) != null) {
@@ -179,6 +180,8 @@ public class GetWESSampleDataTask {
                         WESSampleData nonIgoTrackingRecord = createNonIgoTrackingRecord(dmpTrackRec, consentAList, consentCList);
                         resultList.add(nonIgoTrackingRecord);
                     }
+                    totalProcessed ++;
+                    log.info("Total DMPTracker records processed: " + totalProcessed);
                 }
             }
             log.info("Results found: " + resultList.size() + " Elapsed time (ms): " + (System.currentTimeMillis() - start));
