@@ -76,9 +76,9 @@ public class GetWESSampleDataTask {
             log.info(" Starting GetWesSample task using timestamp " + timestamp);
             List<DataRecord> dmpTrackerRecords = new ArrayList<>();
             try {
-//                dmpTrackerRecords = dataRecordManager.queryDataRecords("DMPSampleTracker", "i_SampleTypeTumororNormal='Tumor' AND DateCreated > " + Long.parseLong(timestamp) + " AND i_SampleDownstreamApplication LIKE '%Exome%' COLLATE utf8_general_ci", user);
+                dmpTrackerRecords = dataRecordManager.queryDataRecords("DMPSampleTracker", "i_SampleTypeTumororNormal='Tumor' AND DateCreated > " + Long.parseLong(timestamp) + " AND i_SampleDownstreamApplication LIKE '%Exome%' COLLATE utf8_general_ci", user);
 //                dmpTrackerRecords = dataRecordManager.queryDataRecords("DMPSampleTracker", "i_SampleTypeTumororNormal='Tumor' AND DateCreated > " + Long.parseLong(timestamp) + " AND i_SampleDownstreamApplication LIKE '%Exome%' AND i_StudySampleIdentifierInvesti LIKE 'P-0002976-T01-WES%' COLLATE utf8_general_ci", user);
-                dmpTrackerRecords = dataRecordManager.queryDataRecords("DMPSampleTracker", "i_StudySampleIdentifierInvesti IN ('P-0013536-T02-WES','P-0025596-T01-WES','P-0028625-T01-WES') AND i_SampleTypeTumororNormal='Tumor'" + " AND i_SampleDownstreamApplication LIKE '%Exome%' COLLATE utf8_general_ci", user);
+                //dmpTrackerRecords = dataRecordManager.queryDataRecords("DMPSampleTracker", "i_StudySampleIdentifierInvesti IN ('P-0013536-T02-WES','P-0025596-T01-WES','P-0028625-T01-WES') AND i_SampleTypeTumororNormal='Tumor'" + " AND i_SampleDownstreamApplication LIKE '%Exome%' COLLATE utf8_general_ci", user);
                 log.info("Num dmpTracker Records: " + dmpTrackerRecords.size());
             } catch (Throwable e) {
                 log.error(e.getMessage(), e);
