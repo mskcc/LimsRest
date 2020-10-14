@@ -9,6 +9,7 @@ import com.velox.api.user.User;
 import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.RequestModel;
+import com.velox.sloan.cmo.recmodels.SampleCMOInfoRecordsModel;
 import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -95,8 +96,11 @@ public class GetWESSampleDataTask {
                     }
                     if (sampleCmoInfoRecs.size() > 0) {
                         for (DataRecord cmoInfoRec : sampleCmoInfoRecs) {
-                            DataRecord parentSamp = cmoInfoRec.getParentsOfType("Sample", user).get(0);
-                            List<DataRecord> allSamplesSharingCmoInfoRec = getChildSamplesWithRequestAsParent(parentSamp);
+                            List<DataRecord> parentSamps = cmoInfoRec.getParentsOfType("Sample", user);
+                            if (parentSamps.isEmpty()){
+                                log.info(String.format("%s record with recordid %d not linked to any parent Sample.", SampleCMOInfoRecordsModel.DATA_TYPE_NAME, cmoInfoRec.getRecordId()));
+                            }
+                            List<DataRecord> allSamplesSharingCmoInfoRec = !parentSamps.isEmpty() ? getChildSamplesWithRequestAsParent(parentSamps.get(0)): new ArrayList<>();
                             log.info("Total Wes Samples for shared CmoInfo Rec: " + allSamplesSharingCmoInfoRec.size());
                             if (allSamplesSharingCmoInfoRec.size()>0){
                                 for (DataRecord sample: allSamplesSharingCmoInfoRec){
