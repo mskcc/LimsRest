@@ -16,7 +16,7 @@ import static org.mockito.Mockito.when;
 public class GetSequencingRequestsTaskTest {
     @Test
     public void queriesRequestsWithFlowCellSamples() {
-        Integer numDays = 7;
+        Long numDays = 7L;
         Boolean delivered = Boolean.TRUE;
 
         GetSequencingRequestsTask task = new GetSequencingRequestsTask(numDays, delivered);
