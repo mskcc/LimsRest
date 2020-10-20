@@ -50,7 +50,8 @@ public class StatusTrackerConfig {
     public static final String STAGE_PATHOLOGY = "Pathology";
     public static final String STAGE_Digital_PCR = "Digital PCR";
     public static final String STAGE_RETURNED_TO_USER = "Returned to User";
-    public static final String STAGE_AWAITING_PROCESSING = "Awaiting Processing"; // Use for undetermined, e.g. manual status assignment/new workflow
+    public static final String STAGE_AWAITING_PROCESSING = "Awaiting Processing";   // Use for undetermined, e.g. manual status assignment/new workflow
+    public static final String STAGE_COMPLETE = "Completed";                        // Used to indicate no pending stage
     // TODO - This should be added, but in a way that it disappears once it is not longer processing
     // TODO - PROCESSING STAGES: "Ready for Processing", "Awaiting Processing", "In Processing", & "Processing Completed"
 
@@ -119,7 +120,7 @@ public class StatusTrackerConfig {
      *      Extraction Requests - 1) Status: "Completed", 2) Non-null Completed Date
      *      Other - Non-null Recent Delivery Date
      *
-     * NOTE - This should be in sync w/ @StatusTrackerConfig::isIgoComplete. If changing this, uncomment
+     * NOTE - This should be in sync w/ @ToggleSampleQcStatus::setSeqAnalysisSampleQcStatus. If changing this, uncomment
      * @getIgoRequestsTask_matchesIsIgoCompleteUtil_* tests in GetIgoRequestsTaskTest
      * @param record
      * @param user
