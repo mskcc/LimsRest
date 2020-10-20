@@ -112,7 +112,9 @@ public class Utils {
                     return true;
                 }
             }
-            // check if the status is actually failed but igoComplete is not marked true.
+            // check if the status is actually failed but igoComplete is not marked true. Sometimes, sample is marked failed
+            // but igoComplete is not checked. It is possible that we do not mark IgoComplete because there is not data to
+            // deliver to the user.
             for (DataRecord rec: qcRecords){
                 Object qcStatus = rec.getValue(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
                 if (qcStatus!= null && qcStatus.toString().equalsIgnoreCase(SEQ_QC_STATUS_FAILED)){
