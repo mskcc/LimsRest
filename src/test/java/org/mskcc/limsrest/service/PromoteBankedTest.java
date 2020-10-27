@@ -239,14 +239,137 @@ public class PromoteBankedTest {
         assertTrue(promoteBanked.needReadCoverageReference("MSK-ACCESS_v1", readCoverageRefs, user));
         assertTrue(promoteBanked.needReadCoverageReference("WholeExomeSequencing", readCoverageRefs, user));
         assertTrue(promoteBanked.needReadCoverageReference("IMPACT505", readCoverageRefs, user));
-        assertFalse(promoteBanked.needReadCoverageReference("10X_Genomics_GeneExpression-3", readCoverageRefs, user));
-        assertFalse(promoteBanked.needReadCoverageReference("10X_Genomics_GeneExpression-5", readCoverageRefs, user));
+        assertFalse(promoteBanked.needReadCoverageReference("10X_Genomics_GeneExpression-31", readCoverageRefs, user));
+        assertFalse(promoteBanked.needReadCoverageReference("10X_Genomics_GeneExpression-51", readCoverageRefs, user));
     }
 
     @Test
     public void getRequestedReadsForCoverageTest(){
+        Map<String, Object> seqReq = promoteBanked.getRequestedReadsForCoverage("MSK-ACCESS_v1", "Tumor", "MSK-ACCESS_v1", "PE100", "Human", "1000", readCoverageRefs, user);
+        assertEquals(seqReq.get("RequestedReads"), 60.0);
+        assertEquals(seqReq.get("CoverageTarget"), "1000");
+        assertEquals(seqReq.get("SequencingRunType"), "PE100");
+
+        Map<String, Object> seqReq0 = promoteBanked.getRequestedReadsForCoverage("MSK-ACCESS_v1", "Normal", "MSK-ACCESS_v1", "PE100", "Human", "1000", readCoverageRefs, user);
+        assertEquals(seqReq.get("RequestedReads"), 6.0);
+        assertEquals(seqReq.get("CoverageTarget"), "1000");
+        assertEquals(seqReq.get("SequencingRunType"), "PE100");
+        // Ref values need to be updated in LIMS
+        Map<String, Object> seqReq1 = promoteBanked.getRequestedReadsForCoverage("CustomCapture", "Tumor", "Poirier_RB1_intron_V2", "PE100", "Human", "100", readCoverageRefs, user);
+        assertEquals(seqReq1.get("RequestedReads"), 33.0);
+        assertEquals(seqReq1.get("CoverageTarget"), "100");
+        assertEquals(seqReq1.get("SequencingRunType"), "PE100");
+
+        // Ref values need to be updated in LIMS
+        Map<String, Object> seqReq2 = promoteBanked.getRequestedReadsForCoverage("CustomCapture", "Normal", "Poirier_RB1_intron_V2", "PE100", "Human", "100", readCoverageRefs, user);
+        assertEquals(seqReq2.get("RequestedReads"), 33.0);
+        assertEquals(seqReq2.get("CoverageTarget"), "100");
+        assertEquals(seqReq2.get("SequencingRunType"), "PE100");
+
+
+        Map<String, Object> seqReq3 = promoteBanked.getRequestedReadsForCoverage("CustomCapture", "Tumor", "ADCC1_v3", "PE100", "Human", "500", readCoverageRefs, user);
+        assertEquals(seqReq3.get("RequestedReads"), 10.0);
+        assertEquals(seqReq3.get("CoverageTarget"), "500");
+        assertEquals(seqReq3.get("SequencingRunType"), "PE100");
+
+        Map<String, Object> seqReq4 = promoteBanked.getRequestedReadsForCoverage("CustomCapture", "Normal", "ADCC1_v3", "PE100", "Human", "250", readCoverageRefs, user);
+        assertEquals(seqReq4.get("RequestedReads"), 5.0);
+        assertEquals(seqReq4.get("CoverageTarget"), "250");
+        assertEquals(seqReq4.get("SequencingRunType"), "PE100");
+
+
+        Map<String, Object> seqReq5 = promoteBanked.getRequestedReadsForCoverage("CustomCapture", "Tumor", "myTYPE_V1", "PE100", "Human", "600", readCoverageRefs, user);
+        assertEquals(seqReq5.get("RequestedReads"), 12.0);
+        assertEquals(seqReq5.get("CoverageTarget"), "600");
+        assertEquals(seqReq5.get("SequencingRunType"), "PE100");
+
+        Map<String, Object> seqReq6 = promoteBanked.getRequestedReadsForCoverage("CustomCapture", "Normal", "myTYPE_V1", "PE100", "Human", "600", readCoverageRefs, user);
+        assertEquals(seqReq6.get("RequestedReads"), 12.0);
+        assertEquals(seqReq6.get("CoverageTarget"), "600");
+        assertEquals(seqReq6.get("SequencingRunType"), "PE100");
+
         Map<String, Object> seqReq = promoteBanked.getRequestedReadsForCoverage("WholeExomeSequencing", "Tumor", "EXOME_human_IDT_FP_v4", "PE100", "Human", "100", readCoverageRefs, user);
-        assertEquals(seqReq.get("RequestedReads"), 33l);
+        assertEquals(seqReq.get("RequestedReads"), 33.0);
+        assertEquals(seqReq.get("CoverageTarget"), "100");
+        assertEquals(seqReq.get("SequencingRunType"), "PE100");
+
+        Map<String, Object> seqReq = promoteBanked.getRequestedReadsForCoverage("WholeExomeSequencing", "Tumor", "EXOME_human_IDT_FP_v4", "PE100", "Human", "100", readCoverageRefs, user);
+        assertEquals(seqReq.get("RequestedReads"), 33.0);
+        assertEquals(seqReq.get("CoverageTarget"), "100");
+        assertEquals(seqReq.get("SequencingRunType"), "PE100");
+
+        Map<String, Object> seqReq = promoteBanked.getRequestedReadsForCoverage("WholeExomeSequencing", "Tumor", "EXOME_human_IDT_FP_v4", "PE100", "Human", "100", readCoverageRefs, user);
+        assertEquals(seqReq.get("RequestedReads"), 33.0);
+        assertEquals(seqReq.get("CoverageTarget"), "100");
+        assertEquals(seqReq.get("SequencingRunType"), "PE100");
+
+        Map<String, Object> seqReq = promoteBanked.getRequestedReadsForCoverage("WholeExomeSequencing", "Tumor", "EXOME_human_IDT_FP_v4", "PE100", "Human", "100", readCoverageRefs, user);
+        assertEquals(seqReq.get("RequestedReads"), 33.0);
+        assertEquals(seqReq.get("CoverageTarget"), "100");
+        assertEquals(seqReq.get("SequencingRunType"), "PE100");
+
+        Map<String, Object> seqReq = promoteBanked.getRequestedReadsForCoverage("WholeExomeSequencing", "Tumor", "EXOME_human_IDT_FP_v4", "PE100", "Human", "100", readCoverageRefs, user);
+        assertEquals(seqReq.get("RequestedReads"), 33.0);
+        assertEquals(seqReq.get("CoverageTarget"), "100");
+        assertEquals(seqReq.get("SequencingRunType"), "PE100");
+
+        Map<String, Object> seqReq = promoteBanked.getRequestedReadsForCoverage("WholeExomeSequencing", "Tumor", "EXOME_human_IDT_FP_v4", "PE100", "Human", "100", readCoverageRefs, user);
+        assertEquals(seqReq.get("RequestedReads"), 33.0);
+        assertEquals(seqReq.get("CoverageTarget"), "100");
+        assertEquals(seqReq.get("SequencingRunType"), "PE100");
+
+        Map<String, Object> seqReq = promoteBanked.getRequestedReadsForCoverage("WholeExomeSequencing", "Tumor", "EXOME_human_IDT_FP_v4", "PE100", "Human", "100", readCoverageRefs, user);
+        assertEquals(seqReq.get("RequestedReads"), 33.0);
+        assertEquals(seqReq.get("CoverageTarget"), "100");
+        assertEquals(seqReq.get("SequencingRunType"), "PE100");
+
+        Map<String, Object> seqReq = promoteBanked.getRequestedReadsForCoverage("WholeExomeSequencing", "Tumor", "EXOME_human_IDT_FP_v4", "PE100", "Human", "100", readCoverageRefs, user);
+        assertEquals(seqReq.get("RequestedReads"), 33.0);
+        assertEquals(seqReq.get("CoverageTarget"), "100");
+        assertEquals(seqReq.get("SequencingRunType"), "PE100");
+
+        Map<String, Object> seqReq = promoteBanked.getRequestedReadsForCoverage("WholeExomeSequencing", "Tumor", "EXOME_human_IDT_FP_v4", "PE100", "Human", "100", readCoverageRefs, user);
+        assertEquals(seqReq.get("RequestedReads"), 33.0);
+        assertEquals(seqReq.get("CoverageTarget"), "100");
+        assertEquals(seqReq.get("SequencingRunType"), "PE100");
+
+        Map<String, Object> seqReq = promoteBanked.getRequestedReadsForCoverage("WholeExomeSequencing", "Tumor", "EXOME_human_IDT_FP_v4", "PE100", "Human", "100", readCoverageRefs, user);
+        assertEquals(seqReq.get("RequestedReads"), 33.0);
+        assertEquals(seqReq.get("CoverageTarget"), "100");
+        assertEquals(seqReq.get("SequencingRunType"), "PE100");
+
+        Map<String, Object> seqReq = promoteBanked.getRequestedReadsForCoverage("WholeExomeSequencing", "Tumor", "EXOME_human_IDT_FP_v4", "PE100", "Human", "100", readCoverageRefs, user);
+        assertEquals(seqReq.get("RequestedReads"), 33.0);
+        assertEquals(seqReq.get("CoverageTarget"), "100");
+        assertEquals(seqReq.get("SequencingRunType"), "PE100");
+
+        Map<String, Object> seqReq = promoteBanked.getRequestedReadsForCoverage("WholeExomeSequencing", "Tumor", "EXOME_human_IDT_FP_v4", "PE100", "Human", "100", readCoverageRefs, user);
+        assertEquals(seqReq.get("RequestedReads"), 33.0);
+        assertEquals(seqReq.get("CoverageTarget"), "100");
+        assertEquals(seqReq.get("SequencingRunType"), "PE100");
+
+        Map<String, Object> seqReq = promoteBanked.getRequestedReadsForCoverage("WholeExomeSequencing", "Tumor", "EXOME_human_IDT_FP_v4", "PE100", "Human", "100", readCoverageRefs, user);
+        assertEquals(seqReq.get("RequestedReads"), 33.0);
+        assertEquals(seqReq.get("CoverageTarget"), "100");
+        assertEquals(seqReq.get("SequencingRunType"), "PE100");
+
+        Map<String, Object> seqReq = promoteBanked.getRequestedReadsForCoverage("WholeExomeSequencing", "Tumor", "EXOME_human_IDT_FP_v4", "PE100", "Human", "100", readCoverageRefs, user);
+        assertEquals(seqReq.get("RequestedReads"), 33.0);
+        assertEquals(seqReq.get("CoverageTarget"), "100");
+        assertEquals(seqReq.get("SequencingRunType"), "PE100");
+
+        Map<String, Object> seqReq = promoteBanked.getRequestedReadsForCoverage("WholeExomeSequencing", "Tumor", "EXOME_human_IDT_FP_v4", "PE100", "Human", "100", readCoverageRefs, user);
+        assertEquals(seqReq.get("RequestedReads"), 33.0);
+        assertEquals(seqReq.get("CoverageTarget"), "100");
+        assertEquals(seqReq.get("SequencingRunType"), "PE100");
+
+        Map<String, Object> seqReq = promoteBanked.getRequestedReadsForCoverage("WholeExomeSequencing", "Tumor", "EXOME_human_IDT_FP_v4", "PE100", "Human", "100", readCoverageRefs, user);
+        assertEquals(seqReq.get("RequestedReads"), 33.0);
+        assertEquals(seqReq.get("CoverageTarget"), "100");
+        assertEquals(seqReq.get("SequencingRunType"), "PE100");
+
+        Map<String, Object> seqReq = promoteBanked.getRequestedReadsForCoverage("WholeExomeSequencing", "Tumor", "EXOME_human_IDT_FP_v4", "PE100", "Human", "100", readCoverageRefs, user);
+        assertEquals(seqReq.get("RequestedReads"), 33.0);
         assertEquals(seqReq.get("CoverageTarget"), "100");
         assertEquals(seqReq.get("SequencingRunType"), "PE100");
     }
