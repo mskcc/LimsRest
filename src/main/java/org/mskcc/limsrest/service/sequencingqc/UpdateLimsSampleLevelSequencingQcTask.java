@@ -125,8 +125,10 @@ public class UpdateLimsSampleLevelSequencingQcTask {
             //Emails do not work on igo-lims02 VM because of mail package conflict with MySQL. This will be implemented when fixed.
             //email.send("sharmaa1@mskcc.org", "zzPDL_SKI_IGO_DATA@mskcc.org", "localhost.mskcc.org", String.format("Added Sequencing stats for run %s", runId), String.format("Added Sequencing stats for %d samples on run %s", statsAdded.size(), runId));
         } catch (ServerException | RemoteException e) {
+            // Log failure and return empty hashmap as commit failed
             log.error(String.format("Failed to commit changes on %s records for sequencing run %s. \nERROR: %s\n%s", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, runId,
                     ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e)));
+            return new HashMap<>();
             //Emails do not work on igo-lims02 VM because of mail package conflict with MySQL. This will be implemented when fixed.
             //try {
             //    email.send("sharmaa1@mskcc.org", "zzPDL_SKI_IGO_DATA@mskcc.org", "localhost.mskcc.org", "Failed to add Run " + runId + " Stats to LIMS", ExceptionUtils.getMessage(e));
@@ -173,25 +175,35 @@ public class UpdateLimsSampleLevelSequencingQcTask {
      * @return
      */
     private JSONObject getStatsFromDb() {
-        HttpURLConnection con;
+        HttpURLConnection con = null;
         String url = getStatsUrl();
+
         StringBuilder response = new StringBuilder();
+        assert url != null;
         try {
-            assert url != null;
+            log.info(String.format("Querying ngs-stats DB: %s", url));
             con = (HttpURLConnection) new URL(url).openConnection();
             con.setRequestMethod("GET");
+        } catch (IOException e) {
+            log.error(String.format("Failed to open connection with Url: %s\n%s\n%s", url, ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e)));
+            return new JSONObject();
+        }
+
+        String inputLine = "";
+        try {
             BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-            String inputLine;
             while ((inputLine = in.readLine()) != null) {
                 response.append(inputLine);
             }
             in.close();
-            con.disconnect();
-            return new JSONObject(response.toString());
-        } catch (Exception e) {
-            log.info(String.format("Error while querying ngs-stats endpoint using url %s.\n%s:%s", url, ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e)));
-            return new JSONObject();
+        } catch (IOException e) {
+            log.error(String.format("Failed to read response from %s: %s", url, inputLine));
         }
+
+        con.disconnect();
+        return new JSONObject(response.toString());
+        // log.info(String.format("Error while querying ngs-stats endpoint using url %s.\n%s:%s", url, ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e)));
+        // return new JSONObject();
     }
 
     /**
