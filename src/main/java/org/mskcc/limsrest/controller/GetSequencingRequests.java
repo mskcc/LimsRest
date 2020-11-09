@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.velox.api.datarecord.DataFieldHelper.parseInteger;
 import static org.mskcc.limsrest.util.Utils.getResponseEntity;
 
 @RestController
@@ -51,9 +50,9 @@ public class GetSequencingRequests {
 
         Map<String, Object> resp = new HashMap<>();
 
-        Integer numDays = 0;
+        Long numDays = 0L;
         try {
-            numDays = parseInteger(days);
+            numDays = Long.parseLong(days);
         } catch (NumberFormatException e) {
             String clientMessage = String.format("Couldn't process input days: %s", days);
             log.error(String.format("%s. Error: %s", clientMessage, e.getMessage()));
