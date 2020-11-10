@@ -3,6 +3,8 @@ package org.mskcc.limsrest.service;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
+import com.velox.api.servermanager.PickListConfig;
+import com.velox.api.servermanager.PickListManager;
 import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
@@ -18,7 +20,6 @@ import java.util.Map;
 public class GetDdpcrAssaysTask extends LimsTask {
     private static Log log = LogFactory.getLog(GetDdpcrAssaysTask.class);
 
-
     public GetDdpcrAssaysTask() {
 
     }
@@ -31,17 +32,17 @@ public class GetDdpcrAssaysTask extends LimsTask {
     @Override
     public List<DdpcrAssay> execute(VeloxConnection conn) {
         User user = conn.getUser();
-        String query = "*";
         List<DataRecord> records = new ArrayList<>();
         try {
             records = conn.getDataRecordManager().queryDataRecords("ddPCRAssayDatabase", null, user);
         } catch (IoError | RemoteException | NotFound e) {
-            log.error(String.format("Failed to query DataRecords w/ query: %s", query));
+            e.printStackTrace();
+            log.error(String.format("Failed to query DataRecords."));
             return new ArrayList<>();
         }
-        System.out.println(records);
-        // Transform assays into a redacted API response
+
         List<DdpcrAssay> assays = new ArrayList<>();
+        List<String> assayNames = new ArrayList<>();
 
         for (DataRecord assayRecord : records) {
             Map<String, Object> sampleFields = null;
@@ -53,10 +54,24 @@ public class GetDdpcrAssaysTask extends LimsTask {
                 return new ArrayList<>();
             }
             DdpcrAssay a = new DdpcrAssay(sampleFields);
-
+            assayNames.add(a.assayName);
             assays.add(a);
+        }
+//        Keep assay picklist n'synch with assay datatype
+//        To be removed when picklist can be safely removed (sample submission still needs it as of 11/2020)
+        try {
+            PickListManager picklister = conn.getDataMgmtServer().getPickListManager(user);
+            PickListConfig pickConfig = picklister.getPickListConfig("ddPCR Assay");
+            pickConfig.setEntryList(assayNames);
+            picklister.storePickListConfig(user, pickConfig);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(String.format("Failed to create assay picklist."));
         }
 
         return assays;
     }
+
+
 }
