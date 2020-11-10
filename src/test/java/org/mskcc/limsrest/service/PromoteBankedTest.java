@@ -457,6 +457,18 @@ public class PromoteBankedTest {
         assertEquals(seqReq34.get("RequestedReads"), null); // need updated in LIMS
         assertEquals(seqReq34.get("CoverageTarget"), null); // need updated in LIMS
         assertEquals(seqReq34.get("SequencingRunType"), "PE100");
+
+        // Ref values need to be updated in LIMS
+        Map<String, Object> seqReq37 = promoteBanked.getRequestedReadsForCoverage("ShallowWGS", "Tumor", "ShallowWGS", "PE100", "Human", null, readCoverageRefs, user);
+        assertEquals(seqReq37.get("RequestedReads"), 10.0); // need updated in LIMS
+        assertEquals(seqReq37.get("CoverageTarget"), null); // need updated in LIMS
+        assertEquals(seqReq37.get("SequencingRunType"), "PE100");
+
+        // Ref values need to be updated in LIMS
+        Map<String, Object> seqReq38 = promoteBanked.getRequestedReadsForCoverage("ShallowWGS", "Normal", "ShallowWGS", "PE100", "Human", null, readCoverageRefs, user);
+        assertEquals(seqReq38.get("RequestedReads"), 10.0); // need updated in LIMS
+        assertEquals(seqReq38.get("CoverageTarget"), null); // need updated in LIMS
+        assertEquals(seqReq38.get("SequencingRunType"), "PE100");
     }
 
     @After
