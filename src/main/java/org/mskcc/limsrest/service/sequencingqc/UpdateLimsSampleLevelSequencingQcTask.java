@@ -5,6 +5,7 @@ import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
+import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.IlluminaSeqExperimentModel;
 import com.velox.sloan.cmo.recmodels.IndexBarcodeModel;
@@ -51,70 +52,94 @@ public class UpdateLimsSampleLevelSequencingQcTask {
 
     public Map<String, String> execute() {
         Map<String, String> statsAdded = new HashMap<>();
-        try {
-            VeloxConnection vConn = conn.getConnection();
-            user = vConn.getUser();
-            dataRecordManager = vConn.getDataRecordManager();
-            user = conn.getConnection().getUser();
-            //get stats from ngs-stats db.
-            JSONObject data = getStatsFromDb();
-            if (data.keySet().size()==0){
-                log.error(String.format("Found no NGS-STATS for run with run id %s using url %s", runId, getStatsUrl()));
+        VeloxConnection vConn = conn.getConnection();
+        user = vConn.getUser();
+        dataRecordManager = vConn.getDataRecordManager();
+        user = conn.getConnection().getUser();
+        //get stats from ngs-stats db.
+        JSONObject data = getStatsFromDb();
+        if (data.keySet().size() == 0) {
+            log.error(String.format("Found no NGS-STATS for run with run id %s using url %s", runId, getStatsUrl()));
+        }
+        //get all the Library samples that are present on the run
+        List<DataRecord> relatedLibrarySamples = getRelatedLibrarySamples(runId);
+        log.info(String.format("Total Related Library Samples for run %s: %d", runId, relatedLibrarySamples.size()));
+        //loop through stats data and add/update lims SeqAnalysisSampleQc records
+        for (String key : data.keySet()) {
+            //get qcDataVals as HashMap
+            Map<String, Object> qcDataVals = getQcValues(data.getJSONObject(key));
+            String sampleName = String.valueOf(qcDataVals.get("OtherSampleId"));
+            String sampleId = String.valueOf(qcDataVals.get("SampleId"));
+            // first find the library sample that is parent of Pool Sample that went on Sequencer.
+            DataRecord librarySample = getLibrarySample(relatedLibrarySamples, sampleId);
+            if (librarySample == null) {
+                log.error("Could not find related Library Sample for Sample with Stats SampleId: " + sampleId);
+                continue;
             }
-            //get all the Library samples that are present on the run
-            List<DataRecord> relatedLibrarySamples = getRelatedLibrarySamples(runId);
-            log.info(String.format("Total Related Library Samples for run %s: %d", runId, relatedLibrarySamples.size()));
-            //loop through stats data and add/update lims SeqAnalysisSampleQc records
-            for (String key : data.keySet()) {
-                //get qcDataVals as HashMap
-                Map<String, Object> qcDataVals = getQcValues(data.getJSONObject(key));
-                String sampleName = String.valueOf(qcDataVals.get("OtherSampleId"));
-                String sampleId = String.valueOf(qcDataVals.get("SampleId"));
-                // first find the library sample that is parent of Pool Sample that went on Sequencer.
-                DataRecord librarySample = getLibrarySample(relatedLibrarySamples, sampleId);
-                if(librarySample == null){
-                    log.error("Could not find related Library Sample for Sample with Stats SampleId: " + sampleId);
-                    continue;
-                }
-                log.info(String.format("Found Library Sample with Sample ID : %s", librarySample.getValue(SampleModel.SAMPLE_ID, user)));
-                String igoId = librarySample.getStringVal(SampleModel.SAMPLE_ID, user);
-                Object altId = getValueFromDataRecord(librarySample, "AltId", "String", user);
-                //add AltId to the values to be updated.
-                qcDataVals.putIfAbsent("AltId", altId);
-                //check if there is an are existing SeqAnalysisSampleQc record. If present update it.
-                String versionLessRunId = getVersionLessRunId(runId);
-                DataRecord existingQc = getExistingSequencingQcRecord(relatedLibrarySamples,sampleName, igoId, versionLessRunId);
-                if (existingQc == null){
-                    log.info(String.format("Existing %s record not found for Sample with Id %s", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, igoId));
-                }
-                if (existingQc != null) {
-                    log.info(String.format("Updating values on existing %s record with OtherSampleId %s, and Record Id %d, values are : %s",
-                            SeqAnalysisSampleQCModel.DATA_TYPE_NAME, existingQc.getStringVal(SampleModel.OTHER_SAMPLE_ID, user),
-                            existingQc.getRecordId(), qcDataVals.toString()));
-                    log.info(String.format("Existing %s datatype Record ID: %d", existingQc.getDataTypeName(), existingQc.getRecordId()));
-                    // remove SeqQcStatus Key,Value from new values so that it does not overwrite existing value.
-                    qcDataVals.remove("SeqQCStatus");
-                    qcDataVals.put(SampleModel.SAMPLE_ID, igoId);
+
+            String igoId = getRecordStringValue(librarySample, SampleModel.SAMPLE_ID, user);
+            log.info(String.format("Found Library Sample with Sample ID : %s", igoId));
+
+            //add AltId to the values to be updated.
+            Object altId = "";
+            try {
+                altId = getValueFromDataRecord(librarySample, "AltId", "String", user);
+            } catch (Exception e){
+                log.error(String.format("Failed to retrieve AltId from Library Sample: %s", igoId));
+            }
+            qcDataVals.putIfAbsent("AltId", altId);
+            //check if there is an are existing SeqAnalysisSampleQc record. If present update it.
+            String versionLessRunId = getVersionLessRunId(runId);
+            DataRecord existingQc = getExistingSequencingQcRecord(relatedLibrarySamples, sampleName, igoId, versionLessRunId);
+            if (existingQc == null) {
+                log.info(String.format("Existing %s record not found for Sample with Id %s", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, igoId));
+            }
+            if (existingQc != null) {
+                log.info(String.format("Updating values on existing %s record with OtherSampleId %s, and Record Id %d, values are : %s",
+                        SeqAnalysisSampleQCModel.DATA_TYPE_NAME, getRecordStringValue(existingQc, SampleModel.OTHER_SAMPLE_ID, user),
+                        existingQc.getRecordId(), qcDataVals.toString()));
+                log.info(String.format("Existing %s datatype Record ID: %d", existingQc.getDataTypeName(), existingQc.getRecordId()));
+                // remove SeqQcStatus Key,Value from new values so that it does not overwrite existing value.
+                qcDataVals.remove("SeqQCStatus");
+                qcDataVals.put(SampleModel.SAMPLE_ID, igoId);
+                // TODO - else has same logic. Remove duplication and move after else?
+                try {
                     existingQc.setFields(qcDataVals, user);
                     statsAdded.putIfAbsent(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), "");
                     statsAdded.put(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), qcDataVals.toString());
+                } catch (ServerException | RemoteException e){
+                    String error = String.format("Failed to modify %s DataRecord: %s. ERROR: %s%s", SampleModel.OTHER_SAMPLE_ID, igoId,
+                            ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
+                    log.error(error);
                 }
-                //if there is no existing SeqAnalysisSampleQc record, create a new one on Library Sample
-                else {
-                    qcDataVals.put(SampleModel.SAMPLE_ID, igoId);
-                    log.info(String.format("Adding new %s child record to %s with SampleId %s, values are : %s",
-                            SeqAnalysisSampleQCModel.DATA_TYPE_NAME, SampleModel.DATA_TYPE_NAME,
-                            librarySample.getStringVal(SampleModel.SAMPLE_ID, user), qcDataVals.toString()));
+            }
+            //if there is no existing SeqAnalysisSampleQc record, create a new one on Library Sample
+            else {
+                qcDataVals.put(SampleModel.SAMPLE_ID, igoId);
+                log.info(String.format("Adding new %s child record to %s with SampleId %s, values are : %s",
+                        SeqAnalysisSampleQCModel.DATA_TYPE_NAME,
+                        SampleModel.DATA_TYPE_NAME,
+                        getRecordStringValue(librarySample, SampleModel.SAMPLE_ID, user),
+                        qcDataVals.toString()));
+                try {
                     librarySample.addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcDataVals, user);
                     statsAdded.putIfAbsent(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), "");
                     statsAdded.put(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), qcDataVals.toString());
+                } catch (ServerException | RemoteException e) {
+                    String error = String.format("Failed to add new %s DataRecord Child for %s. ERROR: %s%s", SampleModel.OTHER_SAMPLE_ID, sampleId,
+                            ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
+                    log.error(error);
                 }
             }
+        }
+        try {
             dataRecordManager.storeAndCommit(String.format("Added/updated new %s records for Sequencing Run %s", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, runId), null, user);
             //Emails do not work on igo-lims02 VM because of mail package conflict with MySQL. This will be implemented when fixed.
             //email.send("sharmaa1@mskcc.org", "zzPDL_SKI_IGO_DATA@mskcc.org", "localhost.mskcc.org", String.format("Added Sequencing stats for run %s", runId), String.format("Added Sequencing stats for %d samples on run %s", statsAdded.size(), runId));
-        } catch (Exception e) {
-            log.error(String.format("Error while querying ngs-stats endpoint using runId %s.\n%s:%s", this.runId, ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e)));
+        } catch (RemoteException | ServerException e) {
+            String error = String.format("Failed to commit changes for %s\nERROR:\n%s\n%s", this.runId, ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
+            log.error(error);
+            return new HashMap();
             //Emails do not work on igo-lims02 VM because of mail package conflict with MySQL. This will be implemented when fixed.
 //            try {
 //                email.send("sharmaa1@mskcc.org", "zzPDL_SKI_IGO_DATA@mskcc.org", "localhost.mskcc.org", "Failed to add Run " + runId + " Stats to LIMS", ExceptionUtils.getMessage(e));
