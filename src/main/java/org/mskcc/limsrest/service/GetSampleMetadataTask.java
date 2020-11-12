@@ -10,7 +10,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.controller.GetSampleMetadata;
-import org.mskcc.limsrest.service.samplemetadata.SampleMetadata;
+import org.mskcc.cmo.shared.SampleMetadata;
 
 import java.util.*;
 import static org.mskcc.limsrest.util.Utils.*;
