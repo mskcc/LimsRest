@@ -150,7 +150,9 @@ public class PromoteBanked extends LimsTask {
             Object refPanelName = ref.getValue("CapturePanel", limsUser);
             Object refRunType = ref.getValue("SequencingRunType", limsUser);
             Object refCoverage = ref.getValue("Coverage", limsUser) != null ? ref.getValue("Coverage", limsUser).toString().replace("X", ""): null;
-            if (Objects.equals(recipe, refRecipe) && Objects.equals(tumorOrNormal, refTumorNormal) && Objects.equals(panelName, refPanelName) && Objects.equals(runType, refRunType) && Objects.equals(coverage, refCoverage)) {
+            Object refOnly = ref.getValue("ReferenceOnly", user);
+            if (Objects.equals(recipe, refRecipe) && Objects.equals(tumorOrNormal, refTumorNormal) && Objects.equals(panelName, refPanelName) && Objects.equals(runType, refRunType) && Objects.equals(coverage, refCoverage)
+                    && !Objects.isNull(refOnly) && !(boolean)refOnly) {
                 foundMatch = true;
                 log.info(String.format("Found matching 'ApplicationReadCoverageRef' record with RecordId %d for given Banked Sample metadata.", ref.getRecordId()));
                 log.info("Recipe: " + recipe + ", RefVal: " + refRecipe );
@@ -203,6 +205,25 @@ public class PromoteBanked extends LimsTask {
                 }
             }
         }catch (RemoteException | NotFound e) {
+            log.info(String.format("%s error while fetching ReadCoverage values. %s", ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getStackTrace(e)));
+        }
+        return false;
+    }
+
+    /**
+     * Method to check if the BankedSample record field values have a field and value for Coverage.
+     * @param dataFields
+     * @param limsUser
+     * @return
+     */
+    private boolean hasCoverageFieldInDataType(Map<String, Object> dataFields, User limsUser){
+        try{
+            for (String field : dataFields.keySet()){
+                if (field.equalsIgnoreCase("RequestedCoverage")){
+                    return true;
+                }
+            }
+        }catch (Exception e) {
             log.info(String.format("%s error while fetching ReadCoverage values. %s", ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getStackTrace(e)));
         }
         return false;
@@ -550,14 +571,17 @@ public class PromoteBanked extends LimsTask {
                 }
                 seqRequirementMap.put("RequestedReads", rrMapped);
             }
-            // Check if Coverage to Reads conversion is required.
-            if (needReadCoverageReference(recipe, readCoverageRefs, user)){
+            // Check if Coverage is a separate field in Banked Sample Datatype and Coverage->Reads conversion is required based on Recipe in Banked Sample data.
+            if (hasCoverageFieldInDataType(bankedFields, user) && needReadCoverageReference(recipe, readCoverageRefs, user)){
                 log.info("Banked Samples need Coveage mapping to reads.");
                 // if true update Reads Coverage values from the 'ApplicationReadCoverageRef' in LIMS.
-                seqRequirementMap.putAll(getRequestedReadsForCoverage(recipe, bankedFields.getOrDefault("TumorOrNormal", null),
+                Map<String, Object> updatedSeqRequirements = getRequestedReadsForCoverage(recipe, bankedFields.getOrDefault("TumorOrNormal", null),
                         bankedFields.getOrDefault("CapturePanel", null), bankedFields.getOrDefault("RunType", null), bankedFields.getOrDefault("Species", null),
-                        bankedFields.getOrDefault("RequestedCoverage", null), readCoverageRefs, user));
-                log.info("Sequencing Requirements updated: " + seqRequirementMap.toString());
+                        bankedFields.getOrDefault("RequestedCoverage", null), readCoverageRefs, user);
+                if (!updatedSeqRequirements.isEmpty()) {
+                    seqRequirementMap.putAll(updatedSeqRequirements);
+                    log.info("Sequencing Requirements updated: " + seqRequirementMap.toString());
+                }
             }
             promotedSampleRecord.addChild("SeqRequirement", seqRequirementMap, user);
         } catch (NullPointerException npe) {
