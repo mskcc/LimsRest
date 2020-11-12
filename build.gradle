@@ -5,6 +5,7 @@ buildscript {
     repositories {
         mavenCentral()
         mavenLocal()
+        maven { url 'https://jitpack.io' }
     }
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:2.1.6.RELEASE")
@@ -56,6 +57,7 @@ repositories {
     mavenLocal()
     maven { url "${nexusUrlReleases}" }
     maven { url "${nexusUrlSnapshots}" }
+    maven { url 'https://jitpack.io' }
     jcenter()
 }
 
@@ -69,6 +71,8 @@ configurations {
 }
 
 dependencies {
+    // metadb shared entities dependency added with jitpack
+    implementation 'com.github.mskcc:metadb-shared-entities:v1.0.0'
     compile 'org.mskcc.common:common-domain:2.14'
 
     compile "io.springfox:springfox-swagger-ui:2.9.2"
