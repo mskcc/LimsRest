@@ -19,6 +19,7 @@ import java.util.Map;
 
 public class GetDdpcrAssaysTask extends LimsTask {
     private static Log log = LogFactory.getLog(GetDdpcrAssaysTask.class);
+    private static final String assayDataType = "ddPCRAssayDatabase";
 
     public GetDdpcrAssaysTask() {
 
@@ -32,9 +33,9 @@ public class GetDdpcrAssaysTask extends LimsTask {
     @Override
     public List<DdpcrAssay> execute(VeloxConnection conn) {
         User user = conn.getUser();
-        List<DataRecord> records = new ArrayList<>();
+        List<DataRecord> records;
         try {
-            records = conn.getDataRecordManager().queryDataRecords("ddPCRAssayDatabase", null, user);
+            records = conn.getDataRecordManager().queryDataRecords(assayDataType, null, user);
         } catch (IoError | RemoteException | NotFound e) {
             e.printStackTrace();
             log.error(String.format("Failed to query DataRecords."));
