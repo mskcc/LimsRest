@@ -9,13 +9,13 @@ import com.velox.api.util.ServerException;
 import com.velox.api.workflow.Workflow;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.RequestModel;
+import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
-import org.mskcc.limsrest.service.requesttracker.Request;
+import org.mskcc.limsrest.service.assignedprocess.QcStatus;
 
-import static org.mskcc.limsrest.util.Utils.getRecordLongValue;
-import static org.mskcc.limsrest.util.Utils.getRecordStringValue;
+import static org.mskcc.limsrest.util.Utils.*;
 
 /**
  * Logic for determining and ordering stages from LIMS sample statuses and workflows
@@ -50,7 +50,8 @@ public class StatusTrackerConfig {
     public static final String STAGE_PATHOLOGY = "Pathology";
     public static final String STAGE_Digital_PCR = "Digital PCR";
     public static final String STAGE_RETURNED_TO_USER = "Returned to User";
-    public static final String STAGE_AWAITING_PROCESSING = "Awaiting Processing"; // Use for undetermined, e.g. manual status assignment/new workflow
+    public static final String STAGE_AWAITING_PROCESSING = "Awaiting Processing";   // Use for undetermined, e.g. manual status assignment/new workflow
+    public static final String STAGE_COMPLETE = "Completed";                        // Used to indicate no pending stage
     // TODO - This should be added, but in a way that it disappears once it is not longer processing
     // TODO - PROCESSING STAGES: "Ready for Processing", "Awaiting Processing", "In Processing", & "Processing Completed"
 
@@ -119,7 +120,7 @@ public class StatusTrackerConfig {
      *      Extraction Requests - 1) Status: "Completed", 2) Non-null Completed Date
      *      Other - Non-null Recent Delivery Date
      *
-     * NOTE - This should be in sync w/ @StatusTrackerConfig::isIgoComplete. If changing this, uncomment
+     * NOTE - This should be in sync w/ @ToggleSampleQcStatus::setSeqAnalysisSampleQcStatus. If changing this, uncomment
      * @getIgoRequestsTask_matchesIsIgoCompleteUtil_* tests in GetIgoRequestsTaskTest
      * @param record
      * @param user
@@ -135,6 +136,28 @@ public class StatusTrackerConfig {
         Long completedDate = getRecordLongValue(record, RequestModel.COMPLETED_DATE, user);
         String requestType = getRecordStringValue(record, RequestModel.REQUEST_NAME, user);
         return (completedDate != null) && requestType.toLowerCase().contains("extraction");
+    }
+
+    /**
+     * This should match ToggleSampleQcStatus > setSeqAnalysisSampleQcStatus
+     * @param record
+     * @param user
+     * @return
+     */
+    public static boolean isQcStatusIgoComplete(DataRecord record, User user) {
+        Boolean passedQc = getRecordBooleanValue(record, SeqAnalysisSampleQCModel.PASSED_QC, user);
+        if(!passedQc){
+            return false;
+        }
+        String seqQcStatus = getRecordStringValue(record, SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
+        if(!QcStatus.PASSED.getText().equals(seqQcStatus)){
+            return false;
+        }
+        return true;
+        /* TODO - True for samples after 2/20/20. Add after Feb 2021
+        Long dateIgoComplete = getRecordLongValue(record, "DateIgoComplete", user);
+        return dateIgoComplete != null;
+         */
     }
 
 

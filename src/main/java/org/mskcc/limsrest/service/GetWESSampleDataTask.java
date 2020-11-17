@@ -9,13 +9,13 @@ import com.velox.api.user.User;
 import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.RequestModel;
+import com.velox.sloan.cmo.recmodels.SampleCMOInfoRecordsModel;
+import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.tomcat.util.ExceptionUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mskcc.limsrest.ConnectionLIMS;
-import org.mskcc.limsrest.service.requesttracker.Request;
 import org.mskcc.limsrest.service.sampletracker.WESSampleData;
 
 import javax.net.ssl.*;
@@ -33,7 +33,6 @@ import java.security.cert.X509Certificate;
 import java.util.*;
 
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
-import static org.apache.tomcat.util.ExceptionUtils.*;
 import static org.mskcc.limsrest.util.Utils.*;
 
 /**
@@ -80,6 +79,7 @@ public class GetWESSampleDataTask {
             try {
                 dmpTrackerRecords = dataRecordManager.queryDataRecords("DMPSampleTracker", "i_SampleTypeTumororNormal='Tumor' AND DateCreated > " + Long.parseLong(timestamp) + " AND i_SampleDownstreamApplication LIKE '%Exome%' COLLATE utf8_general_ci", user);
 //                dmpTrackerRecords = dataRecordManager.queryDataRecords("DMPSampleTracker", "i_SampleTypeTumororNormal='Tumor' AND DateCreated > " + Long.parseLong(timestamp) + " AND i_SampleDownstreamApplication LIKE '%Exome%' AND i_StudySampleIdentifierInvesti LIKE 'P-0002976-T01-WES%' COLLATE utf8_general_ci", user);
+                //dmpTrackerRecords = dataRecordManager.queryDataRecords("DMPSampleTracker", "i_StudySampleIdentifierInvesti IN ('P-0013536-T02-WES','P-0025596-T01-WES','P-0028625-T01-WES') AND i_SampleTypeTumororNormal='Tumor'" + " AND i_SampleDownstreamApplication LIKE '%Exome%' COLLATE utf8_general_ci", user);
                 log.info("Num dmpTracker Records: " + dmpTrackerRecords.size());
             } catch (Throwable e) {
                 log.error(e.getMessage(), e);
@@ -88,6 +88,7 @@ public class GetWESSampleDataTask {
             JSONObject consentAList = getConsentStatusDataValues("parta");
             JSONObject consentCList = getConsentStatusDataValues("partc");
             if (!dmpTrackerRecords.isEmpty()) {
+                int totalProcessed = 0;
                 for (DataRecord dmpTrackRec : dmpTrackerRecords) {
                     List<DataRecord> sampleCmoInfoRecs = new ArrayList<>();
                     if (dmpTrackRec.getValue("i_StudySampleIdentifierInvesti", user) != null) {
@@ -96,8 +97,11 @@ public class GetWESSampleDataTask {
                     }
                     if (sampleCmoInfoRecs.size() > 0) {
                         for (DataRecord cmoInfoRec : sampleCmoInfoRecs) {
-                            DataRecord parentSamp = cmoInfoRec.getParentsOfType("Sample", user).get(0);
-                            List<DataRecord> allSamplesSharingCmoInfoRec = getChildSamplesWithRequestAsParent(parentSamp);
+                            List<DataRecord> parentSamps = cmoInfoRec.getParentsOfType("Sample", user);
+                            if (parentSamps.isEmpty()){
+                                log.info(String.format("%s record with recordid %d not linked to any parent Sample.", SampleCMOInfoRecordsModel.DATA_TYPE_NAME, cmoInfoRec.getRecordId()));
+                            }
+                            List<DataRecord> allSamplesSharingCmoInfoRec = !parentSamps.isEmpty() ? getChildSamplesWithRequestAsParent(parentSamps.get(0)): new ArrayList<>();
                             log.info("Total Wes Samples for shared CmoInfo Rec: " + allSamplesSharingCmoInfoRec.size());
                             if (allSamplesSharingCmoInfoRec.size()>0){
                                 for (DataRecord sample: allSamplesSharingCmoInfoRec){
@@ -143,7 +147,8 @@ public class GetWESSampleDataTask {
                                         Boolean consentPartCStatus = getConsentStatus(consentCList, dmpPatientId);
                                         String sampleStatus = getMostAdvancedLimsStage(sample, igoRequestId, conn);
                                         log.info("sample status: " + sampleStatus);
-                                        String baitsetUsed = getBaitSet(sample, user);
+                                        List<DataRecord> seqQcRecords = getChildDataRecordsOfType(sample, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
+                                        String baitsetUsed = getBaitSet(sample, seqQcRecords, user);
                                         log.info("baitset: " + baitsetUsed);
                                         String accessLevel = "";
                                         String sequencingSite = "";
@@ -175,6 +180,8 @@ public class GetWESSampleDataTask {
                         WESSampleData nonIgoTrackingRecord = createNonIgoTrackingRecord(dmpTrackRec, consentAList, consentCList);
                         resultList.add(nonIgoTrackingRecord);
                     }
+                    totalProcessed ++;
+                    log.info("Total DMPTracker records processed: " + totalProcessed);
                 }
             }
             log.info("Results found: " + resultList.size() + " Elapsed time (ms): " + (System.currentTimeMillis() - start));

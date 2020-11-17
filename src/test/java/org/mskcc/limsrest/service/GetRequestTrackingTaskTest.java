@@ -24,6 +24,7 @@ public class GetRequestTrackingTaskTest {
             "09367_K",      // Good:    Failed branches                 1 IGO-Complete
             "07428_AA",     // Good:    Includes extraction             4 IGO-Complete
             "06302_Z",      // Good:    Submitted Stage has non-promoted record
+
             // Passed/Pending
             "10793",        // Good: 9 Passed, 1 Pending
 
@@ -80,18 +81,46 @@ public class GetRequestTrackingTaskTest {
                         .addStage(STAGE_LIBRARY_CAPTURE, true, 1, 1, 0)
                         .addStage(STAGE_SEQUENCING, true, 1, 1, 0)
                         .addStage(STAGE_DATA_QC, true, 1, 1, 0)
-                        .build(),
+                        .build()
+        ));
+
+        testProjects(testCases);
+    }
+
+    @Test
+    public void splitProject_07428() throws Exception {
+        /*  ALL PASSED
+            "07428_AA",     // Extraction
+            "07428_AF",		// Sequencing
+         */
+        List<Project> testCases = new ArrayList<>(Arrays.asList(
                 new ProjectBuilder("07428_AA")
                         .addStage(STAGE_SUBMITTED, true, 4, 4, 0)
                         .addStage(STAGE_EXTRACTION, true, 4, 4, 0)
+                        .build(),
+                new ProjectBuilder("07428_AF")
                         .addStage(STAGE_LIBRARY_PREP, true, 4, 4, 0)
                         .addStage(STAGE_LIBRARY_QC, true, 4, 4, 0)
                         .addStage(STAGE_SEQUENCING, true, 4, 4, 0)
                         .addStage(STAGE_DATA_QC, true, 4, 4, 0)
-                        .build(),
+                        .build()
+        ));
+
+        testProjects(testCases);
+    }
+
+    @Test
+    public void splitProject_06302() throws Exception {
+        /*  ALL PASSED
+            "06302_Z",     // Extraction
+            "06302_AC",		// Sequencing
+         */
+        List<Project> testCases = new ArrayList<>(Arrays.asList(
                 new ProjectBuilder("06302_Z")
                         .addStage(STAGE_SUBMITTED, true, 57, 56, 0)
                         .addStage(STAGE_EXTRACTION, true, 56, 56, 0)
+                        .build(),
+                new ProjectBuilder("06302_AC")
                         .addStage(STAGE_LIBRARY_PREP, true, 56, 56, 0)
                         .addStage(STAGE_SEQUENCING, true, 56, 56, 0)
                         .addStage(STAGE_DATA_QC, true, 56, 56, 0)
@@ -110,8 +139,9 @@ public class GetRequestTrackingTaskTest {
                 new ProjectBuilder("10793")
                         .addStage(STAGE_SUBMITTED, true, 10, 10, 0)
                         .addStage(STAGE_LIBRARY_PREP, true, 10, 10, 0)
-                        .addStage(STAGE_SEQUENCING, false, 10, 9, 0)
-                        .addStage(STAGE_DATA_QC, false, 10, 9, 0)
+                        .addStage(STAGE_SEQUENCING, false, 10, 0, 0)  // Passed, not complete
+                        .addStage(STAGE_DATA_QC, false, 10, 0, 0)
+                        .addPendingStage(STAGE_SEQUENCING)
                         .build()));
 
         testProjects(testCases);
@@ -136,6 +166,7 @@ public class GetRequestTrackingTaskTest {
                         // TODO - Failed should be 48 & completed 332, but sequencing failures are difficult
                         .addStage(STAGE_SEQUENCING, false, 380, 332, 0)
                         .addStage(STAGE_DATA_QC, false, 380, 332, 48)
+                        .addPendingStage(STAGE_SEQUENCING)
                         .build()
         ));
 
@@ -154,6 +185,7 @@ public class GetRequestTrackingTaskTest {
                         .addStage(STAGE_LIBRARY_CAPTURE, true, 8, 8, 0)
                         .addStage(STAGE_SEQUENCING, false, 8, 0, 0)
                         .addStage(STAGE_DATA_QC, false, 5, 0, 0)
+                        .addPendingStage(STAGE_SEQUENCING)
                         .build()));
 
         testProjects(testCases);
@@ -172,6 +204,7 @@ public class GetRequestTrackingTaskTest {
                         .addStage(STAGE_LIBRARY_CAPTURE, false, 16, 16, 0)
                         .addStage(STAGE_SEQUENCING, false, 16, 16, 0)
                         .addStage(STAGE_DATA_QC, false, 16, 16, 0)
+                        .addPendingStage(STAGE_AWAITING_PROCESSING)
                         .build()));
 
         testProjects(testCases);
@@ -195,6 +228,44 @@ public class GetRequestTrackingTaskTest {
         final Long expectedCompletedDate = 1570468879097L;
         assertEquals(String.format("Completion date should be %d", expectedCompletedDate), expectedCompletedDate, completedDate);
         assertTrue("Extraction request should be IGO-Complete", isIgoComplete);
+    }
+
+    @Test
+    public void sourceRequest() {
+        String childRequestId = "06302_AB";
+        String expectedSourceRequestId = "06302_AA";
+        GetRequestTrackingTask t = new GetRequestTrackingTask(childRequestId, this.conn);
+        Map<String, Object> requestInfo = new HashMap<>();
+        try {
+            requestInfo = t.execute();
+        } catch (IoError | RemoteException | NotFound e) {
+            assertTrue("Exception in task execution", false);
+        }
+
+        Map<String, Object> metaData = (Map<String, Object>) requestInfo.get("metaData");
+        Object[] sourceRequestList = (Object[]) metaData.get("sourceRequests");
+        assertEquals(String.format("%s should have one source request", childRequestId), sourceRequestList.length, 1);
+        String actualSourceRequest = (String) sourceRequestList[0];
+        assertEquals(String.format("%s's source request should be %s", childRequestId, expectedSourceRequestId), actualSourceRequest, expectedSourceRequestId);
+    }
+
+    @Test
+    public void childProject() {
+        String sourceRequestId = "06302_AA";
+        String expectedChildRequestId = "06302_AB";
+        GetRequestTrackingTask t = new GetRequestTrackingTask(sourceRequestId, this.conn);
+        Map<String, Object> requestInfo = new HashMap<>();
+        try {
+            requestInfo = t.execute();
+        } catch (IoError | RemoteException | NotFound e) {
+            assertTrue("Exception in task execution", false);
+        }
+
+        Map<String, Object> metaData = (Map<String, Object>) requestInfo.get("metaData");
+        Object[] childRequestList = (Object[]) metaData.get("childRequests");
+        assertEquals(String.format("%s should have one child request", sourceRequestId), childRequestList.length, 1);
+        String actualChildRequest = (String) childRequestList[0];
+        assertEquals(String.format("%s's child request should be %s", sourceRequestId, expectedChildRequestId), actualChildRequest, expectedChildRequestId);
     }
 
     /**
@@ -264,6 +335,12 @@ public class GetRequestTrackingTaskTest {
             assertEquals(String.format("IS COMPLETE - %b, expected %b (Project: %s, Stage: %s)", complete, expectedComplete, project.name, stageName),
                     expectedComplete, complete);
         }
+
+        Map<String, Object> summary = (Map<String, Object>) requestTracker.get("summary");
+        String actualPendingStage = (String) summary.get("pendingStage");
+        String expectedPendingStage = project.pendingStage;
+        assertEquals(String.format("PENDING STAGE - %s, expected %s (Project: %s)", actualPendingStage, expectedPendingStage, project.name),
+                expectedPendingStage, actualPendingStage);
     }
 
     /**
@@ -272,10 +349,12 @@ public class GetRequestTrackingTaskTest {
     private class ProjectBuilder {
         List<Stage> stages;         // All stages present in the project
         String name;                // Request ID of the project
+        String pendingStage;
 
         ProjectBuilder(String name) {
             this.name = name;
             this.stages = new ArrayList<>();
+            this.pendingStage = STAGE_COMPLETE; // Default pending stage to complete
         }
 
         /**
@@ -294,8 +373,13 @@ public class GetRequestTrackingTaskTest {
             return this;
         }
 
+        ProjectBuilder addPendingStage(String stage){
+            this.pendingStage = stage;
+            return this;
+        }
+
         Project build() {
-            Project project = new Project(this.name, this.stages);
+            Project project = new Project(this.name, this.stages, this.pendingStage);
             return project;
         }
     }
@@ -306,10 +390,12 @@ public class GetRequestTrackingTaskTest {
     private class Project {
         List<Stage> stages;
         String name;
+        String pendingStage;
 
-        Project(String name, List<Stage> stages) {
+        Project(String name, List<Stage> stages, String pendingStage) {
             this.name = name;
             this.stages = stages;
+            this.pendingStage = pendingStage;
         }
     }
 

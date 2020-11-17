@@ -39,8 +39,6 @@ public class GetRequestTrackingTask {
             RequestModel.TATFROM_RECEIVING,
             RequestModel.PROJECT_MANAGER,
             RequestModel.LAB_HEAD_EMAIL,
-            "QcAccessEmails",
-            "DataAccessEmails",
             RequestModel.INVESTIGATOR,
             RequestModel.PROJECT_NAME,
             RequestModel.REQUEST_NAME,
@@ -48,10 +46,12 @@ public class GetRequestTrackingTask {
     };
     private ConnectionLIMS conn;
     private String requestId;
+    private User user;
 
     public GetRequestTrackingTask(String requestId, ConnectionLIMS conn) {
         this.requestId = requestId;
         this.conn = conn;
+        this.user = conn.getConnection().getUser();
     }
 
     public Map<String, Object> execute() throws IoError, RemoteException, NotFound {
@@ -129,8 +129,14 @@ public class GetRequestTrackingTask {
         Integer numTotal = 0;
         StageTracker stage;
         Integer numComplete = 0;
+        String pendingStageName = STAGE_COMPLETE;
+        String stageName;
         for (Map.Entry<String, StageTracker> requestStage : stages.entrySet()) {
+            stageName = requestStage.getKey();
             stage = requestStage.getValue();
+            if(pendingStageName.equals(STAGE_COMPLETE) && !stage.getComplete()){
+                pendingStageName = stageName;
+            }
             isStagesComplete = isStagesComplete && stage.getComplete();
             numFailed += stage.getFailedSamplesCount();
             numTotal = stage.getSize() > numTotal ? stage.getSize() : numTotal;
@@ -141,6 +147,7 @@ public class GetRequestTrackingTask {
         projectStatus.put("completed", numComplete);
         projectStatus.put("total", numTotal);
         projectStatus.put("failed", numFailed);
+        projectStatus.put("pendingStage", pendingStageName);
 
         return projectStatus;
     }
@@ -214,11 +221,12 @@ public class GetRequestTrackingTask {
     private ProjectSampleTree createWorkflowTree(WorkflowSample root, ProjectSampleTree tree) {
         tree.addStageToTracked(root);   // Update tree Project Sample stages w/ the input Workflow sample's stage
 
-        if (STAGE_DATA_QC.equals(root.getStage()) && !tree.isPassedDataQc()) {
+        if (STAGE_DATA_QC.equals(root.getStage()) && !tree.isQcIgoComplete()) {
             // The Data QC stage is updated by a node in Data QC stage. This node can update the entire tree's data
             // QC status as a ProjectSample is marked Data QC complete if it has any one Data QC node marked passed
             tree.updateDataQcStage(root);
         }
+        // TODO - Add logic for when this is in the extraction stage
 
         // Search each child of the input
         DataRecord[] children = new DataRecord[0];
@@ -236,18 +244,24 @@ public class GetRequestTrackingTask {
             // Add all data for the root's children at that level. Allows us to fail only the failed branch
             List<WorkflowSample> workflowChildren = new ArrayList<>();
             for (DataRecord record : children) {
-                WorkflowSample sample = new WorkflowSample(record, this.conn);
-                sample.setParent(root);
-                if (STAGE_AWAITING_PROCESSING.equals(sample.getStage())) {
-                    // Update the stage of the sample to the parent stage if it is awaitingProcessing. If there is not
-                    // resolved parent, leave as "Awaiting Processing"
-                    if (!STAGE_AWAITING_PROCESSING.equals(root.getStage())) {
-                        sample.setStage(root.getStage());
+                if (isWorkflowSampleInProject(record, this.requestId, this.user)) {
+                    WorkflowSample sample = new WorkflowSample(record, this.conn);
+                    sample.setParent(root);
+                    if (STAGE_AWAITING_PROCESSING.equals(sample.getStage())) {
+                        // Update the stage of the sample to the parent stage if it is awaitingProcessing. If there is not
+                        // resolved parent, leave as "Awaiting Processing"
+                        if (!STAGE_AWAITING_PROCESSING.equals(root.getStage())) {
+                            sample.setStage(root.getStage());
+                        }
                     }
+                    root.addChild(sample);
+                    tree.addSample(sample);
+                    workflowChildren.add(sample);
+                } else {
+                    // Child is from a different project - add it as a child Sample Id
+                    String childSampleId = getRecordStringValue(record, SampleModel.SAMPLE_ID, this.user);
+                    root.setChildSampleId(childSampleId);
                 }
-                root.addChild(sample);
-                tree.addSample(sample);
-                workflowChildren.add(sample);
             }
 
             for (WorkflowSample sample : workflowChildren) {
@@ -258,6 +272,21 @@ public class GetRequestTrackingTask {
             }
         }
         return tree;
+    }
+
+    /**
+     * Returns whether the sample is part of the project based on whether the sampleId contains the requestId
+     *      e.g.
+     *          SampleId: "09641_U_76", RequestId: "09641_U" -> TRUE
+     *          SampleId: "09641_X_76", RequestId: "09641_U" -> FALSE
+     * @param record
+     * @param requestId
+     * @param user
+     * @return
+     */
+    private boolean isWorkflowSampleInProject(DataRecord record, String requestId, User user) {
+        String sampleId = getRecordStringValue(record, SampleModel.SAMPLE_ID, user);
+        return sampleId.contains(requestId);
     }
 
     /**
@@ -454,11 +483,19 @@ public class GetRequestTrackingTask {
         metaData.put("serviceId", serviceId);
 
         // Certain fields can only be collected after the ProjectSample has been created
-        Set<String> sourceProjects = projectSamples.stream()
-                .map(sample -> sample.getRoot().getSourceRequest())
+        Set<String> sourceRequests = projectSamples.stream()
+                .map(sample -> sample.getRoot().getSourceRequestId())
                 .filter(sampleId -> !StringUtils.isBlank(sampleId))
                 .collect(Collectors.toSet());
-        metaData.put("sourceProjects", sourceProjects.toArray());
+        metaData.put("sourceRequests", sourceRequests.toArray());
+
+        // Certain fields can only be collected after the ProjectSample has been created
+        Set<String> childRequests = projectSamples.stream()
+                .map(sample -> sample.getRoot().getChildRequestIds())
+                .flatMap(List::stream)
+                .filter(sampleId -> !StringUtils.isBlank(sampleId))
+                .collect(Collectors.toSet());
+        metaData.put("childRequests", childRequests.toArray());
 
         return metaData;
     }
