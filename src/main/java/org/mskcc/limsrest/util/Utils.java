@@ -76,56 +76,105 @@ public class Utils {
     }
 
     /**
+     * Method to check if Sequencing for a sample is Passed Complete based on presence of SeqAnalysisSampleQC as child record
+     * and status of SeqAnalysisSampleQC as Passed on any record and IgoComplete set to True.
+     * @param qcRecords
+     * @param user
+     * @return
+     */
+    private static boolean isSequencingPassedComplete(List<DataRecord>qcRecords, User user){
+        try{
+            for (DataRecord rec: qcRecords){
+                Object qcStatus = rec.getValue(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
+                if (qcStatus!= null && qcStatus.toString().equalsIgnoreCase(SEQ_QC_STATUS_PASSED) && isQcStatusIgoComplete(rec, user)){
+                    return true;
+                }
+            }
+        }catch (Exception e){
+            String msg = String.format("%s -> Error while checking Sequencing QC status equals 'Passed'", ExceptionUtils.getRootCause(e), ExceptionUtils.getStackTrace(e));
+            LOGGER.error(msg);
+        }
+        return false;
+    }
+
+    /**
+     * Method to check if Sequencing for a sample is Failed Complete based on presence of SeqAnalysisSampleQC as child record
+     * and status of SeqAnalysisSampleQC as Failed on any record and IgoComplete set to True.
+     * @param qcRecords
+     * @param user
+     * @return
+     */
+    private static boolean isSequencingFailedComplete(List<DataRecord>qcRecords, User user){
+        try{
+            for (DataRecord rec: qcRecords){
+                Object qcStatus = rec.getValue(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
+                if (qcStatus!= null && qcStatus.toString().equalsIgnoreCase(SEQ_QC_STATUS_FAILED) && isQcStatusIgoComplete(rec, user)){
+                    return true;
+                }
+            }
+            // check if the status is actually failed but igoComplete is not marked true. Sometimes, sample is marked failed
+            // but igoComplete is not checked. It is possible that we do not mark IgoComplete because there is not data to
+            // deliver to the user.
+            for (DataRecord rec: qcRecords){
+                Object qcStatus = rec.getValue(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
+                if (qcStatus!= null && qcStatus.toString().equalsIgnoreCase(SEQ_QC_STATUS_FAILED)){
+                    return true;
+                }
+            }
+        }catch (Exception e){
+            String msg = String.format("%s -> Error while checking Sequencing QC status equals 'Passed'", ExceptionUtils.getRootCause(e), ExceptionUtils.getStackTrace(e));
+            LOGGER.error(msg);
+        }
+        return false;
+    }
+
+    /**
      * Method to check if Sequencing for a sample is complete based on presence of SeqAnalysisSampleQC as child record
      * and status of SeqAnalysisSampleQC as Passed.
      *
      * @param sample
      * @return
      */
-    private static Boolean isSequencingComplete(DataRecord sample, User user) {
+    private static Boolean isSequencingComplete(DataRecord sample, User user){
         DataRecord[] qcRecord = getChildrenofDataRecord(sample, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
         if (qcRecord.length == 0) {
             return false;
         }
+        DataRecord record = qcRecord[0];
+        Boolean isComplete = isQcStatusIgoComplete(record, user);
         String sequencingStatus = getRecordStringValue(qcRecord[0], SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
-        return sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_PASSED) || sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_FAILED);
-    }
-
-    /**
-     * Method to check if Sample failed "Sequencing Data QC" based on presence of SeqAnalysisSampleQC as child record
-     * and status of SeqAnalysisSampleQC as Failed.
-     *
-     * @param sample
-     * @return
-     */
-    private static Boolean hasFailedSequencingDataQc(DataRecord sample, User user){
-        DataRecord [] qcRecrod = getChildrenofDataRecord(sample, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
-        String sequencingStatus = getRecordStringValue(qcRecrod[0], SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
-        return sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_FAILED);
+        Boolean isFailed = sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_FAILED);
+        return isComplete || isFailed;
     }
 
     /**
      * Method to get BaitSet used for a sample.
      *
      * @param sample
+     * @param qcRecords
      * @return
      */
-    public static String getBaitSet(DataRecord sample, User user) {
+    public static String getBaitSet(DataRecord sample, List<DataRecord> qcRecords, User user) {
         try {
-            DataRecord qcRecord = getChildDataRecordOfType(sample, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
-            if (qcRecord == null) {
+            if (qcRecords.isEmpty()) {
                 LOGGER.info(String.format("Seq qc record not found for sample with recordId: %d.", sample.getRecordId()));
                 return "";
             }
-            return (String) getValueFromDataRecord(qcRecord, "BaitSet", "String", user);
+            for (DataRecord qcRec : qcRecords){
+                Object baitset = qcRec.getValue(SeqAnalysisSampleQCModel.BAIT_SET, user);
+                if (baitset != null && !StringUtils.isBlank(baitset.toString())){
+                    return baitset.toString();
+                }
+            }
         } catch (NotFound | RemoteException e) {
-            LOGGER.error(ExceptionUtils.getStackTrace(e));
+            LOGGER.error(String.format("%s -> Error while fetching the baitset: %s", ExceptionUtils.getRootCause(e), ExceptionUtils.getStackTrace(e)));
             return "";
         }
+        return "";
     }
 
     /**
-     * Method to get children of specified type for Sample.
+     * Method to get child record of specified DataType under a Sample.
      *
      * @param sample
      * @param childRecordType
@@ -174,6 +223,46 @@ public class Utils {
         }
         return null;
     }
+
+    /**
+     * Method to get a list of child records of specified DataType under a Sample.
+     * @param sample
+     * @param childRecordType
+     * @param user
+     * @return
+     */
+    public static List<DataRecord> getChildDataRecordsOfType(DataRecord sample, String childRecordType, User user){
+        List<DataRecord> records = new ArrayList<>();
+        try {
+            Object requestId = sample.getValue(SampleModel.REQUEST_ID, user);
+            Stack<DataRecord> sampleStack = new Stack<>();
+            sampleStack.add(sample);
+            do {
+                DataRecord startSample = sampleStack.pop();
+                DataRecord[] childRecs = startSample.getChildrenOfType(childRecordType, user);
+                if (childRecs.length > 0) {
+                    records.addAll(Arrays.asList(childRecs));
+                }
+                List<DataRecord> childSampleRecords = Arrays.asList(startSample.getChildrenOfType(SampleModel.DATA_TYPE_NAME, user));
+                if (childSampleRecords.size() > 0) {
+                    for (DataRecord sam : childSampleRecords) {
+                        Object reqId = sam.getValue(SampleModel.REQUEST_ID, user);
+                        if (reqId != null && requestId.equals(reqId.toString())) {
+                            sampleStack.add(sam);
+                        }
+                    }
+                }
+            } while (!sampleStack.isEmpty());
+        } catch (RemoteException e) {
+            LOGGER.error(String.format("RemoteException -> Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(e)));
+        } catch (IoError ioError) {
+            LOGGER.error(String.format("IoError -> Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(ioError)));
+        } catch (NotFound notFound) {
+            LOGGER.error(String.format("NotFound -> Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(notFound)));
+        }
+        return records;
+    }
+
 
     /**
      * Returns whether the input status is a failed one
@@ -506,11 +595,14 @@ public class Utils {
                 long currentRecordId = current.getRecordId();
                 if (isSequencingComplete(current, user)) {
                     // Check if Sample has failed Sequencing analysis
-                    if (hasFailedSequencingDataQc(current, user)){
+                    List<DataRecord> seqQcRecords =  getChildDataRecordsOfType(current, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
+                    if (isSequencingPassedComplete(seqQcRecords, user)){
+                        // Return the Completed-Sequencing status, NOT currentSampleStatus as this could not unrelated to sequencing
+                        return String.format("%s%s", WORKFLOW_STATUS_COMPLETED, STAGE_SEQUENCING_ANALYSIS);
+                    }
+                    if (isSequencingFailedComplete(seqQcRecords, user)){
                         return String.format("%s%s", WORKFLOW_STATUS_FAILED, STAGE_SEQUENCING_ANALYSIS);
                     }
-                    // Return the Completed-Sequencing status, NOT currentSampleStatus as this could not unrelated to sequencing
-                    return String.format("%s%s", WORKFLOW_STATUS_COMPLETED, STAGE_SEQUENCING_ANALYSIS);
                 }
                 if (currentRecordId > recordId && currentStatusOrder >= statusOrder && isCompleteStatus(currentSampleStatus)) {
                     sampleStatus = currentSampleStatus;
