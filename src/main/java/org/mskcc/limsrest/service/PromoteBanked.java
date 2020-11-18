@@ -150,7 +150,7 @@ public class PromoteBanked extends LimsTask {
             Object refPanelName = ref.getValue("CapturePanel", limsUser);
             Object refRunType = ref.getValue("SequencingRunType", limsUser);
             Object refCoverage = ref.getValue("Coverage", limsUser) != null ? ref.getValue("Coverage", limsUser).toString().replace("X", ""): null;
-            Object refOnly = ref.getValue("ReferenceOnly", user);
+            Object refOnly = ref.getValue("ReferenceOnly", limsUser);
             if (Objects.equals(recipe, refRecipe) && Objects.equals(tumorOrNormal, refTumorNormal) && Objects.equals(panelName, refPanelName) && Objects.equals(runType, refRunType) && Objects.equals(coverage, refCoverage)
                     && !Objects.isNull(refOnly) && !(boolean)refOnly) {
                 foundMatch = true;
@@ -226,6 +226,7 @@ public class PromoteBanked extends LimsTask {
         }catch (Exception e) {
             log.info(String.format("%s error while fetching ReadCoverage values. %s", ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getStackTrace(e)));
         }
+        log.error("Cannot find'RequestedCoverage' field definitions in 'BankedSample' DataType. Will skip Coverage -> Reads conversion.");
         return false;
     }
 
@@ -551,6 +552,12 @@ public class PromoteBanked extends LimsTask {
             seqRequirementMap.put("SampleId", newIgoId);
             seqRequirementMap.put("SequencingRunType", runType);
             String recipe = (String) bankedFields.getOrDefault("Recipe", "");
+            String tumorOrNormal = (String)bankedFields.getOrDefault("TumorOrNormal", null);
+            Object capturePanel = bankedFields.getOrDefault("CapturePanel", null);
+            Object seqRunType = bankedFields.getOrDefault("RunType", null);
+            Object species = bankedFields.getOrDefault("Species", null);
+            Object requestedCoverage = bankedFields.getOrDefault("RequestedCoverage", null);
+
             // banked Sample requested reads is a string, but a double in seqRequirement
             String requestedReads = bankedSample.getRequestedReads();
             if (requestedReads != null && !requestedReads.equals("") &&
@@ -571,13 +578,14 @@ public class PromoteBanked extends LimsTask {
                 }
                 seqRequirementMap.put("RequestedReads", rrMapped);
             }
+            setSeqReq(recipe, tumorOrNormal, seqRequirementMap);
+            log.info(String.format("Sequencing Requirements before Coverage -> Reads conversion logic run: %s", seqRequirementMap.toString()));
             // Check if Coverage is a separate field in Banked Sample Datatype and Coverage->Reads conversion is required based on Recipe in Banked Sample data.
             if (hasCoverageFieldInDataType(bankedFields, user) && needReadCoverageReference(recipe, readCoverageRefs, user)){
                 log.info("Banked Samples need Coveage mapping to reads.");
                 // if true update Reads Coverage values from the 'ApplicationReadCoverageRef' in LIMS.
-                Map<String, Object> updatedSeqRequirements = getRequestedReadsForCoverage(recipe, bankedFields.getOrDefault("TumorOrNormal", null),
-                        bankedFields.getOrDefault("CapturePanel", null), bankedFields.getOrDefault("RunType", null), bankedFields.getOrDefault("Species", null),
-                        bankedFields.getOrDefault("RequestedCoverage", null), readCoverageRefs, user);
+                Map<String, Object> updatedSeqRequirements = getRequestedReadsForCoverage(recipe, tumorOrNormal,
+                        capturePanel, seqRunType, species, requestedCoverage, readCoverageRefs, user);
                 if (!updatedSeqRequirements.isEmpty()) {
                     seqRequirementMap.putAll(updatedSeqRequirements);
                     log.info("Sequencing Requirements updated: " + seqRequirementMap.toString());
