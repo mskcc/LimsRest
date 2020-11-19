@@ -1,8 +1,5 @@
 package org.mskcc.limsrest.util;
 
-import java.rmi.RemoteException;
-import java.util.*;
-
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.user.User;
 import com.velox.api.util.ServerException;
@@ -14,6 +11,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.assignedprocess.QcStatus;
+
+import java.rmi.RemoteException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.mskcc.limsrest.util.Utils.*;
 
@@ -31,7 +32,6 @@ public class StatusTrackerConfig {
     public static final String STAGE_SAMPLE_QC = "Sample QC";
     public static final String STAGE_SEQUENCING = "Sequencing";
     public static final String STAGE_SEQUENCING_ANALYSIS = "Illumina Sequencing Analysis";
-    public static final String STAGE_DATA_QC = "Data QC";
     public static final String STAGE_IGO_COMPLETE = "IGO Complete";
     public static final String STAGE_LIBRARY_QC = "Library QC";
     public static final String STAGE_PCR = "Digital PCR";
@@ -64,13 +64,13 @@ public class StatusTrackerConfig {
             STAGE_AWAITING_PROCESSING,
             STAGE_EXTRACTION,
             STAGE_LIBRARY_PREP,
+            STAGE_PENDING_USER_DECISION,
             STAGE_LIBRARY_CAPTURE,
             STAGE_LIBRARY_QC,
             STAGE_SAMPLE_QC,
             STAGE_PCR,
             STAGE_Digital_PCR,
             STAGE_ADDING_CMO_INFORMATION,
-            STAGE_PENDING_USER_DECISION,
             STAGE_COVID_19_ASSAY,
             STAGE_BATCH_PLANNING,
             STAGE_SAMPLE_ALIQUOTS,
@@ -83,7 +83,6 @@ public class StatusTrackerConfig {
             STAGE_TRANSFER_TUBE_SAMPLES,
             STAGE_PATHOLOGY,
             STAGE_SEQUENCING,
-            STAGE_DATA_QC,      // If something needs to be re-sequenced, we want to keep the sample in data-qc
             STAGE_IGO_COMPLETE,
             STAGE_RETURNED_TO_USER
     };
@@ -140,17 +139,18 @@ public class StatusTrackerConfig {
 
     /**
      * This should match ToggleSampleQcStatus > setSeqAnalysisSampleQcStatus
+     *
      * @param record
      * @param user
      * @return
      */
     public static boolean isQcStatusIgoComplete(DataRecord record, User user) {
         Boolean passedQc = getRecordBooleanValue(record, SeqAnalysisSampleQCModel.PASSED_QC, user);
-        if(!passedQc){
+        if (!passedQc) {
             return false;
         }
         String seqQcStatus = getRecordStringValue(record, SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
-        if(!QcStatus.PASSED.getText().equals(seqQcStatus)){
+        if (!QcStatus.PASSED.getText().equals(seqQcStatus)) {
             return false;
         }
         return true;
@@ -160,6 +160,40 @@ public class StatusTrackerConfig {
          */
     }
 
+    /**
+     * Returns the DataQc status determined from a list of SeqAnalysisSampleQC DataRecords (these should all come from
+     * the sample projectSample)
+     *
+     * @param seqAnalysisQcRecords
+     * @return
+     */
+    public static String getDataQcStatus(List<DataRecord> seqAnalysisQcRecords, User user) {
+        List<DataRecord> igoCompleteRecords = seqAnalysisQcRecords.stream().filter(record ->
+                isQcStatusIgoComplete(record, user)
+        ).collect(Collectors.toList());
+
+        if (igoCompleteRecords.size() > 0) {
+            // Only one record needs to be IGO-Complete
+            return QcStatus.IGO_COMPLETE.toString();
+        }
+
+        List<String> seqQcStatuses = seqAnalysisQcRecords.stream().map(record ->
+                getRecordStringValue(record, SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user)
+        ).collect(Collectors.toList());
+
+        Integer numFailed = seqQcStatuses.stream()
+                .filter(status -> QcStatus.FAILED.toString().equalsIgnoreCase(status))
+                .collect(Collectors.toList())
+                .size();
+
+        if (numFailed > 0 && numFailed == seqAnalysisQcRecords.size()) {
+            // If all qc statuses have been failed, then this is failed
+            return QcStatus.FAILED.toString();
+        }
+
+        List<String> uniqueStatuses = new ArrayList<>(new HashSet(seqQcStatuses));
+        return String.join(",", uniqueStatuses);
+    }
 
     // A Standard ExemplarSampleStatus is composed of a workflow status prefix (below) and workflow name
     public static final String WORKFLOW_STATUS_IN_PROCESS = "In Process - ";
