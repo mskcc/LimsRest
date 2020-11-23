@@ -1,17 +1,14 @@
 package org.mskcc.limsrest.service.requesttracker;
 
-import com.velox.api.datarecord.DataRecord;
 import com.velox.api.user.User;
-import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.service.assignedprocess.QcStatus;
 
-import java.rmi.RemoteException;
 import java.util.*;
 
-import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
-import static org.mskcc.limsrest.util.Utils.*;
+import static org.mskcc.limsrest.util.StatusTrackerConfig.STAGE_AWAITING_PROCESSING;
+import static org.mskcc.limsrest.util.StatusTrackerConfig.StageComp;
 
 /**
  * Data Model of the tree structure descending from one ProjectSample that is passed into the recursive calls
@@ -31,10 +28,9 @@ public class ProjectSampleTree {
     private static Log log = LogFactory.getLog(ProjectSampleTree.class);
 
     private WorkflowSample root;                        // Parent Sample of the tree
-    private String dataQcStatus;                        // Last SeqAnalysisSampleQC status encountered, until a "Passed"
-                                                        // status is found, at which point dataQcStatus is never re-set
+    private String dataQcStatus;                        // SeqAnalysisSampleQC status determinining sequencing status
     private Map<Long, WorkflowSample> sampleMap;        // Map Record IDs to their enriched sample information
-    private Map<String, StageTracker> stageMap;   // Map to all stages by their stage name
+    private Map<String, StageTracker> stageMap;         // Map to all stages by their stage name
 
     private User user;                                  // TODO - should this be elsewhere?
 
@@ -43,7 +39,7 @@ public class ProjectSampleTree {
         this.root = root;
         this.sampleMap = new HashMap<>();
         this.stageMap = new TreeMap<>(new StageComp()); // Order map by order of stages
-        this.dataQcStatus = SEQ_QC_STATUS_PENDING;                          // Pending until finding a QcStatus child
+        this.dataQcStatus = "";                         // Pending until finding a QcStatus child
     }
 
     public WorkflowSample getRoot() {
@@ -55,7 +51,7 @@ public class ProjectSampleTree {
     }
 
     public boolean isFailedDataQC() {
-        return SEQ_QC_STATUS_FAILED.equalsIgnoreCase(this.dataQcStatus);
+        return QcStatus.FAILED.toString().equalsIgnoreCase(this.dataQcStatus);
     }
 
     public List<WorkflowSample> getSamples() {
@@ -68,10 +64,10 @@ public class ProjectSampleTree {
      *
      * @param status
      */
-    private void setDataQcStatus(String status) {
+    public void setDataQcStatus(String status) {
         if (QcStatus.IGO_COMPLETE.toString().equals(this.dataQcStatus)) {
             log.warn(String.format("Not re-seting Tree dataQcStatus to %s. Sample has already been DataQC %s",
-                    status, SEQ_QC_STATUS_PASSED));
+                    status, QcStatus.PASSED.toString()));
             return;
         }
         this.dataQcStatus = status;
@@ -122,86 +118,6 @@ public class ProjectSampleTree {
     }
 
     /**
-     * Updates the DataQcStage of the tree if the input node is at the DataQc stage
-     *
-     * @param node
-     */
-    public void updateDataQcStage(WorkflowSample node) {
-        String nodeStage = node.getStage();
-        if (!STAGE_DATA_QC.equals(nodeStage)) {
-            // Only records in the DataQc Stage should update the node
-            return;
-        }
-
-        // Attempt to update the Data Qc Status of the tree if the current status isn't Passed
-        boolean isIgoComplete = isQcIgoComplete();
-        if (!isIgoComplete) {
-            updateDataQcStatus(node.getRecord());
-            isIgoComplete = isQcIgoComplete();          // After @updateDataQcStatus, update this flag
-        }
-
-        // Update the Tree Data QC Stage
-        StageTracker dataQcStage = this.stageMap.get(nodeStage);
-        dataQcStage.setComplete(isIgoComplete);
-
-        // If the input @node had a Failed Data QC child, the Workflow Sample branch needs to be failed
-        if (isFailedDataQC()) {
-            node.setFailed(Boolean.TRUE);
-            markFailedBranch(node);
-        }
-    }
-
-    /**
-     * Updates the trees dataQcStatus, which should only happen if the input DataRecord has a SeqAnalysisSample QC child
-     * and that child has a valid Qc Status
-     *
-     * @param record
-     * @return
-     */
-    private void updateDataQcStatus(DataRecord record) {
-
-        List<DataRecord> sampleQcRecords = new ArrayList<>();
-        try {
-            /**
-             * A Sample DataRecord can have a SeqAnalysisSampleQCModel child AND have children Sample DataRecords that
-             * also have SeqAnalysisSampleQCModel children. Therefore, we need to grab all descendant
-             * SeqAnalysisSampleQCModel from the input Sample DataRecord, @record, and check to see if any of them
-             * have been marked as IGO-Complete. This is because as long as one child has successfully completed the
-             * sequencing workflow, this WorkflowSample should be marked as Complete and NOT failed
-             */
-            sampleQcRecords = record.getDescendantsOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, this.user);
-        } catch (RemoteException e) {
-            log.error(String.format("Unable to retrieve sampleQcRecords from %d", record.getRecordId()));
-        }
-
-        if (sampleQcRecords.size() == 0) {
-            // Only a node in the Data QC stage will have a child instance of the SeqAnalysisSampleQC DataType
-            return;
-        }
-
-        for (DataRecord sampleQcRecord : sampleQcRecords) {
-            // Check to see if one of the @sampleQcRecords has already marked the ProjectSample as IGO-Complete
-            if (!isQcIgoComplete()) {
-                Boolean isIgoComplete = isQcStatusIgoComplete(sampleQcRecord, this.user);
-                if (isIgoComplete) {
-                    /**
-                     * Mark "IGO-Complete" because this is not a valid @SEQ_QCSTATUS value. LIMS differentiates a
-                     * "Passed" & "IGO-Complete" DataQc record by their "DateIgoComplete" value, not their @SEQ_QCSTATUS
-                     * value
-                     */
-                    setDataQcStatus(QcStatus.IGO_COMPLETE.toString());
-                } else {
-                    String seqQcStatus = getRecordStringValue(sampleQcRecord, SeqAnalysisSampleQCModel.SEQ_QCSTATUS, this.user);
-                    boolean isValidStatus = !"".equals(seqQcStatus);
-                    if (isValidStatus) {
-                        setDataQcStatus(seqQcStatus);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
      * Updates the tree stages and leaf sample completion status
      *      - Tree stage in the stageMap becomes incomplete IF sample's status is not in a completed state
      *      - Leaf completion status needs to be set because there are no children to determine completion
@@ -240,7 +156,7 @@ public class ProjectSampleTree {
      *
      * @param leaf
      */
-    private void markFailedBranch(WorkflowSample leaf) {
+    public void markFailedBranch(WorkflowSample leaf) {
         leaf.setComplete(true);
         // Fail all nodes in path to failed leaf until reaching root (parent == null) or node w/ non-failed children
         WorkflowSample parent = leaf.getParent();
