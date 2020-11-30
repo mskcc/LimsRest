@@ -80,7 +80,7 @@ public class PromoteBanked extends LimsTask {
     }
 
     /**
-     * Detrmines requested reads & coverage based on,
+     * Determines requested reads & coverage based on,
      *      1) BankedSample Requested Reads
      *      2) Recipe (IMPACT, HemePACT, & ACCESS) have specific requirements
      *
@@ -593,8 +593,13 @@ public class PromoteBanked extends LimsTask {
             }
             seqRequirementMap.put("SequencingRunType", seqRunType);
 
+            Map<String, Number> coverageReadsMap;
             // Update Reads & Coverage: "CoverageTarget", "RequestedReads"
-            Map<String, Number> coverageReadsMap = getCovReadsRequirementsMap(recipe, tumorOrNormal, bankedSampleRequestedReads);
+            if ("WholeExomeSequencing".equalsIgnoreCase(recipe)) {
+                coverageReadsMap = getCovReadsRequirementsMap_forWES(bankedSampleRequestedReads);
+            } else {
+                coverageReadsMap = getCovReadsRequirementsMap(recipe, tumorOrNormal, bankedSampleRequestedReads);
+            }
             seqRequirementMap.putAll(coverageReadsMap);
 
             log.info(String.format("Sequencing Requirements before Coverage -> Reads conversion logic run: %s", seqRequirementMap.toString()));
@@ -621,16 +626,26 @@ public class PromoteBanked extends LimsTask {
         return Double.parseDouble(requestedReads);
     }
 
-    void setSeqReqForWES(String requestedReads, Map<String, Object> seqRequirementMap) {
-        seqRequirementMap.put("SequencingRunType", "PE100");
+    /**
+     * Determines requested reads & coverage based on requestedReads of BankedSample DataRecord and internal mapping
+     * of coverage to type of sequencing run in @coverageToSeqReqWES
+     *
+     * @param requestedReads
+     * @return
+     */
+    public Map<String, Number> getCovReadsRequirementsMap_forWES(String requestedReads) {
+        Map<String, Number> coverageReadsMap = new HashMap<>();
         if (requestedReads != null) {
+            // E.g. 70x -> 70
             Matcher depthMatch = Pattern.compile("([0-9]+)[xX]").matcher(requestedReads);
             if (depthMatch.find()) {
                 int coverageTarget = Integer.valueOf(depthMatch.group(1));
-                seqRequirementMap.put("CoverageTarget", coverageTarget);
-                seqRequirementMap.put("RequestedReads", coverageToSeqReqWES.getOrDefault(coverageTarget, null));
+                coverageReadsMap.put("CoverageTarget", coverageTarget);
+                coverageReadsMap.put("RequestedReads", coverageToSeqReqWES.getOrDefault(coverageTarget, null));
             }
         }
+
+        return coverageReadsMap;
     }
 
     private void checkSampleTypeAndPatientId(BankedSample bankedSample) {
