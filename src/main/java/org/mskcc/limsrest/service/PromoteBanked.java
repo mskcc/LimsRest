@@ -7,7 +7,6 @@ import com.velox.api.datarecord.*;
 import com.velox.api.user.User;
 import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
-import com.velox.sloan.cmo.recmodels.RequestModel;
 import com.velox.sloan.cmo.utilities.SloanCMOUtils;
 import com.velox.sloan.cmo.utilities.UuidGenerator;
 import org.apache.commons.lang3.StringUtils;
@@ -32,6 +31,8 @@ import java.rmi.RemoteException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static org.mskcc.limsrest.util.Utils.getRecordStringValue;
 
 /**
  * A queued task that takes banked ids, a service id and optionally a request  and project.
@@ -78,22 +79,50 @@ public class PromoteBanked extends LimsTask {
     public PromoteBanked() {
     }
 
-    /*
-     * Automated addition of read length, minimum number of requested reads, and coverage to seqrequirement table
-     * on promote for IMPACT & HemePACT
-     * <BR>
+    /**
+     * Detrmines requested reads & coverage based on,
+     *      1) BankedSample Requested Reads
+     *      2) Recipe (IMPACT, HemePACT, & ACCESS) have specific requirements
+     *
      * Requested during LIMS meeting 2018-8-28
      * Automated addition of sequencing requirements on promote for ACCESS. Added 2020-07-17
      *
+     * @param recipe, "Recipe" field of BankedSample DataRecord
+     * @param tumorOrNormal, "TumorOrNormal" field of BankedSample DataRecord
+     * @param bankedSampleRequestedReads, "RequestedReads" of BankedSample DataRecord
      */
-    public static void setSeqReq(String recipe, String tumorOrNormal, Map<String, Object> seqRequirementMap) {
-        if (!"Tumor".equals(tumorOrNormal) && !"Normal".equals(tumorOrNormal))
-            return;
+    public static Map<String, Number> getCovReadsRequirementsMap(String recipe, String tumorOrNormal, String bankedSampleRequestedReads) {
+        Map<String, Number> coverageReadsMap = new HashMap<>();
 
+        // Take Promoted Requested Reads from the banked sample DataRecord if available
+        double requestedReads = 0.0;
+        if (bankedSampleRequestedReads != null && !bankedSampleRequestedReads.equals("") &&
+                !bankedSampleRequestedReads.equals("<10 million") && !bankedSampleRequestedReads.equals(">100 million") &&
+                !bankedSampleRequestedReads.equals("Does Not Apply")) {
+            Double rrMapped;
+            Pattern depthPattern = Pattern.compile("([0-9]+)[xX]");
+            Matcher depthMatch = depthPattern.matcher(bankedSampleRequestedReads);
+            if (bankedSampleRequestedReads.equals("MiSeq-SingleRun")) {
+                rrMapped = 0.0;
+            } else if (!depthMatch.find()) {
+                if (bankedSampleRequestedReads.contains("-"))
+                    rrMapped = selectLarger(bankedSampleRequestedReads);
+                else
+                    rrMapped = Double.parseDouble(bankedSampleRequestedReads.trim());
+            } else { //the value is expressed as a coverage
+                rrMapped = Double.parseDouble(depthMatch.group(1));
+            }
+            requestedReads = rrMapped;
+            coverageReadsMap.put("RequestedReads", requestedReads);
+        }
+
+        if (!"Tumor".equals(tumorOrNormal) && !"Normal".equals(tumorOrNormal)) {
+            return coverageReadsMap;
+        }
+
+        // Override requestedReads & coverageTarget in coverageReadsMap for certain recipes
         boolean normal = "Normal".equals(tumorOrNormal);
         int coverageTarget = 0;
-        double requestedReads = 0.0;
-
         if (recipe.contains("Heme")) {
             if (normal) {
                 coverageTarget = 250;
@@ -118,8 +147,10 @@ public class PromoteBanked extends LimsTask {
                 requestedReads = 60.0;
             }
         }
-        seqRequirementMap.put("CoverageTarget", coverageTarget);
-        seqRequirementMap.put("RequestedReads", requestedReads);
+        coverageReadsMap.put("CoverageTarget", coverageTarget);
+        coverageReadsMap.put("RequestedReads", requestedReads); // Update set by recipe
+
+        return coverageReadsMap;
     }
 
 
@@ -553,6 +584,7 @@ public class PromoteBanked extends LimsTask {
             Object capturePanel = bankedFields.getOrDefault("CapturePanel", null);
             Object species = bankedFields.getOrDefault("Species", null);
             Object requestedCoverage = bankedFields.getOrDefault("RequestedCoverage", null);
+            String bankedSampleRequestedReads = bankedSample.getRequestedReads();
 
             // Take runtype from "BankedSample" record. Default to "PE100" if not present
             Object seqRunType = bankedFields.getOrDefault("RunType", null);
@@ -561,27 +593,10 @@ public class PromoteBanked extends LimsTask {
             }
             seqRequirementMap.put("SequencingRunType", seqRunType);
 
-            // banked Sample requested reads is a string, but a double in seqRequirement
-            String requestedReads = bankedSample.getRequestedReads();
-            if (requestedReads != null && !requestedReads.equals("") &&
-                    !requestedReads.equals("<10 million") && !requestedReads.equals(">100 million") &&
-                    !requestedReads.equals("Does Not Apply")) {
-                Double rrMapped;
-                Pattern depthPattern = Pattern.compile("([0-9]+)[xX]");
-                Matcher depthMatch = depthPattern.matcher(requestedReads);
-                if (requestedReads.equals("MiSeq-SingleRun")) {
-                    rrMapped = 0.0;
-                } else if (!depthMatch.find()) {
-                    if (requestedReads.contains("-"))
-                        rrMapped = selectLarger(requestedReads);
-                    else
-                        rrMapped = Double.parseDouble(requestedReads.trim());
-                } else { //the value is expressed as a coverage
-                    rrMapped = Double.parseDouble(depthMatch.group(1));
-                }
-                seqRequirementMap.put("RequestedReads", rrMapped);
-            }
-            setSeqReq(recipe, tumorOrNormal, seqRequirementMap);
+            // Update Reads & Coverage: "CoverageTarget", "RequestedReads"
+            Map<String, Number> coverageReadsMap = getCovReadsRequirementsMap(recipe, tumorOrNormal, bankedSampleRequestedReads);
+            seqRequirementMap.putAll(coverageReadsMap);
+
             log.info(String.format("Sequencing Requirements before Coverage -> Reads conversion logic run: %s", seqRequirementMap.toString()));
             // Check if Coverage is a separate field in Banked Sample Datatype and Coverage->Reads conversion is required based on Recipe in Banked Sample data.
             if (hasCoverageFieldInDataType(bankedFields, user) && needReadCoverageReference(recipe, readCoverageRefs, user)){
@@ -600,7 +615,7 @@ public class PromoteBanked extends LimsTask {
     }
 
     protected static double selectLarger(String requestedReads) {
-        // example 30-40 million
+        // example "30-40 million" => 40.0
         String[] parts = requestedReads.split("[ -]+");
         requestedReads = parts[1].trim();
         return Double.parseDouble(requestedReads);
