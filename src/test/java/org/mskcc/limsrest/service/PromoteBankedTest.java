@@ -6,7 +6,6 @@ import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
-import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
@@ -62,35 +61,39 @@ public class PromoteBankedTest {
 
     @Test
     public void setSeqRequirementsIMPACT() {
-        HashMap<String, Object> map = new HashMap<>();
-        PromoteBanked.setSeqReq("IMPACT468", "Tumor", map);
-        assertEquals("PE100", map.get("SequencingRunType"));
-        assertEquals(14.0, map.get("RequestedReads"));
-        assertEquals(500, map.get("CoverageTarget"));
+        Map<String, Number> map1 = PromoteBanked.getCovReadsRequirementsMap("IMPACT468","Tumor", "");
+        assertEquals(14.0, map1.get("RequestedReads"));
+        assertEquals(500, map1.get("CoverageTarget"));
 
-        PromoteBanked.setSeqReq("M-IMPACT_v1", "Tumor", map);
-        assertEquals("PE100", map.get("SequencingRunType"));
-        assertEquals(14.0, map.get("RequestedReads"));
-        assertEquals(500, map.get("CoverageTarget"));
+        Map<String, Number> map2 = PromoteBanked.getCovReadsRequirementsMap("M-IMPACT_v1", "Tumor", "");
+        assertEquals(14.0, map2.get("RequestedReads"));
+        assertEquals(500, map2.get("CoverageTarget"));
 
-        PromoteBanked.setSeqReq("IMPACT468", "Normal", map);
-        assertEquals("PE100", map.get("SequencingRunType"));
-        assertEquals(7.0, map.get("RequestedReads"));
-        assertEquals(250, map.get("CoverageTarget"));
+        Map<String, Number> map3 = PromoteBanked.getCovReadsRequirementsMap("IMPACT468", "Normal", "");
+        assertEquals(7.0, map3.get("RequestedReads"));
+        assertEquals(250, map3.get("CoverageTarget"));
     }
 
     @Test
     public void setSeqRequirementsHemePACT() {
-        HashMap<String, Object> map = new HashMap<>();
-        PromoteBanked.setSeqReq("HemePACT", "Tumor", map);
-        assertEquals("PE100", map.get("SequencingRunType"));
+        Map<String, Number> map = PromoteBanked.getCovReadsRequirementsMap("HemePACT", "Tumor", "");
         assertEquals(20.0, map.get("RequestedReads"));
         assertEquals(500, map.get("CoverageTarget"));
 
-        PromoteBanked.setSeqReq("HemePACT", "Normal", map);
-        assertEquals("PE100", map.get("SequencingRunType"));
-        assertEquals(10.0, map.get("RequestedReads"));
-        assertEquals(250, map.get("CoverageTarget"));
+        Map<String, Number> map2 = PromoteBanked.getCovReadsRequirementsMap("HemePACT", "Normal", "");
+        assertEquals(10.0, map2.get("RequestedReads"));
+        assertEquals(250, map2.get("CoverageTarget"));
+    }
+
+    @Test
+    public void setSeqRequirementsBasedOnBankedSample() {
+        Map<String, Number> map = PromoteBanked.getCovReadsRequirementsMap("RNASeq_PolyA", "Tumor", "30-40 million");
+        assertEquals(40.0, map.get("RequestedReads"));
+        assertEquals(0, map.get("CoverageTarget"));
+
+        Map<String, Number> map2 = PromoteBanked.getCovReadsRequirementsMap("RNASeq_PolyA", "Normal", "20-30 million");
+        assertEquals(30.0, map2.get("RequestedReads"));
+        assertEquals(0, map2.get("CoverageTarget"));
     }
 
     @Test
