@@ -90,9 +90,6 @@ public class PromoteBanked extends LimsTask {
         if (!"Tumor".equals(tumorOrNormal) && !"Normal".equals(tumorOrNormal))
             return;
 
-        String seqRunType = "PE100";
-        seqRequirementMap.put("SequencingRunType", seqRunType);
-
         boolean normal = "Normal".equals(tumorOrNormal);
         int coverageTarget = 0;
         double requestedReads = 0.0;
@@ -554,9 +551,15 @@ public class PromoteBanked extends LimsTask {
             String recipe = (String) bankedFields.getOrDefault("Recipe", "");
             String tumorOrNormal = (String)bankedFields.getOrDefault("TumorOrNormal", null);
             Object capturePanel = bankedFields.getOrDefault("CapturePanel", null);
-            Object seqRunType = bankedFields.getOrDefault("RunType", null);
             Object species = bankedFields.getOrDefault("Species", null);
             Object requestedCoverage = bankedFields.getOrDefault("RequestedCoverage", null);
+
+            // Take runtype from "BankedSample" record. Default to "PE100" if not present
+            Object seqRunType = bankedFields.getOrDefault("RunType", null);
+            if(seqRunType == null){
+                seqRunType = "PE100";
+            }
+            seqRequirementMap.put("SequencingRunType", seqRunType);
 
             // banked Sample requested reads is a string, but a double in seqRequirement
             String requestedReads = bankedSample.getRequestedReads();
