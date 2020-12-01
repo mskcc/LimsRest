@@ -131,7 +131,7 @@ public class PromoteBanked extends LimsTask {
                 coverageTarget = 500;
                 requestedReads = 20.0;
             }
-            log.info(String.format("Overriding Heme Request (Recipe: %s) - Coverage Target: %d, Requested Reads: %d",
+            log.info(String.format("Overriding Heme Request (Recipe: %s) - Coverage Target: %d, Requested Reads: %f",
                     recipe, coverageTarget, requestedReads));
         } else if (recipe.contains("IMPACT")) { //'M-IMPACT_v1', 'IMPACT468'
             if (normal) {
@@ -141,7 +141,7 @@ public class PromoteBanked extends LimsTask {
                 coverageTarget = 500;
                 requestedReads = 14.0;
             }
-            log.info(String.format("Overriding IMPACT Request (Recipe: %s) - Coverage Target: %d, Requested Reads: %d",
+            log.info(String.format("Overriding IMPACT Request (Recipe: %s) - Coverage Target: %d, Requested Reads: %f",
                     recipe, coverageTarget, requestedReads));
         } else if (recipe.contains("ACCESS")) {
             coverageTarget = 1000;
@@ -150,7 +150,7 @@ public class PromoteBanked extends LimsTask {
             } else {
                 requestedReads = 60.0;
             }
-            log.info(String.format("Overriding ACCESS Request (Recipe: %s) - Coverage Target: %d, Requested Reads: %d",
+            log.info(String.format("Overriding ACCESS Request (Recipe: %s) - Coverage Target: %d, Requested Reads: %f",
                     recipe, coverageTarget, requestedReads));
         }
         coverageReadsMap.put("CoverageTarget", coverageTarget);
