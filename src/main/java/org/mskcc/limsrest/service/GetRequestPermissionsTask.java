@@ -44,20 +44,32 @@ public class GetRequestPermissionsTask {
 
             Boolean isCmoRequest = Boolean.FALSE;
             Boolean bicAnalysis = Boolean.FALSE;
+            String analysisType = "";
             try {
                 isCmoRequest = dataRecord.getBooleanVal("IsCmoRequest", user);
                 bicAnalysis = dataRecord.getBooleanVal("BICAnalysis", user);
+                analysisType = dataRecord.getStringVal("AnalysisType", user);
             } catch (NullPointerException e) {
                 log.warn("Correct invalid null valid in database for request: " + requestId);
             }
 
+            Boolean isBicRequest = isBicRequest(analysisType, bicAnalysis);
+
             String labName = labHeadEmailToLabName(labHeadEmail);
 
-            return new RequestPermissions(requestId, labName, labHeadEmail, isCmoRequest, bicAnalysis, dataAccessEmails);
+            return new RequestPermissions(requestId, labName, labHeadEmail, isCmoRequest, isBicRequest, dataAccessEmails);
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
             return null;
         }
+    }
+
+    protected static Boolean isBicRequest(String analysisType, Boolean bicAnalysis) {
+        // historically Request.BICAnalysis was set until the end of 2019
+        // when the Request.AnalysisType field could have "BIC" or "FASTQ ONLY" or other groups.
+        if (bicAnalysis || "BIC".equalsIgnoreCase(analysisType))
+            return true;
+        return false;
     }
 
     protected static String labHeadEmailToLabName(String labHeadEmail) {
@@ -101,16 +113,16 @@ public class GetRequestPermissionsTask {
         public String labName;
         public String labHeadEmail;
         public Boolean isCmoRequest;
-        public Boolean bicAnalysis;
+        public Boolean isBicRequest;
         public String dataAccessEmails;
 
         public RequestPermissions(String requestId, String labName, String labHeadEmail,
-                                  Boolean isCmoRequest, Boolean bicAnalysis, String dataAccessEmails) {
+                                  Boolean isCmoRequest, Boolean isBicRequest, String dataAccessEmails) {
             this.requestId = requestId;
             this.labName = labName;
             this.labHeadEmail = labHeadEmail;
             this.isCmoRequest = isCmoRequest;
-            this.bicAnalysis = bicAnalysis;
+            this.isBicRequest = isBicRequest;
             this.dataAccessEmails = dataAccessEmails;
         }
     }
