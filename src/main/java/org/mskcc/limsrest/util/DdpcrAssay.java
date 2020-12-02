@@ -36,6 +36,7 @@ public class DdpcrAssay {
     public String miqeContext;
     public Long recordId;
     public String storageUnitPath;
+    public Boolean hideFromUser;
 
     public DdpcrAssay() {
     }
@@ -71,6 +72,8 @@ public class DdpcrAssay {
         this.miqeContext = (String) sampleFields.get("MiqeContext");
         this.recordId = (Long) sampleFields.get("RecordId");
         this.storageUnitPath = (String) sampleFields.get("StorageUnitPath");
+        this.hideFromUser = (Boolean) sampleFields.get("HideFromUser");
+
     }
 
 }
