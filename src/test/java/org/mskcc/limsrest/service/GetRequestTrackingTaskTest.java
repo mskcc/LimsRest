@@ -61,26 +61,23 @@ public class GetRequestTrackingTaskTest {
         List<Project> testCases = new ArrayList<>(Arrays.asList(
                 new ProjectBuilder("10795")
                         .addStage(STAGE_SUBMITTED, true, 3, 3, 0)
+                        .addStage(STAGE_AWAITING_PROCESSING, true, 3, 3, 0)
                         .addStage(STAGE_SEQUENCING, true, 3, 3, 0)
-                        .addStage(STAGE_DATA_QC, true, 3, 3, 0)
                         .build(),
                 new ProjectBuilder("09443_AS")
                         .addStage(STAGE_SUBMITTED, true, 8, 8, 0)
                         .addStage(STAGE_LIBRARY_PREP, true, 8, 8, 0)
                         .addStage(STAGE_SEQUENCING, true, 8, 8, 0)
-                        .addStage(STAGE_DATA_QC, true, 8, 8, 0)
                         .build(),
                 new ProjectBuilder("09602_F")
                         .addStage(STAGE_LIBRARY_PREP, true, 9, 9, 0)
                         .addStage(STAGE_LIBRARY_CAPTURE, true, 12, 12, 0)
                         .addStage(STAGE_SEQUENCING, true, 12, 12, 0)
-                        .addStage(STAGE_DATA_QC, true, 12, 12, 0)
                         .build(),
                 new ProjectBuilder("09367_K")
                         .addStage(STAGE_LIBRARY_PREP, true, 1, 1, 0)
                         .addStage(STAGE_LIBRARY_CAPTURE, true, 1, 1, 0)
                         .addStage(STAGE_SEQUENCING, true, 1, 1, 0)
-                        .addStage(STAGE_DATA_QC, true, 1, 1, 0)
                         .build()
         ));
 
@@ -102,7 +99,6 @@ public class GetRequestTrackingTaskTest {
                         .addStage(STAGE_LIBRARY_PREP, true, 4, 4, 0)
                         .addStage(STAGE_LIBRARY_QC, true, 4, 4, 0)
                         .addStage(STAGE_SEQUENCING, true, 4, 4, 0)
-                        .addStage(STAGE_DATA_QC, true, 4, 4, 0)
                         .build()
         ));
 
@@ -123,7 +119,6 @@ public class GetRequestTrackingTaskTest {
                 new ProjectBuilder("06302_AC")
                         .addStage(STAGE_LIBRARY_PREP, true, 56, 56, 0)
                         .addStage(STAGE_SEQUENCING, true, 56, 56, 0)
-                        .addStage(STAGE_DATA_QC, true, 56, 56, 0)
                         .build()
         ));
 
@@ -140,7 +135,6 @@ public class GetRequestTrackingTaskTest {
                         .addStage(STAGE_SUBMITTED, true, 10, 10, 0)
                         .addStage(STAGE_LIBRARY_PREP, true, 10, 10, 0)
                         .addStage(STAGE_SEQUENCING, false, 10, 0, 0)  // Passed, not complete
-                        .addStage(STAGE_DATA_QC, false, 10, 0, 0)
                         .addPendingStage(STAGE_SEQUENCING)
                         .build()));
 
@@ -149,24 +143,23 @@ public class GetRequestTrackingTaskTest {
 
     @Test
     public void failedComplete() throws Exception {
-        /*  Failed/Complete
+        /*  Failed/Complete10
             "06302_W",		// Good: 1 Failed Library Prep, 41 IGO-Complete
             "06302_AG",		// Not detecting the Data-QC failures
          */
         List<Project> testCases = new ArrayList<>(Arrays.asList(
                 new ProjectBuilder("06302_W")
                         .addStage(STAGE_LIBRARY_PREP, true, 42, 41, 1)
+                        .addStage(STAGE_LIBRARY_CAPTURE, true, 41, 41, 0)
                         .addStage(STAGE_LIBRARY_QC, true, 41, 41, 0)
                         .addStage(STAGE_SEQUENCING, true, 41, 41, 0)
-                        .addStage(STAGE_DATA_QC, true, 41, 41, 0)
                         .build(),
                 new ProjectBuilder("06302_AG")
                         .addStage(STAGE_LIBRARY_PREP, true, 382, 382, 0)
                         .addStage(STAGE_PENDING_USER_DECISION, true, 2, 0, 2)
+                        .addStage(STAGE_LIBRARY_CAPTURE, true, 380, 380, 0)
                         // TODO - Failed should be 48 & completed 332, but sequencing failures are difficult
-                        .addStage(STAGE_SEQUENCING, false, 380, 332, 0)
-                        .addStage(STAGE_DATA_QC, false, 380, 332, 48)
-                        .addPendingStage(STAGE_SEQUENCING)
+                        .addStage(STAGE_SEQUENCING, true, 380, 332, 48)
                         .build()
         ));
 
@@ -184,7 +177,6 @@ public class GetRequestTrackingTaskTest {
                         .addStage(STAGE_LIBRARY_PREP, true, 8, 8, 0)
                         .addStage(STAGE_LIBRARY_CAPTURE, true, 8, 8, 0)
                         .addStage(STAGE_SEQUENCING, false, 8, 0, 0)
-                        .addStage(STAGE_DATA_QC, false, 5, 0, 0)
                         .addPendingStage(STAGE_SEQUENCING)
                         .build()));
 
@@ -203,7 +195,6 @@ public class GetRequestTrackingTaskTest {
                         .addStage(STAGE_LIBRARY_PREP, false, 16, 16, 0)
                         .addStage(STAGE_LIBRARY_CAPTURE, false, 16, 16, 0)
                         .addStage(STAGE_SEQUENCING, false, 16, 16, 0)
-                        .addStage(STAGE_DATA_QC, false, 16, 16, 0)
                         .addPendingStage(STAGE_AWAITING_PROCESSING)
                         .build()));
 

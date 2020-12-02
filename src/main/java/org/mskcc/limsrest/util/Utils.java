@@ -16,6 +16,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.mskcc.domain.sample.NucleicAcid;
 import org.mskcc.limsrest.ConnectionLIMS;
+import org.mskcc.limsrest.service.assignedprocess.QcStatus;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -31,9 +32,6 @@ import java.util.regex.Pattern;
 import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 
 public class Utils {
-    public final static String SEQ_QC_STATUS_PASSED = "passed";
-    public final static String SEQ_QC_STATUS_FAILED = "failed";
-    public final static String SEQ_QC_STATUS_PENDING = "not available";
     private final static Log LOGGER = LogFactory.getLog(Utils.class);
     private final static List<String> TISSUE_SAMPLE_TYPES = Arrays.asList("cells", "plasma", "blood", "tissue", "buffy coat", "blocks/slides", "ffpe sample", "other", "tissue sample");
     private final static List<String> NUCLEIC_ACID_TYPES = Arrays.asList("dna", "rna", "cdna", "cfdna", "dna,cfdna", "amplicon", "pre-qc rna");
@@ -86,7 +84,7 @@ public class Utils {
         try{
             for (DataRecord rec: qcRecords){
                 Object qcStatus = rec.getValue(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
-                if (qcStatus!= null && qcStatus.toString().equalsIgnoreCase(SEQ_QC_STATUS_PASSED) && isQcStatusIgoComplete(rec, user)){
+                if (qcStatus != null && qcStatus.toString().equalsIgnoreCase(QcStatus.PASSED.toString()) && isQcStatusIgoComplete(rec, user)) {
                     return true;
                 }
             }
@@ -108,7 +106,7 @@ public class Utils {
         try{
             for (DataRecord rec: qcRecords){
                 Object qcStatus = rec.getValue(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
-                if (qcStatus!= null && qcStatus.toString().equalsIgnoreCase(SEQ_QC_STATUS_FAILED) && isQcStatusIgoComplete(rec, user)){
+                if (qcStatus != null && qcStatus.toString().equalsIgnoreCase(QcStatus.FAILED.toString()) && isQcStatusIgoComplete(rec, user)) {
                     return true;
                 }
             }
@@ -117,7 +115,7 @@ public class Utils {
             // deliver to the user.
             for (DataRecord rec: qcRecords){
                 Object qcStatus = rec.getValue(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
-                if (qcStatus!= null && qcStatus.toString().equalsIgnoreCase(SEQ_QC_STATUS_FAILED)){
+                if (qcStatus != null && qcStatus.toString().equalsIgnoreCase(QcStatus.FAILED.toString())) {
                     return true;
                 }
             }
@@ -143,7 +141,7 @@ public class Utils {
         DataRecord record = qcRecord[0];
         Boolean isComplete = isQcStatusIgoComplete(record, user);
         String sequencingStatus = getRecordStringValue(qcRecord[0], SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
-        Boolean isFailed = sequencingStatus.equalsIgnoreCase(SEQ_QC_STATUS_FAILED);
+        Boolean isFailed = sequencingStatus.equalsIgnoreCase(QcStatus.FAILED.toString());
         return isComplete || isFailed;
     }
 

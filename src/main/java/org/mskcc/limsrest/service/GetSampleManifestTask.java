@@ -628,7 +628,8 @@ public class GetSampleManifestTask {
                         if (fastq.runBaseDirectory.endsWith("_A1") ||
                                 fastq.runBaseDirectory.endsWith("_A2") ||
                                 fastq.runBaseDirectory.endsWith("_A3") ||
-                                fastq.runBaseDirectory.endsWith("_RENAME")) { // DIANA_0176_AH735GDSXY_RENAME
+                                fastq.runBaseDirectory.endsWith("_RENAME") ||
+                                fastq.runBaseDirectory.endsWith("i7")) { // DIANA_0176_AH735GDSXY_RENAME
                             if (runPassedQC.contains(fastq.run))
                                 passedQCList.add(fastq);
                         }
