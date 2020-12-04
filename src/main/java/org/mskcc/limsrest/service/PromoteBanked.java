@@ -131,7 +131,7 @@ public class PromoteBanked extends LimsTask {
                 coverageTarget = 500;
                 requestedReads = 20.0;
             }
-            log.info(String.format("Overriding Heme Request (Recipe: %s) - Coverage Target: %d, Requested Reads: %d",
+            log.info(String.format("Overriding Heme Request (Recipe: %s) - Coverage Target: %d, Requested Reads: %f",
                     recipe, coverageTarget, requestedReads));
         } else if (recipe.contains("IMPACT")) { //'M-IMPACT_v1', 'IMPACT468'
             if (normal) {
@@ -141,7 +141,7 @@ public class PromoteBanked extends LimsTask {
                 coverageTarget = 500;
                 requestedReads = 14.0;
             }
-            log.info(String.format("Overriding IMPACT Request (Recipe: %s) - Coverage Target: %d, Requested Reads: %d",
+            log.info(String.format("Overriding IMPACT Request (Recipe: %s) - Coverage Target: %d, Requested Reads: %f",
                     recipe, coverageTarget, requestedReads));
         } else if (recipe.contains("ACCESS")) {
             coverageTarget = 1000;
@@ -150,7 +150,7 @@ public class PromoteBanked extends LimsTask {
             } else {
                 requestedReads = 60.0;
             }
-            log.info(String.format("Overriding ACCESS Request (Recipe: %s) - Coverage Target: %d, Requested Reads: %d",
+            log.info(String.format("Overriding ACCESS Request (Recipe: %s) - Coverage Target: %d, Requested Reads: %f",
                     recipe, coverageTarget, requestedReads));
         }
         coverageReadsMap.put("CoverageTarget", coverageTarget);
@@ -596,13 +596,14 @@ public class PromoteBanked extends LimsTask {
                 // BankedSample values determine whether banked sample values should be re-assigned. Log for debugging
                 String bankedSampleLoggedValues = String.format("Promoting w/ Banked Sample Values. Recipe: %s, TumorOrNormal: %s, CapturePanel: %s, Species: %s, RequestedCoverage: %s, Requested Reads: %s",
                         recipe,
-                        tumorOrNormal == null ? "" : tumorOrNormal.toString(),
-                        capturePanel == null ? "" : capturePanel.toString(),
-                        requestedCoverage == null ? "" : requestedCoverage.toString(),
+                        tumorOrNormal == null ? "null" : tumorOrNormal,
+                        capturePanel == null ? "null" : capturePanel.toString(),
+                        species == null ? "null" : species.toString(),
+                        requestedCoverage == null ? "null" : requestedCoverage.toString(),
                         bankedSampleRequestedReads);
                 log.info(bankedSampleLoggedValues);
             } catch (Exception e){
-                log.error(String.format("Failed to log Banked Sample Values: %s", otherSampleId));
+                log.error(String.format("Failed to log Banked Sample Values: %s. Error: %s", otherSampleId, e.getMessage()));
             }
 
             // Take runtype from "BankedSample" record. Default to "PE100" if not present
