@@ -33,7 +33,7 @@ import static org.mskcc.limsrest.util.Utils.*;
 public class GetRequestTrackingTask {
     private static Log log = LogFactory.getLog(GetRequestTrackingTask.class);
 
-    private static String[] requestDataLongFields = new String[]{RequestModel.RECEIVED_DATE};
+    private static String[] requestDataLongFields = new String[]{RequestModel.RECEIVED_DATE, "DueDate"};
     private static String[] requestDataStringFields = new String[]{
             RequestModel.LABORATORY_HEAD,
             RequestModel.GROUP_LEADER,
@@ -43,7 +43,7 @@ public class GetRequestTrackingTask {
             RequestModel.LAB_HEAD_EMAIL,
             RequestModel.INVESTIGATOR,
             RequestModel.PROJECT_NAME,
-            RequestModel.REQUEST_NAME,
+            RequestModel.REQUEST_NAME
 
     };
     private ConnectionLIMS conn;

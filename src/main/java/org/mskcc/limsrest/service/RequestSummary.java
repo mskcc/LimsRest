@@ -27,6 +27,7 @@ public class RequestSummary {
     private Boolean isCmoRequest = Boolean.FALSE;
     private long recordId;
     private Long receivedDate;
+    private Long dueDate;
     private Short sampleNumber;
     private String restStatus;
     private String specialDelivery;
@@ -78,6 +79,15 @@ public class RequestSummary {
 
     public void setReceivedDate(Long receivedDate) {
         this.receivedDate = receivedDate;
+    }
+
+    @JsonInclude(JsonInclude.Include.ALWAYS)
+    public Long getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(Long dueDate) {
+        this.dueDate = dueDate;
     }
 
     @JsonInclude(JsonInclude.Include.ALWAYS)

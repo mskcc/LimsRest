@@ -93,6 +93,7 @@ public class GetIgoRequestsTask extends LimsTask {
             rs.setIsIgoComplete(isIgoComplete(request, user));
             rs.setQcAccessEmail(getRecordStringValue(request, "QcAccessEmails", user));
             rs.setDataAccessEmails(getRecordStringValue(request, "DataAccessEmails", user));
+            rs.setDueDate(getRecordLongValue(request, "DueDate", user));
             requests.add(rs);
         }
 
