@@ -608,8 +608,9 @@ public class PromoteBanked extends LimsTask {
 
             // Take runtype from "BankedSample" record. Default to "PE100" if not present
             Object seqRunType = bankedFields.getOrDefault("RunType", null);
-            if(seqRunType == null){
+            if(seqRunType == null || seqRunType.equals("")){
                 seqRunType = "PE100";
+                log.info(String.format("Defaulting RunType to %s for BankedSample: %s", seqRunType, otherSampleId));
             }
             seqRequirementMap.put("SequencingRunType", seqRunType);
 
