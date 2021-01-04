@@ -11,12 +11,14 @@ import org.junit.platform.commons.util.StringUtils;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.util.LimsStage;
 
+import java.rmi.RemoteException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
+import static org.mskcc.limsrest.util.StatusTrackerConfig.STAGE_AWAITING_PROCESSING;
+import static org.mskcc.limsrest.util.StatusTrackerConfig.getLimsStageFromStatus;
 import static org.mskcc.limsrest.util.Utils.*;
 
 /**
@@ -34,10 +36,13 @@ public class WorkflowSample extends StatusTracker {
     String sourceSampleId;
     String childSampleId;
     String status;
-    WorkflowSample parent;     // TODO - Can this ever be multiple?
+    WorkflowSample parent;
     List<WorkflowSample> children;
     DataRecord record;
     Boolean failed;
+
+    // SeqAnalysisSampleQC DataRecords the WorkflowSample is associated with
+    private List<DataRecord> seqAnalysisQcRecords;
     private User user;
 
     public WorkflowSample(DataRecord record, ConnectionLIMS conn) {
@@ -50,10 +55,19 @@ public class WorkflowSample extends StatusTracker {
         this.recordName = getRecordStringValue(record, SampleModel.SAMPLE_ID, this.user);
         this.record = record;
         this.parent = null;
+        this.seqAnalysisQcRecords = new ArrayList<>();
 
         this.complete = Boolean.FALSE;
 
         enrichSample(conn);
+    }
+
+    public List<DataRecord> getSeqAnalysisQcRecords() {
+        return this.seqAnalysisQcRecords;
+    }
+
+    public void addSeqAnalysisQcRecords(List<DataRecord> seqAnalysisQcRecords) {
+        this.seqAnalysisQcRecords.addAll(seqAnalysisQcRecords);
     }
 
     public List<WorkflowSample> getChildren() {
@@ -89,30 +103,51 @@ public class WorkflowSample extends StatusTracker {
         String status = getRecordStringValue(this.record, SampleModel.EXEMPLAR_SAMPLE_STATUS, this.user);
         this.sourceSampleId = getRecordStringValue(this.record, SampleModel.SOURCE_LIMS_ID, this.user);
         String stageName = STAGE_AWAITING_PROCESSING;
-        try {
-            // Data QC stage is determined by presence of a SeqQCStatus record, it needs to be re-assigned
-            DataRecord[] sampleQcRecord = getChildrenofDataRecord(this.record, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, this.user);
-            if (sampleQcRecord.length > 0) {
-                stageName = STAGE_DATA_QC;
-            } else {
-                // If no DataQC records are found, assign stage based on the Exemplar Status
-                LimsStage limsStage = getLimsStageFromStatus(conn, status);
-                stageName = limsStage.getStageName();
+
+        DataRecord[] sampleQcRecords = getChildrenofDataRecord(this.record, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, this.user);
+        if (sampleQcRecords.length > 0) {
+            // Check immediate children (cheaper) prior to checking for all descendants (more expensive)
+            try {
+                /**
+                 *    +-----+     +------+
+                 *    | WS1 |     | QC1  |
+                 *    +------------------+
+                 *       |
+                 *    +--v--+
+                 *    | WS2 |
+                 *    +-----+
+                 *       |
+                 *    +--v--+     +------+
+                 *    | WS3 |     | QC2  |
+                 *    +------------------+
+                 *
+                 * A Sample DataRecord (WS1) can have a SeqAnalysisSampleQCModel child (QC1) AND have children Sample
+                 * DataRecords (WS3) that also have SeqAnalysisSampleQCModel children (QC2).
+                 * We want all descendant SeqAnalysisSampleQCModel from the input Sample DataRecord, @this.record, b/c:
+                 *      - If either QC1 or QC2 is IGO-Complete, the ProjectSample is IGO-Complete
+                 *      - If QC1 is failed, it's possible for QC2 to be IGO-Complete
+                 * In other words, we can't evaluate on the immediate SeqAnalysisSampleQCModel children of a Workflow
+                 * sample
+                 */
+                List<DataRecord> allDescendingQcSamples = this.record.getDescendantsOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, this.user);
+                addSeqAnalysisQcRecords(allDescendingQcSamples);
+            } catch (RemoteException e) {
+                log.error(String.format("Unable to retrieve sampleQcRecords from %d", record.getRecordId()));
             }
+        }
+
+        try {
+            LimsStage limsStage = getLimsStageFromStatus(conn, status);
+            stageName = limsStage.getStageName();
         } catch (IllegalArgumentException e) {
             log.error(String.format("Unable to identify stageName for Sample Record %d w/ status '%s'", this.recordId, status));
         }
 
-        if (isFailedStatus(status)) {
-            this.failed = Boolean.TRUE;
-        } else {
-            this.failed = Boolean.FALSE;
-        }
-
+        super.stage = stageName;
         this.status = status;
+        this.failed = isFailedStatus(status);
         super.startTime = getRecordLongValue(this.record, SampleModel.DATE_CREATED, this.user);
         super.updateTime = getRecordLongValue(this.record, SampleModel.DATE_MODIFIED, this.user);
-        super.stage = stageName;
     }
 
     public Long getRecordId() {

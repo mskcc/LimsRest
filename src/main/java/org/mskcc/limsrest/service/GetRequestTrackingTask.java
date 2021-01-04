@@ -9,10 +9,12 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.BankedSampleModel;
 import com.velox.sloan.cmo.recmodels.RequestModel;
 import com.velox.sloan.cmo.recmodels.SampleModel;
+import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.platform.commons.util.StringUtils;
 import org.mskcc.limsrest.ConnectionLIMS;
+import org.mskcc.limsrest.service.assignedprocess.QcStatus;
 import org.mskcc.limsrest.service.requesttracker.*;
 
 import java.rmi.RemoteException;
@@ -31,7 +33,7 @@ import static org.mskcc.limsrest.util.Utils.*;
 public class GetRequestTrackingTask {
     private static Log log = LogFactory.getLog(GetRequestTrackingTask.class);
 
-    private static String[] requestDataLongFields = new String[]{RequestModel.RECEIVED_DATE};
+    private static String[] requestDataLongFields = new String[]{RequestModel.RECEIVED_DATE, "DueDate"};
     private static String[] requestDataStringFields = new String[]{
             RequestModel.LABORATORY_HEAD,
             RequestModel.GROUP_LEADER,
@@ -41,7 +43,7 @@ public class GetRequestTrackingTask {
             RequestModel.LAB_HEAD_EMAIL,
             RequestModel.INVESTIGATOR,
             RequestModel.PROJECT_NAME,
-            RequestModel.REQUEST_NAME,
+            RequestModel.REQUEST_NAME
 
     };
     private ConnectionLIMS conn;
@@ -134,7 +136,7 @@ public class GetRequestTrackingTask {
         for (Map.Entry<String, StageTracker> requestStage : stages.entrySet()) {
             stageName = requestStage.getKey();
             stage = requestStage.getValue();
-            if(pendingStageName.equals(STAGE_COMPLETE) && !stage.getComplete()){
+            if (pendingStageName.equals(STAGE_COMPLETE) && !stage.getComplete()) {
                 pendingStageName = stageName;
             }
             isStagesComplete = isStagesComplete && stage.getComplete();
@@ -194,7 +196,7 @@ public class GetRequestTrackingTask {
      *          - All WorkflowSamples in a path to a Non-failed leaf sample should not be failed
      *          - If the root WorkflowSample has not failed, then the ProjectSample has not failed, i.e. there only
      *            needs to be one non-failed leaf sample in the tree for the whole tree to have not failed
-     *          - Note: A Failed WorkflowSample is complete (different from Stage)
+     *          - Note: A Failed WorkflowSample is complete - See @markFailedBranch
      *      III) COMPLETE: Sample has a Sample-DataType DataRecord  child           sample.complete = true
      *          - WorkflowSample w/ child is completed b/c moving on in the workflow creates a child sample
      *          - Non-failed WorkflowSample w/o sample children is incomplete
@@ -221,12 +223,10 @@ public class GetRequestTrackingTask {
     private ProjectSampleTree createWorkflowTree(WorkflowSample root, ProjectSampleTree tree) {
         tree.addStageToTracked(root);   // Update tree Project Sample stages w/ the input Workflow sample's stage
 
-        if (STAGE_DATA_QC.equals(root.getStage()) && !tree.isQcIgoComplete()) {
-            // The Data QC stage is updated by a node in Data QC stage. This node can update the entire tree's data
-            // QC status as a ProjectSample is marked Data QC complete if it has any one Data QC node marked passed
-            tree.updateDataQcStage(root);
+        if (hasFailedQcStage(root)) {
+            root.setFailed(Boolean.TRUE);
+            tree.markFailedBranch(root);
         }
-        // TODO - Add logic for when this is in the extraction stage
 
         // Search each child of the input
         DataRecord[] children = new DataRecord[0];
@@ -246,10 +246,14 @@ public class GetRequestTrackingTask {
             for (DataRecord record : children) {
                 if (isWorkflowSampleInProject(record, this.requestId, this.user)) {
                     WorkflowSample sample = new WorkflowSample(record, this.conn);
+
+                    // Children are related to the same Qc Records as their parents.
+                    sample.addSeqAnalysisQcRecords(root.getSeqAnalysisQcRecords());
+
                     sample.setParent(root);
                     if (STAGE_AWAITING_PROCESSING.equals(sample.getStage())) {
-                        // Update the stage of the sample to the parent stage if it is awaitingProcessing. If there is not
-                        // resolved parent, leave as "Awaiting Processing"
+                        // Update the stage of the sample to the parent stage if it is awaitingProcessing. If there is
+                        // not resolved parent, leave as "Awaiting Processing"
                         if (!STAGE_AWAITING_PROCESSING.equals(root.getStage())) {
                             sample.setStage(root.getStage());
                         }
@@ -273,6 +277,29 @@ public class GetRequestTrackingTask {
         }
         return tree;
     }
+
+    /**
+     * Returns status of whether the input WorkflowSample has failed seqAnalysisQcRecords
+     *
+     * @param node
+     */
+    private boolean hasFailedQcStage(WorkflowSample node) {
+        String nodeStage = node.getStage();
+        List<DataRecord> seqAnalysisQcRecords = node.getSeqAnalysisQcRecords();
+
+        if (seqAnalysisQcRecords.size() == 0 || !STAGE_SEQUENCING.equals(nodeStage)) {
+            // ONLY update projects with @STAGE_SEQUENCING WorkflowSamples that have a WorkflowSample in their path w/ a
+            // SeqAnalysisQcRecord child, which means that their sequencing results are going through QC
+            return false;
+        }
+
+        String qcStatus = getDataQcStatus(seqAnalysisQcRecords, this.user);
+        if (QcStatus.FAILED.toString().equals(qcStatus)) {
+            return true;
+        }
+        return false;
+    }
+
 
     /**
      * Returns whether the sample is part of the project based on whether the sampleId contains the requestId
@@ -301,6 +328,19 @@ public class GetRequestTrackingTask {
         WorkflowSample root = new WorkflowSample(record, this.conn);
         ProjectSampleTree rootTree = new ProjectSampleTree(root, user);
         rootTree.addSample(root);
+
+        // Evaluate overall QcStatus of ProjectSample from all descending SeqAnalysisSampleQC entries b/c the rule is
+        // simple - if there is an IGO-Complete SeqAnalysisSampleQC record, the projectSample is IgoComplete
+        try {
+            List<DataRecord> sampleQcRecords = record.getDescendantsOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, this.user);
+            if (sampleQcRecords.size() > 0) {
+                String qcStatus = getDataQcStatus(sampleQcRecords, this.user);
+                rootTree.setDataQcStatus(qcStatus);
+            }
+        } catch (RemoteException e) {
+            log.error(String.format("Unable to query descending SeqAnalysisSampleQC DataRecords from Sample DataRecord: %d",
+                    record.getRecordId()));
+        }
 
         // Recursively create the workflowTree from the input tree
         ProjectSampleTree workflowTree = createWorkflowTree(root, rootTree);

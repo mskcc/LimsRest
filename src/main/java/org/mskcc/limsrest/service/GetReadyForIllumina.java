@@ -9,7 +9,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
 
-import org.mskcc.limsrest.util.Utils;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.rmi.RemoteException;
@@ -19,8 +18,9 @@ import java.util.*;
 import static org.mskcc.limsrest.util.Utils.getRecordsOfTypeFromParents;
 
 /**
- * A queued task that takes shows all samples that need planned for Illumina runs. This endpoint will return the sample level information for individual Library samples and pooled Library samples.
- * The information is important for Pool planning for sequencing and making important pooling decisions.
+ * A queued task that shows all samples that need planned for Illumina runs. <BR>
+ *     This endpoint will return the sample level information for individual Library samples and pooled Library samples.<BR>
+ * The information is important for Pool planning for sequencing and making pooling decisions.
  */
 public class GetReadyForIllumina {
     private static Log log = LogFactory.getLog(GetReadyForIllumina.class);
@@ -33,18 +33,22 @@ public class GetReadyForIllumina {
     @PreAuthorize("hasRole('READ')")
     public List<RunSummary> execute() {
         List<RunSummary> results = new LinkedList<>();
+        long startTime = System.currentTimeMillis();
         try {
             VeloxConnection vConn = conn.getConnection();
             User user = vConn.getUser();
             DataRecordManager dataRecordManager = vConn.getDataRecordManager();
-
+            log.info("Finding all samples with ExemplarSampleStatus = 'Ready for - Pooling of Sample Libraries for Sequencing'");
             List<DataRecord> samplesToPool = dataRecordManager.queryDataRecords("Sample", "ExemplarSampleStatus = 'Ready for - Pooling of Sample Libraries for Sequencing'", user);
-            if (samplesToPool.size()>0){
+            log.info("Number of samples to pool: " + samplesToPool.size());
+
+            if (samplesToPool.size() > 0){
                 for (DataRecord sample: samplesToPool){
                     String sampleId = sample.getStringVal("SampleId", user);
-                    if (sampleId.toLowerCase().startsWith("pool-")){
-                        List<DataRecord> parentLibrarySamplesForPool = getNearestParentLibrarySamplesForPool(sample, user); // if sample is pool then get all the Library samples in the pool which live as parents of the pool.
-                        for(DataRecord librarySample : parentLibrarySamplesForPool){
+                    if (sampleId.toLowerCase().startsWith("pool-")) {
+                        // if sample is pool then get all the Library samples in the pool which live as parents of the pool.
+                        List<DataRecord> parentLibrarySamplesForPool = getNearestParentLibrarySamplesForPool(sample, user);
+                        for (DataRecord librarySample : parentLibrarySamplesForPool) {
                             RunSummary summary = new RunSummary("DEFAULT", "DEFAULT");
                             //set some of the pool level fields on the summary object like pool
                             summary.setPool(sampleId); //preset poolID
@@ -56,7 +60,7 @@ public class GetReadyForIllumina {
                                 summary.setVolume(sample.getValue("Volume", user).toString());
                             results.add(createRunSummaryForSampleInPool(librarySample, summary, user)); //pass the summary Object with preset pool level information "createRunSummaryForSampleInPool" method to add sample level information
                         }
-                    } else{
+                    } else {
                         RunSummary defaultSummary = new RunSummary("DEFAULT", "DEFAULT"); // if sample is not pool, then it is Library sample and work with it.
                         try {
                             results.add(createRunSummaryForNonPooledSamples(sample, defaultSummary, user));
@@ -70,6 +74,8 @@ public class GetReadyForIllumina {
         } catch (Exception e) {
             log.error("Annotate", e);
         }
+        long stopTime = System.currentTimeMillis();
+        log.info("Query time (ms):" + (stopTime-startTime));
         return results;
     }
 
@@ -82,17 +88,20 @@ public class GetReadyForIllumina {
      * @throws NotFound
      */
     private List<DataRecord> getNearestParentLibrarySamplesForPool(DataRecord pooledSample, User user) throws IoError, RemoteException, NotFound {
+
         List<DataRecord> parentLibrarySamplesForPool = new ArrayList<>();
         Stack<DataRecord> sampleTrackingStack = new Stack<>();
         sampleTrackingStack.add(pooledSample);
-        while(!sampleTrackingStack.isEmpty()){
+        while (!sampleTrackingStack.isEmpty()) {
             List<DataRecord> parentSamples = sampleTrackingStack.pop().getParentsOfType("Sample", user);
-            if (!parentSamples.isEmpty()){
-                for (DataRecord sample : parentSamples){
-                    if (sample.getStringVal("SampleId", user).toLowerCase().startsWith("pool-")){
+            if (!parentSamples.isEmpty()) {
+                for (DataRecord sample : parentSamples) {
+                    String sampleId = sample.getStringVal("SampleId", user);
+                    log.info("Processing: " + sampleId);
+                    if (sampleId.toLowerCase().startsWith("pool-")) {
                         sampleTrackingStack.push(sample);
                     }
-                    else{
+                    else {
                         parentLibrarySamplesForPool.add(sample);
                     }
                 }
@@ -146,8 +155,8 @@ public class GetReadyForIllumina {
             String indexId = recordWithIndexBarcodeInfo.getStringVal("IndexId", user);
             String indexBarcode = recordWithIndexBarcodeInfo.getStringVal("IndexTag", user);
             return indexId + "," + indexBarcode;
-        }else {
-            log.info(String.format("IndexId not found for sample '%s'.\nPlease double check.", sample.getStringVal("SampleId", user)));
+        } else {
+            log.info(String.format("IndexId not found for sample '%s'. Please double check.", sample.getStringVal("SampleId", user)));
             return "";
         }
     }
@@ -170,53 +179,10 @@ public class GetReadyForIllumina {
             DataRecord seqRequirements = sampleWithSeqRequirementAsChild.getChildrenOfType("SeqRequirement", user)[0];
             return seqRequirements.getDoubleVal("RequestedReads", user);
         } else {
-            log.error(String.format("Invalid Sequencing Requirements '%s' for sample '%s'.\nPlease double check.", null, sample.getStringVal("SampleId", user)));
+            log.error(String.format("Invalid Sequencing Requirements '%s' for sample '%s'. Please double check.", null, sample.getStringVal("SampleId", user)));
             return 0.0;
         }
     }
-
-    /**
-     * This method returns the Sequencer name that the sample is planned to run on. This is a value which is not populated anymore, but the method is included to match the
-     * legacy code and front end design.
-     * @param sample
-     * @return Sequencing Run Type value
-     * @throws IoError
-     * @throws RemoteException
-     * @throws NotFound
-     */
-
-    private String getPlannedSequencerForSample(DataRecord sample, User user) throws IoError, RemoteException, NotFound {
-        DataRecord sampleWithBatchPlanningAsChild = getParentSampleWithDesiredChildTypeRecord(sample, "BatchPlanningProtocol", user);
-        if (sampleWithBatchPlanningAsChild !=null && sampleWithBatchPlanningAsChild.getChildrenOfType("BatchPlanningProtocol",user)[0].getValue("SequencingRunType", user) != null){
-            DataRecord batchPlanningRecord = sampleWithBatchPlanningAsChild.getChildrenOfType("BatchPlanningProtocol", user)[0]; //continue here
-            return batchPlanningRecord.getStringVal("SequencingRunType", user);
-        } else {
-            log.error(String.format("Invalid Sequencing Run Type '%s' for sample '%s'.\nPlease double check.", "null", sample.getStringVal("SampleId", user)));
-            return "";
-        }
-    }
-
-
-    /**
-     * This method returns the Week Number that the sample is planned to run on. This is a value which is not populated anymore, but the method is included to match the
-     * legacy code and front end design.
-     * @param sample
-     * @return Week Number Value
-     * @throws IoError
-     * @throws RemoteException
-     * @throws NotFound
-     */
-    private String getPlannedWeekSample(DataRecord sample, User user) throws IoError, RemoteException, NotFound {
-        DataRecord sampleWithBatchPlanningAsChild = getParentSampleWithDesiredChildTypeRecord(sample, "BatchPlanningProtocol", user);
-        if (sampleWithBatchPlanningAsChild != null && sampleWithBatchPlanningAsChild.getChildrenOfType("BatchPlanningProtocol", user)[0].getValue("WeekPlan", user) != null){
-            DataRecord batchPlanningRecord = sampleWithBatchPlanningAsChild.getChildrenOfType("BatchPlanningProtocol", user)[0]; //continue here
-            return  batchPlanningRecord.getStringVal("WeekPlan", user);
-        } else {
-            log.error(String.format("No 'PlannedWeek' info found for sample '%s'.\nPlease double check.", sample.getStringVal("SampleId", user)));
-            return "";
-        }
-    }
-
 
     /**
      * This method returns the SequencingRunType value for the sample.
@@ -232,7 +198,7 @@ public class GetReadyForIllumina {
             DataRecord sequencingRunTypeRecord = sampleWithSeqRequirementAsChild.getChildrenOfType("SeqRequirement", user)[0]; //continue here
             return sequencingRunTypeRecord.getStringVal("SequencingRunType", user);
         } else {
-            log.error(String.format("Invalid Sequencing RunType '%s' for sample '%s'.\nPlease double check.", null, sample.getStringVal("SampleId", user)));
+            log.error(String.format("Invalid Sequencing RunType '%s' for sample '%s'. Please double check.", null, sample.getStringVal("SampleId", user)));
             return "";
         }
     }
@@ -259,6 +225,7 @@ public class GetReadyForIllumina {
             throws NotFound, RemoteException, IoError, InvalidValue {
         Map<String, Object> sampleFieldValues = unpooledSample.getFields(user);
         String sampleId = (String) sampleFieldValues.get("SampleId");
+        log.info("Creating run summary for " + sampleId);
         summary.setSampleId(sampleId);
         summary.setOtherSampleId((String) sampleFieldValues.getOrDefault("OtherSampleId", ""));
         summary.setRequestId((String) sampleFieldValues.getOrDefault("RequestId", ""));
@@ -291,12 +258,13 @@ public class GetReadyForIllumina {
             summary.setReadTotal(seqReq.getValue(SeqRequirementModel.READ_TOTAL, user) != null ? seqReq.getLongVal(SeqRequirementModel.READ_TOTAL, user): 0);
             summary.setRemainingReads(seqReq.getValue("RemainingReads", user) != null ? seqReq.getLongVal("RemainingReads", user) : 0);
         }
-        String plannedSequencer = getPlannedSequencerForSample(unpooledSample, user);
-        if (plannedSequencer != null)
-            summary.setSequencer(plannedSequencer);
-        String batchWeek = getPlannedWeekSample(unpooledSample, user);
-        if (batchWeek != null)
-            summary.setBatch(batchWeek);
+        // TODO REMOVED LEGACY FIELDS
+//        String plannedSequencer = getPlannedSequencerForSample(unpooledSample, user);
+//        if (plannedSequencer != null)
+//            summary.setSequencer(plannedSequencer);
+//        String batchWeek = getPlannedWeekSample(unpooledSample, user);
+//        if (batchWeek != null)
+//            summary.setBatch(batchWeek);
         summary.setRunType(getSequencingRunTypeForSample(unpooledSample, user));
         return summary;
     }
@@ -337,12 +305,6 @@ public class GetReadyForIllumina {
         }
         summary.setBarcodeSeq(indexAndBarcode.split(",")[1]);
         summary.setReadNum(getRequestedReadsForSample(sampleInPool, user).toString());
-        String plannedSequencer = getPlannedSequencerForSample(sampleInPool, user);
-        if (plannedSequencer != null)
-            summary.setSequencer(plannedSequencer);
-        String batchWeek = getPlannedWeekSample(sampleInPool, user);
-        if (batchWeek != null)
-            summary.setBatch(batchWeek);
         summary.setRunType(getSequencingRunTypeForSample(sampleInPool, user));
         return summary;
     }
