@@ -9,8 +9,15 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.KAPALibPlateSetupProtocol1Model;
 import com.velox.sloan.cmo.recmodels.SampleModel;
 import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
+import java.rmi.RemoteException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.cmo.shared.Library;
+import org.mskcc.cmo.shared.QcReport;
+import org.mskcc.cmo.shared.Run;
+import org.mskcc.cmo.shared.SampleManifest;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.util.IGOTools;
 import org.mskcc.limsrest.util.Utils;
@@ -18,10 +25,6 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
-
-import java.rmi.RemoteException;
-import java.text.SimpleDateFormat;
-import java.util.*;
 
 /**
  * Traverse the LIMS & ngs_stats database to find all sample level metadata required.
@@ -160,8 +163,8 @@ public class GetSampleManifestTask {
         Double dnaInputNg = null;
         if (recipe.contains("ACCESS") ) {
             dnaInputNg = findDNAInputForLibraryForMSKACCESS(sample, user);
-            log.info("Searching for ACCESS 2D barcode with base IGO sample ID=" + sampleManifest.cmoInfoIgoId);
-            List<DataRecord> baseSamples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sampleManifest.cmoInfoIgoId + "'", user);
+            log.info("Searching for ACCESS 2D barcode with base IGO sample ID=" + sampleManifest.getCmoInfoIgoId());
+            List<DataRecord> baseSamples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sampleManifest.getCmoInfoIgoId() + "'", user);
             if (baseSamples.size() > 0) {
                 DataRecord baseSample = baseSamples.get(0);
                 // example 2d barcode "8036707180"
@@ -187,7 +190,7 @@ public class GetSampleManifestTask {
             DataRecord aliquot = aliquotEntry.getValue().record;
             DataRecord aliquotParent = aliquotEntry.getValue().parent;
             log.info("Processing DNA library: " + libraryIgoId);
-            SampleManifest.Library library = getLibraryFields(user, libraryIgoId, aliquot, dnaInputNg);
+            Library library = getLibraryFields(user, libraryIgoId, aliquot, dnaInputNg);
 
             List<DataRecord> indexBarcodes = aliquot.getDescendantsOfType("IndexBarcode", user);
             if (aliquotParent != null) { // TODO get barcodes for WES samples
@@ -196,8 +199,8 @@ public class GetSampleManifestTask {
             }
             if (indexBarcodes != null && indexBarcodes.size() > 0) {
                 DataRecord bc = indexBarcodes.get(0);
-                library.barcodeId = bc.getStringVal("IndexId", user);
-                library.barcodeIndex = bc.getStringVal("IndexTag", user);
+                library.setBarcodeId(bc.getStringVal("IndexId", user));
+                library.setBarcodeIndex(bc.getStringVal("IndexTag", user));
             }
 
             // recipe, capture input, capture name
@@ -211,10 +214,10 @@ public class GetSampleManifestTask {
                     Object val = n.getValue("SourceMassToUse", user);
                     if (val != null) {
                         Double captureInput = n.getDoubleVal("SourceMassToUse", user);
-                        library.captureInputNg = captureInput.toString();
-                        library.captureName = poolName;
+                        library.setCaptureInputNg(captureInput.toString());
+                        library.setCaptureName(poolName);
                         Double captureVolume = n.getDoubleVal("VolumeToUse", user);
-                        library.captureConcentrationNm = captureVolume.toString();
+                        library.setCaptureConcentrationNm(captureVolume.toString());
                     }
                 } else {
                     log.warn("Nimblegen records not valid.");
@@ -223,7 +226,7 @@ public class GetSampleManifestTask {
 
             // for each flow cell ID a sample may be on multiple lanes
             // (currently all lanes are demuxed to same fastq file)
-            Map<String, SampleManifest.Run> runsMap = new HashMap<>();
+            Map<String, Run> runsMap = new HashMap<>();
             // run Mode, runId, flow Cell & Lane Number
             // Flow Cell Lanes are far down the sample/pool hierarchy in LIMS
             List<DataRecord> reqLanes = aliquot.getDescendantsOfType("FlowCellLane", user);
@@ -260,7 +263,7 @@ public class GetSampleManifestTask {
                         String illuminaDate = runFolderElements[0].substring(runFolderElements[0].length() - 6); // yymmdd
                         String dateCreated = "20" + illuminaDate.substring(0, 2) + "-" + illuminaDate.substring(2, 4) + "-" + illuminaDate.substring(4, 6);
 
-                        SampleManifest.Run r = new SampleManifest.Run(runMode, runId, flowCellId, readLength, dateCreated);
+                        Run r = new Run(runMode, runId, flowCellId, readLength, dateCreated);
                         if (runsMap.containsKey(flowCellId)) { // already created, just add new lane num to list
                             runsMap.get(flowCellId).addLane(laneNum);
                         } else { // lookup fastq paths for this run, currently making extra queries for 06260_N_9 KIM & others
@@ -273,10 +276,10 @@ public class GetSampleManifestTask {
 
                             if (fastqs != null) {
                                 r.addLane(laneNum);
-                                r.fastqs = fastqs;
+                                r.setFastqs(fastqs);
 
                                 runsMap.put(flowCellId, r);
-                                library.runs.add(r);
+                                library.addRun(r);
                             }
                         }
                     }
@@ -288,8 +291,7 @@ public class GetSampleManifestTask {
             // only report this library if it made it to a sequencer/run and has passed fastqs
             // for example 05257_BS_20 has a library which was sequenced then failed so skip
             if (library.hasFastqs()) {
-                List<SampleManifest.Library> libraries = sampleManifest.getLibraries();
-                libraries.add(library);
+                sampleManifest.addLibrary(library);
             }
         }
         return sampleManifest;
@@ -333,13 +335,13 @@ public class GetSampleManifestTask {
      * although it does have passed QC LIMS records for that run
      */
     private void runJax0004IsMissingFlowcellInfoInLIMS(String origSampleName, SampleManifest sampleManifest,
-                                                       Set<String> runPassedQC, SampleManifest.Library library) {
+                                                       Set<String> runPassedQC, Library library) {
         if (runPassedQC.contains("JAX_0004_BH5GJYBBXX")) {
             String runID = "JAX_0004";
-            SampleManifest.Run r = new SampleManifest.Run("", runID, "H5GJYBBXX", "", "2015-11-30");
-            r.fastqs = FastQPathFinder.search(runID, origSampleName, sampleManifest.getIgoId(), false, runPassedQC);
-            if (r.fastqs != null) {
-                library.runs.add(r);
+            Run r = new Run("", runID, "H5GJYBBXX", "", "2015-11-30");
+            r.setFastqs(FastQPathFinder.search(runID, origSampleName, sampleManifest.getIgoId(), false, runPassedQC));
+            if (r.getFastqs() != null) {
+                library.addRun(r);
             }
         }
     }
@@ -353,8 +355,8 @@ public class GetSampleManifestTask {
                 String igoQcRecommendation = qcRecord.getStringVal("IgoQcRecommendation", user);
                 String comments = qcRecord.getStringVal("Comments", user);
                 String id = qcRecord.getStringVal("InvestigatorDecision", user);
-                SampleManifest.QcReport r = new SampleManifest.QcReport(SampleManifest.QcReportType.DNA, igoQcRecommendation, comments, id);
-                sampleManifest.getQcReports().add(r);
+                QcReport r = new QcReport(QcReport.QcReportType.DNA, igoQcRecommendation, comments, id);
+                sampleManifest.addQcReport(r);
             }
 
             log.info("Searching for QcReportLibrary");
@@ -364,8 +366,8 @@ public class GetSampleManifestTask {
                 String igoQcRecommendation = qcRecord.getStringVal("IgoQcRecommendation", user);
                 String comments = qcRecord.getStringVal("Comments", user);
                 String id = qcRecord.getStringVal("InvestigatorDecision", user);
-                SampleManifest.QcReport r = new SampleManifest.QcReport(SampleManifest.QcReportType.LIBRARY, igoQcRecommendation, comments, id);
-                sampleManifest.getQcReports().add(r);
+                QcReport r = new QcReport(QcReport.QcReportType.LIBRARY, igoQcRecommendation, comments, id);
+                sampleManifest.addQcReport(r);
             }
         } catch (RemoteException | NotFound e) {
             log.error("Failed to complete QC record searches.");
@@ -405,18 +407,18 @@ public class GetSampleManifestTask {
     }
 
     protected SampleManifest fastqsOnlyManifest(SampleManifest sampleManifest, Set<String> runFailedQC) {
-        List<SampleManifest.Run> runs = FastQPathFinder.searchForFastqs(sampleManifest.getIgoId(), runFailedQC);
+        List<Run> runs = FastQPathFinder.searchForFastqs(sampleManifest.getIgoId(), runFailedQC);
 
-        SampleManifest.Library library = new SampleManifest.Library();
-        library.runs = runs;
-        List<SampleManifest.Library> libraries = new ArrayList<>();
+        Library library = new Library();
+        library.setRuns(runs);
+        List<Library> libraries = new ArrayList<>();
         libraries.add(library);
         sampleManifest.setLibraries(libraries);
 
         return sampleManifest;
     }
 
-    private SampleManifest.Library getLibraryFields(User user, String libraryIgoId, DataRecord aliquot, Double dnaInputNg) throws IoError, RemoteException, NotFound {
+    private Library getLibraryFields(User user, String libraryIgoId, DataRecord aliquot, Double dnaInputNg) throws IoError, RemoteException, NotFound {
         DataRecord[] libPrepProtocols = aliquot.getChildrenOfType("DNALibraryPrepProtocol3", user);
         Double libraryVolume = null;
         if (libPrepProtocols != null && libPrepProtocols.length == 1)
@@ -426,13 +428,13 @@ public class GetSampleManifestTask {
         if (libraryConcentrationObj != null)  // for example 06449_1 concentration is null
             libraryConcentration = aliquot.getDoubleVal("Concentration", user);
 
-        return new SampleManifest.Library(libraryIgoId, libraryVolume, libraryConcentration, dnaInputNg);
+        return new Library(libraryIgoId, libraryVolume, libraryConcentration, dnaInputNg);
     }
 
     protected SampleManifest setSampleLevelFields(String igoId, String cmoInfoIgoId, DataRecord cmoInfo, User user) throws NotFound, RemoteException {
         SampleManifest s = new SampleManifest();
         s.setIgoId(igoId);
-        s.cmoInfoIgoId = cmoInfoIgoId;
+        s.setCmoInfoIgoId(cmoInfoIgoId);
         s.setCmoPatientId(cmoInfo.getStringVal("CmoPatientId", user));
         // aka "Sample Name" in SampleCMOInfoRecords
 
@@ -441,12 +443,12 @@ public class GetSampleManifestTask {
             //sampleName = cmoInfo.getStringVal("UserSampleID", user);
         }
         s.setSampleName(sampleName);
-        s.setCMOSampleClass(cmoInfo.getStringVal("CMOSampleClass", user));
+        s.setCmoSampleClass(cmoInfo.getStringVal("CMOSampleClass", user));
         s.setInvestigatorSampleId(cmoInfo.getStringVal("UserSampleID", user));
         String tumorOrNormal = cmoInfo.getStringVal("TumorOrNormal", user);
         s.setTumorOrNormal(tumorOrNormal);
         if ("Tumor".equals(tumorOrNormal))
-            s.setOncoTreeCode(cmoInfo.getStringVal("TumorType", user));
+            s.setOncotreeCode(cmoInfo.getStringVal("TumorType", user));
         s.setTissueLocation(cmoInfo.getStringVal("TissueLocation", user));
         s.setSpecimenType(cmoInfo.getStringVal("SpecimenType", user));
         s.setSampleOrigin(cmoInfo.getStringVal("SampleOrigin", user)); // formerly reported as Sample Type
@@ -531,7 +533,7 @@ public class GetSampleManifestTask {
      */
     public static class FastQPathFinder {
 
-        public static List<SampleManifest.Run> searchForFastqs(String igoId, Set<String> runFailedQC) {
+        public static List<Run> searchForFastqs(String igoId, Set<String> runFailedQC) {
             String url = "http://delphi.mskcc.org:8080/ngs-stats/rundone/fastqsbyigoid/" + igoId;
             log.info("Finding fastqs for igoID: " + igoId);
             try {
@@ -557,19 +559,18 @@ public class GetSampleManifestTask {
                 }
 
                 // for remaining fastqs separate list into each run and get flowcell information and run date
-                HashMap<String, SampleManifest.Run> runMap = new HashMap<>();
+                HashMap<String, Run> runMap = new HashMap<>();
                 for (ArchivedFastq fastq : passedFastqs) {
                     if (runMap.containsKey(fastq.run)) {  // if the run already exists just add the fastq path
-                        SampleManifest.Run run = runMap.get(fastq.run);
-                        run.fastqs.add(fastq.fastq);
+                        Run run = runMap.get(fastq.run);
+                        run.addFastq(fastq.fastq);
                     } else {
                         String runId = fastq.getRunId();
                         String flowCellId = fastq.getFlowCellId();
                         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
                         String runDate = dateFormat.format(fastq.fastqLastModified); // 2020-07-31
-                        SampleManifest.Run run = new SampleManifest.Run(runId, flowCellId, runDate);
-                        run.fastqs = new ArrayList<>();
-                        run.fastqs.add(fastq.fastq);
+                        Run run = new Run(runId, flowCellId, runDate);
+                        run.addFastq(fastq.fastq);
 
                         runMap.put(fastq.run, run);
                     }
