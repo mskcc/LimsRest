@@ -5,14 +5,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Future;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.cmo.messaging.Gateway;
 import org.mskcc.cmo.shared.SampleManifest;
 import org.mskcc.limsrest.ConnectionLIMS;
+import org.mskcc.limsrest.ConnectionPoolLIMS;
+import org.mskcc.limsrest.service.GetProjectDetails;
 import org.mskcc.limsrest.service.GetRequestSamplesTask;
 import org.mskcc.limsrest.service.GetSampleManifestTask;
+import org.mskcc.limsrest.service.ProjectSummary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.ComponentScan;
@@ -39,11 +43,14 @@ public class IgoNewRequestMetaDbPublisher {
     @Autowired
     private Gateway messagingGateway;
 
+    private final GetProjectDetails task = new GetProjectDetails();
     private Log log = LogFactory.getLog(IgoNewRequestMetaDbPublisher.class);
     private final ConnectionLIMS conn;
+    private final ConnectionPoolLIMS connPool;
 
-    public IgoNewRequestMetaDbPublisher(ConnectionLIMS conn) throws Exception {
+    public IgoNewRequestMetaDbPublisher(ConnectionLIMS conn, ConnectionPoolLIMS connPool) throws Exception {
         this.conn = conn;
+        this.connPool = connPool;
         if (messagingGateway == null) {
             log.error("Error establishing connection to NATS server, messagingGateway is NULL");
         } else {
@@ -63,6 +70,33 @@ public class IgoNewRequestMetaDbPublisher {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "FAILURE: requestId is not using a valid format.");
         }
 
+        //TODO: If possible it would be ideal if project id can simply be provided
+        // when calling the endpoint. This block of code was added in case this
+        // request is not possible to hook into the MarkDelivery logic. If project id
+        // CAN be provided when calling this endpoint then we can remove this block of code
+
+        // if project id is null then get project summary for request and extract project id
+        if (projectId == null || projectId.isEmpty()) {
+            task.init(requestId);
+            Future<Object> result = connPool.submitTask(task);
+            ProjectSummary ps = new ProjectSummary();
+            try{
+                ps = (ProjectSummary)result.get();
+                projectId = ps.getProjectId();
+            } catch(Exception e){
+                ps.setCmoProjectId(e.getMessage());
+            }
+        }
+        List<SampleManifest> sampleManifestList = getSampleManifestListByRequestId(requestId);
+        publishIgoNewRequestToMetaDb(projectId, requestId, sampleManifestList);
+    }
+
+    /**
+     * Returns list of sample manifest instances given a request id.
+     * @param requestId
+     * @return
+     */
+    private List<SampleManifest> getSampleManifestListByRequestId(String requestId) {
         // fetch samples for request
         GetRequestSamplesTask.RequestSampleList sl = null;
         try {
@@ -96,7 +130,16 @@ public class IgoNewRequestMetaDbPublisher {
             log.error("Sample Manifest generation failed with error: " + result.error);
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, result.error);
         }
+        return sampleManifestList;
+    }
 
+    /**
+     * Packages message for CMO MetaDB and publishes to MetaDB NATS server.
+     * @param projectId
+     * @param requestId
+     * @param sampleManifestList
+     */
+    private void publishIgoNewRequestToMetaDb(String projectId, String requestId, List<SampleManifest> sampleManifestList) {
         // construct igo request entity to publish to metadb
         Gson gson = new Gson();
         Map<String, Object> igoRequestMap = new HashMap<>();
