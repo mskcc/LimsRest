@@ -2,7 +2,6 @@ package org.mskcc.limsrest.controller;
 
 import com.google.gson.Gson;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -10,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.cmo.messaging.Gateway;
+import org.mskcc.cmo.shared.RequestSample;
 import org.mskcc.cmo.shared.SampleManifest;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.ConnectionPoolLIMS;
@@ -87,8 +87,30 @@ public class IgoNewRequestMetaDbPublisher {
                 ps.setCmoProjectId(e.getMessage());
             }
         }
-        List<SampleManifest> sampleManifestList = getSampleManifestListByRequestId(requestId);
-        publishIgoNewRequestToMetaDb(projectId, requestId, sampleManifestList);
+        GetRequestSamplesTask.RequestSampleList requestDetails = getRequestSampleListDetails(requestId);
+        List<SampleManifest> sampleManifestList = getSampleManifestListByRequestId(requestDetails);
+        publishIgoNewRequestToMetaDb(projectId, requestDetails, sampleManifestList);
+    }
+
+    /**
+     * Returns request metadata given a request id.
+     * @param requestId
+     * @return
+     */
+    private GetRequestSamplesTask.RequestSampleList getRequestSampleListDetails(String requestId) {
+        // fetch metadata and samples for request
+        GetRequestSamplesTask.RequestSampleList sl = null;
+        try {
+            GetRequestSamplesTask t = new GetRequestSamplesTask(requestId, conn);
+             sl = t.execute();
+            if ("NOT_FOUND".equals(sl.getRequestId())) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, requestId + " Request Not Found");
+            }
+        } catch (Exception e) {
+            log.error(e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+        return sl;
     }
 
     /**
@@ -96,23 +118,10 @@ public class IgoNewRequestMetaDbPublisher {
      * @param requestId
      * @return
      */
-    private List<SampleManifest> getSampleManifestListByRequestId(String requestId) {
-        // fetch samples for request
-        GetRequestSamplesTask.RequestSampleList sl = null;
-        try {
-            GetRequestSamplesTask t = new GetRequestSamplesTask(requestId, conn);
-             sl = t.execute();
-            if ("NOT_FOUND".equals(sl.requestId)) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, requestId + " Request Not Found");
-            }
-        } catch (Exception e) {
-            log.error(e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-        }
-
+    private List<SampleManifest> getSampleManifestListByRequestId(GetRequestSamplesTask.RequestSampleList sl) {
         // construct list of igo id strings for the 'GetSampleManifestTask'
         List<String> igoIds = new ArrayList<>();
-        for (GetRequestSamplesTask.RequestSample rs : sl.getSamples()) {
+        for (RequestSample rs : sl.getSamples()) {
             igoIds.add(rs.getIgoSampleId());
         }
 
@@ -139,19 +148,19 @@ public class IgoNewRequestMetaDbPublisher {
      * @param requestId
      * @param sampleManifestList
      */
-    private void publishIgoNewRequestToMetaDb(String projectId, String requestId, List<SampleManifest> sampleManifestList) {
+    private void publishIgoNewRequestToMetaDb(String projectId, GetRequestSamplesTask.RequestSampleList requestDetails, List<SampleManifest> sampleManifestList) {
         // construct igo request entity to publish to metadb
         Gson gson = new Gson();
-        Map<String, Object> igoRequestMap = new HashMap<>();
+        Map<String, Object> igoRequestMap = gson.fromJson(gson.toJson(requestDetails), Map.class);
+        // add project id and sample manifest list to returned map
         igoRequestMap.put("projectId", projectId);
-        igoRequestMap.put("requestId", requestId);
         igoRequestMap.put("sampleManifestList", sampleManifestList);
         String igoRequestJson = gson.toJson(igoRequestMap);
         try {
             log.debug("Publishing cmo request entity: " + igoRequestJson);
             messagingGateway.publish(IGO_NEW_REQUEST_TOPIC, igoRequestJson);
         } catch (Exception e) {
-            String metadbErrorMsg = "Error during attempt to publish new request entity to MetaDB with request id: " + requestId;
+            String metadbErrorMsg = "Error during attempt to publish new request entity to MetaDB with request id: " + requestDetails.getRequestId();
             log.error(metadbErrorMsg);
             if (log.isDebugEnabled()) {
                 StringBuilder builder = new StringBuilder(metadbErrorMsg);
