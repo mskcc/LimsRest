@@ -72,7 +72,7 @@ configurations {
 
 dependencies {
     // cmo metadb shared entities dependency added with jitpack
-    implementation 'com.github.mskcc:cmo-metadb-shared-entities:a0fc37137058e64b96701b46dcccb699375cd9c4'
+    implementation 'com.github.mskcc:cmo-metadb-shared-entities:f4e0093e75e41bc733a0017791b80015ac493b24'
     implementation 'com.github.mskcc:cmo-messaging-java:81258a16d63cea640e4d80efb5df5100a6ff4dea'
     compile 'com.google.code.gson:gson:2.8.6'
 

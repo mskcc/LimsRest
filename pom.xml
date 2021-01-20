@@ -154,7 +154,7 @@
     <dependency>
       <groupId>com.github.mskcc</groupId>
       <artifactId>cmo-metadb-shared-entities</artifactId>
-      <version>a0fc37137058e64b96701b46dcccb699375cd9c4</version>
+      <version>f4e0093e75e41bc733a0017791b80015ac493b24</version>
     </dependency>
     <dependency>
       <groupId>com.github.mskcc</groupId>

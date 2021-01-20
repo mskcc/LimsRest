@@ -146,7 +146,7 @@ public class GetSampleManifestTask {
 
         if (baitSet == null || baitSet.isEmpty())
             log.warn("Missing bait set: " + igoId);
-        sampleManifest.setBaitSet(baitSet);
+        sampleManifest.setBaitset(baitSet);
 
         List<DataRecord> aliquots = sample.getDescendantsOfType("Sample", user);
         // 07260 Request the first sample are DNA Libraries like 07260_1 so can't just search descendants to find DNA libraries
@@ -325,7 +325,7 @@ public class GetSampleManifestTask {
             }
             baitSet = dr.getStringVal(SeqAnalysisSampleQCModel.BAIT_SET, user);
         }
-        sampleManifest.setBaitSet(baitSet);
+        sampleManifest.setBaitset(baitSet);
 
         return fastqsOnlyManifest(sampleManifest, runFailedQC);
     }
