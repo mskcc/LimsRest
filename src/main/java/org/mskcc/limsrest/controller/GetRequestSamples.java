@@ -1,5 +1,6 @@
 package org.mskcc.limsrest.controller;
 
+import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
@@ -10,8 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-
-import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/")
@@ -36,7 +35,7 @@ public class GetRequestSamples {
         try {
             GetRequestSamplesTask t = new GetRequestSamplesTask(requestId, conn);
             GetRequestSamplesTask.RequestSampleList sl = t.execute();
-            if ("NOT_FOUND".equals(sl.requestId)) {
+            if ("NOT_FOUND".equals(sl.getRequestId())) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, requestId + " Request Not Found");
             }
             return sl;
