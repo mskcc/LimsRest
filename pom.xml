@@ -150,12 +150,7 @@
       <artifactId>mockito-core</artifactId>
       <version>1.10.19</version>
     </dependency>
-    <!-- CMO METADB DEPENDENCIES -->
-    <dependency>
-      <groupId>com.github.mskcc</groupId>
-      <artifactId>cmo-metadb-shared-entities</artifactId>
-      <version>f4e0093e75e41bc733a0017791b80015ac493b24</version>
-    </dependency>
+    <!-- CMO METADB -->
     <dependency>
       <groupId>com.github.mskcc</groupId>
       <artifactId>cmo-messaging-java</artifactId>

@@ -3,6 +3,7 @@ package org.mskcc.limsrest.controller;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
+import org.mskcc.limsrest.model.SampleManifest;
 import org.mskcc.limsrest.service.GetSampleManifestTask;
 import org.mskcc.limsrest.service.SampleManifest;
 import org.mskcc.limsrest.util.IGOTools;
