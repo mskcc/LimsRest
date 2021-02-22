@@ -1,5 +1,6 @@
 package org.mskcc.limsrest.service.requesttracker;
 
+import com.velox.api.datarecord.DataRecord;
 import com.velox.api.user.User;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -9,6 +10,7 @@ import java.util.*;
 
 import static org.mskcc.limsrest.util.StatusTrackerConfig.STAGE_AWAITING_PROCESSING;
 import static org.mskcc.limsrest.util.StatusTrackerConfig.StageComp;
+import static org.mskcc.limsrest.util.Utils.*;
 
 /**
  * Data Model of the tree structure descending from one ProjectSample that is passed into the recursive calls
@@ -31,7 +33,7 @@ public class ProjectSampleTree {
     private String dataQcStatus;                        // SeqAnalysisSampleQC status determinining sequencing status
     private Map<Long, WorkflowSample> sampleMap;        // Map Record IDs to their enriched sample information
     private Map<String, StageTracker> stageMap;         // Map to all stages by their stage name
-
+    private Map<String, Object> sampleData;
     private User user;                                  // TODO - should this be elsewhere?
 
     public ProjectSampleTree(WorkflowSample root, User user) {
@@ -40,6 +42,22 @@ public class ProjectSampleTree {
         this.sampleMap = new HashMap<>();
         this.stageMap = new TreeMap<>(new StageComp()); // Order map by order of stages
         this.dataQcStatus = "";                         // Pending until finding a QcStatus child
+        this.sampleData = new HashMap<>();
+    }
+
+    /**
+     * Enrichces ProjectSample w/ values taken directly from LIMS Sample DataRecord
+     */
+    public void enrich(DataRecord record) {
+        // Add concentration volume
+        Double remainingVolume = getRecordDoubleValue(record, "Volume", this.user);
+        Double concentration = getRecordDoubleValue(record, "Concentration", this.user);
+        String concentrationUnits = getRecordStringValue(record, "ConcentrationUnits", this.user);
+
+        this.sampleData.put("volume", remainingVolume);
+        this.sampleData.put("concentration", concentration);
+        this.sampleData.put("concentrationUnits", concentrationUnits);
+
     }
 
     public WorkflowSample getRoot() {
@@ -209,6 +227,7 @@ public class ProjectSampleTree {
         projectSample.setFailed(isFailed);
         projectSample.setComplete(isComplete);
         projectSample.setRoot(getRoot());
+        projectSample.addAttributes(this.sampleData);
 
         return projectSample;
     }

@@ -329,6 +329,8 @@ public class GetRequestTrackingTask {
         ProjectSampleTree rootTree = new ProjectSampleTree(root, user);
         rootTree.addSample(root);
 
+        rootTree.enrich(record);
+
         // Evaluate overall QcStatus of ProjectSample from all descending SeqAnalysisSampleQC entries b/c the rule is
         // simple - if there is an IGO-Complete SeqAnalysisSampleQC record, the projectSample is IgoComplete
         try {
