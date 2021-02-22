@@ -323,6 +323,24 @@ public class Utils {
     }
 
     /**
+     * Safely retrieves a Double Value from a dataRecord
+     *
+     * @param record
+     * @param key
+     * @param user
+     * @return
+     */
+    public static Double getRecordDoubleValue(DataRecord record, String key, User user) {
+        try {
+            return record.getDoubleVal(key, user);
+        } catch (NotFound | RemoteException | NullPointerException e) {
+            LOGGER.error(String.format("Failed to get (Double) key %s from Sample Record: %d", key, record.getRecordId()));
+        }
+        return null;
+    }
+
+
+    /**
      * Safely retrieves a Short Value from a dataRecord
      *
      * @param record
