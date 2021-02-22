@@ -95,6 +95,25 @@ public class GetRequestSamplesTask {
             rsl.setQcAccessEmails(requestDataRecord.getStringVal("QcAccessEmails", user));
             rsl.setDataAccessEmails(requestDataRecord.getStringVal("DataAccessEmails", user));
 
+            // GetRequestPermissionsTask will set fastq.gz permissions based on whether or not BIC or CMO request so
+            // return those values here too.
+            // alternatively, IGO could tell people to call the GetRequestPermissions endpoint instead of adding
+            // the fields here too.
+            Boolean isCmoRequest = Boolean.FALSE;
+            Boolean bicAnalysis = Boolean.FALSE;
+            String analysisType = "";
+            try {
+                isCmoRequest = requestDataRecord.getBooleanVal("IsCmoRequest", user);
+                bicAnalysis = requestDataRecord.getBooleanVal("BICAnalysis", user);
+                analysisType = requestDataRecord.getStringVal("AnalysisType", user);
+            } catch (NullPointerException e) {
+                log.warn("Correct invalid null valid in database for request: " + requestId);
+            }
+            Boolean isBicRequest = GetRequestPermissionsTask.isBicRequest(analysisType, bicAnalysis);
+
+            rsl.setBicAnalysis(isBicRequest);
+            rsl.setCmoRequest(isCmoRequest);
+
             return rsl;
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -191,6 +210,8 @@ public class GetRequestSamplesTask {
         public String qcAccessEmails;
         public String strand; // only for RNASeq
         public String libraryType; // only for RNASeq
+        public Boolean isCmoRequest;
+        public Boolean bicAnalysis;
 
         public List<RequestSample> samples;
 
@@ -204,6 +225,12 @@ public class GetRequestSamplesTask {
             this.requestId = requestId;
             this.samples = samples;
         }
+
+        public Boolean getCmoRequest() { return isCmoRequest; }
+        public void setCmoRequest(Boolean cmoRequest) { isCmoRequest = cmoRequest; }
+
+        public Boolean getBicAnalysis() { return bicAnalysis; }
+        public void setBicAnalysis(Boolean bicAnalysis) { this.bicAnalysis = bicAnalysis; }
 
         public String getLibraryType() { return libraryType; }
         public void setLibraryType(String libraryType) { this.libraryType = libraryType; }
