@@ -10,8 +10,7 @@ import org.mskcc.limsrest.ConnectionLIMS;
 import java.rmi.RemoteException;
 import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 
 public class GetRequestTrackingTaskTest {
@@ -191,14 +190,116 @@ public class GetRequestTrackingTaskTest {
         List<Project> testCases = new ArrayList<>(Arrays.asList(
                 new ProjectBuilder("09546_T")
                         .addStage(STAGE_SUBMITTED, true, 26, 26, 0)
-                        .addStage(STAGE_AWAITING_PROCESSING, false, 10, 0, 0)
-                        .addStage(STAGE_LIBRARY_PREP, false, 16, 16, 0)
-                        .addStage(STAGE_LIBRARY_CAPTURE, false, 16, 16, 0)
-                        .addStage(STAGE_SEQUENCING, false, 16, 16, 0)
-                        .addPendingStage(STAGE_AWAITING_PROCESSING)
+                        .addStage(STAGE_AWAITING_PROCESSING, true, 10, 10, 0)
+                        .addStage(STAGE_LIBRARY_PREP, true, 16, 16, 0)
+                        .addStage(STAGE_LIBRARY_CAPTURE, true, 16, 16, 0)
+                        .addStage(STAGE_SEQUENCING, true, 16, 16, 0)
                         .build()));
 
         testProjects(testCases);
+    }
+
+    @Test
+    public void testCompletedSampleStatuses() throws Exception {
+        String requestID = "08822_AH";
+        String pendingStage = "NONE";       // No pending stage
+
+        GetRequestTrackingTask t = new GetRequestTrackingTask(requestID, this.conn);
+        Map<String, Object> requestInfo = new HashMap<>();
+        try {
+            requestInfo = t.execute();
+        } catch (IoError | RemoteException | NotFound e) {
+            assertTrue("Exception in task execution", false);
+        }
+
+        List<Map<String, Object>> samples = (List<Map<String, Object>>) requestInfo.get("samples");
+        List<Map<String, Object>> requestStages = (List<Map<String, Object>>) requestInfo.get("stages");
+
+        // Test at the request level
+        testStageCompletionStatuses(requestStages, pendingStage, requestID);
+
+        for(Map<String, Object> sample : samples){
+            List<Map<String, Object>> stages = (List<Map<String, Object>>) sample.get("stages");
+            String sampleId = ((Long) sample.get("sampleId")).toString();
+            testStageCompletionStatuses(stages, pendingStage, sampleId);
+        }
+    }
+
+    @Test
+    public void testPendingSampleStatuses() throws Exception {
+        String requestID = "09687_AO";
+        String pendingStage = "Library QC";
+
+        GetRequestTrackingTask t = new GetRequestTrackingTask(requestID, this.conn);
+        Map<String, Object> requestInfo = new HashMap<>();
+        try {
+            requestInfo = t.execute();
+        } catch (IoError | RemoteException | NotFound e) {
+            assertTrue("Exception in task execution", false);
+        }
+
+        List<Map<String, Object>> samples = (List<Map<String, Object>>) requestInfo.get("samples");
+        List<Map<String, Object>> requestStages = (List<Map<String, Object>>) requestInfo.get("stages");
+
+        // Test at the request level
+        testStageCompletionStatuses(requestStages, pendingStage, requestID);
+
+        for(Map<String, Object> sample : samples){
+            List<Map<String, Object>> stages = (List<Map<String, Object>>) sample.get("stages");
+            String sampleId = ((Long) sample.get("sampleId")).toString();
+            testStageCompletionStatuses(stages, pendingStage, sampleId);
+        }
+    }
+
+    @Test
+    public void testDeliveredStatusOfRequests() throws Exception {
+        String[] deliveredRequests = { "08822_AH", "08470_E", "04430_Y", "03498_C" };
+        String[] unDeliveredRequests = { "06000_HA", "04969_R", "10000_I", "10850", "08661_F" };
+
+        validateDeliveredStatus(deliveredRequests, true);
+        validateDeliveredStatus(unDeliveredRequests, false);
+    }
+
+    /**
+     * Validates the isDelivered status of the request responses
+     *
+     * @param requests - list of requestIds
+     * @param expected
+     */
+    private void validateDeliveredStatus(String[] requests, Boolean expected) {
+        for(String reqId : requests){
+            GetRequestTrackingTask t = new GetRequestTrackingTask(reqId, this.conn);
+            Map<String, Object> requestInfo = new HashMap<>();
+            try {
+                requestInfo = t.execute();
+            } catch (IoError | RemoteException | NotFound e) {
+                assertTrue("Exception in task execution", false);
+            }
+            Map<String, Object> summary = (Map<String, Object>) requestInfo.get("summary");
+            Boolean isDelivered = (Boolean) summary.get("isDelivered");
+            assertEquals(String.format("Expected Request %s to have isDelivered: %b", reqId, expected), expected, isDelivered);
+        }
+    }
+
+    /**
+     * Tests whether the stages of the input stage list have the correct completion status
+     *
+     * @param stages - API response of request tracker stages
+     * @param pendingStage - Stage that should be pending
+     * @param id - ID of the object from which stages were taken (DataRecord ID if sample, RequestID if request)
+     */
+    private void testStageCompletionStatuses(List<Map<String, Object>> stages, String pendingStage, String id) {
+        String stageName;
+        Boolean isStageComplete;
+        for(Map<String, Object> stage : stages){
+            stageName = (String) stage.get("stage");
+            isStageComplete = (Boolean) stage.get("complete");
+            if(stageName.equals(pendingStage)){
+                assertFalse(String.format("Stage %s of Sample (ID: %s) should be marked incomplete", stageName, id), isStageComplete);
+            } else {
+                assertTrue(String.format("Stage %s of Sample (ID: %s) should be marked complete", stageName, id), isStageComplete);
+            }
+        }
     }
 
     @Test

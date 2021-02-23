@@ -76,7 +76,7 @@ public class Request {
         apiResponse.put("metaData", this.metaData);
         apiResponse.put("samples", this.samples.stream().map(tracker -> tracker.toApiResponse()).collect(Collectors.toList()));
         apiResponse.put("stages", this.stages.values().stream().map(
-                stage -> stage.toApiResponse()
+                stage -> stage.toApiResponse(false)
         ).collect(Collectors.toList()));
 
         return apiResponse;
