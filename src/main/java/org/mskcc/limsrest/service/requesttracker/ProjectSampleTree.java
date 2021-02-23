@@ -155,10 +155,11 @@ public class ProjectSampleTree {
             // If the sample has been recorded as completed sequencing, then the leaf node is completed
             if (isQcIgoComplete()) {
                 leaf.setComplete(Boolean.TRUE);   // Default leaf completion state is FALSE
-                stage.setComplete(Boolean.TRUE);  // Reset incompleted stages to true since sequencing is the last step
+                stage.setComplete(Boolean.TRUE);  // Reset incomplete stages to true since sequencing is the last step
             } else {
                 // Reaching a leaf w/o traversing a node that sets tree to completedSequencing indicates incomplete
-                stage.setComplete(Boolean.FALSE);
+                // Removing - this should be done after the entire ProjectSample tree has been created
+                // stage.setComplete(Boolean.FALSE);
                 if (isFailedDataQC()) {
                     /**
                      * If a DFS hasn't found a "passed" "SeqAnalysisSampleQC" child, but did find a failed one in the
@@ -219,27 +220,31 @@ public class ProjectSampleTree {
         List<StageTracker> stages = getStages();
         projectSample.addStages(stages);
 
-        String currentStage = "Completed";
+        String currentStageName = "Completed";
+        boolean isFailed = root.getFailed();
+
         if(this.isIgoComplete){
             for(StageTracker stage : stages){
                 stage.setComplete(true);
             }
         } else {
-            // Mark all stages complete until incomplete stage is reached
-            boolean isComplete = true;
-            for (StageTracker stage : stages) {
-                isComplete = isComplete && stage.getComplete();
-                if(!isComplete){
-                    currentStage = stage.getStage();
-                }
+            // Mark all stages, except for the last one, complete
+            StageTracker stage;
+            for(int i = 0; i < stages.size() - 1; i++){
+                stage = stages.get(i);
+                stage.setComplete(true);
             }
+            // Last stage is the current stage
+            StageTracker lastStage = stages.get(stages.size() - 1);
+            lastStage.setComplete(false);
+            currentStageName = lastStage.getStage();
         }
 
-        projectSample.setFailed(root.getFailed());
+        projectSample.setFailed(isFailed);
         projectSample.setComplete(this.isIgoComplete);
         projectSample.setRoot(getRoot());
         projectSample.addAttributes(this.sampleData);
-        projectSample.setCurrentStage(currentStage);
+        projectSample.setCurrentStage(currentStageName);
 
         return projectSample;
     }
