@@ -64,7 +64,7 @@ public class GetRequestPermissionsTask {
         }
     }
 
-    protected static Boolean isBicRequest(String analysisType, Boolean bicAnalysis) {
+    public static Boolean isBicRequest(String analysisType, Boolean bicAnalysis) {
         // historically Request.BICAnalysis was set until the end of 2019
         // when the Request.AnalysisType field could have "BIC" or "FASTQ ONLY" or other groups.
         if (bicAnalysis || "BIC".equalsIgnoreCase(analysisType))

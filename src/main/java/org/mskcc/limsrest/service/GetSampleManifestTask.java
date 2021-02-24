@@ -98,6 +98,22 @@ public class GetSampleManifestTask {
         log.info("Searching Sample table for SampleId ='" + igoId + "'");
         List<DataRecord> samples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + igoId + "'", user);
         if (samples.size() == 0) { // sample not found in sample table
+            // TODO REMOVE this special case for 06302_AO and change the igo lims if it is correct
+            if (igoId.contains("06302_AO_")) { // igo demuxed some 06302_AO samples that are not in LIMS, they have 06302_X parent
+                String igoIdX = igoId.replace("_AO", "_X");
+                List<DataRecord> samples_06302 = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + igoIdX + "'", user);
+                DataRecord sampleX = samples_06302.get(0);
+                // query CMO level fields from 06302_X
+                log.info("SPECIAL CASE - Querying sample CMO info records for: " + igoIdX);
+                SampleManifest sampleManifest = setSampleCMOLevelFields(igoIdX, sampleX, samples_06302, dataRecordManager, user);
+                // query fastqs for 06302_AO
+                sampleManifest.setIgoId(igoId);
+                sampleManifest.setBaitSet("MSK-ACCESS-v1_0-probesAllwFP_hg37_sort-BAITS");
+                sampleManifest.setSpecimenType("cfDNA");
+                SampleManifest result = fastqsOnlyManifest(sampleManifest, new HashSet<>());
+                result.getLibraries().get(0).captureName = "Pool-06302_AO-A8_1";
+                return result;
+            }
             return new SampleManifest();
         }
         DataRecord sample = samples.get(0);
