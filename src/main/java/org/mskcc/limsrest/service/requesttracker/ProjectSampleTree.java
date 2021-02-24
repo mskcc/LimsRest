@@ -15,14 +15,10 @@ import static org.mskcc.limsrest.util.Utils.*;
 /**
  * Data Model of the tree structure descending from one ProjectSample that is passed into the recursive calls
  * when doing a search of the project tree in the LIMs. This is used to track ProjectSample DURING TRAVERSAL for the
- * following dynamic fields,
- *      - Stages encountered (@sampleMap)
- *      - Data QC Status (@dataQcStatus) -  This status is set by a node in the Data QC Stage and marks whether the
- *                                          corresponding ProjectSample has passed the DataQC stage. This is unlike
- *                                          other stages that are
+ * following stages encountered (@sampleMap), which are dynamic values (i.e. can change upon traversl)
  *
  * After traversal, the tree w/ the final values of the dynamic fields are translated into a cleaner representation,
- * ProjectSample, via @convertToProjectSample
+ * ProjectSample, via @evaluateProjectSample, which also evaluates the overall state of the sample
  *
  * @author David Streid
  */
@@ -35,6 +31,7 @@ public class ProjectSampleTree {
     private Map<String, StageTracker> stageMap;         // Map to all stages by their stage name
     private Map<String, Object> sampleData;
     private User user;                                  // TODO - should this be elsewhere?
+    private boolean isIgoComplete;                      // Is Sample complete or not
 
     public ProjectSampleTree(WorkflowSample root, User user) {
         this.user = user;
@@ -43,6 +40,7 @@ public class ProjectSampleTree {
         this.stageMap = new TreeMap<>(new StageComp()); // Order map by order of stages
         this.dataQcStatus = "";                         // Pending until finding a QcStatus child
         this.sampleData = new HashMap<>();
+        this.isIgoComplete = false;                     // Defaults to false, must be set true
     }
 
     /**
@@ -62,6 +60,10 @@ public class ProjectSampleTree {
 
     public WorkflowSample getRoot() {
         return root;
+    }
+
+    public void setIgoComplete(boolean igoComplete) {
+        isIgoComplete = igoComplete;
     }
 
     public boolean isQcIgoComplete() {
@@ -153,10 +155,11 @@ public class ProjectSampleTree {
             // If the sample has been recorded as completed sequencing, then the leaf node is completed
             if (isQcIgoComplete()) {
                 leaf.setComplete(Boolean.TRUE);   // Default leaf completion state is FALSE
-                stage.setComplete(Boolean.TRUE);  // Reset incompleted stages to true since sequencing is the last step
+                stage.setComplete(Boolean.TRUE);  // Reset incomplete stages to true since sequencing is the last step
             } else {
                 // Reaching a leaf w/o traversing a node that sets tree to completedSequencing indicates incomplete
-                stage.setComplete(Boolean.FALSE);
+                // Removing - this should be done after the entire ProjectSample tree has been created
+                // stage.setComplete(Boolean.FALSE);
                 if (isFailedDataQC()) {
                     /**
                      * If a DFS hasn't found a "passed" "SeqAnalysisSampleQC" child, but did find a failed one in the
@@ -206,28 +209,42 @@ public class ProjectSampleTree {
     }
 
     /**
-     * Converts tree representation into a project Sample
+     * Converts tree representation into a project Sample and evaluates overall state
      *
-     * @return
+     * @return ProjectSample, simplified representation of the Sample
      */
-    public ProjectSample convertToProjectSample() {
+    public ProjectSample evaluateProjectSample() {
         if (this.root == null) return null;
 
         ProjectSample projectSample = new ProjectSample(this.root.getRecordId());
         List<StageTracker> stages = getStages();
         projectSample.addStages(stages);
 
-        Boolean isFailed = root.getFailed();                // A failed root indicates 0 branches w/ a non-failed sample
-        // ProjectSample completion is determined by all stages
-        Boolean isComplete = Boolean.TRUE;
-        for (StageTracker stage : stages) {
-            isComplete = isComplete && stage.getComplete();
+        String currentStageName = "Completed";
+        boolean isFailed = root.getFailed();
+
+        if(this.isIgoComplete){
+            for(StageTracker stage : stages){
+                stage.setComplete(true);
+            }
+        } else {
+            // Mark all stages, except for the last one, complete
+            StageTracker stage;
+            for(int i = 0; i < stages.size() - 1; i++){
+                stage = stages.get(i);
+                stage.setComplete(true);
+            }
+            // Last stage is the current stage
+            StageTracker lastStage = stages.get(stages.size() - 1);
+            lastStage.setComplete(false);
+            currentStageName = lastStage.getStage();
         }
 
         projectSample.setFailed(isFailed);
-        projectSample.setComplete(isComplete);
+        projectSample.setComplete(this.isIgoComplete);
         projectSample.setRoot(getRoot());
         projectSample.addAttributes(this.sampleData);
+        projectSample.setCurrentStage(currentStageName);
 
         return projectSample;
     }

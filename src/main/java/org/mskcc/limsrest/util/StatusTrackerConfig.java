@@ -133,8 +133,19 @@ public class StatusTrackerConfig {
 
         // Extraction requests ONLY are considered complete if they have a completion date
         Long completedDate = getRecordLongValue(record, RequestModel.COMPLETED_DATE, user);
+        return (completedDate != null) && isExtractionRequest(record, user);
+    }
+
+    /**
+     * Returns whether input DataRecord represents an Extraction request
+     *
+     * @param record, Request DataRecord
+     * @param user
+     * @return
+     */
+    public static boolean isExtractionRequest(DataRecord record, User user){
         String requestType = getRecordStringValue(record, RequestModel.REQUEST_NAME, user);
-        return (completedDate != null) && requestType.toLowerCase().contains("extraction");
+        return requestType.toLowerCase().contains("extraction");
     }
 
     /**
