@@ -260,6 +260,36 @@ public class GetRequestTrackingTaskTest {
         validateDeliveredStatus(unDeliveredRequests, false);
     }
 
+    @Test
+    public void testMaterialResponse_libPrepDNA() throws Exception {
+        String requestId = "10828_B";
+        GetRequestTrackingTask t = new GetRequestTrackingTask(requestId, this.conn);
+        Map<String, Object> requestInfo = new HashMap<>();
+        try {
+            requestInfo = t.execute();
+        } catch (IoError | RemoteException | NotFound e) {
+            assertTrue("Exception in task execution", false);
+        }
+        List<Map<String, Object>> stages = (List<Map<String, Object>>) requestInfo.get("stages");
+        assertEquals("Only stage present should be libPrep b/c only DNA should be returned", "Library Preparation", stages.get(0).get("stage"));
+
+        List<Map<String, Object>> samples = (List<Map<String, Object>>) requestInfo.get("samples");
+        assertEquals(1, samples.size());
+        Map<String, Object> sampleInfo = (Map<String, Object>) samples.get(0).get("sampleInfo");
+        Map<String, Object> libraryMaterial = (Map<String, Object>) sampleInfo.get("library_material");
+        Map<String, Object> dnaMaterial = (Map<String, Object>) sampleInfo.get("dna_material");
+
+        assertEquals("Library should have 0 volume", 0D, libraryMaterial.get("volume"));
+        assertEquals("Library should have 0 mass", 0D, libraryMaterial.get("mass"));
+        assertEquals("Library should have 0 concentration", 0D, libraryMaterial.get("concentration"));
+        assertEquals("Library shouldn't have populated concentrationUnits", "", libraryMaterial.get("concentrationUnits"));
+
+        assertEquals("dna should have populated volume", 100D, dnaMaterial.get("volume"));
+        assertEquals("dna should have populated mass", 500D, dnaMaterial.get("mass"));
+        assertEquals("dna should have populated concentration", 5D, dnaMaterial.get("concentration"));
+        assertEquals("dna should have populated concentrationUnits", "ng/uL", dnaMaterial.get("concentrationUnits"));
+    }
+
     /**
      * Validates the isDelivered status of the request responses
      *

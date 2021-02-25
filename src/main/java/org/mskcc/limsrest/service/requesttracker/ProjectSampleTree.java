@@ -8,8 +8,7 @@ import org.mskcc.limsrest.service.assignedprocess.QcStatus;
 
 import java.util.*;
 
-import static org.mskcc.limsrest.util.StatusTrackerConfig.STAGE_AWAITING_PROCESSING;
-import static org.mskcc.limsrest.util.StatusTrackerConfig.StageComp;
+import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 import static org.mskcc.limsrest.util.Utils.*;
 
 /**
@@ -44,18 +43,52 @@ public class ProjectSampleTree {
     }
 
     /**
-     * Enrichces ProjectSample w/ values taken directly from LIMS Sample DataRecord
+     * Mapping of the stage to the material they use as input
      */
-    public void enrich(DataRecord record) {
-        // Add concentration volume
-        Double remainingVolume = getRecordDoubleValue(record, "Volume", this.user);
-        Double concentration = getRecordDoubleValue(record, "Concentration", this.user);
-        String concentrationUnits = getRecordStringValue(record, "ConcentrationUnits", this.user);
+    private static Map<String, String> stageToMaterialMap = new HashMap<String, String>(){{
+        put(STAGE_LIBRARY_PREP, "dna_material");
+        put(STAGE_LIBRARY_CAPTURE, "library_material");
+    }};
 
-        this.sampleData.put("volume", remainingVolume);
-        this.sampleData.put("concentration", concentration);
-        this.sampleData.put("concentrationUnits", concentrationUnits);
+    /**
+     * Creates a quantity map of the material used
+     * @param remainingVolume
+     * @param concentration
+     * @param concentrationUnits
+     * @return
+     */
+    private Map<String, Object> createQtyMap(Double remainingVolume, Double mass, Double concentration, String concentrationUnits){
+        Map<String, Object> quantityMap = new HashMap<>();
+        quantityMap.put("volume", remainingVolume);
+        quantityMap.put("mass", mass);
+        quantityMap.put("concentration", concentration);
+        quantityMap.put("concentrationUnits", concentrationUnits);
 
+        return quantityMap;
+    }
+
+    /**
+     * Enrichces ProjectSample w/ values for quantity taken directly from LIMS Sample DataRecord
+     */
+    public void enrichQuantity(DataRecord record, String stage) {
+        /**
+         * The stages we care about are library prep (where DNA/RNA is input) & library capture (where library is input)
+         */
+        if (STAGE_LIBRARY_PREP.equals(stage) || STAGE_LIBRARY_CAPTURE.equals(stage)) {
+            String stageKey = stageToMaterialMap.get(stage);
+            if(!this.sampleData.containsKey(stageKey)){
+                // Add concentration volume
+                Double remainingVolume = getRecordDoubleValue(record, "Volume", this.user);
+                Double concentration = getRecordDoubleValue(record, "Concentration", this.user);
+                Double mass = getRecordDoubleValue(record, "TotalMass", this.user);
+                String concentrationUnits = getRecordStringValue(record, "ConcentrationUnits", this.user);
+
+                // Since Sample DataRecords can have these fields, but aren't actively used, we only populate on non-null
+                if (remainingVolume != null && remainingVolume > 0){
+                    this.sampleData.put(stageKey, createQtyMap(remainingVolume, mass, concentration, concentrationUnits));
+                }
+            }
+        }
     }
 
     public WorkflowSample getRoot() {
@@ -243,8 +276,14 @@ public class ProjectSampleTree {
         projectSample.setFailed(isFailed);
         projectSample.setComplete(this.isIgoComplete);
         projectSample.setRoot(getRoot());
-        projectSample.addAttributes(this.sampleData);
         projectSample.setCurrentStage(currentStageName);
+        // Populte sampleData w/ data if it is missing - default it to null values
+        for(String key : stageToMaterialMap.values()){
+            if(!this.sampleData.containsKey(key)){
+                this.sampleData.put(key, createQtyMap(0D, 0D, 0D, ""));
+            }
+        }
+        projectSample.addAttributes(this.sampleData);
 
         return projectSample;
     }
