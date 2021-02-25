@@ -232,6 +232,13 @@ public class GetRequestTrackingTask {
     private ProjectSampleTree createWorkflowTree(WorkflowSample root, ProjectSampleTree tree) {
         tree.addStageToTracked(root);   // Update tree Project Sample stages w/ the input Workflow sample's stage
 
+
+        // Add any DNA updates
+        String rStage = root.getStage();
+        if(STAGE_LIBRARY_PREP.equals(rStage) || STAGE_LIBRARY_CAPTURE.equals(rStage)){
+            tree.enrichQuantity(root.getRecord(), rStage);
+        }
+
         if (hasFailedQcStage(root)) {
             root.setFailed(Boolean.TRUE);
             tree.markFailedBranch(root);
@@ -337,8 +344,6 @@ public class GetRequestTrackingTask {
         WorkflowSample root = new WorkflowSample(record, this.conn);
         ProjectSampleTree rootTree = new ProjectSampleTree(root, user);
         rootTree.addSample(root);
-
-        rootTree.enrich(record);
 
         // Evaluate overall QcStatus of ProjectSample from all descending SeqAnalysisSampleQC entries b/c the rule is
         // simple - if there is an IGO-Complete SeqAnalysisSampleQC record, the projectSample is IgoComplete
