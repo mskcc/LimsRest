@@ -15,7 +15,7 @@ public class SampleManifest extends SampleMetadata {
     protected String cmoSampleName;
     protected String sampleName;
     protected String cmoSampleClass;
-    protected String oncotreeCode;
+    protected String oncoTreeCode;
     protected String collectionYear;
     protected String tubeId;
     protected String cfDNA2dBarcode;
@@ -33,7 +33,7 @@ public class SampleManifest extends SampleMetadata {
      * @param cmoSampleClass
      * @param cmoPatientId
      * @param investigatorSampleId
-     * @param oncotreeCode
+     * @param oncoTreeCode
      * @param tumorOrNormal
      * @param tissueLocation
      * @param specimenType
@@ -49,7 +49,7 @@ public class SampleManifest extends SampleMetadata {
      * @param libraries
      */
     public SampleManifest(String igoId, String cmoInfoIgoId, String cmoSampleName, String sampleName,
-            String cmoSampleClass, String cmoPatientId, String investigatorSampleId, String oncotreeCode,
+            String cmoSampleClass, String cmoPatientId, String investigatorSampleId, String oncoTreeCode,
             String tumorOrNormal, String tissueLocation, String specimenType, String sampleOrigin,
             String preservation, String collectionYear, String sex, String species, String tubeId,
             String cfDNA2dBarcode, String baitSet, List<QcReport> qcReports, List<Library> libraries) {
@@ -60,7 +60,7 @@ public class SampleManifest extends SampleMetadata {
         this.cmoSampleClass = cmoSampleClass;
         this.cmoPatientId = cmoPatientId;
         this.investigatorSampleId = investigatorSampleId;
-        this.oncotreeCode = oncotreeCode;
+        this.oncoTreeCode = oncoTreeCode;
         this.tumorOrNormal = tumorOrNormal;
         this.tissueLocation = tissueLocation;
         this.specimenType = specimenType;
@@ -107,12 +107,12 @@ public class SampleManifest extends SampleMetadata {
         this.cmoSampleClass = cmoSampleClass;
     }
 
-    public String getOncotreeCode() {
-        return oncotreeCode;
+    public String getOncoTreeCode() {
+        return oncoTreeCode;
     }
 
-    public void setOncotreeCode(String oncotreeCode) {
-        this.oncotreeCode = oncotreeCode;
+    public void setOncoTreeCode(String oncoTreeCode) {
+        this.oncoTreeCode = oncoTreeCode;
     }
 
     public String getCollectionYear() {

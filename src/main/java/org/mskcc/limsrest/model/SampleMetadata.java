@@ -22,7 +22,7 @@ public class SampleMetadata implements Serializable {
     protected String tissueSource;
     protected String tissueLocation;
     protected String recipe;
-    protected String baitset;
+    protected String baitSet;
     protected String fastqPath;
     protected String principalInvestigator;
     protected String ancestorSample;
@@ -52,7 +52,7 @@ public class SampleMetadata implements Serializable {
      * @param tissueSource
      * @param tissueLocation
      * @param recipe
-     * @param baitset
+     * @param baitSet
      * @param fastqPath
      * @param principalInvestigator
      * @param ancestorSample
@@ -62,7 +62,7 @@ public class SampleMetadata implements Serializable {
     public SampleMetadata(String mrn, String cmoPatientId, String cmoSampleId, String igoId,
             String investigatorSampleId, String species, String sex, String tumorOrNormal, String sampleType,
             String preservation, String tumorType, String parentTumorType, String specimenType,
-            String sampleOrigin, String tissueSource, String tissueLocation, String recipe, String baitset,
+            String sampleOrigin, String tissueSource, String tissueLocation, String recipe, String baitSet,
             String fastqPath, String principalInvestigator, String ancestorSample, boolean doNotUse,
             String sampleStatus) {
         this.mrn = mrn;
@@ -82,7 +82,7 @@ public class SampleMetadata implements Serializable {
         this.tissueSource = tissueSource;
         this.tissueLocation = tissueLocation;
         this.recipe = recipe;
-        this.baitset = baitset;
+        this.baitSet = baitSet;
         this.principalInvestigator = principalInvestigator;
         this.fastqPath = fastqPath;
         this.ancestorSample = ancestorSample;
@@ -226,12 +226,12 @@ public class SampleMetadata implements Serializable {
         this.recipe = recipe;
     }
 
-    public String getBaitset() {
-        return baitset;
+    public String getBaitSet() {
+        return baitSet;
     }
 
-    public void setBaitset(String baitset) {
-        this.baitset = baitset;
+    public void setBaitSet(String baitSet) {
+        this.baitSet = baitSet;
     }
 
     public String getFastqPath() {

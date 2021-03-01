@@ -1,5 +1,6 @@
 package org.mskcc.limsrest.service;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.user.User;
@@ -12,7 +13,6 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
-import org.mskcc.limsrest.model.IgoRequest;
 import org.mskcc.limsrest.model.RequestSample;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -215,7 +215,7 @@ public class GetRequestSamplesTask {
 
         public List<RequestSample> samples;
 
-        public List<String> pooledNormals;
+        protected List<String> pooledNormals;
 
         public RequestSampleList(){}
 
@@ -255,6 +255,14 @@ public class GetRequestSamplesTask {
         }
         public void setSamples(List<RequestSample> samples) {
             this.samples = samples;
+        }
+
+        public List<String> getPooledNormals() {
+            return pooledNormals;
+        }
+
+        public void setPooledNormals(List<String> pooledNormals) {
+            this.pooledNormals = pooledNormals;
         }
 
         public String getProjectManagerName() {
@@ -327,12 +335,4 @@ public class GetRequestSamplesTask {
         public void setDataAccessEmails(String dataAccessEmails) { this.dataAccessEmails = dataAccessEmails; }
     }
 
-    public static class RequestSample {
-        private String investigatorSampleId;
-        private String igoSampleId;
-        private boolean IGOComplete;
-
-        public RequestSample() {}
-
-    }
 }
