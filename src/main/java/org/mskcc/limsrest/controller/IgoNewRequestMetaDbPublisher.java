@@ -61,8 +61,7 @@ public class IgoNewRequestMetaDbPublisher {
     }
 
     @GetMapping("/publishIgoRequestToMetaDb")
-    public void getContent(@RequestParam(value = "requestId") String requestId,
-            @RequestParam(value = "projectId") String projectId, HttpServletRequest request) {
+    public void getContent(@RequestParam(value = "requestId") String requestId, HttpServletRequest request) {
         log.info("/publishIgoRequestToMetaDb for request: " + requestId + " " + request.getRemoteAddr());
 
         if (!Whitelists.requestMatches(requestId)) {
@@ -70,12 +69,8 @@ public class IgoNewRequestMetaDbPublisher {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "FAILURE: requestId is not using a valid format.");
         }
 
-        //TODO: If possible it would be ideal if project id can simply be provided
-        // when calling the endpoint. This block of code was added in case this
-        // request is not possible to hook into the MarkDelivery logic. If project id
-        // CAN be provided when calling this endpoint then we can remove this block of code
-
-        // if project id is null then get project summary for request and extract project id
+        String projectId = null;
+        // get project summary for request and extract project id
         if (projectId == null || projectId.isEmpty()) {
             task.init(requestId);
             Future<Object> result = connPool.submitTask(task);
