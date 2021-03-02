@@ -21,7 +21,8 @@ public class DdpcrAssay {
     public String colPosition;
     public String projectNumber;
     public String optimalTemperature;
-    public Integer ramp;
+    public Double ramp;
+    public Integer howManyAssayTubesInStock;
     public Integer denaturationTime;
     public Integer annealingAndExtensionTimes;
     public Integer numberOfAdditionalCycles;
@@ -57,7 +58,8 @@ public class DdpcrAssay {
         this.colPosition = (String) sampleFields.get("ColPosition");
         this.projectNumber = (String) sampleFields.get("ProjectNumber");
         this.optimalTemperature = (String) sampleFields.get("OptimalTemperature");
-        this.ramp = (Integer) sampleFields.get("Ramp");
+        this.ramp = (Double) sampleFields.get("Ramp");
+        this.howManyAssayTubesInStock = (Integer) sampleFields.get("HowManyAssayTubesInStock");
         this.denaturationTime = (Integer) sampleFields.get("DenaturationTime");
         this.annealingAndExtensionTimes = (Integer) sampleFields.get("AnnealingAndExtensionTimes");
         this.numberOfAdditionalCycles = (Integer) sampleFields.get("NumberOfAdditionalCycles");

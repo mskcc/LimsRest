@@ -76,7 +76,7 @@ public class GetRequestTrackingTask {
         final String query = String.format("%s = '%s'", RequestModel.REQUEST_ID, requestId);
         List<DataRecord> requestRecordList = drm.queryDataRecords(RequestModel.DATA_TYPE_NAME, query, user);
         if (requestRecordList.size() != 1) {  // error: request ID not found or more than one found
-            log.error(String.format("Request %s not found for requestId %s. Returning incomplete information", requestId));
+            log.error(String.format("Request %s not found for requestId %s. Returning incomplete information", requestId, requestId));
             return request.toApiResponse();
         }
         DataRecord requestRecord = requestRecordList.get(0);
@@ -124,7 +124,16 @@ public class GetRequestTrackingTask {
         final Long completedDate = getRecordLongValue(requestRecord, RequestModel.COMPLETED_DATE, user);
         projectStatus.put(RequestModel.RECENT_DELIVERY_DATE, mostRecentDeliveryDate);
         projectStatus.put(RequestModel.COMPLETED_DATE, completedDate);
-        projectStatus.put("isIgoComplete", isIgoComplete(requestRecord, user));
+
+        boolean isIgoComplete = isIgoComplete(requestRecord, user);
+        projectStatus.put("isIgoComplete", isIgoComplete);
+        if(isExtractionRequest(requestRecord, user)){
+            // Extraction requests are considered delivered if they are IGO-Complete
+            projectStatus.put("isDelivered", isIgoComplete);
+        } else {
+            // Sequencing requests MUST have a delivery date
+            projectStatus.put("isDelivered", mostRecentDeliveryDate != null);
+        }
 
         Boolean isStagesComplete = true;
         Integer numFailed = 0;
@@ -170,9 +179,9 @@ public class GetRequestTrackingTask {
 
         // Create the tree of each ProjectSample aggregating per-sample status/stage information
         List<ProjectSample> projectSamples = new ArrayList<>();
-        for (DataRecord record : samples) {
-            ProjectSampleTree tree = createProjectSampleTree(record, user);
-            ProjectSample projectSample = tree.convertToProjectSample();
+        for (DataRecord sampleRecord : samples) {
+            ProjectSampleTree tree = createProjectSampleTree(requestRecord, sampleRecord, user);
+            ProjectSample projectSample = tree.evaluateProjectSample();
             projectSamples.add(projectSample);
         }
 
@@ -222,6 +231,13 @@ public class GetRequestTrackingTask {
      */
     private ProjectSampleTree createWorkflowTree(WorkflowSample root, ProjectSampleTree tree) {
         tree.addStageToTracked(root);   // Update tree Project Sample stages w/ the input Workflow sample's stage
+
+
+        // Add any DNA updates
+        String rStage = root.getStage();
+        if(STAGE_LIBRARY_PREP.equals(rStage) || STAGE_LIBRARY_CAPTURE.equals(rStage)){
+            tree.enrichQuantity(root.getRecord(), rStage);
+        }
 
         if (hasFailedQcStage(root)) {
             root.setFailed(Boolean.TRUE);
@@ -323,7 +339,7 @@ public class GetRequestTrackingTask {
      * @param user
      * @return
      */
-    private ProjectSampleTree createProjectSampleTree(DataRecord record, User user) {
+    private ProjectSampleTree createProjectSampleTree(DataRecord requestRecord, DataRecord record, User user) {
         // Initialize input
         WorkflowSample root = new WorkflowSample(record, this.conn);
         ProjectSampleTree rootTree = new ProjectSampleTree(root, user);
@@ -340,6 +356,11 @@ public class GetRequestTrackingTask {
         } catch (RemoteException e) {
             log.error(String.format("Unable to query descending SeqAnalysisSampleQC DataRecords from Sample DataRecord: %d",
                     record.getRecordId()));
+        }
+
+        // Evaluate overall status of sample as complete or not
+        if(isIgoComplete(requestRecord, user) || rootTree.isQcIgoComplete()){
+            rootTree.setIgoComplete(true);
         }
 
         // Recursively create the workflowTree from the input tree

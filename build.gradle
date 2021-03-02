@@ -74,7 +74,7 @@ dependencies {
     // cmo metadb messaging library dependency added with jitpack
     implementation 'com.github.mskcc:cmo-messaging-java:81258a16d63cea640e4d80efb5df5100a6ff4dea'
     compile 'com.google.code.gson:gson:2.8.6'
-
+    
     compile 'org.mskcc.common:common-domain:2.14'
 
     compile "io.springfox:springfox-swagger-ui:2.9.2"

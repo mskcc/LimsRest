@@ -1,5 +1,6 @@
 package org.mskcc.limsrest.service.requesttracker;
 
+import com.velox.api.datarecord.DataRecord;
 import com.velox.api.user.User;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -7,20 +8,16 @@ import org.mskcc.limsrest.service.assignedprocess.QcStatus;
 
 import java.util.*;
 
-import static org.mskcc.limsrest.util.StatusTrackerConfig.STAGE_AWAITING_PROCESSING;
-import static org.mskcc.limsrest.util.StatusTrackerConfig.StageComp;
+import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
+import static org.mskcc.limsrest.util.Utils.*;
 
 /**
  * Data Model of the tree structure descending from one ProjectSample that is passed into the recursive calls
  * when doing a search of the project tree in the LIMs. This is used to track ProjectSample DURING TRAVERSAL for the
- * following dynamic fields,
- *      - Stages encountered (@sampleMap)
- *      - Data QC Status (@dataQcStatus) -  This status is set by a node in the Data QC Stage and marks whether the
- *                                          corresponding ProjectSample has passed the DataQC stage. This is unlike
- *                                          other stages that are
+ * following stages encountered (@sampleMap), which are dynamic values (i.e. can change upon traversl)
  *
  * After traversal, the tree w/ the final values of the dynamic fields are translated into a cleaner representation,
- * ProjectSample, via @convertToProjectSample
+ * ProjectSample, via @evaluateProjectSample, which also evaluates the overall state of the sample
  *
  * @author David Streid
  */
@@ -31,8 +28,9 @@ public class ProjectSampleTree {
     private String dataQcStatus;                        // SeqAnalysisSampleQC status determinining sequencing status
     private Map<Long, WorkflowSample> sampleMap;        // Map Record IDs to their enriched sample information
     private Map<String, StageTracker> stageMap;         // Map to all stages by their stage name
-
+    private Map<String, Object> sampleData;
     private User user;                                  // TODO - should this be elsewhere?
+    private boolean isIgoComplete;                      // Is Sample complete or not
 
     public ProjectSampleTree(WorkflowSample root, User user) {
         this.user = user;
@@ -40,10 +38,65 @@ public class ProjectSampleTree {
         this.sampleMap = new HashMap<>();
         this.stageMap = new TreeMap<>(new StageComp()); // Order map by order of stages
         this.dataQcStatus = "";                         // Pending until finding a QcStatus child
+        this.sampleData = new HashMap<>();
+        this.isIgoComplete = false;                     // Defaults to false, must be set true
+    }
+
+    /**
+     * Mapping of the stage to the material they use as input
+     */
+    private static Map<String, String> stageToMaterialMap = new HashMap<String, String>(){{
+        put(STAGE_LIBRARY_PREP, "dna_material");
+        put(STAGE_LIBRARY_CAPTURE, "library_material");
+    }};
+
+    /**
+     * Creates a quantity map of the material used
+     * @param remainingVolume
+     * @param concentration
+     * @param concentrationUnits
+     * @return
+     */
+    private Map<String, Object> createQtyMap(Double remainingVolume, Double mass, Double concentration, String concentrationUnits){
+        Map<String, Object> quantityMap = new HashMap<>();
+        quantityMap.put("volume", remainingVolume);
+        quantityMap.put("mass", mass);
+        quantityMap.put("concentration", concentration);
+        quantityMap.put("concentrationUnits", concentrationUnits);
+
+        return quantityMap;
+    }
+
+    /**
+     * Enrichces ProjectSample w/ values for quantity taken directly from LIMS Sample DataRecord
+     */
+    public void enrichQuantity(DataRecord record, String stage) {
+        /**
+         * The stages we care about are library prep (where DNA/RNA is input) & library capture (where library is input)
+         */
+        if (STAGE_LIBRARY_PREP.equals(stage) || STAGE_LIBRARY_CAPTURE.equals(stage)) {
+            String stageKey = stageToMaterialMap.get(stage);
+            if(!this.sampleData.containsKey(stageKey)){
+                // Add concentration volume
+                Double remainingVolume = getRecordDoubleValue(record, "Volume", this.user);
+                Double concentration = getRecordDoubleValue(record, "Concentration", this.user);
+                Double mass = getRecordDoubleValue(record, "TotalMass", this.user);
+                String concentrationUnits = getRecordStringValue(record, "ConcentrationUnits", this.user);
+
+                // Since Sample DataRecords can have these fields, but aren't actively used, we only populate on non-null
+                if (remainingVolume != null && remainingVolume > 0){
+                    this.sampleData.put(stageKey, createQtyMap(remainingVolume, mass, concentration, concentrationUnits));
+                }
+            }
+        }
     }
 
     public WorkflowSample getRoot() {
         return root;
+    }
+
+    public void setIgoComplete(boolean igoComplete) {
+        isIgoComplete = igoComplete;
     }
 
     public boolean isQcIgoComplete() {
@@ -135,10 +188,11 @@ public class ProjectSampleTree {
             // If the sample has been recorded as completed sequencing, then the leaf node is completed
             if (isQcIgoComplete()) {
                 leaf.setComplete(Boolean.TRUE);   // Default leaf completion state is FALSE
-                stage.setComplete(Boolean.TRUE);  // Reset incompleted stages to true since sequencing is the last step
+                stage.setComplete(Boolean.TRUE);  // Reset incomplete stages to true since sequencing is the last step
             } else {
                 // Reaching a leaf w/o traversing a node that sets tree to completedSequencing indicates incomplete
-                stage.setComplete(Boolean.FALSE);
+                // Removing - this should be done after the entire ProjectSample tree has been created
+                // stage.setComplete(Boolean.FALSE);
                 if (isFailedDataQC()) {
                     /**
                      * If a DFS hasn't found a "passed" "SeqAnalysisSampleQC" child, but did find a failed one in the
@@ -188,27 +242,48 @@ public class ProjectSampleTree {
     }
 
     /**
-     * Converts tree representation into a project Sample
+     * Converts tree representation into a project Sample and evaluates overall state
      *
-     * @return
+     * @return ProjectSample, simplified representation of the Sample
      */
-    public ProjectSample convertToProjectSample() {
+    public ProjectSample evaluateProjectSample() {
         if (this.root == null) return null;
 
         ProjectSample projectSample = new ProjectSample(this.root.getRecordId());
         List<StageTracker> stages = getStages();
         projectSample.addStages(stages);
 
-        Boolean isFailed = root.getFailed();                // A failed root indicates 0 branches w/ a non-failed sample
-        // ProjectSample completion is determined by all stages
-        Boolean isComplete = Boolean.TRUE;
-        for (StageTracker stage : stages) {
-            isComplete = isComplete && stage.getComplete();
+        String currentStageName = "Completed";
+        boolean isFailed = root.getFailed();
+
+        if(this.isIgoComplete){
+            for(StageTracker stage : stages){
+                stage.setComplete(true);
+            }
+        } else {
+            // Mark all stages, except for the last one, complete
+            StageTracker stage;
+            for(int i = 0; i < stages.size() - 1; i++){
+                stage = stages.get(i);
+                stage.setComplete(true);
+            }
+            // Last stage is the current stage
+            StageTracker lastStage = stages.get(stages.size() - 1);
+            lastStage.setComplete(false);
+            currentStageName = lastStage.getStage();
         }
 
         projectSample.setFailed(isFailed);
-        projectSample.setComplete(isComplete);
+        projectSample.setComplete(this.isIgoComplete);
         projectSample.setRoot(getRoot());
+        projectSample.setCurrentStage(currentStageName);
+        // Populte sampleData w/ data if it is missing - default it to null values
+        for(String key : stageToMaterialMap.values()){
+            if(!this.sampleData.containsKey(key)){
+                this.sampleData.put(key, createQtyMap(0D, 0D, 0D, ""));
+            }
+        }
+        projectSample.addAttributes(this.sampleData);
 
         return projectSample;
     }

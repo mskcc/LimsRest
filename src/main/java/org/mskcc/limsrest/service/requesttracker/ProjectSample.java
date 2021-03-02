@@ -22,12 +22,16 @@ public class ProjectSample {
     boolean complete;
     Boolean failed;
     private Map<String, StageTracker> stages;     // Stages present in the project
+    private Map<String, Object> attributeMap;
     private WorkflowSample root;                        // workflowSamples descend from tree root
+    private String currentStage;
 
     public ProjectSample(Long recordId) {
         this.sampleId = recordId;
         this.complete = true;       // The sample is considered complete until a record is added that is not done
         this.stages = new TreeMap<>(new StageComp());
+        this.attributeMap = new HashMap<>();
+        this.currentStage = "";
     }
 
     public WorkflowSample getRoot() {
@@ -36,6 +40,10 @@ public class ProjectSample {
 
     public void setRoot(WorkflowSample root) {
         this.root = root;
+    }
+
+    public void setCurrentStage(String currentStage) {
+        this.currentStage = currentStage;
     }
 
     public boolean isComplete() {
@@ -80,6 +88,14 @@ public class ProjectSample {
         return this.record;
     }
 
+    /**
+     * Adds attributes of the physical sample (not a workflow sample)
+     *
+     * @param attributeMap
+     */
+    public void addAttributes(Map<String, Object> attributeMap){
+        this.attributeMap.putAll(attributeMap);
+    }
 
     /**
      * Needs to be converted into a map to be returned in service response
@@ -88,13 +104,13 @@ public class ProjectSample {
      */
     public Map<String, Object> toApiResponse() {
         Map<String, Object> apiMap = new HashMap<>();
-
         apiMap.put("sampleId", this.sampleId);
-        apiMap.put("status", this.failed ? "Failed" : this.complete == true ? "Complete" : "Pending");
+        apiMap.put("status", this.failed ? "Failed" : this.complete == true ? "Complete" : this.currentStage);
         apiMap.put("stages", this.stages.values().stream().map(
-                stage -> stage.toApiResponse()
+                stage -> stage.toApiResponse(true)
         ).collect(Collectors.toList()));
         apiMap.put("root", this.root.toApiResponse());
+        apiMap.put("sampleInfo", this.attributeMap);
 
         return apiMap;
     }

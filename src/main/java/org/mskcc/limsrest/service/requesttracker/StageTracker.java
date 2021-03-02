@@ -87,10 +87,18 @@ public class StageTracker extends StatusTracker {
         }
     }
 
-    public Map<String, Object> toApiResponse() {
+    public Map<String, Object> toApiResponse(boolean isSample) {
         Map<String, Object> apiMap = super.toApiResponse();
-        apiMap.put("completedSamples", this.endingSamples);
-        apiMap.put("failedSamples", this.failedSamples);
+        if(isSample){
+            // If sample, exclude all fields that count samples (there is only 1)
+            if(apiMap.containsKey("totalSamples")){
+                apiMap.remove("totalSamples");
+            }
+        } else {
+            // If not sample, i.e. "request", add all counts
+            apiMap.put("completedSamples", this.endingSamples);
+            apiMap.put("failedSamples", this.failedSamples);
+        }
 
         return apiMap;
     }

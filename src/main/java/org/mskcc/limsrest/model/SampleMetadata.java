@@ -22,7 +22,7 @@ public class SampleMetadata implements Serializable {
     protected String tissueSource;
     protected String tissueLocation;
     protected String recipe;
-    protected String baitset;
+    protected String baitSet;
     protected String fastqPath;
     protected String principalInvestigator;
     protected String ancestorSample;
@@ -52,7 +52,7 @@ public class SampleMetadata implements Serializable {
      * @param tissueSource
      * @param tissueLocation
      * @param recipe
-     * @param baitset
+     * @param baitSet
      * @param fastqPath
      * @param principalInvestigator
      * @param ancestorSample

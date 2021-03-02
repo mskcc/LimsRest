@@ -15,7 +15,7 @@ public class SampleManifest extends SampleMetadata {
     protected String cmoSampleName;
     protected String sampleName;
     protected String cmoSampleClass;
-    protected String oncotreeCode;
+    protected String oncoTreeCode;
     protected String collectionYear;
     protected String tubeId;
     protected String cfDNA2dBarcode;
@@ -107,12 +107,12 @@ public class SampleManifest extends SampleMetadata {
         this.cmoSampleClass = cmoSampleClass;
     }
 
-    public String getOncotreeCode() {
-        return oncotreeCode;
+    public String getOncoTreeCode() {
+        return oncoTreeCode;
     }
 
-    public void setOncotreeCode(String oncotreeCode) {
-        this.oncotreeCode = oncotreeCode;
+    public void setOncoTreeCode(String oncoTreeCode) {
+        this.oncoTreeCode = oncoTreeCode;
     }
 
     public String getCollectionYear() {

@@ -95,6 +95,25 @@ public class GetRequestSamplesTask {
             rsl.setQcAccessEmails(requestDataRecord.getStringVal("QcAccessEmails", user));
             rsl.setDataAccessEmails(requestDataRecord.getStringVal("DataAccessEmails", user));
 
+            // GetRequestPermissionsTask will set fastq.gz permissions based on whether or not BIC or CMO request so
+            // return those values here too.
+            // alternatively, IGO could tell people to call the GetRequestPermissions endpoint instead of adding
+            // the fields here too.
+            Boolean isCmoRequest = Boolean.FALSE;
+            Boolean bicAnalysis = Boolean.FALSE;
+            String analysisType = "";
+            try {
+                isCmoRequest = requestDataRecord.getBooleanVal("IsCmoRequest", user);
+                bicAnalysis = requestDataRecord.getBooleanVal("BICAnalysis", user);
+                analysisType = requestDataRecord.getStringVal("AnalysisType", user);
+            } catch (NullPointerException e) {
+                log.warn("Correct invalid null valid in database for request: " + requestId);
+            }
+            Boolean isBicRequest = GetRequestPermissionsTask.isBicRequest(analysisType, bicAnalysis);
+
+            rsl.setBicAnalysis(isBicRequest);
+            rsl.setCmoRequest(isCmoRequest);
+
             return rsl;
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
@@ -176,6 +195,144 @@ public class GetRequestSamplesTask {
             log.error("FASTQ Search error:" + e.getMessage());
             return null;
         }
+    }
+
+    public static class RequestSampleList {
+        public String requestId;
+        public String recipe;
+        public String projectManagerName;
+        public String piEmail;
+        public String labHeadName, labHeadEmail;
+        public String investigatorName, investigatorEmail;
+        public String dataAnalystName, dataAnalystEmail;
+        public String otherContactEmails;
+        public String dataAccessEmails;
+        public String qcAccessEmails;
+        public String strand; // only for RNASeq
+        public String libraryType; // only for RNASeq
+        public Boolean isCmoRequest;
+        public Boolean bicAnalysis;
+
+        public List<RequestSample> samples;
+
+        protected List<String> pooledNormals;
+
+        public RequestSampleList(){}
+
+        public RequestSampleList(String requestId){ this.requestId = requestId; }
+
+        public RequestSampleList(String requestId, List<RequestSample> samples) {
+            this.requestId = requestId;
+            this.samples = samples;
+        }
+
+        public Boolean getCmoRequest() { return isCmoRequest; }
+        public void setCmoRequest(Boolean cmoRequest) { isCmoRequest = cmoRequest; }
+
+        public Boolean getBicAnalysis() { return bicAnalysis; }
+        public void setBicAnalysis(Boolean bicAnalysis) { this.bicAnalysis = bicAnalysis; }
+
+        public String getLibraryType() { return libraryType; }
+        public void setLibraryType(String libraryType) { this.libraryType = libraryType; }
+
+        public String getStrand() { return strand; }
+        public void setStrand(String strand) { this.strand = strand; }
+
+        public String getRecipe() { return recipe; }
+        public void setRecipe(String recipe) { this.recipe = recipe; }
+
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
+        public String getRequestId() {
+            return requestId;
+        }
+        public void setRequestId(String requestId) {
+            this.requestId = requestId;
+        }
+
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
+        public List<RequestSample> getSamples() {
+            return samples;
+        }
+        public void setSamples(List<RequestSample> samples) {
+            this.samples = samples;
+        }
+
+        public List<String> getPooledNormals() {
+            return pooledNormals;
+        }
+
+        public void setPooledNormals(List<String> pooledNormals) {
+            this.pooledNormals = pooledNormals;
+        }
+
+        public String getProjectManagerName() {
+            return projectManagerName;
+        }
+        public void setProjectManagerName(String projectManagerName) {
+            this.projectManagerName = projectManagerName;
+        }
+
+        public String getPiEmail() {
+            return piEmail;
+        }
+        public void setPiEmail(String piEmail) {
+            this.piEmail = piEmail;
+        }
+
+        public String getInvestigatorName() {
+            return investigatorName;
+        }
+        public void setInvestigatorName(String investigatorName) {
+            this.investigatorName = investigatorName;
+        }
+
+        public String getInvestigatorEmail() {
+            return investigatorEmail;
+        }
+        public void setInvestigatorEmail(String investigatorEmail) {
+            this.investigatorEmail = investigatorEmail;
+        }
+
+        public String getDataAnalystName() {
+            return dataAnalystName;
+        }
+        public void setDataAnalystName(String dataAnalystName) {
+            this.dataAnalystName = dataAnalystName;
+        }
+
+        public String getDataAnalystEmail() {
+            return dataAnalystEmail;
+        }
+        public void setDataAnalystEmail(String dataAnalystEmail) {
+            this.dataAnalystEmail = dataAnalystEmail;
+        }
+
+        public String getLabHeadName() {
+            return labHeadName;
+        }
+        public void setLabHeadName(String labHeadName) {
+            this.labHeadName = labHeadName;
+        }
+
+        public String getLabHeadEmail() {
+            return labHeadEmail;
+        }
+        public void setLabHeadEmail(String labHeadEmail) {
+            this.labHeadEmail = labHeadEmail;
+        }
+
+        public String getOtherContactEmails() {
+            return otherContactEmails;
+        }
+        public void setOtherContactEmails(String otherContactEmails) {
+            this.otherContactEmails = otherContactEmails;
+        }
+
+        public String getQcAccessEmails() { return qcAccessEmails; }
+        public void setQcAccessEmails(String qcAccessEmails) { this.qcAccessEmails = qcAccessEmails; }
+
+        public String getDataAccessEmails() { return dataAccessEmails; }
+        public void setDataAccessEmails(String dataAccessEmails) { this.dataAccessEmails = dataAccessEmails; }
     }
 
     public static class RequestSampleList extends IgoRequest {
