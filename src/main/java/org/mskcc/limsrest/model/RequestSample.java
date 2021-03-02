@@ -2,7 +2,7 @@ package org.mskcc.limsrest.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.io.Serializable;
-import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class RequestSample implements Serializable {
     private String investigatorSampleId;

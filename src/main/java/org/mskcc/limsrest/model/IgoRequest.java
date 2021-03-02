@@ -3,7 +3,7 @@ package org.mskcc.limsrest.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.io.Serializable;
 import java.util.List;
-import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class IgoRequest implements Serializable {
     protected String requestId;
