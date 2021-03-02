@@ -62,7 +62,7 @@ public class SampleMetadata implements Serializable {
     public SampleMetadata(String mrn, String cmoPatientId, String cmoSampleId, String igoId,
             String investigatorSampleId, String species, String sex, String tumorOrNormal, String sampleType,
             String preservation, String tumorType, String parentTumorType, String specimenType,
-            String sampleOrigin, String tissueSource, String tissueLocation, String recipe, String baitSet,
+            String sampleOrigin, String tissueSource, String tissueLocation, String recipe, String baitset,
             String fastqPath, String principalInvestigator, String ancestorSample, boolean doNotUse,
             String sampleStatus) {
         this.mrn = mrn;
@@ -82,7 +82,7 @@ public class SampleMetadata implements Serializable {
         this.tissueSource = tissueSource;
         this.tissueLocation = tissueLocation;
         this.recipe = recipe;
-        this.baitSet = baitSet;
+        this.baitset = baitset;
         this.principalInvestigator = principalInvestigator;
         this.fastqPath = fastqPath;
         this.ancestorSample = ancestorSample;
@@ -226,12 +226,12 @@ public class SampleMetadata implements Serializable {
         this.recipe = recipe;
     }
 
-    public String getBaitSet() {
-        return baitSet;
+    public String getBaitset() {
+        return baitset;
     }
 
-    public void setBaitSet(String baitSet) {
-        this.baitSet = baitSet;
+    public void setBaitset(String baitset) {
+        this.baitset = baitset;
     }
 
     public String getFastqPath() {

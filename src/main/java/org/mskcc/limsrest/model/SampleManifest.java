@@ -33,7 +33,7 @@ public class SampleManifest extends SampleMetadata {
      * @param cmoSampleClass
      * @param cmoPatientId
      * @param investigatorSampleId
-     * @param oncoTreeCode
+     * @param oncotreeCode
      * @param tumorOrNormal
      * @param tissueLocation
      * @param specimenType
@@ -49,7 +49,7 @@ public class SampleManifest extends SampleMetadata {
      * @param libraries
      */
     public SampleManifest(String igoId, String cmoInfoIgoId, String cmoSampleName, String sampleName,
-            String cmoSampleClass, String cmoPatientId, String investigatorSampleId, String oncoTreeCode,
+            String cmoSampleClass, String cmoPatientId, String investigatorSampleId, String oncotreeCode,
             String tumorOrNormal, String tissueLocation, String specimenType, String sampleOrigin,
             String preservation, String collectionYear, String sex, String species, String tubeId,
             String cfDNA2dBarcode, String baitSet, List<QcReport> qcReports, List<Library> libraries) {
@@ -60,7 +60,7 @@ public class SampleManifest extends SampleMetadata {
         this.cmoSampleClass = cmoSampleClass;
         this.cmoPatientId = cmoPatientId;
         this.investigatorSampleId = investigatorSampleId;
-        this.oncoTreeCode = oncoTreeCode;
+        this.oncotreeCode = oncotreeCode;
         this.tumorOrNormal = tumorOrNormal;
         this.tissueLocation = tissueLocation;
         this.specimenType = specimenType;

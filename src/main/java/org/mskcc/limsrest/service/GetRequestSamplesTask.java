@@ -1,6 +1,5 @@
 package org.mskcc.limsrest.service;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.user.User;
@@ -13,6 +12,7 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
+import org.mskcc.limsrest.model.IgoRequest;
 import org.mskcc.limsrest.model.RequestSample;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -335,4 +335,18 @@ public class GetRequestSamplesTask {
         public void setDataAccessEmails(String dataAccessEmails) { this.dataAccessEmails = dataAccessEmails; }
     }
 
+    public static class RequestSampleList extends IgoRequest {
+
+        public RequestSampleList() {
+            super();
+        }
+
+        public RequestSampleList(String requestId) {
+            super(requestId);
+        }
+
+        public RequestSampleList(String requestId, List<RequestSample> samples) {
+            super(requestId, samples);
+        }
+    }
 }

@@ -162,7 +162,7 @@ public class GetSampleManifestTask {
 
         if (baitSet == null || baitSet.isEmpty())
             log.warn("Missing bait set: " + igoId);
-        sampleManifest.setBaitSet(baitSet);
+        sampleManifest.setBaitset(baitSet);
 
         List<DataRecord> aliquots = sample.getDescendantsOfType("Sample", user);
         // 07260 Request the first sample are DNA Libraries like 07260_1 so can't just search descendants to find DNA libraries
@@ -344,7 +344,7 @@ public class GetSampleManifestTask {
             }
             baitSet = dr.getStringVal(SeqAnalysisSampleQCModel.BAIT_SET, user);
         }
-        sampleManifest.setBaitSet(baitSet);
+        sampleManifest.setBaitset(baitSet);
 
         return fastqsOnlyManifest(sampleManifest, runFailedQC);
     }
@@ -467,7 +467,7 @@ public class GetSampleManifestTask {
         String tumorOrNormal = cmoInfo.getStringVal("TumorOrNormal", user);
         s.setTumorOrNormal(tumorOrNormal);
         if ("Tumor".equals(tumorOrNormal))
-            s.setOncoTreeCode(cmoInfo.getStringVal("TumorType", user));
+            s.setOncotreeCode(cmoInfo.getStringVal("TumorType", user));
         s.setTissueLocation(cmoInfo.getStringVal("TissueLocation", user));
         s.setSpecimenType(cmoInfo.getStringVal("SpecimenType", user));
         s.setSampleOrigin(cmoInfo.getStringVal("SampleOrigin", user)); // formerly reported as Sample Type
