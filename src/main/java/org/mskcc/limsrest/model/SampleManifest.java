@@ -10,15 +10,29 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  * @author ochoaa
  */
 @JsonIgnoreProperties(value = { "cmoInfoIgoId" })
-public class SampleManifest extends SampleMetadata {
-    protected String cmoInfoIgoId;
-    protected String cmoSampleName;
-    protected String sampleName;
-    protected String cmoSampleClass;
-    protected String oncoTreeCode;
-    protected String collectionYear;
-    protected String tubeId;
-    protected String cfDNA2dBarcode;
+public class SampleManifest {
+    private String igoId;
+
+    public String cmoInfoIgoId; // left out of pipeline JSON
+
+    private String cmoSampleName; // aka "Corrected CMO Sample ID", but not an ID in by normal database standards
+    private String sampleName;
+    private String cmoSampleClass;
+    private String cmoPatientId;
+    private String investigatorSampleId;
+    private String oncoTreeCode;
+    private String tumorOrNormal;
+    private String tissueLocation;
+    private String specimenType;
+    private String sampleOrigin;
+    private String preservation;
+    private String collectionYear;
+    private String sex;
+    private String species;
+    private String tubeId;
+    private String cfDNA2dBarcode;
+
+    private String baitSet;
     protected List<QcReport> qcReports;
     protected List<Library> libraries;
 
@@ -73,6 +87,93 @@ public class SampleManifest extends SampleMetadata {
         this.cfDNA2dBarcode = cfDNA2dBarcode;
         this.qcReports = qcReports;
         this.libraries = libraries;
+    }
+
+    public String getIgoId() {
+        return igoId;
+    }
+
+    public void setIgoId(String igoId) {
+        this.igoId = igoId;
+    }
+    public String getCmoPatientId() {
+        return cmoPatientId;
+    }
+
+    public void setCmoPatientId(String cmoPatientId) {
+        this.cmoPatientId = cmoPatientId;
+    }
+
+    public String getInvestigatorSampleId() {
+        return investigatorSampleId;
+    }
+
+    public void setInvestigatorSampleId(String investigatorSampleId) {
+        this.investigatorSampleId = investigatorSampleId;
+    }
+
+    public String getTumorOrNormal() {
+        return tumorOrNormal;
+    }
+
+    public void setTumorOrNormal(String tumorOrNormal) {
+        this.tumorOrNormal = tumorOrNormal;
+    }
+
+    public String getTissueLocation() {
+        return tissueLocation;
+    }
+
+    public void setTissueLocation(String tissueLocation) {
+        this.tissueLocation = tissueLocation;
+    }
+
+    public String getSpecimenType() {
+        return specimenType;
+    }
+
+    public void setSpecimenType(String specimenType) {
+        this.specimenType = specimenType;
+    }
+
+    public String getSampleOrigin() {
+        return sampleOrigin;
+    }
+
+    public void setSampleOrigin(String sampleOrigin) {
+        this.sampleOrigin = sampleOrigin;
+    }
+
+    public String getPreservation() {
+        return preservation;
+    }
+
+    public void setPreservation(String preservation) {
+        this.preservation = preservation;
+    }
+
+    public String getSex() {
+        return sex;
+    }
+
+    public void setSex(String sex) {
+        this.sex = sex;
+    }
+
+    public String getSpecies() {
+        return species;
+    }
+
+    public void setSpecies(String species) {
+        this.species = species;
+    }
+
+    public String getBaitSet() {
+        return baitSet;
+    }
+
+    public void setBaitSet(String baitSet) {
+        this.baitSet = baitSet;
     }
 
     public String getCmoInfoIgoId() {
