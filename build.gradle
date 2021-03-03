@@ -72,7 +72,9 @@ configurations {
 
 dependencies {
     // cmo metadb messaging library dependency added with jitpack
-    implementation 'com.github.mskcc:cmo-messaging-java:39241a484410204dd27112e074578d887323b801'
+    implementation('com.github.mskcc:cmo-messaging-java:39241a484410204dd27112e074578d887323b801') {
+        exclude group: 'org.slf4j'
+    }
     compile 'com.google.code.gson:gson:2.8.6'
     
     compile 'org.mskcc.common:common-domain:2.14'

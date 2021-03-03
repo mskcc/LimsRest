@@ -155,6 +155,11 @@
       <groupId>com.github.mskcc</groupId>
       <artifactId>cmo-messaging-java</artifactId>
       <version>39241a484410204dd27112e074578d887323b801</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>
