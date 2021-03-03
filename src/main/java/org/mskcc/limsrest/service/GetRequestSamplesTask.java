@@ -1,6 +1,5 @@
 package org.mskcc.limsrest.service;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.user.User;
@@ -13,8 +12,8 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
-import org.mskcc.limsrest.model.IgoRequest;
 import org.mskcc.limsrest.model.RequestSample;
+import org.mskcc.limsrest.model.RequestSampleList;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +33,7 @@ public class GetRequestSamplesTask {
         this.conn = conn;
     }
 
-    public GetRequestSamplesTask.RequestSampleList execute() {
+    public RequestSampleList execute() {
         try {
             VeloxConnection vConn = conn.getConnection();
             User user = vConn.getUser();
@@ -111,6 +110,8 @@ public class GetRequestSamplesTask {
                 log.warn("Correct invalid null valid in database for request: " + requestId);
             }
             Boolean isBicRequest = GetRequestPermissionsTask.isBicRequest(analysisType, bicAnalysis);
+            rsl.setCmoRequest(isCmoRequest);
+            rsl.setBicAnalysis(isBicRequest);
 
             return rsl;
         } catch (Throwable e) {
@@ -195,18 +196,4 @@ public class GetRequestSamplesTask {
         }
     }
 
-    public static class RequestSampleList extends IgoRequest {
-
-        public RequestSampleList() {
-            super();
-        }
-
-        public RequestSampleList(String requestId) {
-            super(requestId);
-        }
-
-        public RequestSampleList(String requestId, List<RequestSample> samples) {
-            super(requestId, samples);
-        }
-    }
 }
