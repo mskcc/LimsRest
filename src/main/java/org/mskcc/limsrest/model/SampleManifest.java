@@ -1,6 +1,7 @@
 package org.mskcc.limsrest.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -10,12 +11,10 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  * @author ochoaa
  */
 @JsonIgnoreProperties(value = { "cmoInfoIgoId" })
-public class SampleManifest {
+public class SampleManifest implements Serializable {
     private String igoId;
-
-    public String cmoInfoIgoId; // left out of pipeline JSON
-
-    private String cmoSampleName; // aka "Corrected CMO Sample ID", but not an ID in by normal database standards
+    private String cmoInfoIgoId;
+    private String cmoSampleName;
     private String sampleName;
     private String cmoSampleClass;
     private String cmoPatientId;
@@ -31,7 +30,6 @@ public class SampleManifest {
     private String species;
     private String tubeId;
     private String cfDNA2dBarcode;
-
     private String baitSet;
     protected List<QcReport> qcReports;
     protected List<Library> libraries;

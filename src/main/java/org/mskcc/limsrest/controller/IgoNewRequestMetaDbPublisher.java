@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -12,11 +11,11 @@ import org.mskcc.cmo.messaging.Gateway;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.ConnectionPoolLIMS;
 import org.mskcc.limsrest.model.RequestSample;
+import org.mskcc.limsrest.model.RequestSampleList;
 import org.mskcc.limsrest.model.SampleManifest;
 import org.mskcc.limsrest.service.GetProjectDetails;
 import org.mskcc.limsrest.service.GetRequestSamplesTask;
 import org.mskcc.limsrest.service.GetSampleManifestTask;
-import org.mskcc.limsrest.service.ProjectSummary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.ComponentScan;
@@ -68,21 +67,10 @@ public class IgoNewRequestMetaDbPublisher {
             log.error("FAILURE: requestId is not using a valid format.");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "FAILURE: requestId is not using a valid format.");
         }
-
-        String projectId = null;
-        // get project summary for request and extract project id
-        if (projectId == null || projectId.isEmpty()) {
-            task.init(requestId);
-            Future<Object> result = connPool.submitTask(task);
-            ProjectSummary ps = new ProjectSummary();
-            try{
-                ps = (ProjectSummary)result.get();
-                projectId = ps.getProjectId();
-            } catch(Exception e){
-                ps.setCmoProjectId(e.getMessage());
-            }
-        }
-        GetRequestSamplesTask.RequestSampleList requestDetails = getRequestSampleListDetails(requestId);
+        // get project id from request id
+        String[] parts = requestId.split("_");
+        String projectId = parts[0];
+        RequestSampleList requestDetails = getRequestSampleListDetails(requestId);
         List<SampleManifest> sampleManifestList = getSampleManifestListByRequestId(requestDetails);
         publishIgoNewRequestToMetaDb(projectId, requestDetails, sampleManifestList);
     }
@@ -92,9 +80,9 @@ public class IgoNewRequestMetaDbPublisher {
      * @param requestId
      * @return
      */
-    private GetRequestSamplesTask.RequestSampleList getRequestSampleListDetails(String requestId) {
+    private RequestSampleList getRequestSampleListDetails(String requestId) {
         // fetch metadata and samples for request
-        GetRequestSamplesTask.RequestSampleList sl = null;
+        RequestSampleList sl = null;
         try {
             GetRequestSamplesTask t = new GetRequestSamplesTask(requestId, conn);
              sl = t.execute();
@@ -113,7 +101,7 @@ public class IgoNewRequestMetaDbPublisher {
      * @param requestId
      * @return
      */
-    private List<SampleManifest> getSampleManifestListByRequestId(GetRequestSamplesTask.RequestSampleList sl) {
+    private List<SampleManifest> getSampleManifestListByRequestId(RequestSampleList sl) {
         // construct list of igo id strings for the 'GetSampleManifestTask'
         List<String> igoIds = new ArrayList<>();
         for (RequestSample rs : sl.getSamples()) {
@@ -143,7 +131,7 @@ public class IgoNewRequestMetaDbPublisher {
      * @param requestId
      * @param sampleManifestList
      */
-    private void publishIgoNewRequestToMetaDb(String projectId, GetRequestSamplesTask.RequestSampleList requestDetails, List<SampleManifest> sampleManifestList) {
+    private void publishIgoNewRequestToMetaDb(String projectId, RequestSampleList requestDetails, List<SampleManifest> sampleManifestList) {
         // construct igo request entity to publish to metadb
         Gson gson = new Gson();
         Map<String, Object> igoRequestMap = gson.fromJson(gson.toJson(requestDetails), Map.class);

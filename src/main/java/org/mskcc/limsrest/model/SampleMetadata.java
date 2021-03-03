@@ -1,70 +1,38 @@
 package org.mskcc.limsrest.model;
 
 import java.io.Serializable;
-import java.util.Date;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class SampleMetadata implements Serializable {
-    protected String mrn;
-    protected String cmoPatientId;
-    protected String cmoSampleId;
-    protected String igoId;
-    protected String investigatorSampleId;
-    protected String species;
-    protected String sex;
-    protected String tumorOrNormal;
-    protected String sampleType;
-    protected String preservation;
-    protected String tumorType;
-    protected String parentTumorType;
-    protected String specimenType;
-    protected String sampleOrigin;
-    protected String tissueSource;
-    protected String tissueLocation;
-    protected String recipe;
-    protected String baitSet;
-    protected String fastqPath;
-    protected String principalInvestigator;
-    protected String ancestorSample;
-    protected boolean doNotUse;
-    protected String sampleStatus;
-    protected Date creationDate;
-    private String requestId;
+    private String mrn;
+    private String cmoPatientId;
+    private String cmoSampleId;
+    private String igoId;
+    private String investigatorSampleId;
+    private String species;
+    private String sex;
+    private String tumorOrNormal;
+    private String sampleType;
+    private String preservation;
+    private String tumorType;
+    private String parentTumorType;
+    private String specimenType;
+    private String sampleOrigin;
+    private String tissueSource;
+    private String tissueLocation;
+    private String recipe;
+    private String baitset;
+    private String fastqPath;
+    private String principalInvestigator;
+    private String ancestorSample;
+    private String sampleStatus;
 
-    public SampleMetadata(){}
+    public SampleMetadata() {}
 
-    /**
-     * SampleMetadata constructor.
-     * @param mrn
-     * @param cmoPatientId
-     * @param cmoSampleId
-     * @param igoId
-     * @param investigatorSampleId
-     * @param species
-     * @param sex
-     * @param tumorOrNormal
-     * @param sampleType
-     * @param preservation
-     * @param tumorType
-     * @param parentTumorType
-     * @param specimenType
-     * @param sampleOrigin
-     * @param tissueSource
-     * @param tissueLocation
-     * @param recipe
-     * @param baitSet
-     * @param fastqPath
-     * @param principalInvestigator
-     * @param ancestorSample
-     * @param doNotUse
-     * @param sampleStatus
-     */
-    public SampleMetadata(String mrn, String cmoPatientId, String cmoSampleId, String igoId,
-            String investigatorSampleId, String species, String sex, String tumorOrNormal, String sampleType,
-            String preservation, String tumorType, String parentTumorType, String specimenType,
-            String sampleOrigin, String tissueSource, String tissueLocation, String recipe, String baitSet,
-            String fastqPath, String principalInvestigator, String ancestorSample, boolean doNotUse,
-            String sampleStatus) {
+    public SampleMetadata(String mrn, String cmoPatientId, String cmoSampleId, String igoId, String investigatorSampleId, String species,
+                          String sex, String tumorOrNormal, String sampleType, String preservation, String tumorType, String parentTumorType,
+                          String specimenType, String sampleOrigin, String tissueSource, String tissueLocation, String recipe,
+                          String baitset, String fastqPath, String principalInvestigator, String ancestorSample, String sampleStatus) {
         this.mrn = mrn;
         this.cmoPatientId = cmoPatientId;
         this.cmoSampleId = cmoSampleId;
@@ -82,11 +50,10 @@ public class SampleMetadata implements Serializable {
         this.tissueSource = tissueSource;
         this.tissueLocation = tissueLocation;
         this.recipe = recipe;
-        this.baitSet = baitSet;
+        this.baitset = baitset;
         this.principalInvestigator = principalInvestigator;
         this.fastqPath = fastqPath;
         this.ancestorSample = ancestorSample;
-        this.doNotUse = doNotUse;
         this.sampleStatus = sampleStatus;
     }
 
@@ -226,9 +193,13 @@ public class SampleMetadata implements Serializable {
         this.recipe = recipe;
     }
 
-    public String getBaitSet() { return baitSet; }
+    public String getBaitset() { 
+        return baitset; 
+    }
 
-    public void setBaitSet(String baitSet) { this.baitSet = baitSet; }
+    public void setBaitset(String baitset) { 
+        this.baitset = baitset; 
+    }
 
     public String getFastqPath() {
         return fastqPath;
@@ -254,36 +225,12 @@ public class SampleMetadata implements Serializable {
         this.ancestorSample = ancestorSample;
     }
 
-    public boolean isDoNotUse() {
-        return doNotUse;
-    }
-
-    public void setDoNotUse(boolean doNotUse) {
-        this.doNotUse = doNotUse;
-    }
-
     public String getSampleStatus() {
         return sampleStatus;
     }
 
     public void setSampleStatus(String sampleStatus) {
         this.sampleStatus = sampleStatus;
-    }
-
-    public Date getCreationDate() {
-        return creationDate;
-    }
-
-    public void setCreationDate(Date creationDate) {
-        this.creationDate = creationDate;
-    }
-
-    public String getRequestId() {
-        return requestId;
-    }
-
-    public void setRequestId(String requestId) {
-        this.requestId = requestId;
     }
 
     @Override
