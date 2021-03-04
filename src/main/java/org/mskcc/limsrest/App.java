@@ -1,7 +1,9 @@
 package org.mskcc.limsrest;
 
+import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.cmo.messaging.Gateway;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -19,8 +21,6 @@ import springfox.documentation.service.Contact;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
-
-import java.util.List;
 
 @SpringBootApplication
 @EnableSwagger2
@@ -48,6 +48,14 @@ public class App extends SpringBootServletInitializer {
 
     @Value("#{'${human.recipes}'.split(',')}")
     private List<String> humanRecipes;
+    
+    @Autowired
+    private Gateway messagingGateway;
+    
+    @Bean
+    public void initMessagingGateway() throws Exception {
+        messagingGateway.connect();
+    }
 
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
