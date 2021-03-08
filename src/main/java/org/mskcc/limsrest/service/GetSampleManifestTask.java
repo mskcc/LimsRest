@@ -165,9 +165,14 @@ public class GetSampleManifestTask {
         // 07260 Request the first sample are DNA Libraries like 07260_1 so can't just search descendants to find DNA libraries
         aliquots.add(sample);
         Map<String, LibraryDataRecord> dnaLibraries = findDNALibraries(aliquots, sampleManifest.getIgoId(), user);
-
         log.info("DNA Libraries found: " + dnaLibraries.size());
-        if (dnaLibraries.size() == 0) {
+
+        // For these projects from 2016, LIMS DNA libraries are marked differently than newer projects.  In order to
+        // find and return all fastq.gz files set the DNA Library as the base IGO ID
+        Set<String> specialIgoIds = new HashSet<>(Arrays.asList(
+                "06049_I_29", "06049_I_19", "06049_E_14", "06049_E_12", "06208_B_3", "06208_B_22", "06208_3", "93017_D_51", "06058_U_6", "05428_W_1"));
+        if (dnaLibraries.size() == 0 || specialIgoIds.contains(igoId)) {
+            dnaLibraries.clear();
             // 05500_FQ_1 was submitted as a pooled library, try to find fastqs
             log.info("No DNA libraries found, searching from base IGO ID.");
             dnaLibraries.put(igoId, new LibraryDataRecord(sample));
@@ -522,8 +527,7 @@ public class GetSampleManifestTask {
         Map<String, LibraryDataRecord> dnaLibrariesFinal = new HashMap<>();
         // For example: 09245_E_21_1_1_1, 09245_E_21_1_1_1_2 & Failed 09245_E_21_1_1_1_1
         for (String libraryName : dnaLibraries.keySet()) {
-            if (!dnaLibraries.containsKey(libraryName + "_1") &&
-                    !dnaLibraries.containsKey(libraryName + "_2")) {
+            if (!dnaLibraries.containsKey(libraryName + "_1") && !dnaLibraries.containsKey(libraryName + "_2")) {
                 // link parent child DNA libraries if they exist
                 LibraryDataRecord dr = new LibraryDataRecord(dnaLibraries.get(libraryName),
                         dnaLibraries.get(libraryName.substring(0, libraryName.length() - 2)));
