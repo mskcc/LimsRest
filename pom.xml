@@ -154,12 +154,7 @@
     <dependency>
       <groupId>com.github.mskcc</groupId>
       <artifactId>cmo-messaging-java</artifactId>
-      <version>39241a484410204dd27112e074578d887323b801</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-        </exclusion>
-      </exclusions>
+      <version>6533df65d4510647e6ff1c430dd4d1de3f336479</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>

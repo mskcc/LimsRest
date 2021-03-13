@@ -51,10 +51,26 @@ public class App extends SpringBootServletInitializer {
     
     @Autowired
     private Gateway messagingGateway;
-    
+
+    @Value("${nats.clusterid}")
+    private String clusterID;
+
+    @Value("${nats.clientid}")
+    private String clientID;
+
+    @Value("${nats.url}")
+    private String natsURL;
+
     @Bean
-    public void initMessagingGateway() throws Exception {
-        messagingGateway.connect();
+    public Gateway messagingGateway() throws Exception {
+        messagingGateway.connect(clusterID, clientID, natsURL);
+        log.info("Attempting to connecto to CMO MetaDB NATS server...");
+        if (!messagingGateway.isConnected()) {
+            log.error("Failed to connect to CMO MetaDB NATS server - messages will not be published");
+        } else {
+            log.info("CMO MetaDB NATS connection successful");
+        }
+        return messagingGateway;
     }
 
     public static void main(String[] args) {

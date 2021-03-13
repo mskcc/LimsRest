@@ -50,13 +50,6 @@ public class IgoNewRequestMetaDbPublisher {
     public IgoNewRequestMetaDbPublisher(ConnectionLIMS conn, ConnectionPoolLIMS connPool) throws Exception {
         this.conn = conn;
         this.connPool = connPool;
-        if (messagingGateway == null) {
-            log.error("Error establishing connection to NATS server, messagingGateway is NULL");
-        } else {
-            if (!messagingGateway.isConnected()) {
-                messagingGateway.connect();
-            }
-        }
     }
 
     @GetMapping("/publishIgoRequestToMetaDb")
@@ -137,7 +130,7 @@ public class IgoNewRequestMetaDbPublisher {
         Map<String, Object> igoRequestMap = gson.fromJson(gson.toJson(requestDetails), Map.class);
         // add project id and sample manifest list to returned map
         igoRequestMap.put("projectId", projectId);
-        igoRequestMap.put("sampleManifestList", sampleManifestList);
+        igoRequestMap.put("samples", sampleManifestList);
         String igoRequestJson = gson.toJson(igoRequestMap);
         try {
             log.debug("Publishing cmo request entity: " + igoRequestJson);
