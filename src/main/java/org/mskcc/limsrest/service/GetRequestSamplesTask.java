@@ -72,6 +72,11 @@ public class GetRequestSamplesTask {
                 RequestSample rs = new RequestSample(othersampleId, igoId, igoComplete);
                 sampleList.add(rs);
             }
+            // TODO REMOVE 06302_AO custom demux code
+            if (requestId.equals("06302_AO")) {
+                log.info("REPLACING LIMS SAMPLE LIST.");
+                sampleList = samples06302_AO;
+            }
             RequestSampleList rsl = new RequestSampleList(requestId, sampleList);
 
             if (isIMPACTOrHEMEPACT(recipe)) {
@@ -373,4 +378,54 @@ public class GetRequestSamplesTask {
             this.IGOComplete = IGOComplete;
         }
     }
+
+    // TODO REMOVE after fingerprinting
+    private static ArrayList<RequestSample> samples06302_AO = new ArrayList<RequestSample>() {
+        {
+            add(new RequestSample("MSK-ML-0023-CF5-MSK13395A-P", "06302_AO_962", true));
+            add(new RequestSample("MSK-ML-0007-CF5-MSK5003894D-P","06302_AO_966", true));
+            add(new RequestSample("MSK-ML-0092-CF3-MSK5004862D-P","06302_AO_1007", true));
+            add(new RequestSample("MSK-MB-0012-CF6-msk5001817d-p","06302_AO_135", true));
+            add(new RequestSample("MSK-MB-0080-CF8-msk5005638d-p","06302_AO_182", true));
+            add(new RequestSample("MSK-ML-0086-CF3-MSK5003804D-P","06302_AO_1028", true));
+            add(new RequestSample("MSK-ML-0070-CF6-MSK5004852C-P","06302_AO_967", true));
+            add(new RequestSample("MSK-ML-0091-CF3-MSK5001430D-P","06302_AO_968", true));
+            add(new RequestSample("MSK-MB-0027-CF2-msk5000429c-p","06302_AO_134", true));
+            add(new RequestSample("MSK-MB-0030-CF2-MSK14012a-p","06302_AO_158", true));
+            add(new RequestSample("MSK-MB-0072-CF6-msk5005272c-p","06302_AO_176", true));
+            add(new RequestSample("MSK-ML-0036-CF5-MSK5001255D-P","06302_AO_1036", true));
+            add(new RequestSample("MSK-ML-0076-CF8-MSK5004712D-P","06302_AO_980", true));
+            add(new RequestSample("MSK-ML-0006-CF10-MSK5003812C-P","06302_AO_1014", true));
+            add(new RequestSample("MSK-MB-0045-CF1-MSK10461a-p","06302_AO_128", true));
+            add(new RequestSample("MSK-MB-0008-CF3-MSK11534a-p","06302_AO_155", true));
+            add(new RequestSample("MSK-MB-0087-CF6-msk5004058d-p","06302_AO_175", true));
+            add(new RequestSample("MSK-ML-0036-CF5-MSK5001255C-P","06302_AO_1046", true));
+            add(new RequestSample("MSK-ML-0008-CF8-MSK5005402D-P","06302_AO_982", true));
+            add(new RequestSample("MSK-ML-0008-CF3-MSK5000441C-P","06302_AO_1004", true));
+            add(new RequestSample("MSK-ML-0080-CF4-MSK5004863C-P","06302_AO_1010", true));
+            add(new RequestSample("MSK-ML-0033-CF5-5000075D-P","06302_AO_1012", true));
+            add(new RequestSample("MSK-MB-0034-CF7-msk5002820c-p","06302_AO_118", true));
+            add(new RequestSample("MSK-MB-0088-CF6-msk5005643c-p","06302_AO_180", true));
+            add(new RequestSample("MSK-ML-0008-CF6-MSK5003805C-P","06302_AO_1021", true));
+            add(new RequestSample("MSK-ML-0013-CF4-MSK5003861C-P","06302_AO_1022", true));
+            add(new RequestSample("MSK-ML-0033-CF6-MSK5001283D-P","06302_AO_986", true));
+            add(new RequestSample("MSK-ML-0041-CF3-MSK13929A-P","06302_AO_988", true));
+            add(new RequestSample("MSK-MB-0030-CF8-msk5005621d-p","06302_AO_109", true));
+            add(new RequestSample("MSK-MB-0045-CF5-msk5001092d-p","06302_AO_185", true));
+            add(new RequestSample("MSK-ML-0092-CF3-MSK5004862C-P","06302_AO_1041", true));
+            add(new RequestSample("positivecontrol_100819","06302_AO_1056", true));
+            add(new RequestSample("MSK-MB-0030-CF3-MSK14055a-p","06302_AO_123", true));
+            add(new RequestSample("MSK-MB-0018-CF2-MSK12430a-p","06302_AO_149", true));
+            add(new RequestSample("MSK-MB-0061-CF4-msk5001133c-p","06302_AO_156", true));
+            add(new RequestSample("MSK-MB-0085-CF2-msk5001123c-p","06302_AO_167", true));
+            add(new RequestSample("MSK-ML-0054-CF1-MSK12746A-P","06302_AO_1035", true));
+            add(new RequestSample("MSK-ML-0061-CF3-MSK5001254D-P","06302_AO_1040", true));
+            add(new RequestSample("MSK-MB-0085-CF3-msk5001143d-p","06302_AO_140", true));
+            add(new RequestSample("MSK-MB-0051-CF6-msk5001144d-p","06302_AO_141", true));
+            add(new RequestSample("MSK-MB-0099-CF1-msk5000961d-p","06302_AO_142", true));
+            add(new RequestSample("MSK-MB-0085-CF2-msk5001123d-p","06302_AO_166", true));
+            add(new RequestSample("MSK-MB-0104-CF8-msk5005634c-p","06302_AO_170", true));
+            add(new RequestSample("MSK-ML-0062-CF1-MSK5003813D-P","06302_AO_1023", true));
+        }
+    };
 }
