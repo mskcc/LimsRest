@@ -35,6 +35,7 @@ public class RequestSummary {
     private String qcAccessEmail;
     private String dataAccessEmails;
     private Boolean isIgoComplete;
+    private List<String> runFolders;
 
     public RequestSummary() {
         this("UNKNOWN");
@@ -62,6 +63,16 @@ public class RequestSummary {
             this.isCmoRequest = cmoRequest;
         }
     }
+
+    @JsonInclude(JsonInclude.Include.NON_ABSENT)
+    public List<String> getRunFolders() {
+        return runFolders;
+    }
+
+    public void setRunFolders(List<String> runFolders) {
+        this.runFolders = runFolders;
+    }
+
 
     @JsonInclude(JsonInclude.Include.ALWAYS)
     public String getDataAccessEmails() {
