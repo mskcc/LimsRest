@@ -52,10 +52,12 @@ public class GetSequencingRequestsTask extends LimsTask {
      */
     private List<String> getSequencingFoldersOfRequest(DataRecordManager drm, DataRecord request, User user) {
         List<DataRecord> seqExperiments = getDescendantsOfType(request, IlluminaSeqProtocolModel.DATA_TYPE_NAME, user);
-        List<String> experimentIds = seqExperiments.stream().map((exp) -> {
-            Long expId = getRecordLongValue(exp, IlluminaSeqProtocolModel.EXPERIMENT_RECORD_ID, user);
-            return expId.toString();
-        }).distinct().collect(Collectors.toList());
+        List<String> experimentIds = seqExperiments.stream()
+                .map((exp) -> {
+                    Long expId = getRecordLongValue(exp, IlluminaSeqProtocolModel.EXPERIMENT_RECORD_ID, user);
+                    return expId.toString(); })
+                .distinct()
+                .collect(Collectors.toList());
         String query = String.format("%s in (%s)", IlluminaSeqExperimentModel.RECORD_ID, String.join(",", experimentIds));
         List<DataRecord> illuminaSeqExperiments = new ArrayList<>();
         try {
@@ -65,8 +67,11 @@ public class GetSequencingRequestsTask extends LimsTask {
                     IlluminaSeqExperimentModel.DATA_TYPE_NAME));
             return new ArrayList<>();
         }
-        List<String> runFolders = illuminaSeqExperiments.stream().map(
-                seqExpRecord -> getRecordStringValue(seqExpRecord, IlluminaSeqExperimentModel.SEQUENCER_RUN_FOLDER, user))
+        List<String> runFolders = illuminaSeqExperiments.stream()
+                .map(seqExpRecord -> getRecordStringValue(seqExpRecord, IlluminaSeqExperimentModel.SEQUENCER_RUN_FOLDER, user))
+                .filter(seqExpRecord -> {
+                    return !"".equals(seqExpRecord);
+                })
                 .collect(Collectors.toList());
 
         return runFolders;
@@ -123,8 +128,8 @@ public class GetSequencingRequestsTask extends LimsTask {
 
         for (DataRecord request : requestRecords) {
             List<String> seqFolders = getSequencingFoldersOfRequest(dataRecordManager, request, user);
-
             String requestId = getRecordStringValue(request, RequestModel.REQUEST_ID, user);
+
             RequestSummary rs = new RequestSummary(requestId);
             rs.setRunFolders(seqFolders);
             rs.setInvestigator(getRecordStringValue(request, RequestModel.INVESTIGATOR, user));
