@@ -1,13 +1,11 @@
 package org.mskcc.limsrest.util;
 
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
-import com.velox.sloan.cmo.recmodels.FlowCellLaneModel;
-import com.velox.sloan.cmo.recmodels.FlowCellModel;
-import com.velox.sloan.cmo.recmodels.SampleModel;
-import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
+import com.velox.sloan.cmo.recmodels.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
@@ -391,6 +389,23 @@ public class Utils {
             LOGGER.error(String.format("Failed to retrieve %s children of %s record: %d", childDataType, record.getDataTypeName(), record.getRecordId()));
         }
         return new DataRecord[0];
+    }
+
+    /**
+     * Returns Datatype descendents of the input DataRecord
+     *
+     * @param record
+     * @param dataType
+     * @param user
+     * @return
+     */
+    public static List<DataRecord> getDescendantsOfType(DataRecord record, String dataType, User user) {
+        try {
+            return record.getDescendantsOfType(dataType, user);
+        } catch (RemoteException e){
+            LOGGER.error(String.format("Failed to retrieve %s descendents of %s record: %d", dataType, record.getDataTypeName(), record.getRecordId()));
+        }
+        return new ArrayList<>();
     }
 
     /**
