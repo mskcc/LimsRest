@@ -17,18 +17,15 @@ import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.mskcc.limsrest.util.StatusTrackerConfig.isIgoComplete;
-import static org.mskcc.limsrest.util.Utils.getRecordLongValue;
-import static org.mskcc.limsrest.util.Utils.getRecordStringValue;
-import static org.mskcc.limsrest.util.Utils.getDescendantsOfType;
+import static org.mskcc.limsrest.util.Utils.*;
 
 public class GetSequencingRequestsTask extends LimsTask {
-    private static Log log = LogFactory.getLog(GetIgoRequestsTask.class);
+    private static Log log = LogFactory.getLog(GetSequencingRequestsTask.class);
 
     private Long days;          // Number of days since sequencing
     private Boolean delivered;  // Whether to determine requests that have been marked IGO-COMPLETE
@@ -95,20 +92,21 @@ public class GetSequencingRequestsTask extends LimsTask {
         List<List<DataRecord>> parentSamples = new ArrayList<>();
         try {
             parentSamples = dataRecordManager.getParentsOfType(records, "Sample", user);
-        } catch (ServerException | RemoteException e) {
+        } catch (RemoteException | ServerException e) {
             log.error("Failed to query Samples");
         }
 
         List<String> reqIds = new LinkedList<>();
         for (List<DataRecord> samples : parentSamples) {
             for (DataRecord sample : samples) {
-                try {
-                    String possibleReqId = getRecordStringValue(sample, RequestModel.REQUEST_ID, user);
-                    if (!reqIds.contains(possibleReqId)) {
-                        log.info(String.format("Adding RequestID: %s", possibleReqId));
-                        reqIds.add(possibleReqId);
+                String possibleReqId = getRecordStringValue(sample, RequestModel.REQUEST_ID, user);
+                log.info(String.format("Original RequestID: %s", possibleReqId));
+                String[] cSplit = possibleReqId.split(",");
+                for (String reqId : cSplit) {
+                    if (!reqIds.contains(reqId)) {
+                        log.info(String.format("Adding RequestID: %s", reqId));
+                        reqIds.add(reqId);
                     }
-                } catch (NullPointerException e) {
                 }
             }
         }
