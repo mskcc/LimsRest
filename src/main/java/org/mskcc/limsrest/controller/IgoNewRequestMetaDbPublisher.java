@@ -1,10 +1,10 @@
 package org.mskcc.limsrest.controller;
 
 import com.google.gson.Gson;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.cmo.messaging.Gateway;
@@ -31,7 +31,7 @@ import org.springframework.web.server.ResponseStatusException;
  * Published package includes request ID and all samples for request.
  * @author ochoaa
  */
-@ComponentScan("org.mskcc.cmo.messaging")
+@ComponentScan({"org.mskcc.cmo.messaging", "org.mskcc.cmo.common.*"})
 @RestController
 @RequestMapping("/")
 public class IgoNewRequestMetaDbPublisher {
@@ -96,17 +96,19 @@ public class IgoNewRequestMetaDbPublisher {
      */
     private List<SampleManifest> getSampleManifestListByRequestId(RequestSampleList sl) {
         // construct list of igo id strings for the 'GetSampleManifestTask'
-        List<String> igoIds = new ArrayList<>();
-        for (RequestSample rs : sl.getSamples()) {
-            igoIds.add(rs.getIgoSampleId());
+        List<RequestSample> requestSamples = sl.getSamples();
+        String[] igoIds = new String[requestSamples.size()];
+        for (int i = 0; i < requestSamples.size(); i++) {
+            RequestSample rs = requestSamples.get(i);
+            igoIds[i] = rs.getIgoSampleId();
         }
 
         // fetch list of sample manifests for request sample (igo)ids
         List<SampleManifest> sampleManifestList = null;
-        GetSampleManifestTask sampleManifest = new GetSampleManifestTask((String[]) igoIds.toArray(), conn);
+        GetSampleManifestTask sampleManifest = new GetSampleManifestTask(igoIds, conn);
         GetSampleManifestTask.SampleManifestResult result = sampleManifest.execute();
         if (result == null) {
-            log.error("Sample Manifest generation failed for: " + igoIds.toString());
+            log.error("Sample Manifest generation failed for: " + StringUtils.join(igoIds, ", "));
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
         } else if (result.error == null) {
             log.info("Returning n rows: " + result.smList.size());
