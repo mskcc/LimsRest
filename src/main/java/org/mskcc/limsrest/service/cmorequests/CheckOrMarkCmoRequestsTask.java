@@ -26,7 +26,7 @@ import static org.mskcc.limsrest.util.Utils.getValueFromDataRecord;
  *
  * 1. all WES recapture --Done
  * 2. WES (currently: if pipeline option is checked in ilabs, for near future: if CCS/TEMPO pipeline (Opt-in) option is checked in ilabs or in sample intake) --Done
- * 3. all IMPACT --Done
+ * 3. all IMPACT (except mouse impact) -- Done
  * 4. all ACCESS --Done
  * 5. all HEMEPACT --Done
  * 6. Any request with skicmopm@mskcc.org listed in ilabs --Done
@@ -41,6 +41,7 @@ public class CheckOrMarkCmoRequestsTask {
 
     private static final String CMO_PM_EMAIL = "skicmopm@mskcc.org";
     private static final String IMPACT_RECIPE_VAL = "impact";
+    private static final String MOUSE_IMPACT_RECIPE_VAL = "m-impact";
     private static final String HEMEMPACT_RECIPE_VAL = "hemepact";
     private static final String ACCESS_RECIPE_VAL = "msk-access";
     private static final String WHOLE_EXOME_RECIPE = "WholeExomeSequencing";
@@ -211,7 +212,8 @@ public class CheckOrMarkCmoRequestsTask {
         //check if cmo recipe, impact, hemepact or msk-access. The recipe validation is enough to call the request cmo request.
         if (!StringUtils.isBlank(recipe)) {
             recipe = recipe.toLowerCase();
-            if (recipe.contains(IMPACT_RECIPE_VAL) || recipe.contains(HEMEMPACT_RECIPE_VAL) || recipe.contains(ACCESS_RECIPE_VAL)) {
+            if ((recipe.contains(IMPACT_RECIPE_VAL) || recipe.contains(HEMEMPACT_RECIPE_VAL) || recipe.contains(ACCESS_RECIPE_VAL))
+                    && !recipe.contains(MOUSE_IMPACT_RECIPE_VAL)) {
                 return true;
             }
             return cmoRecipes.contains(recipe) && bicAnalysis;

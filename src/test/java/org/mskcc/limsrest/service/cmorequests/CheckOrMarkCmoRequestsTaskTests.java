@@ -41,6 +41,7 @@ public class CheckOrMarkCmoRequestsTaskTests {
         assertFalse(CheckOrMarkCmoRequestsTask.isCmoRecipe("WholeExomeSequencing", false));
         assertFalse(CheckOrMarkCmoRequestsTask.isCmoRecipe("RNASeq_RiboDeplete", true));
         assertFalse(CheckOrMarkCmoRequestsTask.isCmoRecipe("RNASeq_RiboDeplete", false));
+        assertFalse(CheckOrMarkCmoRequestsTask.isCmoRecipe("M-IMPACT_v1", false));
     }
 
 
