@@ -9,7 +9,7 @@ public class DdpcrAssay {
     public String assayName;
     public String nameAminoAcidChange;
     public String nameNucleotideChange;
-    public Double assayVolume;
+    public String assayVolume;
     public String assayType;
     public String fluorophore;
     public String assayReference;
@@ -46,7 +46,7 @@ public class DdpcrAssay {
         this.assayName = (String) sampleFields.get("AssayName");
         this.nameAminoAcidChange = (String) sampleFields.get("NameAminoAcidChange");
         this.nameNucleotideChange = (String) sampleFields.get("NameNucleotideChange");
-        this.assayVolume = (Double) sampleFields.get("AssayVolume");
+        this.assayVolume = (String)sampleFields.get("AssayVolume");
         this.assayType = (String) sampleFields.get("AssayType");
         this.fluorophore = (String) sampleFields.get("Fluorophore");
         this.assayReference = (String) sampleFields.get("AssayReference");
