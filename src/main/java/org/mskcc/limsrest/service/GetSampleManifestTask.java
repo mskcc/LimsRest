@@ -99,7 +99,8 @@ public class GetSampleManifestTask {
         List<DataRecord> samples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + igoId + "'", user);
         if (samples.size() == 0) { // sample not found in sample table
             // TODO REMOVE this special case for 06302_AO and change the igo lims if it is correct
-            if (igoId.contains("06302_AO_")) { // igo demuxed some 06302_AO samples that are not in LIMS, they have 06302_X parent
+            // igo made a custom 06302_AO sample sheet with samples that are not in LIMS, they have a 06302_X parent
+            if (igoId.contains("06302_AO_")) {
                 String igoIdX = igoId.replace("_AO", "_X");
                 List<DataRecord> samples_06302 = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + igoIdX + "'", user);
                 DataRecord sampleX = samples_06302.get(0);
@@ -112,6 +113,12 @@ public class GetSampleManifestTask {
                 sampleManifest.setSpecimenType("cfDNA");
                 SampleManifest result = fastqsOnlyManifest(sampleManifest, new HashSet<>());
                 result.getLibraries().get(0).captureName = "Pool-06302_AO-A8_1";
+                result.getLibraries().get(0).runs.get(0).readLength = "101/8/8/101";
+                result.getLibraries().get(0).runs.get(0).runMode = "NovaSeq S4";
+                Integer array[] = {1, 2, 3, 4};
+                result.getLibraries().get(0).runs.get(0).flowCellLanes = Arrays.asList(array);
+                setACCESS2dBarcode(user, dataRecordManager, sampleX, sampleManifest);
+                sampleManifest.setTubeId(getTubeId(sampleX, user));
                 return result;
             }
             return new SampleManifest();
@@ -180,26 +187,7 @@ public class GetSampleManifestTask {
 
         Double dnaInputNg = null;
         if (recipe.contains("ACCESS") ) {
-            dnaInputNg = findDNAInputForLibraryForMSKACCESS(sample, user);
-            log.info("Searching for ACCESS 2D barcode with base IGO sample ID=" + sampleManifest.cmoInfoIgoId);
-            List<DataRecord> baseSamples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sampleManifest.cmoInfoIgoId + "'", user);
-            if (baseSamples.size() > 0) {
-                DataRecord baseSample = baseSamples.get(0);
-                // example 2d barcode "8036707180"
-                String barcode = baseSample.getStringVal("MicronicTubeBarcode", user);
-                while (barcode == null || barcode.length() < 8) {
-                    // travel to child sample to look for the original barcode, for example 06302_AH_9
-                    log.info("No 2dbarcode in parent sample, checking child sample.");
-                    DataRecord [] sampleChildren = baseSample.getChildrenOfType("Sample", user);
-                    if (sampleChildren.length > 0) {
-                        baseSample = sampleChildren[0];
-                        barcode = baseSample.getStringVal("MicronicTubeBarcode", user);
-                    } else {
-                        break;
-                    }
-                }
-                sampleManifest.setCfDNA2dBarcode(barcode);
-            }
+            dnaInputNg = setACCESS2dBarcode(user, dataRecordManager, sample, sampleManifest);
         }
 
         // for each DNA Library traverse the records grab the fields we need and paths to fastqs.
@@ -314,6 +302,31 @@ public class GetSampleManifestTask {
             }
         }
         return sampleManifest;
+    }
+
+    private Double setACCESS2dBarcode(User user, DataRecordManager dataRecordManager, DataRecord sample, SampleManifest sampleManifest) throws NotFound, IoError, RemoteException {
+        Double dnaInputNg;
+        dnaInputNg = findDNAInputForLibraryForMSKACCESS(sample, user);
+        log.info("Searching for ACCESS 2D barcode with base IGO sample ID=" + sampleManifest.cmoInfoIgoId);
+        List<DataRecord> baseSamples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sampleManifest.cmoInfoIgoId + "'", user);
+        if (baseSamples.size() > 0) {
+            DataRecord baseSample = baseSamples.get(0);
+            // example 2d barcode "8036707180"
+            String barcode = baseSample.getStringVal("MicronicTubeBarcode", user);
+            while (barcode == null || barcode.length() < 8) {
+                // travel to child sample to look for the original barcode, for example 06302_AH_9
+                log.info("No 2dbarcode in parent sample, checking child sample.");
+                DataRecord [] sampleChildren = baseSample.getChildrenOfType("Sample", user);
+                if (sampleChildren.length > 0) {
+                    baseSample = sampleChildren[0];
+                    barcode = baseSample.getStringVal("MicronicTubeBarcode", user);
+                } else {
+                    break;
+                }
+            }
+            sampleManifest.setCfDNA2dBarcode(barcode);
+        }
+        return dnaInputNg;
     }
 
     private String getTubeId(DataRecord sample, User user) throws IoError, RemoteException, NotFound {
