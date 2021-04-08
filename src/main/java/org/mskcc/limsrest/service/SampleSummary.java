@@ -6,7 +6,6 @@ import java.util.LinkedList;
 
 public class SampleSummary {
     private String id;
-
     private String assay;
     private String barcodeId;
     private String cellCount;
@@ -38,6 +37,8 @@ public class SampleSummary {
     private String recipe;
     private Long readNumber;  // missing
     private String readSummary; // missing
+    private String requestedReads;
+    private String requestedCoverage;
     private Long recordId;
     private String rowPosition;
     private String runType;
@@ -409,6 +410,23 @@ public class SampleSummary {
         this.readSummary = readSummary;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getRequestedReads() {
+        return requestedReads;
+    }
+
+    public void setRequestedReads(String requestedReads) {
+        this.requestedReads = requestedReads;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getRequestedCoverage() {
+        return requestedCoverage;
+    }
+
+    public void setRequestedCoverage(String requestedCoverage) {
+        this.requestedCoverage = requestedCoverage;
+    }
     public String getCancerType() {
         if (tumorType == null) {
             return tumorOrNormal;
@@ -525,6 +543,7 @@ public class SampleSummary {
     public void setCmoPatientId(String cmoPatientId) {
         this.cmoPatientId = cmoPatientId;
     }
+
     @Override
     public String toString() {
         return "SampleSummary{" +
@@ -560,6 +579,8 @@ public class SampleSummary {
                 ", recipe='" + recipe + '\'' +
                 ", readNumber=" + readNumber +
                 ", readSummary='" + readSummary + '\'' +
+                ", requestedReads='" + requestedReads + '\'' +
+                ", requestedCoverage='" + requestedCoverage + '\'' +
                 ", recordId=" + recordId +
                 ", rowPosition='" + rowPosition + '\'' +
                 ", runType='" + runType + '\'' +
