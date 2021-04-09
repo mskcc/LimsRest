@@ -31,6 +31,9 @@ public class ProjectSampleTree {
     private Map<String, Object> sampleData;
     private User user;                                  // TODO - should this be elsewhere?
     private boolean isIgoComplete;                      // Is Sample complete or not
+    private String correctedInvestigatorSampleId;
+    private String sampleName;
+    private String investigatorSampleId;
 
     public ProjectSampleTree(WorkflowSample root, User user) {
         this.user = user;
@@ -40,6 +43,9 @@ public class ProjectSampleTree {
         this.dataQcStatus = "";                         // Pending until finding a QcStatus child
         this.sampleData = new HashMap<>();
         this.isIgoComplete = false;                     // Defaults to false, must be set true
+        this.sampleName = "";
+        this.investigatorSampleId = "";
+        this.correctedInvestigatorSampleId = "";
     }
 
     /**
@@ -109,6 +115,16 @@ public class ProjectSampleTree {
 
     public List<WorkflowSample> getSamples() {
         return new ArrayList(sampleMap.values());
+    }
+
+    public void setSampleName(String sampleName) {
+        this.sampleName = sampleName;
+    }
+    public void setInvestigatorSampleId(String investigatorSampleId) {
+        this.investigatorSampleId = investigatorSampleId;
+    }
+    public void setCorrectedInvestigatorSampleId(String correctedInvestigatorSampleId) {
+        this.correctedInvestigatorSampleId = correctedInvestigatorSampleId;
     }
 
     /**
@@ -284,6 +300,12 @@ public class ProjectSampleTree {
             }
         }
         projectSample.addAttributes(this.sampleData);
+
+        Map<String, Object> sampleNames = new HashMap<>();
+        sampleNames.put("sampleName", this.sampleName);
+        sampleNames.put("investigatorId", this.investigatorSampleId);
+        sampleNames.put("correctedInvestigatorId", this.correctedInvestigatorSampleId);
+        projectSample.addAttributes(sampleNames);
 
         return projectSample;
     }
