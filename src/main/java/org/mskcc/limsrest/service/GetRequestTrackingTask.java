@@ -372,7 +372,7 @@ public class GetRequestTrackingTask {
         DataRecord[] sampleCmoInfochildren = getChildrenofDataRecord(record, CmoSampleInfo.DATA_TYPE_NAME, user);
         if(sampleCmoInfochildren.length == 1){
             DataRecord sampleCmoInfoChild = sampleCmoInfochildren[0];
-            String correctedCmoId = getRecordStringValue(sampleCmoInfoChild, CmoSampleInfo.CORRECTED_CMOID, user);
+            String correctedCmoId = getRecordStringValue(sampleCmoInfoChild, CmoSampleInfo.CORRECTED_INVEST_PATIENT_ID, user);
             rootTree.setCorrectedInvestigatorSampleId(correctedCmoId);
         } else {
             log.info(String.format("There is not a single %s child for Sample DataRecord: %d",
