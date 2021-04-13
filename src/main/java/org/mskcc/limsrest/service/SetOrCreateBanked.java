@@ -10,6 +10,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.HashMap;
 import java.util.List;
 
+import static org.mskcc.limsrest.util.Utils.getCovReadsRequirementsMap;
+
 /**
  * A queued task that takes a sample id and other values and looks for a banked sample with that id
  * If no such sample is present but there is an appropriate request it will create it
@@ -313,11 +315,12 @@ public class SetOrCreateBanked extends LimsTask {
                 bankedFields.put("TumorType", cancerType);
             }
             bankedFields.put("TumorOrNormal", setTumorOrNormal(sampleClass, cancerType, sampleId));
-
+            // update the reads for IMPACT, HEMEPACT, ACCESS and Archer
+            bankedFields.putAll(getCovReadsRequirementsMap(bankedFields.get("Recipe"), bankedFields.get("TumorOrNormal"),
+                    bankedFields.get("RequestedReads"), bankedFields.get("RequestedCoverage")));
             if (vol > 0.0) {
                 banked.setDataField("Volume", vol, user);
             }
-
             if (!"NULL".equals(numTubes)) {
                 bankedFields.put("NumTubes", numTubes);
             }
