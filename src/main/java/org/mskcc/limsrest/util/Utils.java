@@ -796,7 +796,12 @@ public class Utils {
         // Override requestedReads & coverageTarget in coverageReadsMap for certain recipes
         boolean normal = "Normal".equals(tumorOrNormal);
         Object coverageTarget = coverage;
-        if (Objects.nonNull(recipe) && recipe.toString().contains("Heme")) {
+        if (Objects.nonNull(recipe) && recipe.toString().contains("Archer-")) {
+            requestedReads = 2.5;
+            LOGGER.info(String.format("Updating Archer Request (Recipe: %s) - Coverage Target: %s, Requested Reads: %f",
+                    recipe, coverageTarget, requestedReads));
+        }
+        else if (Objects.nonNull(recipe) && recipe.toString().contains("Heme")) {
             if (normal) {
                 coverageTarget = "250X";
                 requestedReads = 10.0;
@@ -824,11 +829,6 @@ public class Utils {
                 requestedReads = 60.0;
             }
             LOGGER.info(String.format("Updating ACCESS Request (Recipe: %s) - Coverage Target: %s, Requested Reads: %f",
-                    recipe, coverageTarget, requestedReads));
-        }
-        else if (Objects.nonNull(recipe) && recipe.toString().contains("Archer")) {
-            requestedReads = 2.5;
-            LOGGER.info(String.format("Updating Archer Request (Recipe: %s) - Coverage Target: %s, Requested Reads: %f",
                     recipe, coverageTarget, requestedReads));
         }
         coverageReadsMap.put("RequestedCoverage", coverageTarget);
