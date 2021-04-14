@@ -50,7 +50,6 @@ public class GetReadyForIllumina {
                     String requestName = "";
                     if (!requestRecords.isEmpty()) {
                         requestName = requestRecords.get(0).getStringVal("RequestName", user);
-                        System.out.println("SET REQUEST NAME:" + requestName + ":" + sampleId);
                     }
                     if (sampleId.toLowerCase().startsWith("pool-")) {
                         // if sample is pool then get all the Library samples in the pool which live as parents of the pool.
