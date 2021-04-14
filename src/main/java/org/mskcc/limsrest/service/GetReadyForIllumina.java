@@ -19,7 +19,7 @@ import static org.mskcc.limsrest.util.Utils.getRecordsOfTypeFromParents;
 
 /**
  * A queued task that shows all samples that need planned for Illumina runs. <BR>
- *     This endpoint will return the sample level information for individual Library samples and pooled Library samples.<BR>
+ * This endpoint will return the sample level information for individual Library samples and pooled Library samples.<BR>
  * The information is important for Pool planning for sequencing and making pooling decisions.
  */
 public class GetReadyForIllumina {
@@ -33,6 +33,7 @@ public class GetReadyForIllumina {
     @PreAuthorize("hasRole('READ')")
     public List<RunSummary> execute() {
         List<RunSummary> results = new LinkedList<>();
+        // this query has had performance issues when the number of samples is high, track execution time
         long startTime = System.currentTimeMillis();
         try {
             VeloxConnection vConn = conn.getConnection();
@@ -45,6 +46,12 @@ public class GetReadyForIllumina {
             if (samplesToPool.size() > 0){
                 for (DataRecord sample: samplesToPool){
                     String sampleId = sample.getStringVal("SampleId", user);
+                    List<DataRecord> requestRecords = sample.getAncestorsOfType("Request", user);
+                    String requestName = "";
+                    if (!requestRecords.isEmpty()) {
+                        requestName = requestRecords.get(0).getStringVal("RequestName", user);
+                        System.out.println("SET REQUEST NAME:" + requestName + ":" + sampleId);
+                    }
                     if (sampleId.toLowerCase().startsWith("pool-")) {
                         // if sample is pool then get all the Library samples in the pool which live as parents of the pool.
                         List<DataRecord> parentLibrarySamplesForPool = getNearestParentLibrarySamplesForPool(sample, user);
@@ -54,6 +61,7 @@ public class GetReadyForIllumina {
                             summary.setPool(sampleId); //preset poolID
                             summary.setConcentration(sample.getDoubleVal("Concentration", user)); //preset Pool Concentration
                             summary.setStatus(sample.getStringVal("ExemplarSampleStatus", user)); //preset Pool Status
+                            summary.setRequestName(requestName);
                             if (sample.getValue("Volume", user) == null) //preset pool volume in this if else block
                                 summary.setVolume("null");
                             else
@@ -61,9 +69,8 @@ public class GetReadyForIllumina {
                             results.add(createRunSummaryForSampleInPool(librarySample, summary, user)); //pass the summary Object with preset pool level information "createRunSummaryForSampleInPool" method to add sample level information
                         }
                     } else {
-                        RunSummary defaultSummary = new RunSummary("DEFAULT", "DEFAULT"); // if sample is not pool, then it is Library sample and work with it.
                         try {
-                            results.add(createRunSummaryForNonPooledSamples(sample, defaultSummary, user));
+                            results.add(createRunSummaryForNonPooledSamples(sample, requestName, user));
                         } catch (IllegalStateException e){
                             // Continue processing remaining data records
                             log.error(e.getMessage());
@@ -88,7 +95,6 @@ public class GetReadyForIllumina {
      * @throws NotFound
      */
     private List<DataRecord> getNearestParentLibrarySamplesForPool(DataRecord pooledSample, User user) throws IoError, RemoteException, NotFound {
-
         List<DataRecord> parentLibrarySamplesForPool = new ArrayList<>();
         Stack<DataRecord> sampleTrackingStack = new Stack<>();
         sampleTrackingStack.add(pooledSample);
@@ -172,7 +178,6 @@ public class GetReadyForIllumina {
      * @throws ServerException
      * @throws InvalidValue
      */
-
     private Double getRequestedReadsForSample(DataRecord sample, User user) throws IoError, RemoteException, NotFound, ServerException, InvalidValue {
         DataRecord sampleWithSeqRequirementAsChild = getParentSampleWithDesiredChildTypeRecord(sample, "SeqRequirement", user);
         if (sampleWithSeqRequirementAsChild !=null && sampleWithSeqRequirementAsChild.getChildrenOfType("SeqRequirement", user)[0].getValue("RequestedReads", user) != null) {
@@ -213,7 +218,6 @@ public class GetReadyForIllumina {
     /**
      * This method will create the Summary Object for the sample not part of a pool.
      * @param unpooledSample
-     * @param summary
      * @param user
      * @return Run Summary for sample.
      * @throws NotFound
@@ -221,11 +225,13 @@ public class GetReadyForIllumina {
      * @throws IoError
      * @throws InvalidValue
      */
-    private RunSummary createRunSummaryForNonPooledSamples(DataRecord unpooledSample, RunSummary summary, User user)
+    private RunSummary createRunSummaryForNonPooledSamples(DataRecord unpooledSample, String requestName, User user)
             throws NotFound, RemoteException, IoError, InvalidValue {
         Map<String, Object> sampleFieldValues = unpooledSample.getFields(user);
         String sampleId = (String) sampleFieldValues.get("SampleId");
         log.info("Creating run summary for " + sampleId);
+        RunSummary summary = new RunSummary("DEFAULT", "DEFAULT"); // if sample is not pool, then it is Library sample and work with it.
+        summary.setRequestName(requestName);
         summary.setSampleId(sampleId);
         summary.setOtherSampleId((String) sampleFieldValues.getOrDefault("OtherSampleId", ""));
         summary.setRequestId((String) sampleFieldValues.getOrDefault("RequestId", ""));
@@ -258,13 +264,6 @@ public class GetReadyForIllumina {
             summary.setReadTotal(seqReq.getValue(SeqRequirementModel.READ_TOTAL, user) != null ? seqReq.getLongVal(SeqRequirementModel.READ_TOTAL, user): 0);
             summary.setRemainingReads(seqReq.getValue("RemainingReads", user) != null ? seqReq.getLongVal("RemainingReads", user) : 0);
         }
-        // TODO REMOVED LEGACY FIELDS
-//        String plannedSequencer = getPlannedSequencerForSample(unpooledSample, user);
-//        if (plannedSequencer != null)
-//            summary.setSequencer(plannedSequencer);
-//        String batchWeek = getPlannedWeekSample(unpooledSample, user);
-//        if (batchWeek != null)
-//            summary.setBatch(batchWeek);
         summary.setRunType(getSequencingRunTypeForSample(unpooledSample, user));
         return summary;
     }
