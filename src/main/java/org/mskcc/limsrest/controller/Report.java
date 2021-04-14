@@ -15,7 +15,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Future;
 
 @RestController
 @RequestMapping("/")
@@ -85,21 +84,23 @@ public class Report {
         return runSums;
     }
 
+    /**
+     * Endpoint for the IGO-Run-Planner application.
+     */
     @GetMapping("/planRuns")
     public List<RunSummary> getPlan(@RequestParam(value = "user") String user) {
         log.info("Starting plan Runs for user " + user);
-        GetReadyForIllumina illuminaTask = new GetReadyForIllumina(conn);
-        List<RunSummary> runSums = new LinkedList<>();
         try {
-            runSums = illuminaTask.execute();
+            return new GetReadyForIllumina(conn).execute();
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
             RunSummary rs = new RunSummary("BLANK_RUN", "BLANK_REQUEST");
             rs.setInvestigator(e.getMessage() + " TRACE: " + sw.toString());
+            List<RunSummary> runSums = new LinkedList<>();
             runSums.add(rs);
+            return runSums;
         }
-        return runSums;
     }
 }
