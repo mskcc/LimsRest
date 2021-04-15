@@ -831,6 +831,12 @@ public class Utils {
             LOGGER.info(String.format("Updating ACCESS Request (Recipe: %s) - Coverage Target: %s, Requested Reads: %f",
                     recipe, coverageTarget, requestedReads));
         }
+        if (requestedReads != null && String.valueOf(requestedReads).split("-").length == 2){
+            requestedReads = selectLarger(String.valueOf(requestedReads));
+        }
+        else if (requestedReads != null && !StringUtils.isBlank(String.valueOf(requestedReads))){
+            requestedReads = Double.parseDouble(String.valueOf(requestedReads).split(" ")[0].trim());
+        }
         coverageReadsMap.put("RequestedCoverage", coverageTarget);
         coverageReadsMap.put("RequestedReads", requestedReads); // Update set by recipe
         return coverageReadsMap;

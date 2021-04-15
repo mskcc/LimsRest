@@ -30,6 +30,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.mskcc.limsrest.util.Utils.selectLarger;
+
 
 /**
  * A queued task that takes banked ids, a service id and optionally a request  and project.
@@ -426,29 +428,30 @@ public class PromoteBanked extends LimsTask {
             }
             seqRequirementMap.put("SequencingRunType", seqRunType);
             seqRequirementMap.put("CoverageTarget", requestedCoverage);
-            String reqReads = (String) bankedFields.getOrDefault("RequestedReads", null);
-            if (reqReads!= null && reqReads.split("-").length == 2){
-                seqRequirementMap.put("RequestedReads", selectLarger(reqReads));
-            }
-            else if (reqReads != null && !StringUtils.isBlank(reqReads)){
-                seqRequirementMap.put("RequestedReads", Double.parseDouble(reqReads.split(" ")[0].trim()));
-            }
+//            String reqReads = (String) bankedFields.getOrDefault("RequestedReads", null);
+//            if (reqReads!= null && reqReads.split("-").length == 2){
+//                seqRequirementMap.put("RequestedReads", selectLarger(reqReads));
+//            }
+//            else if (reqReads != null && !StringUtils.isBlank(reqReads)){
+//                seqRequirementMap.put("RequestedReads", Double.parseDouble(reqReads.split(" ")[0].trim()));
+//            }
             promotedSampleRecord.addChild("SeqRequirement", seqRequirementMap, user);
         } catch (NullPointerException npe) {
+            log.error(npe.getStackTrace().toString());
         }
     }
-
-    /**
-     * Method to return larger value when a range is available
-     * @param requestedReads
-     * @return
-     */
-    protected static double selectLarger(String requestedReads) {
-        // example "30-40 million" => 40.0
-        String[] parts = requestedReads.split("[ -]+");
-        requestedReads = parts[1].trim();
-        return Double.parseDouble(requestedReads);
-    }
+//
+//    /**
+//     * Method to return larger value when a range is available
+//     * @param requestedReads
+//     * @return
+//     */
+//    protected static double selectLarger(String requestedReads) {
+//        // example "30-40 million" => 40.0
+//        String[] parts = requestedReads.split("[ -]+");
+//        requestedReads = parts[1].trim();
+//        return Double.parseDouble(requestedReads);
+//    }
 
     /**
      * Determines requested reads & coverage based on requestedReads of BankedSample DataRecord and internal mapping
