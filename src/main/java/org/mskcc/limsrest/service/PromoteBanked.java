@@ -431,7 +431,7 @@ public class PromoteBanked extends LimsTask {
                 seqRequirementMap.put("RequestedReads", selectLarger(reqReads));
             }
             else if (reqReads != null && !StringUtils.isBlank(reqReads)){
-                seqRequirementMap.put("RequestedReads", reqReads);
+                seqRequirementMap.put("RequestedReads", Double.parseDouble(reqReads.split(" ")[0].trim()));
             }
             promotedSampleRecord.addChild("SeqRequirement", seqRequirementMap, user);
         } catch (NullPointerException npe) {
