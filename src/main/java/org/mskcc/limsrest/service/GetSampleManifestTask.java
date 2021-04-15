@@ -430,7 +430,7 @@ public class GetSampleManifestTask {
         List<DataRecord> cmoRecords = Utils.getRecordsOfTypeFromParents(sample, "Sample", "SampleCMOInfoRecords", user);
         DataRecord cmoInfo;
         String cmoInfoIgoId = "";
-        if (cmoRecords == null) {
+        if (cmoRecords == null || cmoRecords.isEmpty()) {
             log.info("No CMO info record found, using sample level fields for IGO ID: " + igoId);
             cmoInfo = samples.get(0);
         } else {
