@@ -426,12 +426,23 @@ public class PromoteBanked extends LimsTask {
             }
             seqRequirementMap.put("SequencingRunType", seqRunType);
             seqRequirementMap.put("CoverageTarget", requestedCoverage);
-            seqRequirementMap.put("RequestedReads", bankedFields.getOrDefault("RequestedReads", null));
+            String reqReads = (String) bankedFields.getOrDefault("RequestedReads", null);
+            if (reqReads!= null && reqReads.split("-").length == 2){
+                seqRequirementMap.put("RequestedReads", selectLarger(reqReads));
+            }
+            else if (reqReads != null && !StringUtils.isBlank(reqReads)){
+                seqRequirementMap.put("RequestedReads", reqReads);
+            }
             promotedSampleRecord.addChild("SeqRequirement", seqRequirementMap, user);
         } catch (NullPointerException npe) {
         }
     }
 
+    /**
+     * Method to return larger value when a range is available
+     * @param requestedReads
+     * @return
+     */
     protected static double selectLarger(String requestedReads) {
         // example "30-40 million" => 40.0
         String[] parts = requestedReads.split("[ -]+");
