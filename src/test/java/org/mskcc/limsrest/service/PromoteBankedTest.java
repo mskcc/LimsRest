@@ -181,12 +181,6 @@ public class PromoteBankedTest {
         );
     }
 
-    @Test
-    public void selectLarger() {
-        double result = PromoteBanked.selectLarger("30-40 million");
-        assertEquals(40.0, result, 0.001);
-    }
-
     @After
     public void destroy(){
         conn.close();
