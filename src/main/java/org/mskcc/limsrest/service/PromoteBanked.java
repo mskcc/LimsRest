@@ -420,30 +420,13 @@ public class PromoteBanked extends LimsTask {
             if (Objects.nonNull(requestedCoverage)){
                 requestedCoverage = requestedCoverage.toString().replace("X","").replace("x", "");
             }
-            // Take runtype from "BankedSample" record. Default to "PE100" if not present and requested coverage is not present.
-            Object seqRunType = bankedFields.getOrDefault("RunType", null);
-            if((requestedCoverage == null || StringUtils.isBlank(requestedCoverage.toString())) && (seqRunType == null || StringUtils.isBlank(seqRunType.toString()))){
-                seqRunType = "PE100";
-            }
-            seqRequirementMap.put("SequencingRunType", seqRunType);
+            seqRequirementMap.put("SequencingRunType", bankedFields.getOrDefault("RunType", null));
             seqRequirementMap.put("CoverageTarget", requestedCoverage);
             promotedSampleRecord.addChild("SeqRequirement", seqRequirementMap, user);
         } catch (NullPointerException npe) {
             log.error(npe.getStackTrace().toString());
         }
     }
-//
-//    /**
-//     * Method to return larger value when a range is available
-//     * @param requestedReads
-//     * @return
-//     */
-//    protected static double selectLarger(String requestedReads) {
-//        // example "30-40 million" => 40.0
-//        String[] parts = requestedReads.split("[ -]+");
-//        requestedReads = parts[1].trim();
-//        return Double.parseDouble(requestedReads);
-//    }
 
     /**
      * Determines requested reads & coverage based on requestedReads of BankedSample DataRecord and internal mapping
@@ -466,6 +449,7 @@ public class PromoteBanked extends LimsTask {
         return coverageReadsMap;
     }
 
+
     private void checkSampleTypeAndPatientId(BankedSample bankedSample) {
         Utils.requireNonNullNorEmpty(bankedSample.getCMOPatientId(), String.format("Cmo Patient id is empty for" +
                 " banked " +
@@ -475,10 +459,12 @@ public class PromoteBanked extends LimsTask {
                 "%s", bankedSample.getId()));
     }
 
+
     private Sample getPromotedSample(BankedSample bankedSample, String uuid, String newIgoId, String
             assignedRequestId) {
         return bankedSampleToSampleConverter.convert(bankedSample, uuid, newIgoId, assignedRequestId);
     }
+
 
     Map<String, Object> getCmoFields(Map<String, Object> bankedFields, String correctedCmoSampleId, String
             assignedRequestId, String igoId, String uuid) {
