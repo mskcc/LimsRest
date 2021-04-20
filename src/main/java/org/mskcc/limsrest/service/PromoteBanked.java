@@ -416,25 +416,17 @@ public class PromoteBanked extends LimsTask {
             } catch (Exception e){
                 log.error(String.format("Failed to log Banked Sample Values: %s. Error: %s", otherSampleId, e.getMessage()));
             }
-
-            // Take runtype from "BankedSample" record. Default to "PE100" if not present
-            Object seqRunType = bankedFields.getOrDefault("RunType", null);
-            if(seqRunType == null){
-                seqRunType = "PE100";
-            }
             requestedCoverage = bankedFields.getOrDefault("RequestedCoverage", null);
             if (Objects.nonNull(requestedCoverage)){
                 requestedCoverage = requestedCoverage.toString().replace("X","").replace("x", "");
             }
+            // Take runtype from "BankedSample" record. Default to "PE100" if not present and requested coverage is not present.
+            Object seqRunType = bankedFields.getOrDefault("RunType", null);
+            if((requestedCoverage == null || StringUtils.isBlank(requestedCoverage.toString())) && (seqRunType == null || StringUtils.isBlank(seqRunType.toString()))){
+                seqRunType = "PE100";
+            }
             seqRequirementMap.put("SequencingRunType", seqRunType);
             seqRequirementMap.put("CoverageTarget", requestedCoverage);
-//            String reqReads = (String) bankedFields.getOrDefault("RequestedReads", null);
-//            if (reqReads!= null && reqReads.split("-").length == 2){
-//                seqRequirementMap.put("RequestedReads", selectLarger(reqReads));
-//            }
-//            else if (reqReads != null && !StringUtils.isBlank(reqReads)){
-//                seqRequirementMap.put("RequestedReads", Double.parseDouble(reqReads.split(" ")[0].trim()));
-//            }
             promotedSampleRecord.addChild("SeqRequirement", seqRequirementMap, user);
         } catch (NullPointerException npe) {
             log.error(npe.getStackTrace().toString());
