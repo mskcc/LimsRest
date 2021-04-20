@@ -4,13 +4,11 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
 import com.velox.api.datarecord.*;
-import com.velox.api.user.User;
 import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.utilities.SloanCMOUtils;
 import com.velox.sloan.cmo.utilities.UuidGenerator;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.*;
@@ -32,7 +30,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.mskcc.limsrest.util.Utils.getRecordStringValue;
+import static org.mskcc.limsrest.util.Utils.selectLarger;
+
 
 /**
  * A queued task that takes banked ids, a service id and optionally a request  and project.
@@ -78,192 +77,6 @@ public class PromoteBanked extends LimsTask {
 
     public PromoteBanked() {
     }
-
-    /**
-     * Determines requested reads & coverage based on,
-     *      1) BankedSample Requested Reads
-     *      2) Recipe (IMPACT, HemePACT, & ACCESS) have specific requirements
-     *
-     * Requested during LIMS meeting 2018-8-28
-     * Automated addition of sequencing requirements on promote for ACCESS. Added 2020-07-17
-     *
-     * @param recipe, "Recipe" field of BankedSample DataRecord
-     * @param tumorOrNormal, "TumorOrNormal" field of BankedSample DataRecord
-     * @param bankedSampleRequestedReads, "RequestedReads" of BankedSample DataRecord
-     */
-    public static Map<String, Number> getCovReadsRequirementsMap(String recipe, String tumorOrNormal, String bankedSampleRequestedReads) {
-        Map<String, Number> coverageReadsMap = new HashMap<>();
-
-        // Take Promoted Requested Reads from the banked sample DataRecord if available
-        double requestedReads = 0.0;
-        if (bankedSampleRequestedReads != null && !bankedSampleRequestedReads.equals("") &&
-                !bankedSampleRequestedReads.equals("<10 million") && !bankedSampleRequestedReads.equals(">100 million") &&
-                !bankedSampleRequestedReads.equals("Does Not Apply")) {
-            Double rrMapped;
-            Pattern depthPattern = Pattern.compile("([0-9]+)[xX]");
-            Matcher depthMatch = depthPattern.matcher(bankedSampleRequestedReads);
-            if (bankedSampleRequestedReads.equals("MiSeq-SingleRun")) {
-                rrMapped = 0.0;
-            } else if (!depthMatch.find()) {
-                if (bankedSampleRequestedReads.contains("-"))
-                    rrMapped = selectLarger(bankedSampleRequestedReads);
-                else
-                    rrMapped = Double.parseDouble(bankedSampleRequestedReads.trim());
-            } else { //the value is expressed as a coverage
-                rrMapped = Double.parseDouble(depthMatch.group(1));
-            }
-            requestedReads = rrMapped;
-            coverageReadsMap.put("RequestedReads", requestedReads);
-        }
-
-        if (!"Tumor".equals(tumorOrNormal) && !"Normal".equals(tumorOrNormal)) {
-            return coverageReadsMap;
-        }
-
-        // Override requestedReads & coverageTarget in coverageReadsMap for certain recipes
-        boolean normal = "Normal".equals(tumorOrNormal);
-        int coverageTarget = 0;
-        if (recipe.contains("Heme")) {
-            if (normal) {
-                coverageTarget = 250;
-                requestedReads = 10.0;
-            } else {
-                coverageTarget = 500;
-                requestedReads = 20.0;
-            }
-            log.info(String.format("Overriding Heme Request (Recipe: %s) - Coverage Target: %d, Requested Reads: %f",
-                    recipe, coverageTarget, requestedReads));
-        } else if (recipe.contains("IMPACT")) { //'M-IMPACT_v1', 'IMPACT468'
-            if (normal) {
-                coverageTarget = 250;
-                requestedReads = 7.0;
-            } else {
-                coverageTarget = 500;
-                requestedReads = 14.0;
-            }
-            log.info(String.format("Overriding IMPACT Request (Recipe: %s) - Coverage Target: %d, Requested Reads: %f",
-                    recipe, coverageTarget, requestedReads));
-        } else if (recipe.contains("ACCESS")) {
-            coverageTarget = 1000;
-            if (normal) {
-                requestedReads = 6.0;
-            } else {
-                requestedReads = 60.0;
-            }
-            log.info(String.format("Overriding ACCESS Request (Recipe: %s) - Coverage Target: %d, Requested Reads: %f",
-                    recipe, coverageTarget, requestedReads));
-        }
-        coverageReadsMap.put("CoverageTarget", coverageTarget);
-        coverageReadsMap.put("RequestedReads", requestedReads); // Update set by recipe
-
-        return coverageReadsMap;
-    }
-
-
-    /**
-     * Get Requested Reads and Coverage values from Reference values defined in LIMS DataType 'ApplicationReadCoverageRef'
-     * @param recipe
-     * @param tumorOrNormal
-     * @param panelName
-     * @param runType
-     * @param species
-     * @param applicationReadCoverageRefs
-     * @return
-     */
-    public Map<String, Object> getRequestedReadsForCoverage(Object recipe, Object tumorOrNormal, Object panelName, Object runType, Object species, Object coverage, List<DataRecord> applicationReadCoverageRefs, User limsUser){
-        Map<String, Object> readCoverage = new HashMap<>();
-        try {
-        if (Objects.isNull(recipe)){
-            log.error(String.format("Cannot set Read/Coverage values because of missing Recipe value on Banked Sample, Recipe -> %s", recipe, tumorOrNormal));
-            return readCoverage;
-        }
-        boolean foundMatch = false;
-        for (DataRecord ref : applicationReadCoverageRefs){
-            Object refRecipe = ref.getValue("PlatformApplication", limsUser);
-            Object refTumorNormal = ref.getValue("TumorNormal", limsUser);
-            Object refPanelName = ref.getValue("CapturePanel", limsUser);
-            Object refRunType = ref.getValue("SequencingRunType", limsUser);
-            Object refCoverage = ref.getValue("Coverage", limsUser) != null ? ref.getValue("Coverage", limsUser).toString().replace("X", ""): null;
-            Object refOnly = ref.getValue("ReferenceOnly", limsUser);
-            if (Objects.equals(recipe, refRecipe) && Objects.equals(tumorOrNormal, refTumorNormal) && Objects.equals(panelName, refPanelName) && Objects.equals(runType, refRunType) && Objects.equals(coverage, refCoverage)
-                    && !Objects.isNull(refOnly) && !(boolean)refOnly) {
-                foundMatch = true;
-                log.info(String.format("Found matching 'ApplicationReadCoverageRef' record with RecordId %d for given Banked Sample metadata.", ref.getRecordId()));
-                log.info("Recipe: " + recipe + ", RefVal: " + refRecipe );
-                log.info("TumorNormal: " + tumorOrNormal + ", RefVal: " + refTumorNormal );
-                log.info("PanelName: " + panelName + ", RefVal: " + refPanelName );
-                log.info("RunType: " + runType + ", RefVal: " + refRunType );
-                log.info("Coverage: " + coverage + ", RefVal: " + refCoverage );
-                readCoverage.put("SequencingRunType", refRunType);
-                readCoverage.put("CoverageTarget", refCoverage);
-                Object human = "Human";
-                Object mouse = "Mouse";
-                // populate Requested reads based on Species. ApplicationReadCoverageRef has different RequestedReads values for Human and Mouse species.
-                // default to values for Human species if Species is null.
-                if (species != null) {
-                    if (Objects.equals(human, species)) {
-                        readCoverage.put("RequestedReads", ref.getValue("MillionReadsHuman", limsUser));
-                    }
-                    if (Objects.equals(mouse, species)) {
-                        readCoverage.put("RequestedReads", ref.getValue("MillionReadsMouse", limsUser));
-                    }
-                } else {
-                    log.info("Banked Sample Species does not match 'Human' or 'Mouse'. Will apply 'Human' RequestedReads values for Coverage -> RequestedReads conversion");
-                    readCoverage.put("RequestedReads", ref.getValue("MillionReadsHuman", limsUser));
-                }
-            }
-        }
-        if (!foundMatch){
-            log.error(String.format("Cannot find matching records in 'ApplicationReadCoverageRef' using given Banked Sample metadata -> %s: %s, %s: %s, %s: %s, %s: %s, %s: %s.",
-                    "Recipe", recipe, "TumorOrNormal", tumorOrNormal, "CapturePanel", panelName, "SequencingRunType", runType, "Coverage", coverage));
-        }
-        } catch (RemoteException | NotFound e) {
-            log.info(String.format("%s error while fetching ReadCoverage values. %s", ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getStackTrace(e)));
-        }
-        return readCoverage;
-    }
-
-
-    /**
-     * Method to check if the Requested Reads value should come from 'ApplicationReadCoverageRef' table in LIMS.
-     * @param recipe
-     * @param applicationReadCoverageRefs
-     * @return
-     */
-    public boolean needReadCoverageReference(String recipe, List<DataRecord> applicationReadCoverageRefs, User limsUser){
-        try{
-            for (DataRecord rec : applicationReadCoverageRefs){
-                Object refRecipe = rec.getValue("PlatformApplication", limsUser);
-                if (Objects.equals(refRecipe, recipe)){
-                    return true;
-                }
-            }
-        }catch (RemoteException | NotFound e) {
-            log.info(String.format("%s error while fetching ReadCoverage values. %s", ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getStackTrace(e)));
-        }
-        return false;
-    }
-
-    /**
-     * Method to check if the BankedSample record field values have a field and value for Coverage.
-     * @param dataFields
-     * @param limsUser
-     * @return
-     */
-    private boolean hasCoverageFieldInDataType(Map<String, Object> dataFields, User limsUser){
-        try{
-            for (String field : dataFields.keySet()){
-                if (field.equalsIgnoreCase("RequestedCoverage")){
-                    return true;
-                }
-            }
-        }catch (Exception e) {
-            log.info(String.format("%s error while fetching ReadCoverage values. %s", ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getStackTrace(e)));
-        }
-        log.error("Cannot find'RequestedCoverage' field definitions in 'BankedSample' DataType. Will skip Coverage -> Reads conversion.");
-        return false;
-    }
-
 
     public void init(String[] bankedIds, String projectId, String requestId, String serviceId, String igoUser, String materials, boolean dryrun) {
         this.bankedIds = bankedIds;
@@ -439,7 +252,7 @@ public class PromoteBanked extends LimsTask {
                 List<DataRecord> readCoverageRefs = dataRecordManager.queryDataRecords("ApplicationReadCoverageRef", "ReferenceOnly != 1", user);
                 log.info("ApplicationReadCoverageRef records: " + readCoverageRefs.size());
                 for (DataRecord bankedSample : bankedList) {
-                    createRecords(bankedSample, req, requestId, barcodeId2Sequence, plateId2Plate, existentIds, maxId, offset, readCoverageRefs);
+                    createRecords(bankedSample, req, requestId, barcodeId2Sequence, plateId2Plate, existentIds, maxId, offset);
                     offset++;
                     bankedSample.setDataField("Promoted", Boolean.TRUE, user);
                     bankedSample.setDataField("RequestId", requestId, user);
@@ -490,7 +303,7 @@ public class PromoteBanked extends LimsTask {
 
     public void createRecords(DataRecord bankedSampleRecord, DataRecord req, String requestId,
                               HashMap<String, String> barcodeId2Sequence, HashMap<String, DataRecord> plateId2Plate,
-                              HashSet<String> existentIds, int maxExistentId, int offset, List<DataRecord> readCoverageRefs)
+                              HashSet<String> existentIds, int maxExistentId, int offset)
             throws LimsException, InvalidValue, AlreadyExists, NotFound, IoError, RemoteException, ServerException {
         try {
             AuditLog auditLog = user.getAuditLog();
@@ -559,7 +372,6 @@ public class PromoteBanked extends LimsTask {
                 throw new LimsException("The LIMS does not know about the barcode " + barcodeId + ". Please make sure" +
                         " to the list of barcodes is up-to-date");
             }
-
             if (barcodeId != null && !barcodeId.equals("")) {
                 Map<String, Object> bcFields = new HashMap<>();
                 bcFields.put("OtherSampleId", otherSampleId);
@@ -580,7 +392,6 @@ public class PromoteBanked extends LimsTask {
 
             Map<String, Object> cmoFields = getCmoFields(bankedFields, correctedCmoSampleId, requestId, newIgoId, uuid);
             promotedSampleRecord.addChild("SampleCMOInfoRecords", cmoFields, user);
-
             Map<String, Object> seqRequirementMap = new HashMap<>();
             seqRequirementMap.put("OtherSampleId", otherSampleId);
             seqRequirementMap.put("SampleId", newIgoId);
@@ -605,45 +416,16 @@ public class PromoteBanked extends LimsTask {
             } catch (Exception e){
                 log.error(String.format("Failed to log Banked Sample Values: %s. Error: %s", otherSampleId, e.getMessage()));
             }
-
-            // Take runtype from "BankedSample" record. Default to "PE100" if not present
-            Object seqRunType = bankedFields.getOrDefault("RunType", null);
-            if(seqRunType == null){
-                seqRunType = "PE100";
+            requestedCoverage = bankedFields.getOrDefault("RequestedCoverage", null);
+            if (Objects.nonNull(requestedCoverage)){
+                requestedCoverage = requestedCoverage.toString().replace("X","").replace("x", "");
             }
-            seqRequirementMap.put("SequencingRunType", seqRunType);
-
-            Map<String, Number> coverageReadsMap;
-            // Update Reads & Coverage: "CoverageTarget", "RequestedReads"
-            if ("WholeExomeSequencing".equalsIgnoreCase(recipe)) {
-                coverageReadsMap = getCovReadsRequirementsMap_forWES(bankedSampleRequestedReads);
-            } else {
-                coverageReadsMap = getCovReadsRequirementsMap(recipe, tumorOrNormal, bankedSampleRequestedReads);
-            }
-            seqRequirementMap.putAll(coverageReadsMap);
-
-            log.info(String.format("Sequencing Requirements before Coverage -> Reads conversion logic run: %s", seqRequirementMap.toString()));
-            // Check if Coverage is a separate field in Banked Sample Datatype and Coverage->Reads conversion is required based on Recipe in Banked Sample data.
-            if (hasCoverageFieldInDataType(bankedFields, user) && needReadCoverageReference(recipe, readCoverageRefs, user)){
-                log.info("Banked Samples need Coveage mapping to reads.");
-                // if true update Reads Coverage values from the 'ApplicationReadCoverageRef' in LIMS.
-                Map<String, Object> updatedSeqRequirements = getRequestedReadsForCoverage(recipe, tumorOrNormal,
-                        capturePanel, seqRunType, species, requestedCoverage, readCoverageRefs, user);
-                if (!updatedSeqRequirements.isEmpty()) {
-                    seqRequirementMap.putAll(updatedSeqRequirements);
-                    log.info("Sequencing Requirements updated: " + seqRequirementMap.toString());
-                }
-            }
+            seqRequirementMap.put("SequencingRunType", bankedFields.getOrDefault("RunType", null));
+            seqRequirementMap.put("CoverageTarget", requestedCoverage);
             promotedSampleRecord.addChild("SeqRequirement", seqRequirementMap, user);
         } catch (NullPointerException npe) {
+            log.error(npe.getStackTrace().toString());
         }
-    }
-
-    protected static double selectLarger(String requestedReads) {
-        // example "30-40 million" => 40.0
-        String[] parts = requestedReads.split("[ -]+");
-        requestedReads = parts[1].trim();
-        return Double.parseDouble(requestedReads);
     }
 
     /**
@@ -653,20 +435,20 @@ public class PromoteBanked extends LimsTask {
      * @param requestedReads
      * @return
      */
-    public Map<String, Number> getCovReadsRequirementsMap_forWES(String requestedReads) {
-        Map<String, Number> coverageReadsMap = new HashMap<>();
+    public Map<String, Object> getCovReadsRequirementsMap_forWES(String requestedReads) {
+        Map<String, Object> coverageReadsMap = new HashMap<>();
         if (requestedReads != null) {
             // E.g. 70x -> 70
             Matcher depthMatch = Pattern.compile("([0-9]+)[xX]").matcher(requestedReads);
             if (depthMatch.find()) {
-                int coverageTarget = Integer.valueOf(depthMatch.group(1));
+                Object coverageTarget = Integer.valueOf(depthMatch.group(1));
                 coverageReadsMap.put("CoverageTarget", coverageTarget);
                 coverageReadsMap.put("RequestedReads", coverageToSeqReqWES.getOrDefault(coverageTarget, null));
             }
         }
-
         return coverageReadsMap;
     }
+
 
     private void checkSampleTypeAndPatientId(BankedSample bankedSample) {
         Utils.requireNonNullNorEmpty(bankedSample.getCMOPatientId(), String.format("Cmo Patient id is empty for" +
@@ -677,10 +459,12 @@ public class PromoteBanked extends LimsTask {
                 "%s", bankedSample.getId()));
     }
 
+
     private Sample getPromotedSample(BankedSample bankedSample, String uuid, String newIgoId, String
             assignedRequestId) {
         return bankedSampleToSampleConverter.convert(bankedSample, uuid, newIgoId, assignedRequestId);
     }
+
 
     Map<String, Object> getCmoFields(Map<String, Object> bankedFields, String correctedCmoSampleId, String
             assignedRequestId, String igoId, String uuid) {
@@ -774,7 +558,6 @@ public class PromoteBanked extends LimsTask {
         if (!endMatch.find()) {
             return sampleName;
         }
-
         return sampleName.replaceFirst("(_[0-9]+)[0-9_]*$", endMatch.group(1));
     }
 }

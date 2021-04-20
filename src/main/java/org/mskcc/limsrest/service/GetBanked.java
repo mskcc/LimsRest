@@ -140,6 +140,18 @@ public class GetBanked extends LimsTask {
                 ss.setRecordId((Long) sampleFields.get("RecordId"));
                 ss.addRequest((String) sampleFields.get("RequestId"));
                 ss.setReadSummary(sample.getStringVal("RequestedReads", user));
+                if (sampleFields.containsKey("RequestedReads")){
+                    ss.setRequestedReads((String) sampleFields.get("RequestedReads"));
+                }
+                else{
+                    ss.setRequestedReads("");
+                }
+                if (sampleFields.containsKey("RequestedCoverage")){
+                    ss.setRequestedCoverage((String)sampleFields.get("RequestedCoverage"));
+                }
+                else{
+                    ss.setRequestedCoverage("");
+                }
                 ss.setRowPosition(sample.getStringVal("RowPosition", user));
                 ss.setRunType(sample.getStringVal("RunType", user));
                 ss.setSampleClass(sample.getStringVal("SampleClass", user));

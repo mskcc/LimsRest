@@ -3,6 +3,8 @@ package org.mskcc.limsrest.util;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
+import static org.mskcc.limsrest.util.Utils.selectLarger;
+
 public class UtilsTest {
 
     @Test
@@ -29,6 +31,12 @@ public class UtilsTest {
         assertEquals(4, Utils.getSampleTypeOrder("capture library"));
         assertEquals(5, Utils.getSampleTypeOrder("pooled library"));
         assertEquals(0, Utils.getSampleTypeOrder("Test"));
+    }
+
+    @Test
+    public void testSelectLarger() {
+        double result = selectLarger("30-40 million");
+        assertEquals(40.0, result, 0.001);
     }
 
 }
