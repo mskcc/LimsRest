@@ -231,6 +231,7 @@ public class GetRequestSamplesTask {
             this.samples = samples;
         }
 
+        //TODO @deprecated remove "cmoRequest" from JSON response and only keep "isCmoRequest"
         public Boolean getCmoRequest() { return isCmoRequest; }
         public void setCmoRequest(Boolean cmoRequest) { isCmoRequest = cmoRequest; }
 
