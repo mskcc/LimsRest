@@ -72,7 +72,7 @@ configurations {
 
 dependencies {
     // cmo metadb messaging library dependency added with jitpack
-    implementation('com.github.mskcc:cmo-messaging-java:21cd141496f10112e3c670af91a85ca54ae2c70e')
+    implementation('com.github.mskcc:cmo-messaging-java:0cc7bcc0cafe00421acc79171b6bf2f03660d854')
     implementation('com.github.mskcc:cmo-metadb-common:v1.4-alpha')
     compile 'com.google.code.gson:gson:2.8.6'
     
