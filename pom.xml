@@ -154,7 +154,7 @@
     <dependency>
       <groupId>com.github.mskcc</groupId>
       <artifactId>cmo-messaging-java</artifactId>
-      <version>0cc7bcc0cafe00421acc79171b6bf2f03660d854</version>
+      <version>512dbdac54c00b60f7481421840928a1c45c8c93</version>
     </dependency>
     <dependency>
       <groupId>com.github.mskcc</groupId>
