@@ -14,9 +14,8 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.mskcc.limsrest.util.Utils.getRecordLongValue;
-import static org.mskcc.limsrest.util.Utils.getRecordStringValue;
 import static org.mskcc.limsrest.util.StatusTrackerConfig.isIgoComplete;
+import static org.mskcc.limsrest.util.Utils.*;
 
 public class GetIgoRequestsTask extends LimsTask {
     private static Log log = LogFactory.getLog(GetIgoRequestsTask.class);
@@ -84,6 +83,7 @@ public class GetIgoRequestsTask extends LimsTask {
         for (DataRecord request : records) {
             String requestId = getRecordStringValue(request, RequestModel.REQUEST_ID, user);
             RequestSummary rs = new RequestSummary(requestId);
+            rs.setIsCmoRequest(getRecordBooleanValue(request, "IsCmoRequest", user));
             rs.setInvestigator(getRecordStringValue(request, RequestModel.INVESTIGATOR, user));
             rs.setPi(getRecordStringValue(request, RequestModel.LABORATORY_HEAD, user));
             rs.setRequestType(getRecordStringValue(request, RequestModel.REQUEST_NAME, user));
