@@ -30,8 +30,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.mskcc.limsrest.util.Utils.selectLarger;
-
 
 /**
  * A queued task that takes banked ids, a service id and optionally a request  and project.
@@ -263,8 +261,16 @@ public class PromoteBanked extends LimsTask {
                 log.error(e);
 
                 MultiValueMap<String, String> headers = new HttpHeaders();
+
+                // Avoid HeadersTooLargeException
+                String errMessage = e.getMessage();
+                String headerErr = "";
+                if(errMessage != null){
+                    headerErr = errMessage.substring(0,Math.min(500,errMessage.length()));
+                }
+
                 headers.add(Constants.ERRORS,
-                        Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + e.toString() + ": " + e.getMessage());
+                        Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + headerErr);
 
                 return new ResponseEntity<>(headers, HttpStatus.OK);
             }
