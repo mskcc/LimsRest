@@ -23,7 +23,7 @@ jacoco {
     toolVersion = "0.8.2"
 }
 
-if (target== 'dev'){
+if (target == 'dev'){
     copy {
         from "src/dev/resources"
         into "src/main/resources"
@@ -83,15 +83,15 @@ dependencies {
 
     compile ('javax.servlet:jstl:1.2')
 
+    compile group: 'commons-logging', name: 'commons-logging', version: '1.2'
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.9'
-    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.10'
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.11'
 
     compile 'com.velox.internalproducts:veloxapi:10.6.1-b777'
     compile 'com.velox.sloan.cmo:sloancmo:2.21.1-LIMS10.6.1_b84'
     compile 'com.velox.internalproducts:sapiogeneric:15.0.0-LIMS10.6.1'
     compile 'com.velox.internalproducts:sapioutils:15.0.0-LIMS10.6.1'
     compile 'com.velox.internalproducts:sapio-commons:15.0.0-LIMS10.6.1'
-    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.0'
 
     compile fileTree (dir: 'libs', include: '*.jar')
 
