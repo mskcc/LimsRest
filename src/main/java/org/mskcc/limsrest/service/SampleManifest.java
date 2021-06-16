@@ -301,4 +301,31 @@ public class SampleManifest {
         this.libraries = libraries;
     }
 
+    @Override
+    public String toString() {
+        return "SampleManifest{" +
+                "igoId='" + igoId + '\'' +
+                ", cmoInfoIgoId='" + cmoInfoIgoId + '\'' +
+                ", cmoSampleName='" + cmoSampleName + '\'' +
+                ", sampleName='" + sampleName + '\'' +
+                ", cmoSampleClass='" + cmoSampleClass + '\'' +
+                ", cmoPatientId='" + cmoPatientId + '\'' +
+                ", investigatorSampleId='" + investigatorSampleId + '\'' +
+                ", oncoTreeCode='" + oncoTreeCode + '\'' +
+                ", tumorOrNormal='" + tumorOrNormal + '\'' +
+                ", tissueLocation='" + tissueLocation + '\'' +
+                ", specimenType='" + specimenType + '\'' +
+                ", sampleOrigin='" + sampleOrigin + '\'' +
+                ", preservation='" + preservation + '\'' +
+                ", collectionYear='" + collectionYear + '\'' +
+                ", sex='" + sex + '\'' +
+                ", species='" + species + '\'' +
+                ", tubeId='" + tubeId + '\'' +
+                ", cfDNA2dBarcode='" + cfDNA2dBarcode + '\'' +
+                ", baitSet='" + baitSet + '\'' +
+                ", qcReports=" + qcReports +
+                ", libraries=" + libraries +
+                ", cmoSampleIdFields=" + cmoSampleIdFields +
+                '}';
+    }
 }
