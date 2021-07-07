@@ -33,16 +33,18 @@ import static org.mskcc.limsrest.util.Utils.getBaseSampleId;
 import static org.mskcc.limsrest.util.Utils.getRecordsOfTypeFromParents;
 
 public class UpdateLimsSampleLevelSequencingQcTask {
+    private Log log = LogFactory.getLog(UpdateLimsSampleLevelSequencingQcTask.class);
+
     private final static List<String> POOLED_SAMPLE_TYPES = Collections.singletonList("pooled library");
     private final String POOLEDNORMAL_IDENTIFIER = "POOLEDNORMAL";
     private final String CONTROL_IDENTIFIER = "CTRL";
+
     DataRecordManager dataRecordManager;
     String appPropertyFile = "/app.properties";
     String inital_qc_status = "Under-Review";
-    BasicMail email = new BasicMail();
-    private Log log = LogFactory.getLog(UpdateLimsSampleLevelSequencingQcTask.class);
     private ConnectionLIMS conn;
     User user;
+
     private String runId;
 
     public UpdateLimsSampleLevelSequencingQcTask(String runId, ConnectionLIMS conn) {
@@ -51,11 +53,11 @@ public class UpdateLimsSampleLevelSequencingQcTask {
     }
 
     public Map<String, String> execute() {
-        Map<String, String> statsAdded = new HashMap<>();
         VeloxConnection vConn = conn.getConnection();
         user = vConn.getUser();
         dataRecordManager = vConn.getDataRecordManager();
         user = conn.getConnection().getUser();
+
         //get stats from ngs-stats db.
         JSONObject data = getStatsFromDb();
         if (data.keySet().size() == 0) {
@@ -64,6 +66,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         //get all the Library samples that are present on the run
         List<DataRecord> relatedLibrarySamples = getRelatedLibrarySamples(runId);
         log.info(String.format("Total Related Library Samples for run %s: %d", runId, relatedLibrarySamples.size()));
+        Map<String, String> statsAdded = new HashMap<>();
         //loop through stats data and add/update lims SeqAnalysisSampleQc records
         for (String key : data.keySet()) {
             //get qcDataVals as HashMap
@@ -79,7 +82,6 @@ public class UpdateLimsSampleLevelSequencingQcTask {
 
             String igoId = getRecordStringValue(librarySample, SampleModel.SAMPLE_ID, user);
             log.info(String.format("Found Library Sample with Sample ID : %s", igoId));
-
             //add AltId to the values to be updated.
             Object altId = "";
             try {
@@ -112,9 +114,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                             ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
                     log.error(error);
                 }
-            }
-            //if there is no existing SeqAnalysisSampleQc record, create a new one on Library Sample
-            else {
+            } else { //if there is no existing SeqAnalysisSampleQc record, create a new one on Library Sample
                 qcDataVals.put(SampleModel.SAMPLE_ID, igoId);
                 log.info(String.format("Adding new %s child record to %s with SampleId %s, values are : %s",
                         SeqAnalysisSampleQCModel.DATA_TYPE_NAME,
@@ -134,18 +134,10 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         }
         try {
             dataRecordManager.storeAndCommit(String.format("Added/updated new %s records for Sequencing Run %s", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, runId), null, user);
-            //Emails do not work on igo-lims02 VM because of mail package conflict with MySQL. This will be implemented when fixed.
-            //email.send("sharmaa1@mskcc.org", "zzPDL_SKI_IGO_DATA@mskcc.org", "localhost.mskcc.org", String.format("Added Sequencing stats for run %s", runId), String.format("Added Sequencing stats for %d samples on run %s", statsAdded.size(), runId));
         } catch (RemoteException | ServerException e) {
-            String error = String.format("Failed to commit changes for %s\nERROR:\n%s\n%s", this.runId, ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
-            log.error(error);
+            log.error("ERROR Message: " + e.getMessage());
+            log.error(String.format("Failed to commit changes for %s\nERROR:\n%s", this.runId, ExceptionUtils.getStackTrace(e)));
             return new HashMap();
-            //Emails do not work on igo-lims02 VM because of mail package conflict with MySQL. This will be implemented when fixed.
-//            try {
-//                email.send("sharmaa1@mskcc.org", "zzPDL_SKI_IGO_DATA@mskcc.org", "localhost.mskcc.org", "Failed to add Run " + runId + " Stats to LIMS", ExceptionUtils.getMessage(e));
-//            } catch (MessagingException ex) {
-//                log.error(String.format("Failed to send error email.\n%s", ExceptionUtils.getStackTrace(e)));
-//            }
         }
         log.info(String.format("Added/Updated total %d %s records for Sequencing Run %s",statsAdded.size(), SeqAnalysisSampleQCModel.DATA_TYPE_NAME, runId));
         return statsAdded;
