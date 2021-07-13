@@ -60,24 +60,6 @@ public class PromoteBankedTest {
     }
 
     @Test
-    public void setSeqRequirementsWES_whenRequestReadsIsValid() {
-        Map<String, Object> seqRequirementMap = promoteBanked.getCovReadsRequirementsMap_forWES("100X");
-        Assertions.assertThat(seqRequirementMap).hasSize(2);
-        Assertions.assertThat(seqRequirementMap).containsKeys("CoverageTarget", "RequestedReads");
-        Assertions.assertThat(seqRequirementMap).containsEntry("CoverageTarget", 100);
-        Assertions.assertThat(seqRequirementMap).containsEntry("RequestedReads", 60.0);
-    }
-
-    @Test
-    public void setSeqRequirementWES_whenCoverageTargetIsNotInMap() {
-        Map<String, Object> seqRequirementMap = promoteBanked.getCovReadsRequirementsMap_forWES("1000X");
-        Assertions.assertThat(seqRequirementMap).hasSize(2);
-        Assertions.assertThat(seqRequirementMap).containsKeys("CoverageTarget", "RequestedReads");
-        Assertions.assertThat(seqRequirementMap).containsEntry("CoverageTarget", 1000);
-        Assertions.assertThat(seqRequirementMap).containsEntry("RequestedReads", null);
-    }
-
-    @Test
     public void unaliquotname_whenSampleNameIsNotAliquot() {
         String sampleName = "1234_S_1";
         Assertions.assertThat(promoteBanked.unaliquotName(sampleName)).isEqualTo(sampleName);
