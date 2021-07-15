@@ -41,7 +41,7 @@ public class GetRequestTrackingTaskTest {
 
     @Before
     public void setup() {
-        this.conn = new ConnectionLIMS("tango.mskcc.org", 1099, "fe74d8e1-c94b-4002-a04c-eb5c492704ba", "test-runner", "password1");
+        this.conn = new ConnectionLIMS("igo-lims03.mskcc.org", 1088, "fe74d8e1-c94b-4002-a04c-eb5c492704ba", "test-runner", "password1");
     }
 
     @After
@@ -303,6 +303,7 @@ public class GetRequestTrackingTaskTest {
             try {
                 requestInfo = t.execute();
             } catch (IoError | RemoteException | NotFound e) {
+                System.err.println(e.getMessage());
                 assertTrue("Exception in task execution", false);
             }
             Map<String, Object> summary = (Map<String, Object>) requestInfo.get("summary");

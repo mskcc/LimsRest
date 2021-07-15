@@ -23,8 +23,7 @@ public class StatusTrackerConfigTest {
 
     @Before
     public void setup() {
-        // Connection needed to query the existing tango workflow manager
-        this.conn = new ConnectionLIMS("tango.mskcc.org", 1099, "fe74d8e1-c94b-4002-a04c-eb5c492704ba", "test-runner", "password1");
+        this.conn = new ConnectionLIMS("igo-lims03.mskcc.org", 1088, "fe74d8e1-c94b-4002-a04c-eb5c492704ba", "test-runner", "password1");
     }
 
     @After
