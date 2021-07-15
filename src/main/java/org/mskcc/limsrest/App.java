@@ -31,15 +31,6 @@ public class App extends SpringBootServletInitializer {
     @Autowired
     private Environment env;
 
-    @Value("${slack.webhookUrl}")
-    private String webhookUrl;
-    @Value("${slack.channel}")
-    private String channel;
-    @Value("${slack.user}")
-    private String user;
-    @Value("${slack.icon}")
-    private String icon;
-
     @Value("${dmpRestUrl}")
     private String dmpRestUrl;
 
