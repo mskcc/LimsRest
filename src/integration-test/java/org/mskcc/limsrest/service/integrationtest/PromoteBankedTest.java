@@ -34,8 +34,6 @@ import org.mskcc.limsrest.service.converter.SampleRecordToSampleConverter;
 import org.mskcc.limsrest.service.promote.BankedSampleToSampleConverter;
 import org.mskcc.util.Constants;
 import org.mskcc.util.VeloxConstants;
-import org.mskcc.util.notificator.Notificator;
-import org.mskcc.util.notificator.SlackNotificator;
 
 import java.io.FileReader;
 import java.rmi.RemoteException;
@@ -55,7 +53,6 @@ public class PromoteBankedTest {
     private static final Log LOG = LogFactory.getLog(PromoteBankedTest.class);
 
     private static ResourceBundle rbTest = ResourceBundle.getBundle("tangotest");
-
     private static final String connectionPromoteBanked = "resources/lims-tango-test";
 
     private static final String USER_SAMP_ID1 = "userSampId1";
@@ -96,7 +93,6 @@ public class PromoteBankedTest {
     private DataRecord projectRecord;
     private BankedSampleToSampleConverter bankedSampleToSampleConverter = new BankedSampleToSampleConverter();
     private int id = 0;
-    private Notificator slackNotificator;
 
     List<String> humanRecipes = Arrays.asList(
             IMPACT_341.getValue(),
@@ -130,7 +126,6 @@ public class PromoteBankedTest {
 
             Properties properties = new Properties();
             properties.load(new FileReader(getResourceFile(appPropertyFile)));
-            slackNotificator = new SlackNotificator(properties.getProperty("slack.webhookUrl"), properties.getProperty("slack.channel"), properties.getProperty("slack.user"), properties.getProperty("slack.icon"));
         } catch (Exception e) {
             LOG.error(e);
             throw new RuntimeException("unable to configure integration test", e);
@@ -635,7 +630,7 @@ public class PromoteBankedTest {
             bankedIds[i] = String.valueOf(bankedRecords.get(i).getRecordId());
         }
 
-        promoteBanked.init(bankedIds, projectId, requestId, serviceId, "promoteBankedTest", false);
+        promoteBanked.init(bankedIds, projectId, requestId, serviceId, "promoteBankedTest", "",false);
     }
 
     private DataRecord addPromoteBanked(String cmoPatientId, SpecimenType specimenType, Optional<SampleOrigin>

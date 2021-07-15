@@ -306,6 +306,7 @@ public class GetRequestTrackingTaskTest {
             try {
                 requestInfo = t.execute();
             } catch (IoError | RemoteException | NotFound e) {
+                System.err.println(e.getMessage());
                 assertTrue("Exception in task execution", false);
             }
             Map<String, Object> summary = (Map<String, Object>) requestInfo.get("summary");
