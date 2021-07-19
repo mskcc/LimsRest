@@ -104,7 +104,7 @@ public class ProjectSample {
      */
     public Map<String, Object> toApiResponse() {
         Map<String, Object> apiMap = new HashMap<>();
-        apiMap.put("sampleId", this.sampleId);
+        apiMap.put("sampleId", this.root.getRecordName());      // e.g. "09798_1"
         apiMap.put("status", this.failed ? "Failed" : this.complete == true ? "Complete" : this.currentStage);
         apiMap.put("stages", this.stages.values().stream().map(
                 stage -> stage.toApiResponse(true)

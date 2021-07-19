@@ -78,6 +78,10 @@ public class WorkflowSample extends StatusTracker {
         this.children.add(child);
     }
 
+    public String getRecordName() {
+        return recordName;
+    }
+
     public Boolean getFailed() {
         return failed;
     }
