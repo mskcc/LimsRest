@@ -4,6 +4,7 @@ import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mskcc.limsrest.ConnectionLIMS;
 
@@ -13,6 +14,7 @@ import java.util.*;
 import static org.junit.Assert.*;
 import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
 
+@Ignore // @TODO mock database connection
 public class GetRequestTrackingTaskTest {
     public static final Set<String> TEST_THESE_PROJECTS = new HashSet<>(Arrays.asList(
             // ALL PASSED
