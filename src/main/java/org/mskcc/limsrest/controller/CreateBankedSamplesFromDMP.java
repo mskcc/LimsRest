@@ -3,8 +3,7 @@ package org.mskcc.limsrest.controller;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionPoolLIMS;
-import org.mskcc.limsrest.service.dmp.DateRetriever;
-import org.mskcc.limsrest.service.dmp.DefaultTodayDateRetriever;
+import org.mskcc.limsrest.service.dmp.DefaultTodayDateParser;
 import org.mskcc.limsrest.service.dmp.GenerateBankedSamplesFromDMP;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,8 +20,7 @@ public class CreateBankedSamplesFromDMP {
     private static final Log log = LogFactory.getLog(CreateBankedSamplesFromDMP.class);
 
     private final ConnectionPoolLIMS conn;
-    private final GenerateBankedSamplesFromDMP task = new GenerateBankedSamplesFromDMP();
-    private final DateRetriever dateRetriever = new DefaultTodayDateRetriever();
+    private final GenerateBankedSamplesFromDMP generateBankedSamplesFromDMP = new GenerateBankedSamplesFromDMP();
 
     public CreateBankedSamplesFromDMP(ConnectionPoolLIMS conn) {
         this.conn = conn;
@@ -32,14 +30,14 @@ public class CreateBankedSamplesFromDMP {
     public ResponseEntity<String> getSampleCmoId(@RequestParam(value = "date", required = false) String date) {
         LocalDate localDate = null;
         try {
-            localDate = dateRetriever.retrieve(date);
+            localDate = DefaultTodayDateParser.parse(date);
             log.info(String.format("Starting to create banked samples from DMP samples for date: %s", localDate));
             log.info("Creating task");
 
-            task.setDate(localDate);
+            generateBankedSamplesFromDMP.setDate(localDate);
 
             log.info("Getting result");
-            Future<Object> result = conn.submitTask(task);
+            Future<Object> result = conn.submitTask(generateBankedSamplesFromDMP);
 
             String response = (String) result.get();
 
