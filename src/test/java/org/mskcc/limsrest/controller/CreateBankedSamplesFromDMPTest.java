@@ -32,7 +32,7 @@ public class CreateBankedSamplesFromDMPTest {
     public void whenDateIsNullAndNoErrors_shouldReturnOk() throws Exception {
         when(conn.submitTask(any())).thenReturn(mock(FutureTask.class));
 
-        ResponseEntity<String> response = createBankedSamplesFromDMP.getSampleCmoId(null);
+        ResponseEntity<String> response = createBankedSamplesFromDMP.createBankedSamplesFromDMP(null);
 
         assertThat(response.getStatusCode(), is(HttpStatus.OK));
     }
@@ -41,14 +41,14 @@ public class CreateBankedSamplesFromDMPTest {
     public void whenDateIsNullAndCreateBankedThrowsException_shouldReturnNotFound() throws Exception {
         when(generateBankedSamplesFromDMP.call()).thenThrow(Exception.class);
 
-        ResponseEntity<String> response = createBankedSamplesFromDMP.getSampleCmoId(null);
+        ResponseEntity<String> response = createBankedSamplesFromDMP.createBankedSamplesFromDMP(null);
 
         assertThat(response.getStatusCode(), is(HttpStatus.NOT_FOUND));
     }
 
     @Test
     public void whenDateIsNullAndDateRetrieverThrowsException_shouldReturnNotFound() throws Exception {
-        ResponseEntity<String> response = createBankedSamplesFromDMP.getSampleCmoId(null);
+        ResponseEntity<String> response = createBankedSamplesFromDMP.createBankedSamplesFromDMP(null);
 
         assertThat(response.getStatusCode(), is(HttpStatus.NOT_FOUND));
     }
