@@ -27,7 +27,7 @@ public class CreateBankedSamplesFromDMP {
     }
 
     @RequestMapping("/createBankedSamplesFromDMP")
-    public ResponseEntity<String> createBankedSamplesFromDMP(@RequestParam(value = "date", required = false) String date) {
+    public ResponseEntity<String> getSampleCmoId(@RequestParam(value = "date", required = false) String date) {
         LocalDate localDate = null;
         try {
             localDate = DefaultTodayDateParser.parse(date);
