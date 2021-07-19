@@ -7,8 +7,6 @@ import static junit.framework.TestCase.assertTrue;
 
 public class CheckOrMarkCmoRequestsTaskTests {
 
-    private CheckOrMarkCmoRequestsTask checkOrMarkCMORequestsTask;
-
     @Test
     public void isCmoRequest_test(){
         assertTrue(CheckOrMarkCmoRequestsTask.isCmoRequest("skicmopm@mskcc.org", "IMPACT468", true));
