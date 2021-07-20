@@ -1,7 +1,6 @@
 package org.mskcc.limsrest.util;
 
 import com.velox.api.datarecord.DataRecord;
-import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
@@ -25,7 +24,6 @@ import java.net.URL;
 import java.rmi.RemoteException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.mskcc.limsrest.util.StatusTrackerConfig.*;
@@ -778,67 +776,5 @@ public class Utils {
         String[] parts = requestedReads.split("[ -]+");
         requestedReads = parts[1].trim();
         return Double.parseDouble(requestedReads);
-    }
-
-    /**
-     * Update requested reads & coverage for Recipe (IMPACT, HemePACT, ACCESS & Archer) as they have specific requirements
-     * @param recipe, "Recipe" field from sample submission
-     * @param tumorOrNormal, "TumorOrNormal" field sample submission
-     * @param reads, "requestedReads" value from sample submission
-     * @param tumorOrNormal, "TumorOrNormal" field of BankedSample DataRecord
-     *
-     */
-    public static Map<String, Object> getCovReadsRequirementsMap(Object recipe, Object tumorOrNormal, Object reads, Object coverage) {
-        Map<String, Object> coverageReadsMap = new HashMap<>();
-
-        // Take Promoted Requested Reads from the banked sample DataRecord if available
-        Object requestedReads = reads;
-        // Override requestedReads & coverageTarget in coverageReadsMap for certain recipes
-        boolean normal = "Normal".equals(tumorOrNormal);
-        Object coverageTarget = coverage;
-        if (Objects.nonNull(recipe) && recipe.toString().contains("Archer-")) {
-            requestedReads = 2.5;
-            LOGGER.info(String.format("Updating Archer Request (Recipe: %s) - Coverage Target: %s, Requested Reads: %f",
-                    recipe, coverageTarget, requestedReads));
-        }
-        else if (Objects.nonNull(recipe) && recipe.toString().contains("Heme")) {
-            if (normal) {
-                coverageTarget = "250X";
-                requestedReads = 10.0;
-            } else {
-                coverageTarget = "500X";
-                requestedReads = 20.0;
-            }
-            LOGGER.info(String.format("Updating Heme Request (Recipe: %s) - Coverage Target: %s, Requested Reads: %f",
-                    recipe, coverageTarget, requestedReads));
-        } else if (Objects.nonNull(recipe) && recipe.toString().contains("IMPACT")) { //'M-IMPACT_v1', 'IMPACT468'
-            if (normal) {
-                coverageTarget = "250X";
-                requestedReads = 7.0;
-            } else {
-                coverageTarget = "500X";
-                requestedReads = 14.0;
-            }
-            LOGGER.info(String.format("Updating IMPACT Request (Recipe: %s) - Coverage Target: %s, Requested Reads: %f",
-                    recipe, coverageTarget, requestedReads));
-        } else if (Objects.nonNull(recipe) && recipe.toString().contains("ACCESS")) {
-            coverageTarget = "1000X";
-            if (normal) {
-                requestedReads = 6.0;
-            } else {
-                requestedReads = 60.0;
-            }
-            LOGGER.info(String.format("Updating ACCESS Request (Recipe: %s) - Coverage Target: %s, Requested Reads: %f",
-                    recipe, coverageTarget, requestedReads));
-        }
-        if (requestedReads != null && String.valueOf(requestedReads).split("-").length == 2){
-            requestedReads = selectLarger(String.valueOf(requestedReads));
-        }
-        else if (requestedReads != null && !StringUtils.isBlank(String.valueOf(requestedReads))){
-            requestedReads = Double.parseDouble(String.valueOf(requestedReads).split(" ")[0].trim());
-        }
-        coverageReadsMap.put("RequestedCoverage", coverageTarget);
-        coverageReadsMap.put("RequestedReads", requestedReads); // Update set by recipe
-        return coverageReadsMap;
     }
 }
