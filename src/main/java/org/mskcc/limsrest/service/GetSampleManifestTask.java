@@ -24,7 +24,9 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
- * Traverse the LIMS & ngs_stats database to find all sample level metadata required.
+ * Traverse the LIMS & ngs_stats database to find all sample level metadata required for CMO pipelines.<BR>
+ * The sample metadata pipeline requirements were originally gathered for running IMPACT, ACCESS & WES pipelines with
+ * some special considerations for BIC
  */
 public class GetSampleManifestTask {
     private static Log log = LogFactory.getLog(GetSampleManifestTask.class);
@@ -130,13 +132,15 @@ public class GetSampleManifestTask {
         // fastq is named by sample level field not cmo record in case of a sample swap such as 07951_I_12
         String origSampleName = sample.getStringVal("OtherSampleId", user);
 
+
         String recipe = sample.getStringVal(SampleModel.RECIPE, user);
         // for example 07951_S_50_1 is Fingerprinting sample, skip for pipelines for now
         if ("Fingerprinting".equals(recipe))
             return new SampleManifest();
 
         SampleManifest sampleManifest = setSampleCMOLevelFields(igoId, sample, samples, dataRecordManager, user);
-
+        String naToExtract = sample.getStringVal("NAtoExtract", user);
+        sampleManifest.getCmoSampleIdFields().setNaToExtract(naToExtract);
         sampleManifest.setTubeId(getTubeId(sample, user));
 
         if (!isPipelineRecipe(recipe)) {
@@ -492,7 +496,8 @@ public class GetSampleManifestTask {
         s.setSex(cmoInfo.getStringVal("Gender", user));
         s.setSpecies(cmoInfo.getStringVal("Species", user));
         s.setCmoSampleName(cmoInfo.getStringVal("CorrectedCMOID", user));
-
+        String normalizedPatientId = cmoInfo.getStringVal("NormalizedPatientId", user);
+        s.getCmoSampleIdFields().setNormalizedPatientId(normalizedPatientId);
         return s;
     }
 
@@ -667,16 +672,17 @@ public class GetSampleManifestTask {
                                 fastq.runBaseDirectory.endsWith("_A3") ||
                                 fastq.runBaseDirectory.endsWith("_RENAME") ||
                                 fastq.runBaseDirectory.endsWith("i7") ||
-                                fastq.runBaseDirectory.endsWith("I7")
+                                fastq.runBaseDirectory.endsWith("I7") ||
+                                fastq.runBaseDirectory.endsWith("_v2")
                         ) {
                             if (runPassedQC.contains(fastq.run))
                                 passedQCList.add(fastq);
                         }
                     }
                 }
-
+                log.info("fastqs passed QC: " + passedQCList.size());
                 passedQCList = filterMultipleDemuxes(passedQCList);
-
+                log.info("fastqs passed QC: " + passedQCList.size());
                 List<String> result = new ArrayList<>();
                 for (ArchivedFastq fastq : passedQCList) {
                     result.add(fastq.fastq);

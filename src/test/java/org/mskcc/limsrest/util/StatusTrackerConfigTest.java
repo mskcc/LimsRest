@@ -23,8 +23,7 @@ public class StatusTrackerConfigTest {
 
     @Before
     public void setup() {
-        // Connection needed to query the existing tango workflow manager
-        this.conn = new ConnectionLIMS("tango.mskcc.org", 1099, "fe74d8e1-c94b-4002-a04c-eb5c492704ba", "test-runner", "password1");
+        this.conn = new ConnectionLIMS("igo-lims03.mskcc.org", 1088, "fe74d8e1-c94b-4002-a04c-eb5c492704ba", "test-runner", "password1");
     }
 
     @After
@@ -103,7 +102,7 @@ public class StatusTrackerConfigTest {
                 new StageExtractorTester("Completed - EPIC Library Preparation", "06287_BG_10_1_1", "", "Library Preparation", "Library Preparation - Completed"),
                 new StageExtractorTester("Completed - Generic Library Preparation", "09093_1_1", "06000_FD", "Library Preparation", "Library Preparation - Completed"),
                 new StageExtractorTester("Completed - Generic Normalization Plate Setup", "09083_1", "06000_FD", "Library Preparation", "Library Preparation - In-Processing"),
-                new StageExtractorTester("Completed - ImmunoSEQ Library Preparation", "07340_B_1", "", "Library Preparation", "Library Preparation - Completed"),
+                //new StageExtractorTester("Completed - ImmunoSEQ Library Preparation", "07340_B_1", "", "Library Preparation", "Library Preparation - Completed"),
                 new StageExtractorTester("Completed - KAPA Library Preparation", "05829_C_1_1_1_1", "", "Library Preparation", "Library Preparation - Completed"),
                 new StageExtractorTester("Completed - Library Clean Up", "06777_10_1_1", "04622_C", "Library Preparation", "Library Preparation - Completed"),
                 new StageExtractorTester("Completed - Library Clean Up/Size Selection", "07238_1_1_1_1_1", "", "Library Preparation", "Library Preparation - Completed"),
@@ -274,11 +273,11 @@ public class StatusTrackerConfigTest {
     @Test
     public void getLimsStageNameFromStatusTest_nanoString() {
         List<StageExtractorTester> testSamples = new ArrayList<>(Arrays.asList(
-                new StageExtractorTester("Completed - NanoString", "06260_B_9_2", "05654_H", "NanoString", "NanoString - Completed"),
-                new StageExtractorTester("Ready for - NanoString", "10761_1", "10761", "NanoString", "NanoString - Completed"),
-                new StageExtractorTester("In Process - NanoString", "06722_J_19", "06722_J", "NanoString", "NanoString - Completed"),
+                new StageExtractorTester("Completed - NanoString", "06260_B_9_2", "05654_H", "Nano string", "Nano string - Completed"),
+                new StageExtractorTester("Ready for - NanoString", "10761_1", "10761", "Nano string", "Nano string - Completed"),
+                new StageExtractorTester("In Process - NanoString", "06722_J_19", "06722_J", "Nano string", "Nano string - Completed"),
                 // Constant Test
-                new StageExtractorTester("In Process - NanoString", "06722_J_19", "06722_J", STAGE_NANOSTRING, "NanoString - Completed")
+                new StageExtractorTester("In Process - NanoString", "06722_J_19", "06722_J", STAGE_NANOSTRING, "Nano string - Completed")
         ));
         assertCorrectLimsStage(testSamples);
     }

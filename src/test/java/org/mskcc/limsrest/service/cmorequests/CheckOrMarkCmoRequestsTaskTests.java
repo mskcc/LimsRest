@@ -1,16 +1,11 @@
 package org.mskcc.limsrest.service.cmorequests;
 
-import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
-import static org.mskcc.domain.Recipe.*;
 
 public class CheckOrMarkCmoRequestsTaskTests {
-
-    private CheckOrMarkCmoRequestsTask checkOrMarkCMORequestsTask;
 
     @Test
     public void isCmoRequest_test(){
@@ -43,6 +38,4 @@ public class CheckOrMarkCmoRequestsTaskTests {
         assertFalse(CheckOrMarkCmoRequestsTask.isCmoRecipe("RNASeq_RiboDeplete", false));
         assertFalse(CheckOrMarkCmoRequestsTask.isCmoRecipe("M-IMPACT_v1", false));
     }
-
-
 }

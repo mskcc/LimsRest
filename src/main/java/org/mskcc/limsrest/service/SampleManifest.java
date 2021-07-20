@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Sample Level information which describe metadata and wetlab information reported to pipelines.
  * <BR>
- * Samples can have libraries, libraries can have runs, runs have fastqs.
+ * Samples can have libraries, libraries have sequencer runs, runs have fastqs.
  */
 @JsonIgnoreProperties(value = { "cmoInfoIgoId" })
 public class SampleManifest {
@@ -43,6 +43,9 @@ public class SampleManifest {
     public enum QcReportType {
         DNA, RNA, LIBRARY;
     }
+
+    // fields added so the Meta DB team can build CMO sample IDs outside the IGO LIMS
+    private CMOSampleIdFields cmoSampleIdFields = new CMOSampleIdFields();
 
     /*
      * The IGO qc reports (DNA, RNA, Library) are returned with pipeline data and meant for the analyst reviewing
@@ -171,6 +174,10 @@ public class SampleManifest {
     }
 
     public SampleManifest() {}
+
+    public CMOSampleIdFields getCmoSampleIdFields() { return cmoSampleIdFields; }
+
+    public void setCmoSampleIdFields(CMOSampleIdFields cmoSampleIdFields) { this.cmoSampleIdFields = cmoSampleIdFields; }
 
     public String getTubeId() { return tubeId; }
 
@@ -318,6 +325,7 @@ public class SampleManifest {
                 ", baitSet='" + baitSet + '\'' +
                 ", qcReports=" + qcReports +
                 ", libraries=" + libraries +
+                ", cmoSampleIdFields=" + cmoSampleIdFields +
                 '}';
     }
 }
