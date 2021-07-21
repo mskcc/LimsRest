@@ -1,4 +1,4 @@
-package org.mskcc.limsrest.service.dmp;
+package org.mskcc.limsrest.service;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -22,7 +22,7 @@ public class PromoteBankedMockTest {
         promoteBanked.getCovReadsRequirementsMap_forWES("100X");
         when(promoteBanked.getCovReadsRequirementsMap_forWES(anyString())).then();
 
-
+    }
     @Test
     public void setSeqRequirementWES_whenCoverageTargetIsNotInMap() {
 
