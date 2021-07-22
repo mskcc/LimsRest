@@ -19,6 +19,7 @@ import org.mskcc.limsrest.service.promote.BankedSampleToSampleConverter;
 import org.mskcc.limsrest.util.Constants;
 import org.mskcc.limsrest.util.Messages;
 import org.mskcc.limsrest.util.Utils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -64,6 +65,7 @@ public class PromoteBanked extends LimsTask {
     String materials;
     boolean dryrun = false;
     private Multimap<String, String> errors = HashMultimap.create();
+    @Autowired
     private Map<Integer, Double> coverageToSeqReqWES = ImmutableMap.<Integer, Double>builder()
             .put(30, 20.0)
             .put(70, 45.0)
