@@ -99,6 +99,9 @@ public class GetRequestSamplesTask {
             rsl.setOtherContactEmails(requestDataRecord.getStringVal("MailTo", user));
             rsl.setQcAccessEmails(requestDataRecord.getStringVal("QcAccessEmails", user));
             rsl.setDataAccessEmails(requestDataRecord.getStringVal("DataAccessEmails", user));
+            Object deliveryDate = requestDataRecord.getValue("RecentDeliveryDate", user);
+            if (deliveryDate != null)
+                rsl.setDeliveryDate(requestDataRecord.getLongVal("RecentDeliveryDate", user));
 
             // GetRequestPermissionsTask will set fastq.gz permissions based on whether or not BIC or CMO request so
             // return those values here too.
@@ -217,6 +220,7 @@ public class GetRequestSamplesTask {
         public String libraryType; // only for RNASeq
         public Boolean isCmoRequest;
         public Boolean bicAnalysis;
+        private Long deliveryDate = null;
 
         public List<RequestSample> samples;
 
@@ -230,6 +234,9 @@ public class GetRequestSamplesTask {
             this.requestId = requestId;
             this.samples = samples;
         }
+
+        public Long getDeliveryDate() { return deliveryDate; }
+        public void setDeliveryDate(Long deliveryDate) { this.deliveryDate = deliveryDate; }
 
         //TODO @deprecated remove "cmoRequest" from JSON response and only keep "isCmoRequest"
         public Boolean getCmoRequest() { return isCmoRequest; }
