@@ -1,5 +1,7 @@
 package org.mskcc.limsrest.service.requesttracker;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -13,6 +15,7 @@ import static org.mskcc.limsrest.util.StatusTrackerConfig.StageComp;
  *
  * @author David Streid
  */
+@Getter @Setter
 public class Request {
     private static Log log = LogFactory.getLog(Request.class);
 
@@ -27,15 +30,6 @@ public class Request {
         this.samples = new ArrayList<>();
         this.stages = new TreeMap<>(new StageComp());
         this.metaData = new HashMap<>();
-    }
-
-
-    public void setMetaData(Map<String, Object> metaData) {
-        this.metaData = metaData;
-    }
-
-    public void setSummary(Map<String, Object> summary) {
-        this.summary = summary;
     }
 
     /**
@@ -60,14 +54,6 @@ public class Request {
 
     }
 
-    public List<ProjectSample> getSamples() {
-        return samples;
-    }
-
-    public void setSamples(List<ProjectSample> samples) {
-        this.samples = samples;
-    }
-
     public Map<String, Object> toApiResponse() {
         Map<String, Object> apiResponse = new HashMap<>();
 
@@ -80,9 +66,5 @@ public class Request {
         ).collect(Collectors.toList()));
 
         return apiResponse;
-    }
-
-    public void setRequestId(String requestId) {
-        this.requestId = requestId;
     }
 }

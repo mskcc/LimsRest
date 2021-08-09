@@ -4,6 +4,7 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import lombok.AllArgsConstructor;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
@@ -108,6 +109,7 @@ public class GetRequestPermissionsTask {
         emailToLabMap.put("w-mark@ski.mskcc.org", "markw");
     }
 
+    @AllArgsConstructor
     public static class RequestPermissions {
         public String requestId;
         public String labName;
@@ -115,15 +117,5 @@ public class GetRequestPermissionsTask {
         public Boolean isCmoRequest;
         public Boolean isBicRequest;
         public String dataAccessEmails;
-
-        public RequestPermissions(String requestId, String labName, String labHeadEmail,
-                                  Boolean isCmoRequest, Boolean isBicRequest, String dataAccessEmails) {
-            this.requestId = requestId;
-            this.labName = labName;
-            this.labHeadEmail = labHeadEmail;
-            this.isCmoRequest = isCmoRequest;
-            this.isBicRequest = isBicRequest;
-            this.dataAccessEmails = dataAccessEmails;
-        }
     }
 }

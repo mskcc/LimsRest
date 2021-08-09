@@ -2,6 +2,8 @@ package org.mskcc.limsrest.service.requesttracker;
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.user.User;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.service.assignedprocess.QcStatus;
@@ -21,6 +23,7 @@ import static org.mskcc.limsrest.util.Utils.*;
  *
  * @author David Streid
  */
+@Getter @Setter
 public class ProjectSampleTree {
     private static Log log = LogFactory.getLog(ProjectSampleTree.class);
 
@@ -97,14 +100,6 @@ public class ProjectSampleTree {
         }
     }
 
-    public WorkflowSample getRoot() {
-        return root;
-    }
-
-    public void setIgoComplete(boolean igoComplete) {
-        isIgoComplete = igoComplete;
-    }
-
     public boolean isQcIgoComplete() {
         return QcStatus.IGO_COMPLETE.toString().equalsIgnoreCase(this.dataQcStatus);
     }
@@ -115,16 +110,6 @@ public class ProjectSampleTree {
 
     public List<WorkflowSample> getSamples() {
         return new ArrayList(sampleMap.values());
-    }
-
-    public void setSampleName(String sampleName) {
-        this.sampleName = sampleName;
-    }
-    public void setInvestigatorSampleId(String investigatorSampleId) {
-        this.investigatorSampleId = investigatorSampleId;
-    }
-    public void setCorrectedInvestigatorSampleId(String correctedInvestigatorSampleId) {
-        this.correctedInvestigatorSampleId = correctedInvestigatorSampleId;
     }
 
     /**
@@ -158,10 +143,6 @@ public class ProjectSampleTree {
      */
     public List<StageTracker> getStages() {
         return new ArrayList<>(stageMap.values());
-    }
-
-    public User getUser() {
-        return this.user;
     }
 
     /**

@@ -1,5 +1,6 @@
 package org.mskcc.limsrest.service.cmoinfo.cspace;
 
+import lombok.Getter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.Recipe;
@@ -14,7 +15,7 @@ import java.util.Map;
 
 public class CspaceSampleTypeAbbreviationRetriever implements SampleTypeAbbreviationRetriever {
     private final static Log LOGGER = LogFactory.getLog(CspaceSampleTypeAbbreviationRetriever.class);
-
+    @Getter
     private final static Map<NucleicAcid, String> nucleicAcid2Abbreviation = new HashMap<>();
     private final static Map<SampleType, String> sampleType2Abbreviation = new HashMap<>();
 
@@ -30,9 +31,9 @@ public class CspaceSampleTypeAbbreviationRetriever implements SampleTypeAbbrevia
         sampleType2Abbreviation.put(SampleType.RNA, Constants.RNA_ABBREV);
     }
 
-    public static Map<NucleicAcid, String> getNucleicAcid2Abbreviation() {
-        return new HashMap<>(nucleicAcid2Abbreviation);
-    }
+//    public static Map<NucleicAcid, String> getNucleicAcid2Abbreviation() {
+//        return new HashMap<>(nucleicAcid2Abbreviation);
+//    }
 
     private static String resolveByNucleicAcid(CorrectedCmoSampleView correctedCmoSampleView) {
         NucleicAcid nucleicAcid = correctedCmoSampleView.getNucleidAcid();

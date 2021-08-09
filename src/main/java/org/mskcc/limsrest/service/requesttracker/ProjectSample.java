@@ -1,6 +1,8 @@
 package org.mskcc.limsrest.service.requesttracker;
 
 import com.velox.api.datarecord.DataRecord;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,6 +18,7 @@ import static org.mskcc.limsrest.util.StatusTrackerConfig.StageComp;
  *
  * @author David Streid
  */
+@Getter @Setter
 public class ProjectSample {
     Long sampleId;
     DataRecord record;
@@ -33,35 +36,6 @@ public class ProjectSample {
         this.attributeMap = new HashMap<>();
         this.currentStage = "";
     }
-
-    public WorkflowSample getRoot() {
-        return root;
-    }
-
-    public void setRoot(WorkflowSample root) {
-        this.root = root;
-    }
-
-    public void setCurrentStage(String currentStage) {
-        this.currentStage = currentStage;
-    }
-
-    public boolean isComplete() {
-        return complete;
-    }
-
-    public void setComplete(boolean complete) {
-        this.complete = complete;
-    }
-
-    public Boolean getFailed() {
-        return failed;
-    }
-
-    public void setFailed(Boolean failed) {
-        this.failed = failed;
-    }
-
     public List<StageTracker> getStages() {
         return new ArrayList(stages.values());
     }
@@ -82,10 +56,6 @@ public class ProjectSample {
                             });
                 }
         );
-    }
-
-    public DataRecord getRecord() {
-        return this.record;
     }
 
     /**

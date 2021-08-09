@@ -1,5 +1,6 @@
 package org.mskcc.limsrest.service.requesttracker;
 
+import lombok.Getter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -13,6 +14,7 @@ import java.util.Map;
  *
  * @author David Streid
  */
+@Getter
 public class StageTracker extends StatusTracker {
     private static Log log = LogFactory.getLog(StageTracker.class);
     public static final Integer SAMPLE_COUNT = 1; // Default size for a sample, i.e. single tracked sample has size: 1
@@ -29,14 +31,6 @@ public class StageTracker extends StatusTracker {
 
         setStage(stage);
         setSize(size);
-    }
-
-    public Integer getEndingSamples() {
-        return endingSamples;
-    }
-
-    public String getStage() {
-        return stage;
     }
 
     public void addStartingSample(Integer count) {

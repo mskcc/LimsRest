@@ -2,12 +2,13 @@ package org.mskcc.limsrest.service;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.velox.sloan.cmo.recmodels.RequestModel;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-
+@Setter
 public class RequestSummary {
     private ArrayList<SampleSummary> samples;
     private LinkedList<Long> deliveryDates;
@@ -69,18 +70,9 @@ public class RequestSummary {
         return runFolders;
     }
 
-    public void setRunFolders(List<String> runFolders) {
-        this.runFolders = runFolders;
-    }
-
-
     @JsonInclude(JsonInclude.Include.ALWAYS)
     public String getDataAccessEmails() {
         return dataAccessEmails;
-    }
-
-    public void setDataAccessEmails(String dataAccessEmails) {
-        this.dataAccessEmails = dataAccessEmails;
     }
 
     @JsonInclude(JsonInclude.Include.ALWAYS)
@@ -88,17 +80,9 @@ public class RequestSummary {
         return receivedDate;
     }
 
-    public void setReceivedDate(Long receivedDate) {
-        this.receivedDate = receivedDate;
-    }
-
     @JsonInclude(JsonInclude.Include.ALWAYS)
     public Long getDueDate() {
         return dueDate;
-    }
-
-    public void setDueDate(Long dueDate) {
-        this.dueDate = dueDate;
     }
 
     @JsonInclude(JsonInclude.Include.ALWAYS)
@@ -106,34 +90,14 @@ public class RequestSummary {
         return qcAccessEmail;
     }
 
-    public void setQcAccessEmail(String qcAccessEmail) {
-        this.qcAccessEmail = qcAccessEmail;
-    }
-
     @JsonInclude(JsonInclude.Include.ALWAYS)
     public String getLabHeadEmail() {
         return labHeadEmail;
     }
 
-    public void setLabHeadEmail(String labHeadEmail) {
-        this.labHeadEmail = labHeadEmail;
-    }
-
     @JsonInclude(JsonInclude.Include.ALWAYS)
     public Boolean getIsIgoComplete() {
         return this.isIgoComplete;
-    }
-
-    public void setIsIgoComplete(Boolean isIgoComplete) {
-        this.isIgoComplete = isIgoComplete;
-    }
-
-    public void setRestStatus(String s) {
-        this.restStatus = s;
-    }
-
-    public void setSpecialDelivery(String s) {
-        this.specialDelivery = s;
     }
 
     public ArrayList<SampleSummary> getSamples() {
@@ -148,50 +112,8 @@ public class RequestSummary {
         deliveryDates.add(date);
     }
 
-    public void setAnalysisRequested(boolean req) {
-        this.analysisRequested = req;
-    }
-
-    public void setAnalysisType(String s) { this.analysisType = s;  }
-
-    public void setRecordId(long id) {
-        this.recordId = id;
-    }
-
-    public void setRequestType(String s) {
-        this.requestType = s;
-    }
-
-    public void setCmoProject(String proj) {
-        cmoProjectId = proj;
-    }
-
-    public void setPi(String name) {
-        pi = name;
-    }
-
-    public void setProjectManager(String name) {
-        projectManager = name;
-    }
-
     public void setAutorunnable(boolean pipelinable) {
         this.pipelinable = pipelinable;
-    }
-
-    public void setInvestigator(String name) {
-        investigator = name;
-    }
-
-    public void setPiEmail(String email) {
-        piEmail = email;
-    }
-
-    public void setInvestigatorEmail(String email) {
-        investigatorEmail = email;
-    }
-
-    public void setSampleNumber(Short sampleNumber) {
-        this.sampleNumber = sampleNumber;
     }
 
     public List<Long> getDeliveryDate() {
@@ -204,17 +126,9 @@ public class RequestSummary {
         return completedDate;
     }
 
-    public void setCompletedDate(Long completedDate) {
-        this.completedDate = completedDate;
-    }
-
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public Long getRecentDeliveryDate() {
         return recentDeliveryDate;
-    }
-
-    public void setRecentDeliveryDate(Long mostRecentDeliveryDate) {
-        this.recentDeliveryDate = mostRecentDeliveryDate;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

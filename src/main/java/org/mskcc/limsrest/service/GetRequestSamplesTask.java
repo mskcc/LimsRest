@@ -1,5 +1,6 @@
 package org.mskcc.limsrest.service;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
@@ -7,6 +8,7 @@ import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.RequestModel;
 import com.velox.sloan.cmo.recmodels.SampleModel;
+import lombok.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
@@ -138,7 +140,7 @@ public class GetRequestSamplesTask {
             rsl.setStrand("non-stranded");
         else // as of 2019 IGO has no "stranded-forward" kits.
             rsl.setStrand("stranded-reverse");
-        
+
         // The LibraryType field was included in the original Pipelinekickoff codebase and BIC requested that
         // IGO add it to the endpoint in August 2020
         rsl.setLibraryType(requestName);
@@ -201,7 +203,7 @@ public class GetRequestSamplesTask {
             return null;
         }
     }
-
+    @Getter @Setter
     public static class RequestSampleList {
         public String requestId;
         public String recipe;
@@ -235,148 +237,37 @@ public class GetRequestSamplesTask {
         public Boolean getCmoRequest() { return isCmoRequest; }
         public void setCmoRequest(Boolean cmoRequest) { isCmoRequest = cmoRequest; }
 
-        public Boolean getBicAnalysis() { return bicAnalysis; }
-        public void setBicAnalysis(Boolean bicAnalysis) { this.bicAnalysis = bicAnalysis; }
-
-        public String getLibraryType() { return libraryType; }
-        public void setLibraryType(String libraryType) { this.libraryType = libraryType; }
-
-        public String getStrand() { return strand; }
-        public void setStrand(String strand) { this.strand = strand; }
-
-        public String getRecipe() { return recipe; }
-        public void setRecipe(String recipe) { this.recipe = recipe; }
-
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         public String getRequestId() {
             return requestId;
-        }
-        public void setRequestId(String requestId) {
-            this.requestId = requestId;
         }
 
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         public List<RequestSample> getSamples() {
             return samples;
         }
-        public void setSamples(List<RequestSample> samples) {
-            this.samples = samples;
-        }
-
-        public String getProjectManagerName() {
-            return projectManagerName;
-        }
-        public void setProjectManagerName(String projectManagerName) {
-            this.projectManagerName = projectManagerName;
-        }
-
-        public String getPiEmail() {
-            return piEmail;
-        }
-        public void setPiEmail(String piEmail) {
-            this.piEmail = piEmail;
-        }
-
-        public String getInvestigatorName() {
-            return investigatorName;
-        }
-        public void setInvestigatorName(String investigatorName) {
-            this.investigatorName = investigatorName;
-        }
-
-        public String getInvestigatorEmail() {
-            return investigatorEmail;
-        }
-        public void setInvestigatorEmail(String investigatorEmail) {
-            this.investigatorEmail = investigatorEmail;
-        }
-
-        public String getDataAnalystName() {
-            return dataAnalystName;
-        }
-        public void setDataAnalystName(String dataAnalystName) {
-            this.dataAnalystName = dataAnalystName;
-        }
-
-        public String getDataAnalystEmail() {
-            return dataAnalystEmail;
-        }
-        public void setDataAnalystEmail(String dataAnalystEmail) {
-            this.dataAnalystEmail = dataAnalystEmail;
-        }
-
-        public String getLabHeadName() {
-            return labHeadName;
-        }
-        public void setLabHeadName(String labHeadName) {
-            this.labHeadName = labHeadName;
-        }
-
-        public String getLabHeadEmail() {
-            return labHeadEmail;
-        }
-        public void setLabHeadEmail(String labHeadEmail) {
-            this.labHeadEmail = labHeadEmail;
-        }
-
-        public String getOtherContactEmails() {
-            return otherContactEmails;
-        }
-        public void setOtherContactEmails(String otherContactEmails) {
-            this.otherContactEmails = otherContactEmails;
-        }
-
-        public String getQcAccessEmails() { return qcAccessEmails; }
-        public void setQcAccessEmails(String qcAccessEmails) { this.qcAccessEmails = qcAccessEmails; }
-
-        public String getDataAccessEmails() { return dataAccessEmails; }
-        public void setDataAccessEmails(String dataAccessEmails) { this.dataAccessEmails = dataAccessEmails; }
     }
 
+    @NoArgsConstructor @AllArgsConstructor
+    @ToString @Setter
     public static class RequestSample {
         private String investigatorSampleId;
         private String igoSampleId;
         private boolean IGOComplete;
 
-        public RequestSample() {}
-
-        public RequestSample(String investigatorSampleId, String igoSampleId, boolean IGOComplete) {
-            this.investigatorSampleId = investigatorSampleId;
-            this.igoSampleId = igoSampleId;
-            this.IGOComplete = IGOComplete;
-        }
-
-        @Override
-        public String toString() {
-            return "RequestSample{" +
-                    "investigatorSampleId='" + investigatorSampleId + '\'' +
-                    ", igoSampleId='" + igoSampleId + '\'' +
-                    ", IGOComplete=" + IGOComplete +
-                    '}';
-        }
-
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         public String getInvestigatorSampleId() {
             return investigatorSampleId;
-        }
-        public void setInvestigatorSampleId(String sampleName) {
-            this.investigatorSampleId = investigatorSampleId;
         }
 
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         public String getIgoSampleId() {
             return igoSampleId;
         }
-        public void setIgoSampleId(String igoSampleId) {
-            this.igoSampleId = igoSampleId;
-        }
 
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         public boolean isIGOComplete() {
             return IGOComplete;
-        }
-        public void setIGOComplete(boolean IGOComplete) {
-            this.IGOComplete = IGOComplete;
         }
     }
 

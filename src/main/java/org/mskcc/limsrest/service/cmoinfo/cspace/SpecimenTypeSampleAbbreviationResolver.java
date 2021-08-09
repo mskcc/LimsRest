@@ -1,5 +1,6 @@
 package org.mskcc.limsrest.service.cmoinfo.cspace;
 
+import lombok.Getter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.CorrectedCmoSampleView;
@@ -10,6 +11,7 @@ import java.util.Map;
 
 public class SpecimenTypeSampleAbbreviationResolver implements SampleAbbreviationResolver {
     private final static Log LOGGER = LogFactory.getLog(SpecimenTypeSampleAbbreviationResolver.class);
+    @Getter
     private final static Map<SpecimenType, String> specimenTypeToAbbreviation = new HashMap<>();
 
     static {
@@ -19,9 +21,9 @@ public class SpecimenTypeSampleAbbreviationResolver implements SampleAbbreviatio
         specimenTypeToAbbreviation.put(SpecimenType.ORGANOID, "G");
     }
 
-    public static Map<SpecimenType, String> getSpecimenTypeToAbbreviation() {
-        return specimenTypeToAbbreviation;
-    }
+    //public static Map<SpecimenType, String> getSpecimenTypeToAbbreviation() {
+//        return specimenTypeToAbbreviation;
+//    }
 
     @Override
     public String resolve(CorrectedCmoSampleView correctedCmoSampleView) {
