@@ -5,6 +5,7 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.api.user.User;
 import com.velox.sloan.cmo.recmodels.SampleModel;
 import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.logging.Log;
@@ -34,18 +35,18 @@ import static org.mskcc.limsrest.util.Utils.*;
 public class WorkflowSample extends StatusTracker {
     private static Log log = LogFactory.getLog(WorkflowSample.class);
 
-    Long recordId;
-    String recordName;
-    String sourceSampleId;
+    @Setter(AccessLevel.NONE) Long recordId;
+    @Setter(AccessLevel.NONE) @Getter(AccessLevel.NONE) String recordName;
+    @Setter(AccessLevel.NONE) @Getter(AccessLevel.NONE) String sourceSampleId;
     String childSampleId;
-    String status;
+    @Setter(AccessLevel.NONE) String status;
     WorkflowSample parent;
-    List<WorkflowSample> children;
+    @Setter(AccessLevel.NONE) List<WorkflowSample> children;
     DataRecord record;
     Boolean failed;
 
     // SeqAnalysisSampleQC DataRecords the WorkflowSample is associated with
-    private List<DataRecord> seqAnalysisQcRecords;
+    @Setter(AccessLevel.NONE) private List<DataRecord> seqAnalysisQcRecords;
     private User user;
 
     public WorkflowSample(DataRecord record, ConnectionLIMS conn) {

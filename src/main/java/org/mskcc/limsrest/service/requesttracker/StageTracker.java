@@ -32,7 +32,9 @@ public class StageTracker extends StatusTracker {
         setStage(stage);
         setSize(size);
     }
-
+    public String getStage() {
+        return stage;
+    }
     public void addStartingSample(Integer count) {
         if (count == null) {
             log.error("Failed to add a null-count size to the startingSamples of Stage");

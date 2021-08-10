@@ -14,9 +14,9 @@ import lombok.ToString;
 @ToString @EqualsAndHashCode
 public class QCSiteStats {
     // Picard File
-    public String run;
-    public String request;
-    public String sample;
+    @EqualsAndHashCode.Include public String run;
+    @EqualsAndHashCode.Include public String request;
+    @EqualsAndHashCode.Include public String sample;
     public String referenceGenome;
 
     // ALIGNMENT SUMMARY METRICS

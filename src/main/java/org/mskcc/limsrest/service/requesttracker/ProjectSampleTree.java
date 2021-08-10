@@ -2,6 +2,7 @@ package org.mskcc.limsrest.service.requesttracker;
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.user.User;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.logging.Log;
@@ -31,8 +32,8 @@ public class ProjectSampleTree {
     private String dataQcStatus;                        // SeqAnalysisSampleQC status determinining sequencing status
     private Map<Long, WorkflowSample> sampleMap;        // Map Record IDs to their enriched sample information
     private Map<String, StageTracker> stageMap;         // Map to all stages by their stage name
-    private Map<String, Object> sampleData;
-    private User user;                                  // TODO - should this be elsewhere?
+    @Setter(AccessLevel.NONE) private Map<String, Object> sampleData;
+    @Setter(AccessLevel.NONE) private User user;                                  // TODO - should this be elsewhere?
     private boolean isIgoComplete;                      // Is Sample complete or not
     private String correctedInvestigatorSampleId;
     private String sampleName;

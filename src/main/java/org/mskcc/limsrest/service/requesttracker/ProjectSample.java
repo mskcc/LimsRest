@@ -1,6 +1,7 @@
 package org.mskcc.limsrest.service.requesttracker;
 
 import com.velox.api.datarecord.DataRecord;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,12 +21,12 @@ import static org.mskcc.limsrest.util.StatusTrackerConfig.StageComp;
  */
 @Getter @Setter
 public class ProjectSample {
-    Long sampleId;
-    DataRecord record;
+    @Setter(AccessLevel.NONE) Long sampleId;
+    @Setter(AccessLevel.NONE) DataRecord record;
     boolean complete;
     Boolean failed;
-    private Map<String, StageTracker> stages;     // Stages present in the project
-    private Map<String, Object> attributeMap;
+    @Getter(AccessLevel.NONE) private Map<String, StageTracker> stages;     // Stages present in the project
+    @Setter(AccessLevel.NONE) private Map<String, Object> attributeMap;
     private WorkflowSample root;                        // workflowSamples descend from tree root
     private String currentStage;
 

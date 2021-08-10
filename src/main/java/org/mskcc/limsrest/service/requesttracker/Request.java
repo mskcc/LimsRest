@@ -1,5 +1,6 @@
 package org.mskcc.limsrest.service.requesttracker;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.logging.Log;
@@ -19,11 +20,11 @@ import static org.mskcc.limsrest.util.StatusTrackerConfig.StageComp;
 public class Request {
     private static Log log = LogFactory.getLog(Request.class);
 
-    private String requestId;
-    private Map<String, StageTracker> stages;
+    @Getter(AccessLevel.NONE) private String requestId;
+    @Setter(AccessLevel.NONE) private Map<String, StageTracker> stages;
     private List<ProjectSample> samples;                // Tree of samples
-    private Map<String, Object> metaData;               // Summary of metaData
-    private Map<String, Object> summary;                // Summary of overall project status
+    @Getter(AccessLevel.NONE) private Map<String, Object> metaData;               // Summary of metaData
+    @Getter(AccessLevel.NONE) private Map<String, Object> summary;                // Summary of overall project status
 
     public Request(String requestId) {
         this.requestId = requestId;
