@@ -2,6 +2,9 @@ package org.mskcc.limsrest.service.requesttracker;
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.user.User;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.service.assignedprocess.QcStatus;
@@ -21,6 +24,7 @@ import static org.mskcc.limsrest.util.Utils.*;
  *
  * @author David Streid
  */
+@Getter @Setter
 public class ProjectSampleTree {
     private static Log log = LogFactory.getLog(ProjectSampleTree.class);
 
@@ -28,8 +32,8 @@ public class ProjectSampleTree {
     private String dataQcStatus;                        // SeqAnalysisSampleQC status determinining sequencing status
     private Map<Long, WorkflowSample> sampleMap;        // Map Record IDs to their enriched sample information
     private Map<String, StageTracker> stageMap;         // Map to all stages by their stage name
-    private Map<String, Object> sampleData;
-    private User user;                                  // TODO - should this be elsewhere?
+    @Setter(AccessLevel.NONE) private Map<String, Object> sampleData;
+    @Setter(AccessLevel.NONE) private User user;                                  // TODO - should this be elsewhere?
     private boolean isIgoComplete;                      // Is Sample complete or not
     private String correctedInvestigatorSampleId;
     private String sampleName;
@@ -97,14 +101,6 @@ public class ProjectSampleTree {
         }
     }
 
-    public WorkflowSample getRoot() {
-        return root;
-    }
-
-    public void setIgoComplete(boolean igoComplete) {
-        isIgoComplete = igoComplete;
-    }
-
     public boolean isQcIgoComplete() {
         return QcStatus.IGO_COMPLETE.toString().equalsIgnoreCase(this.dataQcStatus);
     }
@@ -115,16 +111,6 @@ public class ProjectSampleTree {
 
     public List<WorkflowSample> getSamples() {
         return new ArrayList(sampleMap.values());
-    }
-
-    public void setSampleName(String sampleName) {
-        this.sampleName = sampleName;
-    }
-    public void setInvestigatorSampleId(String investigatorSampleId) {
-        this.investigatorSampleId = investigatorSampleId;
-    }
-    public void setCorrectedInvestigatorSampleId(String correctedInvestigatorSampleId) {
-        this.correctedInvestigatorSampleId = correctedInvestigatorSampleId;
     }
 
     /**
@@ -158,10 +144,6 @@ public class ProjectSampleTree {
      */
     public List<StageTracker> getStages() {
         return new ArrayList<>(stageMap.values());
-    }
-
-    public User getUser() {
-        return this.user;
     }
 
     /**

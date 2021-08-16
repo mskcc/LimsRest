@@ -7,6 +7,7 @@ import com.velox.api.servermanager.PickListConfig;
 import com.velox.api.servermanager.PickListManager;
 import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import lombok.NoArgsConstructor;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.util.DdpcrAssay;
@@ -16,14 +17,10 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
+@NoArgsConstructor
 public class GetDdpcrAssaysTask extends LimsTask {
     private static Log log = LogFactory.getLog(GetDdpcrAssaysTask.class);
     private static final String assayDataType = "ddPCRAssayDatabase";
-
-    public GetDdpcrAssaysTask() {
-
-    }
 
     public void init() {
 

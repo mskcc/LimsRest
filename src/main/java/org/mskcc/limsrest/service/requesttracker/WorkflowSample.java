@@ -5,6 +5,9 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.api.user.User;
 import com.velox.sloan.cmo.recmodels.SampleModel;
 import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.platform.commons.util.StringUtils;
@@ -28,21 +31,22 @@ import static org.mskcc.limsrest.util.Utils.*;
  *
  * @author David Streid
  */
+@Getter @Setter
 public class WorkflowSample extends StatusTracker {
     private static Log log = LogFactory.getLog(WorkflowSample.class);
 
-    Long recordId;
-    String recordName;
-    String sourceSampleId;
+    @Setter(AccessLevel.NONE) Long recordId;
+    @Setter(AccessLevel.NONE) @Getter(AccessLevel.NONE) String recordName;
+    @Setter(AccessLevel.NONE) @Getter(AccessLevel.NONE) String sourceSampleId;
     String childSampleId;
-    String status;
+    @Setter(AccessLevel.NONE) String status;
     WorkflowSample parent;
-    List<WorkflowSample> children;
+    @Setter(AccessLevel.NONE) List<WorkflowSample> children;
     DataRecord record;
     Boolean failed;
 
     // SeqAnalysisSampleQC DataRecords the WorkflowSample is associated with
-    private List<DataRecord> seqAnalysisQcRecords;
+    @Setter(AccessLevel.NONE) private List<DataRecord> seqAnalysisQcRecords;
     private User user;
 
     public WorkflowSample(DataRecord record, ConnectionLIMS conn) {
@@ -62,36 +66,12 @@ public class WorkflowSample extends StatusTracker {
         enrichSample(conn);
     }
 
-    public List<DataRecord> getSeqAnalysisQcRecords() {
-        return this.seqAnalysisQcRecords;
-    }
-
     public void addSeqAnalysisQcRecords(List<DataRecord> seqAnalysisQcRecords) {
         this.seqAnalysisQcRecords.addAll(seqAnalysisQcRecords);
     }
 
-    public List<WorkflowSample> getChildren() {
-        return children;
-    }
-
     public void addChild(WorkflowSample child) {
         this.children.add(child);
-    }
-
-    public Boolean getFailed() {
-        return failed;
-    }
-
-    public void setFailed(Boolean failed) {
-        this.failed = failed;
-    }
-
-    public String getChildSampleId() {
-        return this.childSampleId;
-    }
-
-    public void setChildSampleId(String childSampleId) {
-        this.childSampleId = childSampleId;
     }
 
     /**
@@ -148,30 +128,6 @@ public class WorkflowSample extends StatusTracker {
         this.failed = isFailedStatus(status);
         super.startTime = getRecordLongValue(this.record, SampleModel.DATE_CREATED, this.user);
         super.updateTime = getRecordLongValue(this.record, SampleModel.DATE_MODIFIED, this.user);
-    }
-
-    public Long getRecordId() {
-        return recordId;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public WorkflowSample getParent() {
-        return parent;
-    }
-
-    public void setParent(WorkflowSample parent) {
-        this.parent = parent;
-    }
-
-    public DataRecord getRecord() {
-        return record;
-    }
-
-    public void setRecord(DataRecord record) {
-        this.record = record;
     }
 
     /**

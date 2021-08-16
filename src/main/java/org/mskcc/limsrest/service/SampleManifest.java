@@ -1,6 +1,10 @@
 package org.mskcc.limsrest.service;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,6 +16,8 @@ import java.util.List;
  * Samples can have libraries, libraries have sequencer runs, runs have fastqs.
  */
 @JsonIgnoreProperties(value = { "cmoInfoIgoId" })
+@Getter @Setter
+@ToString @NoArgsConstructor
 public class SampleManifest {
     private String igoId;
 
@@ -66,7 +72,7 @@ public class SampleManifest {
         public String comments;
         public String investigatorDecision;
     }
-
+    @NoArgsConstructor @ToString
     public static class Library {
         public String barcodeId;
         public String barcodeIndex;
@@ -82,8 +88,6 @@ public class SampleManifest {
         public String captureName;
 
         public List<Run> runs = new ArrayList<>();
-
-        public Library() {}
 
         public Library(String libraryIgoId, Double libraryVolume, Double libraryConcentrationNgul, Double dnaInputNg) {
             this.libraryIgoId = libraryIgoId;
@@ -108,24 +112,9 @@ public class SampleManifest {
             }
             return fastqs;
         }
-
-        @Override
-        public String toString() {
-            return "Library{" +
-                    "barcodeId='" + barcodeId + '\'' +
-                    ", barcodeIndex='" + barcodeIndex + '\'' +
-                    ", libraryIgoId='" + libraryIgoId + '\'' +
-                    ", libraryVolume=" + libraryVolume +
-                    ", libraryConcentrationNgul=" + libraryConcentrationNgul +
-                    ", dnaInputNg=" + dnaInputNg +
-                    ", captureConcentrationNm='" + captureConcentrationNm + '\'' +
-                    ", captureInputNg='" + captureInputNg + '\'' +
-                    ", captureName='" + captureName + '\'' +
-                    ", runs=" + runs +
-                    '}';
-        }
     }
 
+    @ToString
     public static class Run {
         public String runMode;
         public String runId;
@@ -158,174 +147,6 @@ public class SampleManifest {
             flowCellLanes.add(lane);
             Collections.sort(flowCellLanes);
         }
-
-        @Override
-        public String toString() {
-            return "Run{" +
-                    "runMode='" + runMode + '\'' +
-                    ", runId='" + runId + '\'' +
-                    ", flowCellId='" + flowCellId + '\'' +
-                    ", readLength='" + readLength + '\'' +
-                    ", runDate='" + runDate + '\'' +
-                    ", flowCellLanes=" + flowCellLanes +
-                    ", fastqs=" + fastqs +
-                    '}';
-        }
     }
 
-    public SampleManifest() {}
-
-    public CMOSampleIdFields getCmoSampleIdFields() { return cmoSampleIdFields; }
-
-    public void setCmoSampleIdFields(CMOSampleIdFields cmoSampleIdFields) { this.cmoSampleIdFields = cmoSampleIdFields; }
-
-    public String getTubeId() { return tubeId; }
-
-    public void setTubeId(String tubeId) { this.tubeId = tubeId; }
-
-    public String getCfDNA2dBarcode() { return cfDNA2dBarcode; }
-
-    public void setCfDNA2dBarcode(String cfDNA2dBarcode) { this.cfDNA2dBarcode = cfDNA2dBarcode; }
-
-    public List<QcReport> getQcReports() { return qcReports; }
-
-    public void setQcReports(List<QcReport> qcReports) { this.qcReports = qcReports; }
-
-    public void setCMOSampleClass(String cmoSampleClass) { this.cmoSampleClass = cmoSampleClass; }
-
-    public String getCmoSampleClass() { return cmoSampleClass; }
-
-    public void setSampleName(String sampleName) { this.sampleName = sampleName; }
-
-    public String getSampleName () { return sampleName; }
-
-    public String getCmoSampleName() { return cmoSampleName; }
-
-    public void setCmoSampleName(String cmoSampleName) { this.cmoSampleName = cmoSampleName; }
-
-    public String getSpecies() { return species; }
-
-    public void setSpecies(String species) { this.species = species; }
-
-    public String getTumorOrNormal() {
-        return tumorOrNormal;
-    }
-
-    public void setTumorOrNormal(String tumorOrNormal) {
-        this.tumorOrNormal = tumorOrNormal;
-    }
-
-    public String getIgoId() {
-        return igoId;
-    }
-
-    public void setIgoId(String igoId) {
-        this.igoId = igoId;
-    }
-
-    public String getCmoPatientId() {
-        return cmoPatientId;
-    }
-
-    public void setCmoPatientId(String cmoPatientId) {
-        this.cmoPatientId = cmoPatientId;
-    }
-
-    public String getInvestigatorSampleId() {
-        return investigatorSampleId;
-    }
-
-    public void setInvestigatorSampleId(String investigatorSampleId) { this.investigatorSampleId = investigatorSampleId; }
-
-    public String getOncoTreeCode() {
-        return oncoTreeCode;
-    }
-
-    public void setOncoTreeCode(String oncoTreeCode) {
-        this.oncoTreeCode = oncoTreeCode;
-    }
-
-    public String getSpecimenType() { return specimenType; }
-
-    public void setSpecimenType(String specimenType) { this.specimenType = specimenType; }
-
-    public String getTissueLocation() {
-        return tissueLocation;
-    }
-
-    public void setTissueLocation(String tissueLocation) {
-        this.tissueLocation = tissueLocation;
-    }
-
-    public String getSampleOrigin() {
-        return sampleOrigin;
-    }
-
-    public void setSampleOrigin(String sampleOrigin) { this.sampleOrigin = sampleOrigin; }
-
-    public String getPreservation() {
-        return preservation;
-    }
-
-    public void setPreservation(String preservation) {
-        this.preservation = preservation;
-    }
-
-    public String getCollectionYear() {
-        return collectionYear;
-    }
-
-    public void setCollectionYear(String collectionYear) {
-        this.collectionYear = collectionYear;
-    }
-
-    public String getSex() {
-        return sex;
-    }
-
-    public void setSex(String sex) {
-        this.sex = sex;
-    }
-
-    public String getBaitSet() { return baitSet; }
-
-    public void setBaitSet(String baitSet) {
-        this.baitSet = baitSet;
-    }
-
-    public List<Library> getLibraries() {
-        return libraries;
-    }
-
-    public void setLibraries(List<Library> libraries) {
-        this.libraries = libraries;
-    }
-
-    @Override
-    public String toString() {
-        return "SampleManifest{" +
-                "igoId='" + igoId + '\'' +
-                ", cmoInfoIgoId='" + cmoInfoIgoId + '\'' +
-                ", cmoSampleName='" + cmoSampleName + '\'' +
-                ", sampleName='" + sampleName + '\'' +
-                ", cmoSampleClass='" + cmoSampleClass + '\'' +
-                ", cmoPatientId='" + cmoPatientId + '\'' +
-                ", investigatorSampleId='" + investigatorSampleId + '\'' +
-                ", oncoTreeCode='" + oncoTreeCode + '\'' +
-                ", tumorOrNormal='" + tumorOrNormal + '\'' +
-                ", tissueLocation='" + tissueLocation + '\'' +
-                ", specimenType='" + specimenType + '\'' +
-                ", sampleOrigin='" + sampleOrigin + '\'' +
-                ", preservation='" + preservation + '\'' +
-                ", collectionYear='" + collectionYear + '\'' +
-                ", sex='" + sex + '\'' +
-                ", species='" + species + '\'' +
-                ", tubeId='" + tubeId + '\'' +
-                ", cfDNA2dBarcode='" + cfDNA2dBarcode + '\'' +
-                ", baitSet='" + baitSet + '\'' +
-                ", qcReports=" + qcReports +
-                ", libraries=" + libraries +
-                ", cmoSampleIdFields=" + cmoSampleIdFields +
-                '}';
-    }
 }

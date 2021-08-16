@@ -236,7 +236,7 @@ public class GetReadyForIllumina {
         summary.setRequestId((String) sampleFieldValues.getOrDefault("RequestId", ""));
         summary.setTubeBarcode((String) sampleFieldValues.getOrDefault("MicronicTubeBarcode", ""));
         summary.setStatus((String) sampleFieldValues.getOrDefault("ExemplarSampleStatus", ""));
-        summary.setTumor((String) sampleFieldValues.getOrDefault("TumorOrNormal", ""));
+        summary.setTumorStatus((String) sampleFieldValues.getOrDefault("TumorOrNormal", ""));
         summary.setWellPos(sampleFieldValues.getOrDefault("ColPosition", "") + (String) sampleFieldValues.getOrDefault("RowPosition", ""));
         summary.setConcentrationUnits((String) sampleFieldValues.getOrDefault("ConcentrationUnits", ""));
         Double concentration = (Double) sampleFieldValues.get("Concentration");
@@ -284,7 +284,7 @@ public class GetReadyForIllumina {
         summary.setOtherSampleId((String) sampleFieldValues.getOrDefault("OtherSampleId", ""));
         summary.setRequestId((String) sampleFieldValues.getOrDefault("RequestId", ""));
         summary.setTubeBarcode((String) sampleFieldValues.getOrDefault("MicronicTubeBarcode", ""));
-        summary.setTumor((String) sampleFieldValues.getOrDefault("TumorOrNormal", ""));
+        summary.setTumorStatus((String) sampleFieldValues.getOrDefault("TumorOrNormal", ""));
         summary.setWellPos(sampleFieldValues.getOrDefault("ColPosition", "") + (String) sampleFieldValues.getOrDefault("RowPosition", ""));
         summary.setConcentrationUnits((String) sampleFieldValues.getOrDefault("ConcentrationUnits", ""));
         summary.setRecipe(getRecipeForSample(sampleInPool, user));

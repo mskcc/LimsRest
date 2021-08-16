@@ -2,7 +2,9 @@ package org.mskcc.limsrest.service;
 
 import java.util.ArrayList;
 import com.fasterxml.jackson.annotation.*;
+import lombok.Setter;
 
+@Setter
 public class ProjectSummary {
    private ArrayList<RequestSummary> summaryRequests;
    private ArrayList<RequestDetailed> detailedRequests;
@@ -53,48 +55,6 @@ public class ProjectSummary {
    public void addRequest(RequestDetailed rd){
      detailedRequests.add(rd);
    }
-
-   public void setCmoProjectId(String cmoProjectId){
-    this.cmoProjectId = cmoProjectId;
-  }
-   public void setCmoProposalTitle(String cmoProposalTitle){
-    this.cmoProposalTitle = cmoProposalTitle;
-  }
-   public void setCmoStudyType(String cmoStudyType){
-    this.cmoStudyType = cmoStudyType;
-  }
-   public void setCmoFinalProjectTitle(String cmoFinalProjectTitle){
-    this.cmoFinalProjectTitle = cmoFinalProjectTitle;
-  }
-   public void setCmoProjectBrief(String cmoProjectBrief){
-    this.cmoProjectBrief = cmoProjectBrief;
-  }
-   public void setProjectDesc(String projectDesc){
-    this.projectDesc = projectDesc;
-  }
-
-   public void setProjectName(String projectName){
-    this.projectName = projectName;
-  }
-   public void setProjectNotes(String projectNotes){
-
-    this.projectNotes = projectNotes;
-  }
-
-  public void setStudyName(String studyName){
-    this.studyName = studyName;
-  }
-   public void setGroupLeader(String groupLeader){
-    this.groupLeader = groupLeader;
-  }
-   public void setProjectId(String projectId){
-    this.projectId = projectId;
-  }
-   
-   public void setCmoMeetingDiscussionDate(long cmoMeetingDiscussionDate){
-    this.cmoMeetingDiscussionDate = cmoMeetingDiscussionDate;
-  }  
-
 
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
   public String getCmoProjectId(){

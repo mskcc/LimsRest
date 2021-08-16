@@ -167,7 +167,7 @@ public class GetDelivered extends LimsTask {
                     ss.addBaseId((String) sampleFields.get("SampleId"));
                     ss.addCmoId((String) sampleFields.get("OtherSampleId"));
                     try {
-                        ss.setSpecies((String) sampleFields.get("Species"));
+                        ss.setOrganism((String) sampleFields.get("Species"));
                     } catch (NullPointerException npe) {
                     }
                     try {

@@ -128,7 +128,7 @@ public class GetPassingSamples extends LimsTask {
                     if (parentSample != null) {
 
                         try {
-                            ss.setSpecies((String) parentFields.get("Species"));
+                            ss.setOrganism((String) parentFields.get("Species"));
                         } catch (NullPointerException npe) {
                         }
                         try {

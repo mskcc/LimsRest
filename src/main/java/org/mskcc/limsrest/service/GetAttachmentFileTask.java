@@ -2,6 +2,7 @@ package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import lombok.NoArgsConstructor;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -9,13 +10,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.HashMap;
 import java.util.List;
 
-
+@NoArgsConstructor
 public class GetAttachmentFileTask extends LimsTask {
     private static Log log = LogFactory.getLog(GetAttachmentFileTask.class);
     protected String recordId;
-
-    public GetAttachmentFileTask() {
-    }
 
     public GetAttachmentFileTask(String recordId) {
         this.recordId = recordId;

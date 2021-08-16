@@ -3,7 +3,9 @@ package org.mskcc.limsrest.service;
 import java.util.List;
 import java.util.LinkedList;
 import com.fasterxml.jackson.annotation.*;
+import lombok.Setter;
 
+@Setter
 public class RunSummary {
     private String awaitingSamples;
     private String concentrationUnits;
@@ -54,88 +56,10 @@ public class RunSummary {
         }
     }
 
-    public void setSampleId(String sampleId) {this.sampleId = sampleId;}
-    public void setBarcodeId(String bcid){
-    this.barcodeId = bcid;
-    }
-    public void setBarcodeSeq(String bcSeq){
-    this.barcodeSeq = bcSeq;
-    }
-    public void setLabHead(String labHead){
-    this.labHead = labHead;
-    }
-    public void setInvestigator(String investigator){
-    this.investigator = investigator;
-    }
-    public void setRecipe(String recipe){
-    this.recipe = recipe;
-    }
-    public void setRequestId(String requestId){
-    this.requestId = requestId;
-    }
-    public void setReadNum(String readNum){
-    this.readNum = readNum;
-    }
-    public void setRunType(String runType){
-    this.runType = runType;
-    }
-    public void setOtherSampleId(String otherSampleId){
-    this.otherSampleId = otherSampleId;
-    }
-    public void setSpecies(String species){
-        this.species = species;
-    }
-    public void setStatus(String status){
-       this.status = status;
-    }
-    public void setNumberRequestSamples(Short num){
-      this.numberRequestSamples = num;
-    }
-    public void setNumberRequestedReads(int numberReqReads){
-    this.numberRequestedReads = numberReqReads;
-    }
-    public void setStartDate(long creationInEpochMilli){
-    this.startDate = creationInEpochMilli;
-    }
-    public void setReceivedDate(long creationInEpochMilli){
-    this.receivedDate = creationInEpochMilli;
-    }
     public void addLane(long lane){
      this.lanes.add(lane);
     }
-    public void setPlateId(String plate){
-     this.plateId = plate;
-    }
-    public void setPool(String pool){
-    this.pool = pool;
-    }
-    public void setConcentration(double concentration){
-     this.concentration = concentration;
-    }
-    public void setAltConcentration(double concentration){
-     this.altConcentration = concentration;
-    }
-    public void setConcentrationUnits(String units){
-     this.concentrationUnits = units;
-    }
-    public void setTumor(String status){
-    this.tumorStatus = status;
-    }
-    public void setTubeBarcode(String tubeBarcode){
-    this.tubeBarcode = tubeBarcode;
-    }
-    public void setVolume(String volume){
-    this.volume = volume;
-    }
-    public void setWellPos(String wellPos){
-    this.wellPos = wellPos;
-    }
-    public void setFastqOnly(Boolean fastq){
-     this.fastqOnly = fastq;
-    }
-
     public String getRequestName() { return requestName; }
-    public void setRequestName(String requestName) { this.requestName = requestName; }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getAwaitingSamples(){
@@ -267,17 +191,9 @@ public class RunSummary {
         return readTotal;
     }
 
-    public void setReadTotal(long readTotal) {
-        this.readTotal = readTotal;
-    }
-
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public long getRemainingReads() {
         return remainingReads;
-    }
-
-    public void setRemainingReads(long remainingReads) {
-        this.remainingReads = remainingReads;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

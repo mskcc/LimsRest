@@ -3,6 +3,7 @@ package org.mskcc.limsrest.service;
 import com.velox.api.servermanager.PickListConfig;
 import com.velox.api.servermanager.PickListManager;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import lombok.Setter;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -13,12 +14,9 @@ import java.util.List;
  * 
  * @author Aaron Gabow
  */
+@Setter
 public class GetPickList extends LimsTask {
     private String picklist;
-
-    public void setPicklist(String picklist) {
-        this.picklist = picklist;
-    }
 
     @Override
     public Object execute(VeloxConnection conn) {

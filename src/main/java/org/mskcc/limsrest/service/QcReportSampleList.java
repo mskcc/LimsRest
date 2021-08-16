@@ -1,12 +1,16 @@
 package org.mskcc.limsrest.service;
 
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 // base class for DNA/RNA/Library Report Samples
+@Getter @Setter
 public class QcReportSampleList {
     public String requestId;
     public List<Object> requestSampleIds;
@@ -34,70 +38,6 @@ public class QcReportSampleList {
 
     public QcReportSampleList(String requestId) {
         this.requestId = requestId;
-    }
-
-    public List<Object> getRequestSampleIds() {
-        return requestSampleIds;
-    }
-
-    public void setRequestSampleIds(List<Object> requestSampleIds) {
-        this.requestSampleIds = requestSampleIds;
-    }
-
-    public String getRequestId() {
-        return requestId;
-    }
-
-    public void setRequestId(String requestId) {
-        this.requestId = requestId;
-    }
-
-    public List<ReportSample> getRnaReportSamples() {
-        return rnaReportSamples;
-    }
-
-    public void setRnaReportSamples(List<ReportSample> rnaReportSamples) {
-        this.rnaReportSamples = rnaReportSamples;
-    }
-
-    public List<ReportSample> getDnaReportSamples() {
-        return dnaReportSamples;
-    }
-
-    public void setDnaReportSamples(List<ReportSample> dnaReportSamples) {
-        this.dnaReportSamples = dnaReportSamples;
-    }
-
-    public List<ReportSample> getLibraryReportSamples() {
-        return libraryReportSamples;
-    }
-
-    public void setLibraryReportSamples(List<ReportSample> libraryReportSamples) {
-        this.libraryReportSamples = libraryReportSamples;
-    }
-
-    public List<PathologySample> getPathologyReportSamples() {
-        return pathologyReportSamples;
-    }
-
-    public void setPathologyReportSamples(List<PathologySample> pathologyReportSamples) {
-        this.pathologyReportSamples = pathologyReportSamples;
-    }
-
-    public List<CovidSample> getCovidReportSamples() {
-        return covidReportSamples;
-    }
-
-    public void setCovidReportSamples(List<CovidSample> covidReportSamples) {
-        this.covidReportSamples = covidReportSamples;
-    }
-
-    public List<HashMap<String, Object>> getAttachments() {
-        return attachments;
-    }
-
-    public void setAttachments(List<HashMap<String, Object>> attachments) {
-        this.attachments = attachments;
     }
 
     public static class ReportSample {

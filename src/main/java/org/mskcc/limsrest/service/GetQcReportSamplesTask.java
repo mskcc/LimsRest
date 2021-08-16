@@ -3,6 +3,7 @@ package org.mskcc.limsrest.service;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.RequestModel;
+import lombok.NoArgsConstructor;
 import org.mskcc.limsrest.service.QcReportSampleList.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -18,13 +19,11 @@ import java.util.stream.Collectors;
  *
  * @author Lisa Wagner
  */
+@NoArgsConstructor
 public class GetQcReportSamplesTask extends LimsTask {
     private static Log log = LogFactory.getLog(GetQcReportSamplesTask.class);
     public List<Object> otherSampleIds;
     protected String requestId;
-
-    public GetQcReportSamplesTask() {
-    }
 
     public GetQcReportSamplesTask(List<Object> otherSampleIds, String requestId) {
         this.otherSampleIds = otherSampleIds;

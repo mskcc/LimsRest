@@ -167,14 +167,14 @@ public class GetSampleQc {
                         }
                         if (requirements.length > 0){
                             try {
-                                ss.setRequestedReadNumber((long)requirements[0].getDoubleVal("RequestedReads", user));
+                                ss.setReadNumber((long)requirements[0].getDoubleVal("RequestedReads", user));
                             } catch(NullPointerException npe){
-                                ss.setRequestedReadNumber(0);
+                                ss.setReadNumber(Long.valueOf(0));
                             }
                             try {
-                                ss.setCoverageTarget(requirements[0].getIntegerVal("CoverageTarget", user));
+                                ss.setCoverage(requirements[0].getIntegerVal("CoverageTarget", user));
                             } catch (NullPointerException npe){
-                                ss.setCoverageTarget(0);
+                                ss.setCoverage(0);
                             }
                         }
 
@@ -242,13 +242,13 @@ public class GetSampleQc {
                 ss.addConcentrationUnits("ng/uL");
                 ss.addBaseId("0");
                 ss.addVolume(1.0);
-                ss.setSpecies(s.getReferenceGenome());
-                ss.setCoverageTarget(0);
-                ss.setRequestedReadNumber(0);
+                ss.setOrganism(s.getReferenceGenome());
+                ss.setCoverage(0);
+                ss.setReadNumber(Long.valueOf("0"));
                 ss.addCmoId("PooledNormal");
                 ss.setTumorOrNormal("Control");
                 ss.setInitialPool("Pooled Normal");
-                ss.setRecordId(-1);
+                ss.setRecordId(Long.valueOf("-1"));
                 ss.addRequest("Pooled Normal");
 
                 ss.setQc(s.toSampleSummary());
@@ -296,8 +296,8 @@ public class GetSampleQc {
             runAndCatchNpe(() -> qcSummary.setReadsDuped((Long) qcFields.get("ReadPairDupes")));
             runAndCatchNpe(() -> qcSummary.setReadsExamined((Long) qcFields.get("ReadsExamined")));
             runAndCatchNpe(() -> qcSummary.setTotalReads((Long) qcFields.get("TotalReads")));
-            runAndCatchNpe(() -> qcSummary.setUnmapped((Long) qcFields.get("UnmappedDupes")));
-            runAndCatchNpe(() -> qcSummary.setUnpairedReadsExamined((Long) qcFields.get("UnpairedReads")));
+            runAndCatchNpe(() -> qcSummary.setUnmappedReads((Long) qcFields.get("UnmappedDupes")));
+            runAndCatchNpe(() -> qcSummary.setUnpairedExamined((Long) qcFields.get("UnpairedReads")));
             runAndCatchNpe(() -> qcSummary.setZeroCoveragePercent((Double) qcFields.get("ZeroCoveragePercent")));
             runAndCatchNpe(() -> qcSummary.setRun((String) qcFields.get("SequencerRunFolder")));
             runAndCatchNpe(() -> qcSummary.setReviewed((Boolean) qcFields.get("Reviewed")));
@@ -339,7 +339,7 @@ public class GetSampleQc {
             runAndCatchNpe(() -> rs.setIsCmoRequest((Boolean)requestFields.get("IsCmoRequest")));
             runAndCatchNpe(() -> rs.setAnalysisRequested((Boolean) requestFields.get("BICAnalysis")));
             runAndCatchNpe(() -> rs.setAnalysisType((String) requestFields.get("AnalysisType")));
-            runAndCatchNpe(() -> rs.setCmoProject((String) requestFields.get("CMOProjectID")));
+            runAndCatchNpe(() -> rs.setCmoProjectId((String) requestFields.get("CMOProjectID")));
             runAndCatchNpe(() -> rs.setProjectManager((String) requestFields.get("ProjectManager")));
         } catch (Throwable e) {
             log.error(e);
@@ -359,7 +359,7 @@ public class GetSampleQc {
     public static void annotateSampleSummary(SampleSummary ss, Map<String, Object> sampleFields) {
         try {
             ss.setRecordId((Long) sampleFields.get("RecordId"));
-            ss.setSpecies((String) sampleFields.get("Species"));
+            ss.setOrganism((String) sampleFields.get("Species"));
             runAndCatchNpe(() -> ss.setRecipe((String) sampleFields.get("Recipe")));
             runAndCatchNpe(() -> ss.setTumorOrNormal((String) sampleFields.get("TumorOrNormal")));
             runAndCatchNpe(() -> ss.setTumorType((String) sampleFields.get("TumorType")));

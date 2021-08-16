@@ -1,5 +1,8 @@
 package org.mskcc.limsrest.service;
 
+import lombok.Getter;
+
+@Getter
 public class QcStatusEvent extends RestDescriptor  implements Comparable{
     private Long timestamp;
     private String event;
@@ -7,14 +10,6 @@ public class QcStatusEvent extends RestDescriptor  implements Comparable{
     public QcStatusEvent(Long timestamp, String event){
         this.timestamp = timestamp;
         this.event = event;
-    }
-
-    public Long getTimestamp(){
-        return timestamp;
-    }
-
-    public String getEvent(){
-        return event;
     }
 
     @Override 
