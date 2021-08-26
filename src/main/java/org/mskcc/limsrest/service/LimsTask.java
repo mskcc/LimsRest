@@ -117,7 +117,7 @@ public abstract class LimsTask implements VeloxExecutable<Object>, Callable<Obje
             runAndCatchNpe(() -> requestDetailed.setRequestType((String) requestFields.get("RequestType")));
             runAndCatchNpe(() -> requestDetailed.setSampleType((String) requestFields.get("SampleType")));
             runAndCatchNpe(() -> requestDetailed.setStatus((String) requestFields.get("Status")));
-            runAndCatchNpe(() -> requestDetailed.setFurthestSample((String) requestFields.get("FurthestSample")));
+            runAndCatchNpe(() -> requestDetailed.setFurthest((String) requestFields.get("FurthestSample")));
             runAndCatchNpe(() -> requestDetailed.setTelephoneNum((String) requestFields.get("TelephoneNum")));
             runAndCatchNpe(() -> requestDetailed.setTatFromProcessing((String) requestFields.get
                     ("TATFromInProcessing")));

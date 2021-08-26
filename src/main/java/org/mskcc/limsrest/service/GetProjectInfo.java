@@ -44,7 +44,7 @@ public class GetProjectInfo extends LimsTask {
                                 ancestorSample = searchParents.get(0);
                                 requirements = ancestorSample.getChildrenOfType("SeqRequirement", user);
                                 if (requirements.length > 0) {
-                                    ss.setRequestedReadNumber((long) requirements[0].getDoubleVal("RequestedReads", user));
+                                    ss.setReadNumber((long) requirements[0].getDoubleVal("RequestedReads", user));
                                 }
                             } else {
                                 ancestorSample = null;

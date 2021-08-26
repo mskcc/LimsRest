@@ -2,6 +2,9 @@ package org.mskcc.limsrest.service.dmp;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import org.mskcc.domain.sample.NucleicAcid;
 import org.mskcc.domain.sample.SampleClass;
 import org.mskcc.domain.sample.SampleOrigin;
@@ -9,36 +12,12 @@ import org.mskcc.domain.sample.SpecimenType;
 import org.mskcc.util.Constants;
 
 import java.util.*;
-
+@Getter @Setter @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CMOSampleRequestDetailsResponse {
     private String trackingId;
     private String result;
     private Content content;
-
-    public String getTrackingId() {
-        return trackingId;
-    }
-
-    public void setTrackingId(String trackingId) {
-        this.trackingId = trackingId;
-    }
-
-    public String getResult() {
-        return result;
-    }
-
-    public void setResult(String result) {
-        this.result = result;
-    }
-
-    public Content getContent() {
-        return content;
-    }
-
-    public void setContent(Content content) {
-        this.content = content;
-    }
 
     public Map<String, Map<String, String>> getCmoSampleRequestDetails() {
         return content.getCmoSampleRequestDetails();
@@ -46,15 +25,6 @@ public class CMOSampleRequestDetailsResponse {
 
     public List<DMPSample> getStudies() {
         return content.getStudies();
-    }
-
-    @Override
-    public String toString() {
-        return "CMOSampleRequestDetails{" +
-                "trackingId='" + trackingId + '\'' +
-                ", result='" + result + '\'' +
-                ", content=" + content +
-                '}';
     }
 
     public static class Content {

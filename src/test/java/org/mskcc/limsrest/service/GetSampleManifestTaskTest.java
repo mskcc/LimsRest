@@ -49,6 +49,23 @@ public class GetSampleManifestTaskTest {
     }
 
     @Test
+    public void sameLaneR1AndR2() {
+        List<ArchivedFastq> passedQCList = new ArrayList<>();
+        ArchivedFastq a = new ArchivedFastq();
+        a.setFastq("/igo/delivery/FASTQ/MICHELLE_0383_AHC3LWDSX2_v2/Project_11570_B/Sample_001_IGO_11570_B_1/001_IGO_11570_B_1_S1_L003_R1_001.fastq.gz");
+        a.setRunBaseDirectory("MICHELLE_0383_AHC3LWDSX2_v2");
+        a.setFastqLastModified(new Date(5000));
+
+        ArchivedFastq b = new ArchivedFastq();
+        b.setFastq("/igo/delivery/FASTQ/MICHELLE_0383_AHC3LWDSX2_v2/Project_11570_B/Sample_001_IGO_11570_B_1/001_IGO_11570_B_1_S1_L003_R2_001.fastq.gz");
+        b.setRunBaseDirectory("MICHELLE_0383_AHC3LWDSX2_v2");
+        b.setFastqLastModified(new Date(5000));
+
+        List<ArchivedFastq> result = GetSampleManifestTask.filterMultipleDemuxes(Arrays.asList(a,b));
+        assertEquals(2, result.size());
+    }
+
+    @Test
     public void sameRunRedemux_A2() {
         List<ArchivedFastq> passedQCList = new ArrayList<>();
         ArchivedFastq a = new ArchivedFastq();

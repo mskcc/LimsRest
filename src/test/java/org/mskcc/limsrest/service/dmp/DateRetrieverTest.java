@@ -13,11 +13,10 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
 public class DateRetrieverTest {
-    private DateRetriever dateRetriever = new DefaultTodayDateRetriever();
 
     @Test
     public void whenDateIsNull_shouldReturnTodayDate() throws Exception {
-        LocalDate date = dateRetriever.retrieve(null);
+        LocalDate date = DefaultTodayDateParser.parse(null);
 
         assertThat(date.getDayOfMonth(), is(LocalDateTime.now().getDayOfMonth()));
         assertThat(date.getMonth(), is(LocalDateTime.now().getMonth()));
@@ -26,7 +25,7 @@ public class DateRetrieverTest {
 
     @Test
     public void whenDateIsEmpty_shouldReturnTodayDate() throws Exception {
-        LocalDate date = dateRetriever.retrieve("");
+        LocalDate date = DefaultTodayDateParser.parse("");
 
         assertThat(date.getDayOfMonth(), is(LocalDateTime.now().getDayOfMonth()));
         assertThat(date.getMonth(), is(LocalDateTime.now().getMonth()));
@@ -44,7 +43,7 @@ public class DateRetrieverTest {
 
     private void assertExceptionIsThrown(String wrongDate) {
         Optional<Exception> exception = TestUtils.assertThrown(() -> {
-            dateRetriever.retrieve(wrongDate);
+            DefaultTodayDateParser.parse(wrongDate);
         });
 
         assertThat(exception.isPresent(), is(true));

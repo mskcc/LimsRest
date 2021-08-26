@@ -2,7 +2,9 @@ package org.mskcc.limsrest.service;
 
 import java.util.ArrayList;
 import com.fasterxml.jackson.annotation.*;
+import lombok.Setter;
 
+@Setter
 public class RequestDetailed {
 
    private ArrayList<SampleSummary> samples;
@@ -82,199 +84,11 @@ public class RequestDetailed {
         requestId = request;
         investigator = "UNKNOWN";
    }
-
-   public void setApplications(String applications){
-	this.applications = applications;
-}
-   public void setBicReadme(String bicReadme){
-	this.bicReadme = bicReadme;
-  }
-   public void setClinicalCorrelative(String clinicalCorrelative){
-	this.clinicalCorrelative = clinicalCorrelative;
-   }
-   public void setCostCenter(String costCenter){
-	this.costCenter = costCenter;
-   }
-   public void setFundNumber(String fundNumber){
-	this.fundNumber = fundNumber;
-   }
-   public void setContactName(String contactName){
-	this.contactName = contactName;
-   }
-   public void setDataAnalyst(String dataAnalyst){
-	this.dataAnalyst = dataAnalyst;
-   }
-   public void setDataAnalystEmail(String dataAnalystEmail){
-	this.dataAnalystEmail = dataAnalystEmail;
-   }
-   public void setDataDeliveryType(String dataDeliveryType){
-	this.dataDeliveryType = dataDeliveryType;
-   }
-   public void setCmoContactName(String name){
-        cmoContactName = name;
-   }
-
-   public void setCmoPiName(String name){
-       cmoPiName = name;
-   }
-   public void setCmoPiEmail(String email){
-       cmoPiEmail = email;
-   }
-   public void setCmoProjectId(String cmoProjectId){
-	this.cmoProjectId = cmoProjectId;
-   }
-   public void setRequestId(String requestId){
-	this.requestId = requestId;
-   }
-   public void setFaxNumber(String faxNumber){
-	this.faxNumber = faxNumber;
-   }
-   public void setInvestigator(String investigator){
-	this.investigator = investigator;
-   }
-   public void setIrbWaiverComments(String irbWaiverComments){
-	this.irbWaiverComments = irbWaiverComments;
-   }
-   public void setMailTo(String mailTo){
-      //if this isn't well formed, don't set
-      if(mailTo.split("@").length == mailTo.split(",").length + 1){
-           this.mailTo = mailTo;
-      }
-   }
-   public void setQcAccessEmails(String qcAccessEmails){
-      //if this isn't well formed, don't set
-      if(qcAccessEmails.split("@").length == qcAccessEmails.split(",").length + 1){
-           this.qcAccessEmails = qcAccessEmails;
-      }
-   }
-   public void setDataAccessEmails(String dataAccessEmails){
-      //if this isn't well formed, don't set
-      if(dataAccessEmails.split("@").length == dataAccessEmails.split(",").length + 1){
-           this.dataAccessEmails = dataAccessEmails;
-      }
-   }
-   public void setAnalysisType(String analysisType){
-	this.analysisType = analysisType;
-   }
-   public void setPi(String pi){
-	this.pi = pi;
-   }
-   public void setProjectName(String projectName){
-    this.projectName = projectName;
-   }
-
-   public void setProjectNotes(String projectNotes){
-	this.projectNotes = projectNotes;
-   }
-   public void setGroup(String group){
-	this.group = group;
-   }
-   public void setGroupLeader(String groupLeader){
-	this.groupLeader = groupLeader;
-   }
-   public void setInvestigatorEmail(String investigatorEmail){
-	this.investigatorEmail = investigatorEmail;
-   }
-   public void setIrbId(String irbId){
-	this.irbId = irbId;
-   }
-   public void setIrbVerifier(String irbVerifier){
-	this.irbVerifier = irbVerifier;
-   }
-   public void setPiEmail(String piEmail){
-	this.piEmail = piEmail;
-   }
-   public void setProjectManager(String projectManager){
-	this.projectManager = projectManager;
-   }
-   public void setRequestDescription(String requestDescription){
-	this.requestDescription = requestDescription;
-   }
-   public void setRequestDetails(String requestDetails){
-	this.requestDetails = requestDetails;
-   }
-   public void setRoom(String room){
-	this.room = room;
-   }
-   public void setRequestType(String requestType){
-	this.requestType = requestType;
-   }
-   public void setSampleType(String sampleType){
-	this.sampleType = sampleType;
-   }
-   public void setStatus(String status){
-	this.status = status;
-   }
-   
-  public void setFurthestSample(String furthest){
-    this.furthest = furthest;
-   }
-
-   public void setTelephoneNum(String telephoneNum){
-	this.telephoneNum = telephoneNum;
-   }
-   public void setTatFromProcessing(String tatFromProcessing){
-	this.tatFromProcessing = tatFromProcessing;
-   }
-   public void setTatFromReceiving(String tatFromReceiving){
-	this.tatFromReceiving = tatFromReceiving;
-   }
-   public void setServicesRequested(String servicesRequested){
-	this.servicesRequested = servicesRequested;
-   }
-   public void setStudyId(String studyId){
-	this.studyId = studyId;
-   }
-  public void setCommunicationNotes(String communicationNotes){
-	this.communicationNotes = communicationNotes;
-   }
-
-   public void setCompletedDate(long completedDate){
-	this.completedDate = completedDate;
-   }
-   public void setDeliveryDate(long deliveryDate){
-	this.deliveryDate = deliveryDate;
-   }
-   public void setPartialReceivedDate(long partialReceivedDate){
-	this.partialReceivedDate = partialReceivedDate;
-   }
    public void setReceivedDate(long recievedDate){
 	this.recievedDate = recievedDate;
    }
-   public void setPortalDate(long portalDate){
-	this.portalDate = portalDate;
-   }
-   public void setPortalUploadDate(long portalUploadDate){
-	this.portalUploadDate = portalUploadDate;
-   }
-   public void setInvestigatorDate(long investigatorDate){
-	this.investigatorDate = investigatorDate;
-   }
-   public void setInprocessDate(long inprocessDate){
-	this.inprocessDate = inprocessDate;
-   }
-   public void setIlabsRequestDate(long ilabsRequestDate){
-	this.ilabsRequestDate = ilabsRequestDate;
-   }
-
-   public void setIrbDate(long irbDate){
-    this.irbDate = irbDate;
-   }
-   public void setSamplesReceivedDate(long samplesReceivedDate){
-	this.samplesReceivedDate = samplesReceivedDate;
-   }
-
    public void setAutorunnable(boolean pipelinable){
 	this.pipelinable = pipelinable;
-   }
-   public void setFastqRequested(boolean fastqRequested){
-	this.fastqRequested = fastqRequested;
-   }
-   public void setAnalysisRequested(boolean analysisRequested){
-	this.analysisRequested = analysisRequested;
-   }
-   public void setHighPriority(boolean highPriority){
-	this.highPriority = Boolean.valueOf(highPriority);
    }
   
   public ArrayList<SampleSummary> getSamples(){
@@ -526,6 +340,4 @@ public class RequestDetailed {
     rd.setInvestigator(e);
     return rd;
   }
-
-
 }

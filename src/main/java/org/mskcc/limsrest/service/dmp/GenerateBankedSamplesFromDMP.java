@@ -1,6 +1,8 @@
 package org.mskcc.limsrest.service.dmp;
 
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.BankedSample;
@@ -18,7 +20,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Collectors;
-
+@Setter @NoArgsConstructor
 public class GenerateBankedSamplesFromDMP extends LimsTask {
     private static final Log LOGGER = LogFactory.getLog(GenerateBankedSamplesFromDMP.class);
 
@@ -31,23 +33,6 @@ public class GenerateBankedSamplesFromDMP extends LimsTask {
     protected LimsDataRetriever limsDataRetriever = new BankedSampleRetriever();
 
     private LocalDate date;
-
-    public GenerateBankedSamplesFromDMP() {
-    }
-
-    public void setLimsDataRetriever(LimsDataRetriever limsDataRetriever) {
-        this.limsDataRetriever = limsDataRetriever;
-    }
-    public void setDmpSamplesRetriever(DMPSamplesRetriever dmpSamplesRetriever) {
-        this.dmpSamplesRetriever = dmpSamplesRetriever;
-    }
-    public void setRecordSaver(RecordSaver recordSaver) {
-        this.recordSaver = recordSaver;
-    }
-
-    public void setDate(LocalDate date) {
-        this.date = date;
-    }
 
     @Override
     public String execute(VeloxConnection conn) {

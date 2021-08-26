@@ -3,7 +3,7 @@ package org.mskcc.limsrest.controller;
 import org.junit.Before;
 import org.junit.Test;
 import org.mskcc.limsrest.ConnectionPoolLIMS;
-import org.mskcc.limsrest.service.dmp.DefaultTodayDateRetriever;
+import org.mskcc.limsrest.service.dmp.DefaultTodayDateParser;
 import org.mskcc.limsrest.service.dmp.GenerateBankedSamplesFromDMP;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +20,7 @@ public class CreateBankedSamplesFromDMPTest {
     private final GenerateBankedSamplesFromDMP generateBankedSamplesFromDMP = mock
             (GenerateBankedSamplesFromDMP.class);
     private final ConnectionPoolLIMS conn = mock(ConnectionPoolLIMS.class);
-    private final DefaultTodayDateRetriever dateRetriever = mock(DefaultTodayDateRetriever.class);
+    private final DefaultTodayDateParser dateRetriever = mock(DefaultTodayDateParser.class);
     private CreateBankedSamplesFromDMP createBankedSamplesFromDMP;
 
     @Before
@@ -32,7 +32,7 @@ public class CreateBankedSamplesFromDMPTest {
     public void whenDateIsNullAndNoErrors_shouldReturnOk() throws Exception {
         when(conn.submitTask(any())).thenReturn(mock(FutureTask.class));
 
-        ResponseEntity<String> response = createBankedSamplesFromDMP.getSampleCmoId(null);
+        ResponseEntity<String> response = createBankedSamplesFromDMP.createBankedSamplesFromDMP(null);
 
         assertThat(response.getStatusCode(), is(HttpStatus.OK));
     }
@@ -40,18 +40,15 @@ public class CreateBankedSamplesFromDMPTest {
     @Test
     public void whenDateIsNullAndCreateBankedThrowsException_shouldReturnNotFound() throws Exception {
         when(generateBankedSamplesFromDMP.call()).thenThrow(Exception.class);
-        when(dateRetriever.retrieve(any())).thenCallRealMethod();
 
-        ResponseEntity<String> response = createBankedSamplesFromDMP.getSampleCmoId(null);
+        ResponseEntity<String> response = createBankedSamplesFromDMP.createBankedSamplesFromDMP(null);
 
         assertThat(response.getStatusCode(), is(HttpStatus.NOT_FOUND));
     }
 
     @Test
     public void whenDateIsNullAndDateRetrieverThrowsException_shouldReturnNotFound() throws Exception {
-        when(dateRetriever.retrieve(any())).thenThrow(Exception.class);
-
-        ResponseEntity<String> response = createBankedSamplesFromDMP.getSampleCmoId(null);
+        ResponseEntity<String> response = createBankedSamplesFromDMP.createBankedSamplesFromDMP(null);
 
         assertThat(response.getStatusCode(), is(HttpStatus.NOT_FOUND));
     }

@@ -1,9 +1,8 @@
 package org.mskcc.limsrest.service.integrationtest;
 
 import org.mskcc.limsrest.ConnectionLIMS;
-import org.mskcc.limsrest.model.Library;
 import org.mskcc.limsrest.model.RequestSample;
-import org.mskcc.limsrest.model.Run;
+import org.mskcc.limsrest.model.RequestSampleList;
 import org.mskcc.limsrest.service.GetRequestSamplesTask;
 import org.mskcc.limsrest.service.GetSampleManifestTask;
 import org.mskcc.limsrest.model.SampleManifest;
@@ -100,7 +99,7 @@ public class AllWholeExome {
                                         String request) {
         System.out.println("Getting Data for request: " + request);
         GetRequestSamplesTask requestSamples = new GetRequestSamplesTask(request, conn);
-        GetRequestSamplesTask.RequestSampleList sampleList = requestSamples.execute();
+        RequestSampleList sampleList = requestSamples.execute();
 
         WES wes = new WES();
         wes.requestID = request;
@@ -116,8 +115,8 @@ public class AllWholeExome {
 
                 } else {
                     SampleManifest sm = smResult.smList.get(0);
-                    for (Library library : sm.getLibraries()) {
-                        for (Run run : library.getRuns()) {
+                    for (SampleManifest.Library library : sm.getLibraries()) {
+                        for (SampleManifest.Run run : library.getRuns()) {
                             for (String fastq : run.getFastqs())
                                 if (results.containsKey(fastq)) {
                                     System.err.println("DUPLICATE FASTQ: " + fastq + " Sample" + sample);

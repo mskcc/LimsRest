@@ -3,12 +3,15 @@ package org.mskcc.limsrest.service;
 import com.velox.api.datarecord.AuditLog;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import org.apache.commons.lang3.StringUtils;
 import org.mskcc.domain.sample.TumorNormalType;
 import org.mskcc.limsrest.util.Messages;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.HashMap;
 import java.util.List;
+
+import static org.mskcc.limsrest.util.Utils.getCovReadsRequirementsMap;
 
 /**
  * A queued task that takes a sample id and other values and looks for a banked sample with that id
@@ -313,11 +316,19 @@ public class SetOrCreateBanked extends LimsTask {
                 bankedFields.put("TumorType", cancerType);
             }
             bankedFields.put("TumorOrNormal", setTumorOrNormal(sampleClass, cancerType, sampleId));
+            // update the reads for IMPACT, HEMEPACT, ACCESS and Archer
+            bankedFields.putAll(getCovReadsRequirementsMap(bankedFields.get("Recipe"), bankedFields.get("TumorOrNormal"),
+                    bankedFields.get("RequestedReads"), bankedFields.get("RequestedCoverage")));
 
+            // Default RunType to "PE100" if user did not enter RunType and RequestedReads values during sample submission.
+            Object seqRunType = bankedFields.getOrDefault("RunType", null);
+            Object reqCoverage = bankedFields.getOrDefault("RequestedCoverage", null);
+            if((reqCoverage == null || StringUtils.isBlank(reqCoverage.toString())) && (seqRunType == null || StringUtils.isBlank(seqRunType.toString()))){
+                bankedFields.put("RunType", "PE100");
+            }
             if (vol > 0.0) {
                 banked.setDataField("Volume", vol, user);
             }
-
             if (!"NULL".equals(numTubes)) {
                 bankedFields.put("NumTubes", numTubes);
             }

@@ -8,24 +8,21 @@ import org.mskcc.limsrest.util.Constants;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 
-public class DefaultTodayDateRetriever implements DateRetriever {
-    private static final Log LOGGER = LogFactory.getLog(DefaultTodayDateRetriever.class);
+public class DefaultTodayDateParser {
+    private static final Log LOGGER = LogFactory.getLog(DefaultTodayDateParser.class);
 
-    @Override
-    public LocalDate retrieve(String dateString) {
+    public static LocalDate parse(String dateString) {
         if (StringUtils.isEmpty(dateString)) {
             LocalDate now = LocalDate.now();
             LOGGER.info(String.format("Date parameter not provided thus today's date %s will be used", now));
-
             return now;
         } else {
             return getParsedDate(dateString);
         }
     }
 
-    private LocalDate getParsedDate(String dateString) {
+    private static LocalDate getParsedDate(String dateString) {
         LOGGER.info(String.format("Date parameter provided: %s", dateString));
-
         try {
             return LocalDate.parse(dateString, Constants.US_DATE_TIME_FORMATTER);
         } catch (DateTimeParseException e) {

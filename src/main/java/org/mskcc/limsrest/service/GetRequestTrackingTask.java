@@ -13,6 +13,8 @@ import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.platform.commons.util.StringUtils;
+import org.mskcc.domain.sample.CmoSampleInfo;
+import org.mskcc.domain.sample.Sample;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.assignedprocess.QcStatus;
 import org.mskcc.limsrest.service.requesttracker.*;
@@ -363,6 +365,20 @@ public class GetRequestTrackingTask {
             rootTree.setIgoComplete(true);
         }
 
+        String investigatorSampleName = getRecordStringValue(record, Sample.USER_SAMPLE_ID, user);
+        String sampleName = getRecordStringValue(record, Sample.OTHER_SAMPLE_ID, user);
+        rootTree.setSampleName(sampleName);
+        rootTree.setInvestigatorSampleId(investigatorSampleName);
+        DataRecord[] sampleCmoInfochildren = getChildrenofDataRecord(record, CmoSampleInfo.DATA_TYPE_NAME, user);
+        if(sampleCmoInfochildren.length == 1){
+            DataRecord sampleCmoInfoChild = sampleCmoInfochildren[0];
+            String correctedCmoId = getRecordStringValue(sampleCmoInfoChild, CmoSampleInfo.USER_SAMPLE_ID, user);
+            rootTree.setCorrectedInvestigatorSampleId(correctedCmoId);
+        } else {
+            log.info(String.format("There is not a single %s child for Sample DataRecord: %d",
+                    CmoSampleInfo.DATA_TYPE_NAME,
+                    record.getRecordId()));
+        }
         // Recursively create the workflowTree from the input tree
         ProjectSampleTree workflowTree = createWorkflowTree(root, rootTree);
 

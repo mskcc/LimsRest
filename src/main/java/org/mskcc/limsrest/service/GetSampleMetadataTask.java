@@ -87,11 +87,12 @@ public class GetSampleMetadataTask {
                         log.info("baitset: " + baitset);
                         String fastqPath = "";
                         String ancestorSample = getOriginSampleId(sample, user);
+                        boolean doNotUse = false;
                         String sampleStatus = getMostAdvancedLimsStage(sample, requestId, this.conn);
                         SampleMetadata metadata = new SampleMetadata(mrn, cmoPatientId, cmoSampleId, igoId, investigatorSampleId, species,
                                 sex, tumorOrNormal, sampleType, preservation, tumorType, parentTumorType,
                                 specimenType, sampleOrigin, tissueSource, tissueLocation, recipe,
-                                baitset, fastqPath, labHead, ancestorSample, sampleStatus);
+                                baitset, fastqPath, labHead, ancestorSample, doNotUse, sampleStatus);
                         sampleMetadata.add(metadata);
                         log.info("Done building object.");
                     }
