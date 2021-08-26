@@ -36,8 +36,8 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/")
 public class IgoNewRequestMetaDbPublisher {
 
-    @Value("${nats.publisher_topic}")
-    private String IGO_NEW_REQUEST_TOPIC;
+    @Value("${nats.igo_request_validator_topic}")
+    private String IGO_REQUEST_VALIDATOR_TOPIC;
 
     @Autowired
     private Gateway messagingGateway;
@@ -134,19 +134,14 @@ public class IgoNewRequestMetaDbPublisher {
         igoRequestMap.put("projectId", projectId);
         igoRequestMap.put("samples", sampleManifestList);
         String igoRequestJson = gson.toJson(igoRequestMap);
+
+        // publish request json to IGO_REQUEST_VALIDATOR_TOPIC
         try {
-            log.debug("Publishing cmo request entity: " + igoRequestJson);
-            messagingGateway.publish(IGO_NEW_REQUEST_TOPIC, igoRequestJson);
+            log.info("Publishing to 'IGO_REQUEST_VALIDATOR_TOPIC' " + IGO_REQUEST_VALIDATOR_TOPIC + ": " + requestDetails.getRequestId());
+            messagingGateway.publish(IGO_REQUEST_VALIDATOR_TOPIC, igoRequestJson);
         } catch (Exception e) {
-            String metadbErrorMsg = "Error during attempt to publish new request entity to MetaDB with request id: " + requestDetails.getRequestId();
-            log.error(metadbErrorMsg);
-            if (log.isDebugEnabled()) {
-                StringBuilder builder = new StringBuilder(metadbErrorMsg);
-                builder.append("\n****FAILED IGO_NEW_REQUEST MESSAGE****\n")
-                        .append(igoRequestJson)
-                        .append("\n****************\n");
-                log.debug(builder);
-            }
+            String metadbErrorMsg = "Error during attempt to publish request to topic: " + IGO_REQUEST_VALIDATOR_TOPIC;
+            log.error(metadbErrorMsg, e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, metadbErrorMsg, e);
         }
     }
