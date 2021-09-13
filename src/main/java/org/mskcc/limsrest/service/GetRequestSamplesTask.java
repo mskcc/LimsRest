@@ -1,6 +1,5 @@
 package org.mskcc.limsrest.service;
 
-import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
@@ -8,10 +7,11 @@ import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.RequestModel;
 import com.velox.sloan.cmo.recmodels.SampleModel;
-import lombok.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
+import org.mskcc.limsrest.model.RequestSample;
+import org.mskcc.limsrest.model.RequestSampleList;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +35,7 @@ public class GetRequestSamplesTask {
         this.conn = conn;
     }
 
-    public GetRequestSamplesTask.RequestSampleList execute() {
+    public RequestSampleList execute() {
         try {
             VeloxConnection vConn = conn.getConnection();
             User user = vConn.getUser();
@@ -83,7 +83,7 @@ public class GetRequestSamplesTask {
 
             if (isIMPACTOrHEMEPACT(recipe)) {
                 log.info("Adding pooled normals for recipe: " + recipe);
-                rsl.pooledNormals = findPooledNormals(requestId);
+                rsl.setPooledNormals(findPooledNormals(requestId));
             }
             String requestName = requestDataRecord.getStringVal(RequestModel.REQUEST_NAME, user);
             if (requestName != null && requestName.toUpperCase().contains("RNASEQ")) {
@@ -120,9 +120,8 @@ public class GetRequestSamplesTask {
                 log.warn("Correct invalid null valid in database for request: " + requestId);
             }
             Boolean isBicRequest = GetRequestPermissionsTask.isBicRequest(analysisType, bicAnalysis);
-
+            rsl.setIsCmoRequest(isCmoRequest);
             rsl.setBicAnalysis(isBicRequest);
-            rsl.setCmoRequest(isCmoRequest);
 
             return rsl;
         } catch (Throwable e) {
@@ -204,77 +203,6 @@ public class GetRequestSamplesTask {
         } catch (Exception e) {
             log.error("FASTQ Search error:" + e.getMessage());
             return null;
-        }
-    }
-    @Getter @Setter
-    public static class RequestSampleList {
-        public String requestId;
-        public String recipe;
-        public String projectManagerName;
-        public String piEmail;
-        public String labHeadName, labHeadEmail;
-        public String investigatorName, investigatorEmail;
-        public String dataAnalystName, dataAnalystEmail;
-        public String otherContactEmails;
-        public String dataAccessEmails;
-        public String qcAccessEmails;
-        public String strand; // only for RNASeq
-        public String libraryType; // only for RNASeq
-        public Boolean isCmoRequest;
-        public Boolean bicAnalysis;
-        private Long deliveryDate = null;
-
-        public List<RequestSample> samples;
-
-        public List<String> pooledNormals;
-
-        public RequestSampleList(){}
-
-        public RequestSampleList(String requestId){ this.requestId = requestId; }
-
-        public RequestSampleList(String requestId, List<RequestSample> samples) {
-            this.requestId = requestId;
-            this.samples = samples;
-        }
-
-        public Long getDeliveryDate() { return deliveryDate; }
-        public void setDeliveryDate(Long deliveryDate) { this.deliveryDate = deliveryDate; }
-
-        //TODO @deprecated remove "cmoRequest" from JSON response and only keep "isCmoRequest"
-        public Boolean getCmoRequest() { return isCmoRequest; }
-        public void setCmoRequest(Boolean cmoRequest) { isCmoRequest = cmoRequest; }
-
-        @JsonInclude(JsonInclude.Include.NON_EMPTY)
-        public String getRequestId() {
-            return requestId;
-        }
-
-        @JsonInclude(JsonInclude.Include.NON_EMPTY)
-        public List<RequestSample> getSamples() {
-            return samples;
-        }
-    }
-
-    @NoArgsConstructor @AllArgsConstructor
-    @ToString @Setter
-    public static class RequestSample {
-        private String investigatorSampleId;
-        private String igoSampleId;
-        private boolean IGOComplete;
-
-        @JsonInclude(JsonInclude.Include.NON_EMPTY)
-        public String getInvestigatorSampleId() {
-            return investigatorSampleId;
-        }
-
-        @JsonInclude(JsonInclude.Include.NON_EMPTY)
-        public String getIgoSampleId() {
-            return igoSampleId;
-        }
-
-        @JsonInclude(JsonInclude.Include.NON_EMPTY)
-        public boolean isIGOComplete() {
-            return IGOComplete;
         }
     }
 

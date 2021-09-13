@@ -1,18 +1,16 @@
 package org.mskcc.limsrest.controller;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.ConnectionLIMS;
-import org.mskcc.limsrest.service.GetSampleMetadataTask;
-import org.mskcc.limsrest.service.samplemetadata.SampleMetadata;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.ConnectionLIMS;
+import org.mskcc.limsrest.model.SampleMetadata;
+import org.mskcc.limsrest.service.GetSampleMetadataTask;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/")

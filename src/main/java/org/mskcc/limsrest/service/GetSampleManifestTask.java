@@ -9,19 +9,19 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.KAPALibPlateSetupProtocol1Model;
 import com.velox.sloan.cmo.recmodels.SampleModel;
 import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
+import java.rmi.RemoteException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
+import org.mskcc.limsrest.model.SampleManifest;
 import org.mskcc.limsrest.util.IGOTools;
 import org.mskcc.limsrest.util.Utils;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
-
-import java.rmi.RemoteException;
-import java.text.SimpleDateFormat;
-import java.util.*;
 
 /**
  * Traverse the LIMS & ngs_stats database to find all sample level metadata required for CMO pipelines.<BR>
@@ -118,12 +118,13 @@ public class GetSampleManifestTask {
                 result.getLibraries().get(0).barcodeId = sampleSheet.barcodeId;
                 result.getLibraries().get(0).barcodeIndex = sampleSheet.barcodeIndex1+"-"+sampleSheet.barcodeIndex2;
                 result.getLibraries().get(0).captureName = "Pool-06302_AO-A8_1";
-                result.getLibraries().get(0).runs.get(0).readLength = "101/8/8/101";
-                result.getLibraries().get(0).runs.get(0).runMode = "NovaSeq S4";
+                result.getLibraries().get(0).runs.get(0).setReadLength("101/8/8/101");
+                result.getLibraries().get(0).runs.get(0).setRunMode("NovaSeq S4");
                 Integer array[] = {1, 2, 3, 4};
-                result.getLibraries().get(0).runs.get(0).flowCellLanes = Arrays.asList(array);
+                result.getLibraries().get(0).runs.get(0).setFlowCellLanes(Arrays.asList(array));
                 setACCESS2dBarcode(user, dataRecordManager, sampleX, sampleManifest);
                 sampleManifest.setTubeId(getTubeId(sampleX, user));
+
                 return result;
             }
             return new SampleManifest();
@@ -212,8 +213,8 @@ public class GetSampleManifestTask {
             }
             if (indexBarcodes != null && indexBarcodes.size() > 0) {
                 DataRecord bc = indexBarcodes.get(0);
-                library.barcodeId = bc.getStringVal("IndexId", user);
-                library.barcodeIndex = bc.getStringVal("IndexTag", user);
+                library.setBarcodeId(bc.getStringVal("IndexId", user));
+                library.setBarcodeIndex(bc.getStringVal("IndexTag", user));
             }
 
             // recipe, capture input, capture name
@@ -227,10 +228,11 @@ public class GetSampleManifestTask {
                     Object val = n.getValue("SourceMassToUse", user);
                     if (val != null) {
                         Double captureInput = n.getDoubleVal("SourceMassToUse", user);
-                        library.captureInputNg = captureInput.toString();
-                        library.captureName = poolName;
+                        library.setCaptureInputNg(captureInput.toString());
+                        library.setCaptureName(poolName);
                         Double captureVolume = n.getDoubleVal("VolumeToUse", user);
-                        library.captureConcentrationNm = captureVolume.toString();
+                        library.setCaptureConcentrationNm(captureVolume.toString());
+                        sampleManifest.addLibrary(library);
                     }
                 } else {
                     log.warn("Nimblegen records not valid.");
@@ -289,10 +291,10 @@ public class GetSampleManifestTask {
 
                             if (fastqs != null) {
                                 r.addLane(laneNum);
-                                r.fastqs = fastqs;
+                                r.setFastqs(fastqs);
 
                                 runsMap.put(flowCellId, r);
-                                library.runs.add(r);
+                                library.addRun(r);
                             }
                         }
                     }
@@ -306,6 +308,7 @@ public class GetSampleManifestTask {
             if (library.hasFastqs()) {
                 List<SampleManifest.Library> libraries = sampleManifest.getLibraries();
                 libraries.add(library);
+                sampleManifest.setLibraries(libraries);
             }
         }
         return sampleManifest;
@@ -314,8 +317,8 @@ public class GetSampleManifestTask {
     private Double setACCESS2dBarcode(User user, DataRecordManager dataRecordManager, DataRecord sample, SampleManifest sampleManifest) throws NotFound, IoError, RemoteException {
         Double dnaInputNg;
         dnaInputNg = findDNAInputForLibraryForMSKACCESS(sample, user);
-        log.info("Searching for ACCESS 2D barcode with base IGO sample ID=" + sampleManifest.cmoInfoIgoId);
-        List<DataRecord> baseSamples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sampleManifest.cmoInfoIgoId + "'", user);
+        log.info("Searching for ACCESS 2D barcode with base IGO sample ID=" + sampleManifest.getCmoInfoIgoId());
+        List<DataRecord> baseSamples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sampleManifest.getCmoInfoIgoId() + "'", user);
         if (baseSamples.size() > 0) {
             DataRecord baseSample = baseSamples.get(0);
             // example 2d barcode "8036707180"
@@ -378,9 +381,9 @@ public class GetSampleManifestTask {
         if (runPassedQC.contains("JAX_0004_BH5GJYBBXX")) {
             String runID = "JAX_0004";
             SampleManifest.Run r = new SampleManifest.Run("", runID, "H5GJYBBXX", "", "2015-11-30");
-            r.fastqs = FastQPathFinder.search(runID, origSampleName, sampleManifest.getIgoId(), false, runPassedQC);
-            if (r.fastqs != null) {
-                library.runs.add(r);
+            r.setFastqs(FastQPathFinder.search(runID, origSampleName, sampleManifest.getIgoId(), false, runPassedQC));
+            if (r.getFastqs() != null) {
+                library.addRun(r);
             }
         }
     }
@@ -395,7 +398,7 @@ public class GetSampleManifestTask {
                 String comments = qcRecord.getStringVal("Comments", user);
                 String id = qcRecord.getStringVal("InvestigatorDecision", user);
                 SampleManifest.QcReport r = new SampleManifest.QcReport(SampleManifest.QcReportType.DNA, igoQcRecommendation, comments, id);
-                sampleManifest.getQcReports().add(r);
+                sampleManifest.addQcReport(r);
             }
 
             log.info("Searching for QcReportLibrary");
@@ -406,7 +409,7 @@ public class GetSampleManifestTask {
                 String comments = qcRecord.getStringVal("Comments", user);
                 String id = qcRecord.getStringVal("InvestigatorDecision", user);
                 SampleManifest.QcReport r = new SampleManifest.QcReport(SampleManifest.QcReportType.LIBRARY, igoQcRecommendation, comments, id);
-                sampleManifest.getQcReports().add(r);
+                sampleManifest.addQcReport(r);
             }
         } catch (RemoteException | NotFound e) {
             log.error("Failed to complete QC record searches.");
@@ -449,7 +452,7 @@ public class GetSampleManifestTask {
         List<SampleManifest.Run> runs = FastQPathFinder.searchForFastqs(sampleManifest.getIgoId(), runFailedQC);
 
         SampleManifest.Library library = new SampleManifest.Library();
-        library.runs = runs;
+        library.setRuns(runs);
         List<SampleManifest.Library> libraries = new ArrayList<>();
         libraries.add(library);
         sampleManifest.setLibraries(libraries);
@@ -473,7 +476,7 @@ public class GetSampleManifestTask {
     protected SampleManifest setSampleLevelFields(String igoId, String cmoInfoIgoId, DataRecord cmoInfo, User user) throws NotFound, RemoteException {
         SampleManifest s = new SampleManifest();
         s.setIgoId(igoId);
-        s.cmoInfoIgoId = cmoInfoIgoId;
+        s.setCmoInfoIgoId(cmoInfoIgoId);
         s.setCmoPatientId(cmoInfo.getStringVal("CmoPatientId", user));
         // aka "Sample Name" in SampleCMOInfoRecords
 
@@ -602,15 +605,14 @@ public class GetSampleManifestTask {
                 for (ArchivedFastq fastq : passedFastqs) {
                     if (runMap.containsKey(fastq.run)) {  // if the run already exists just add the fastq path
                         SampleManifest.Run run = runMap.get(fastq.run);
-                        run.fastqs.add(fastq.fastq);
+                        run.addFastq(fastq.fastq);
                     } else {
                         String runId = fastq.getRunId();
                         String flowCellId = fastq.getFlowCellId();
                         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
                         String runDate = dateFormat.format(fastq.fastqLastModified); // 2020-07-31
                         SampleManifest.Run run = new SampleManifest.Run(runId, flowCellId, runDate);
-                        run.fastqs = new ArrayList<>();
-                        run.fastqs.add(fastq.fastq);
+                        run.addFastq(fastq.fastq);
 
                         runMap.put(fastq.run, run);
                     }

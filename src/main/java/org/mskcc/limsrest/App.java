@@ -1,7 +1,9 @@
 package org.mskcc.limsrest;
 
+import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.cmo.messaging.Gateway;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -20,8 +22,6 @@ import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
-import java.util.List;
-
 @SpringBootApplication
 @EnableSwagger2
 @PropertySource({"classpath:/connect.txt", "classpath:/app.properties"})
@@ -39,6 +39,24 @@ public class App extends SpringBootServletInitializer {
 
     @Value("#{'${human.recipes}'.split(',')}")
     private List<String> humanRecipes;
+    
+    @Autowired
+    private Gateway messagingGateway;
+
+    @Value("${nats.url}")
+    private String natsUrl;
+
+    @Bean
+    public Gateway messagingGateway() throws Exception {
+        messagingGateway.connect(natsUrl);
+        log.info("Attempting to connecto to CMO MetaDB NATS server...");
+        if (!messagingGateway.isConnected()) {
+            log.error("Failed to connect to CMO MetaDB NATS server - messages will not be published");
+        } else {
+            log.info("CMO MetaDB NATS connection successful");
+        }
+        return messagingGateway;
+    }
 
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);

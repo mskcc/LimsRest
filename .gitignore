@@ -1,5 +1,6 @@
 # Compiled class file
 *.class
+target
 
 # Log file
 *.log
@@ -43,6 +44,7 @@ libs/*sapio*
 .idea/**/workspace.xml
 .idea/**/tasks.xml
 .idea/dictionaries
+.nb-gradle
 
 # Sensitive or high-churn files:
 .idea/**/dataSources/
