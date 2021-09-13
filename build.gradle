@@ -58,7 +58,6 @@ repositories {
     mavenCentral()
     mavenLocal()
     maven { url "${nexusUrlReleases}" }
-    maven { url "${nexusUrlSnapshots}" }
     maven { url 'https://jitpack.io' }
     jcenter()
 }
@@ -101,10 +100,10 @@ dependencies {
     //providedCompile group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0'
 
     compile 'com.velox.internalproducts:veloxapi:10.6.1-b777'
-    compile 'com.velox.sloan.cmo:sloancmo:2.21.1-LIMS10.6.1_b84'
-    compile 'com.velox.internalproducts:sapiogeneric:15.0.0-LIMS10.6.1'
-    compile 'com.velox.internalproducts:sapioutils:15.0.0-LIMS10.6.1'
-    compile 'com.velox.internalproducts:sapio-commons:15.0.0-LIMS10.6.1'
+    compile 'com.velox.sloan.cmo:sloancmo:2.21.1-LIMS10.6.1_b777'
+    compile 'com.velox.internalproducts:sapiogeneric:15.1.0-LIMS10.6.1'
+    compile 'com.velox.internalproducts:sapioutils:15.1.0-LIMS10.6.1'
+    compile 'com.velox.internalproducts:sapio-commons:15.1.0-LIMS10.6.1'
 
     compile fileTree (dir: 'libs', include: '*.jar')
 
@@ -185,10 +184,6 @@ uploadArchives {
         mavenDeployer {
             repository(
                     url: "${nexusUrlReleases}") {
-                authentication(userName: nexusUsername, password: nexusPassword)
-            }
-            snapshotRepository(
-                    url: "${nexusUrlSnapshots}") {
                 authentication(userName: nexusUsername, password: nexusPassword)
             }
 
