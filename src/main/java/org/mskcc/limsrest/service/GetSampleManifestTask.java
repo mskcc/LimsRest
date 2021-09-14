@@ -663,24 +663,8 @@ public class GetSampleManifestTask {
                     // The LIMS has no QC data for samples prior to Oct. 2015
                     if (runPassedQC.size() == 0)
                         passedQCList.add(fastq);
-                    else if (runPassedQC.contains(fastq.runBaseDirectory))
+                    else if (runPassedQC.contains(fastq.run))
                         passedQCList.add(fastq);
-                    else {
-                        // for example, 08106_C_35 has fastq PITT_0214_AHVHVFBBXX_A1 BUT PASSED
-                        // PITT_0214_AHVHVFBBXX in LIMS which is okay
-                        // TODO REGEX to extract run and test this instead of _A1, _A2, etc.
-                        if (fastq.runBaseDirectory.endsWith("_A1") ||
-                                fastq.runBaseDirectory.endsWith("_A2") ||
-                                fastq.runBaseDirectory.endsWith("_A3") ||
-                                fastq.runBaseDirectory.endsWith("_RENAME") ||
-                                fastq.runBaseDirectory.endsWith("i7") ||
-                                fastq.runBaseDirectory.endsWith("I7") ||
-                                fastq.runBaseDirectory.endsWith("_v2")
-                        ) {
-                            if (runPassedQC.contains(fastq.run))
-                                passedQCList.add(fastq);
-                        }
-                    }
                 }
                 log.info("fastqs passed QC: " + passedQCList.size());
                 passedQCList = filterMultipleDemuxes(passedQCList);
