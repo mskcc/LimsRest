@@ -66,6 +66,7 @@ public class SetOrCreateBanked extends LimsTask {
     double concentration;
     int rowIndex;
     long transactionId;
+    int numberOfAmplicons;
 
     public void init(
             String igoUser,
@@ -111,7 +112,8 @@ public class SetOrCreateBanked extends LimsTask {
             float vol,
             double concentration,
             int rowIndex,
-            long transactionId) {
+            long transactionId,
+            int numOfAmplicons) {
 
         this.igoUser = igoUser;
         this.investigator = investigator;
@@ -159,6 +161,7 @@ public class SetOrCreateBanked extends LimsTask {
         this.concentration = concentration;
         this.rowIndex = rowIndex;
         this.transactionId = transactionId;
+        this.numberOfAmplicons = numOfAmplicons;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
