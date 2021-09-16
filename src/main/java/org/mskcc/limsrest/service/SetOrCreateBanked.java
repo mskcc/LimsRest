@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 import static org.mskcc.limsrest.util.Utils.getCovReadsRequirementsMap;
 
@@ -334,6 +335,9 @@ public class SetOrCreateBanked extends LimsTask {
             }
             if (!"NULL".equals(numTubes)) {
                 bankedFields.put("NumTubes", numTubes);
+            }
+            if(Objects.nonNull(numberOfAmplicons)) {
+                bankedFields.put("NumberOfAmplicons", numberOfAmplicons);
             }
 
             if (concentration > 0.0) {

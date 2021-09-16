@@ -347,6 +347,7 @@ public class PromoteBanked extends LimsTask {
         String newIgoId = requestId + "_" + (maxExistentId + offset);
         try {
             DataRecord promotedSampleRecord = req.addChild("Sample", user);
+            DataRecord missionBioProtocol1 =
             String barcodeId = bankedSample.getBarcodeId();
             String runType = bankedSample.getRunType();
             String plateId = bankedSample.getPlateId();
@@ -408,6 +409,12 @@ public class PromoteBanked extends LimsTask {
             Object species = bankedFields.getOrDefault("Species", null);
             Object requestedCoverage = bankedFields.getOrDefault("RequestedCoverage", null);
             String bankedSampleRequestedReads = bankedSample.getRequestedReads();
+
+            //Populating number of amplicons in MissionBioTapestri lib prep Protocol1 table
+            //Runs if recipe is a MissionBio kind.
+            if(recipe.contains("MissionBio")) {
+                missionBioProtocol1.setDataField("NumberOfAmplicons", bankedSample.getNumOfAmplicons);
+            }
 
             try {
                 // BankedSample values determine whether banked sample values should be re-assigned. Log for debugging
