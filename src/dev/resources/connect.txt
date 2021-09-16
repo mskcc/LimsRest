@@ -1,7 +1,6 @@
 lims.host=localhost
 lims.port=
 lims.guid=
-
 lims.user1=
 lims.pword1=
 lims.user2=
