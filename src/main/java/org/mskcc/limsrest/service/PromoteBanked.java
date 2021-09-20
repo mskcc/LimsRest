@@ -410,6 +410,9 @@ public class PromoteBanked extends LimsTask {
             Object requestedCoverage = bankedFields.getOrDefault("RequestedCoverage", null);
             String bankedSampleRequestedReads = bankedSample.getRequestedReads();
 
+
+            missionBioProtocol1.get(0).setDataField("SampleId", bankedSampleRecord.getValue("SampleId", user), user);
+            missionBioProtocol1.get(0).setDataField("OtherSampleId", bankedSampleRecord.getValue("OtherSampleId", user), user);
             //Populating number of amplicons in MissionBioTapestri lib prep Protocol1 table
             //Runs if recipe is a MissionBio kind.
             if(recipe.contains("MissionBio")) {
