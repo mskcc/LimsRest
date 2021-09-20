@@ -1,7 +1,6 @@
 package org.mskcc.limsrest.service;
 
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
 import com.velox.api.datarecord.*;
 import com.velox.api.util.ServerException;
@@ -64,14 +63,6 @@ public class PromoteBanked extends LimsTask {
     String materials;
     boolean dryrun = false;
     private Multimap<String, String> errors = HashMultimap.create();
-    private Map<Integer, Double> coverageToSeqReqWES = ImmutableMap.<Integer, Double>builder()
-            .put(30, 20.0)
-            .put(70, 45.0)
-            .put(100, 60.0)
-            .put(150, 95.0)
-            .put(200, 120.0)
-            .put(250, 160.0)
-            .build();
 
     public PromoteBanked() {
     }
@@ -247,8 +238,6 @@ public class PromoteBanked extends LimsTask {
                 int offset = 1;
                 HashMap<String, DataRecord> plateId2Plate = new HashMap<>();
                 // get Coverage -> RequestedReads Reference table values from 'ApplicationReadCoverageRef' table in LIMS.
-                List<DataRecord> readCoverageRefs = dataRecordManager.queryDataRecords("ApplicationReadCoverageRef", "ReferenceOnly != 1", user);
-                log.info("ApplicationReadCoverageRef records: " + readCoverageRefs.size());
                 for (DataRecord bankedSample : bankedList) {
                     createRecords(bankedSample, req, requestId, barcodeId2Sequence, plateId2Plate, existentIds, maxId, offset);
                     offset++;
@@ -443,28 +432,6 @@ public class PromoteBanked extends LimsTask {
             log.error(npe.getStackTrace().toString());
         }
     }
-
-    /**
-     * Determines requested reads & coverage based on requestedReads of BankedSample DataRecord and internal mapping
-     * of coverage to type of sequencing run in @coverageToSeqReqWES
-     *
-     * @param requestedReads
-     * @return
-     */
-    public Map<String, Object> getCovReadsRequirementsMap_forWES(String requestedReads) {
-        Map<String, Object> coverageReadsMap = new HashMap<>();
-        if (requestedReads != null) {
-            // E.g. 70x -> 70
-            Matcher depthMatch = Pattern.compile("([0-9]+)[xX]").matcher(requestedReads);
-            if (depthMatch.find()) {
-                Object coverageTarget = Integer.valueOf(depthMatch.group(1));
-                coverageReadsMap.put("CoverageTarget", coverageTarget);
-                coverageReadsMap.put("RequestedReads", coverageToSeqReqWES.getOrDefault(coverageTarget, null));
-            }
-        }
-        return coverageReadsMap;
-    }
-
 
     private void checkSampleTypeAndPatientId(BankedSample bankedSample) {
         Utils.requireNonNullNorEmpty(bankedSample.getCMOPatientId(), String.format("Cmo Patient id is empty for" +
