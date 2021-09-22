@@ -56,6 +56,7 @@ public class SampleSummary {
     private String userId; // expName
     private double volume;
     private double yield;  // missing
+    private int numberOfAmplicons;
 
     private SampleQcSummary qc;
     private LinkedList<BasicQc> basicQcs;
@@ -378,4 +379,7 @@ public class SampleSummary {
     public String getCmoPatientId() {
         return cmoPatientId;
     }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public int getNumberOfAmplicons() { return numberOfAmplicons; }
 }

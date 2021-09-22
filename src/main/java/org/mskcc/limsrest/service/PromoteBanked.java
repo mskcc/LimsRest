@@ -400,12 +400,12 @@ public class PromoteBanked extends LimsTask {
 
             //Populating number of amplicons in MissionBioTapestri lib prep Protocol1 table
             //Runs if recipe is a MissionBio kind.
-            if(recipe.contains("MissionBio")) {
+            if(recipe.toLowerCase().contains("missionbio")) {
                 Map<String, Object> missionbiofields = new HashMap<>();
                 missionbiofields.put("SampleId", newIgoId);
                 missionbiofields.put("OtherSampleId", otherSampleId);
                 missionbiofields.put("NumberOfAmplicons", bankedSampleRecord.getValue("NumberOfAmplicons", user));
-                DataRecord missionBioProtocol1 = promotedSampleRecord.addChild("MissionBio Tapestri Library Prep Protocol 1s", missionbiofields, user);
+                promotedSampleRecord.addChild("MissionBioTapestriLibProtocol1", missionbiofields, user);
             }
 
             try {
