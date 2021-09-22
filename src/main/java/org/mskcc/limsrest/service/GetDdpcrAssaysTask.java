@@ -62,7 +62,6 @@ public class GetDdpcrAssaysTask extends LimsTask {
             PickListConfig pickConfig = picklister.getPickListConfig("ddPCR Assay");
             pickConfig.setEntryList(assayNames);
             picklister.storePickListConfig(user, pickConfig);
-            log.info("Assays been successfully replaced.");
 
         } catch (Exception e) {
             e.printStackTrace();
