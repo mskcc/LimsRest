@@ -57,16 +57,17 @@ public class GetDdpcrAssaysTask extends LimsTask {
         }
 //        Keep assay picklist n'synch with assay datatype
 //        To be removed when picklist can be safely removed (sample submission still needs it as of 11/2020)
-//        try {
-//            PickListManager picklister = conn.getDataMgmtServer().getPickListManager(user);
-//            PickListConfig pickConfig = picklister.getPickListConfig("ddPCR Assay");
-//            pickConfig.setEntryList(assayNames);
-//            picklister.storePickListConfig(user, pickConfig);
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            log.error(String.format("Failed to create assay picklist."));
-//        }
+        try {
+            PickListManager picklister = conn.getDataMgmtServer().getPickListManager(user);
+            PickListConfig pickConfig = picklister.getPickListConfig("ddPCR Assay");
+            pickConfig.setEntryList(assayNames);
+            picklister.storePickListConfig(user, pickConfig);
+            log.info("Assays been successfully replaced.");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(String.format("Failed to create assay picklist."));
+        }
 
         return assays;
     }

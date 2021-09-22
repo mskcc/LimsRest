@@ -336,7 +336,6 @@ public class PromoteBanked extends LimsTask {
         String newIgoId = requestId + "_" + (maxExistentId + offset);
         try {
             DataRecord promotedSampleRecord = req.addChild("Sample", user);
-            List<DataRecord> missionBioProtocol1 = dataRecordManager.queryDataRecords("MissionBio Tapestri Library Prep Protocol 1s", "SampleId ='" + newIgoId + "'", user);
             String barcodeId = bankedSample.getBarcodeId();
             String runType = bankedSample.getRunType();
             String plateId = bankedSample.getPlateId();
@@ -399,13 +398,14 @@ public class PromoteBanked extends LimsTask {
             Object requestedCoverage = bankedFields.getOrDefault("RequestedCoverage", null);
             String bankedSampleRequestedReads = bankedSample.getRequestedReads();
 
-
-            missionBioProtocol1.get(0).setDataField("SampleId", bankedSampleRecord.getValue("SampleId", user), user);
-            missionBioProtocol1.get(0).setDataField("OtherSampleId", bankedSampleRecord.getValue("OtherSampleId", user), user);
             //Populating number of amplicons in MissionBioTapestri lib prep Protocol1 table
             //Runs if recipe is a MissionBio kind.
             if(recipe.contains("MissionBio")) {
-                missionBioProtocol1.get(0).setDataField("NumberOfAmplicons", bankedSampleRecord.getValue("NumberOfAmplicons", user), user);
+                Map<String, Object> missionbiofields = new HashMap<>();
+                missionbiofields.put("SampleId", newIgoId);
+                missionbiofields.put("OtherSampleId", otherSampleId);
+                missionbiofields.put("NumberOfAmplicons", bankedSampleRecord.getValue("NumberOfAmplicons", user));
+                DataRecord missionBioProtocol1 = promotedSampleRecord.addChild("MissionBio Tapestri Library Prep Protocol 1s", missionbiofields, user);
             }
 
             try {
