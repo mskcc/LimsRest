@@ -52,7 +52,9 @@ public class GetDdpcrAssaysTask extends LimsTask {
                 return new ArrayList<>();
             }
             DdpcrAssay a = new DdpcrAssay(sampleFields);
-            assayNames.add(a.assayName);
+            if(!a.hideFromUser) {
+                assayNames.add(a.assayName);
+            }
             assays.add(a);
         }
 //        Keep assay picklist n'synch with assay datatype
