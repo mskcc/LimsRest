@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.io.BufferedReader;
+import java.io.IOError;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -215,6 +216,8 @@ public class Utils {
             LOGGER.error(String.format("IoError -> Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(ioError)));
         } catch (NotFound notFound) {
             LOGGER.error(String.format("NotFound -> Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(notFound)));
+        } catch (Exception ex) {
+            LOGGER.error(String.format("NotFound -> Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(ex)));
         }
         return null;
     }
@@ -254,6 +257,8 @@ public class Utils {
             LOGGER.error(String.format("IoError -> Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(ioError)));
         } catch (NotFound notFound) {
             LOGGER.error(String.format("NotFound -> Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(notFound)));
+        } catch (Exception ex) {
+            LOGGER.error(String.format("NotFound -> Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(ex)));
         }
         return records;
     }
@@ -386,12 +391,14 @@ public class Utils {
             return sampleChildren;
         } catch (IoError | RemoteException e) {
             LOGGER.error(String.format("Failed to retrieve %s children of %s record: %d", childDataType, record.getDataTypeName(), record.getRecordId()));
+        } catch(Exception e) {
+            LOGGER.error(String.format("Failed to retrieve %s children of %s record: %d", childDataType, record.getDataTypeName(), record.getRecordId()));
         }
         return new DataRecord[0];
     }
 
     /**
-     * Returns Datatype descendents of the input DataRecord
+     * Returns Datatype descendants of the input DataRecord
      *
      * @param record
      * @param dataType
@@ -401,8 +408,10 @@ public class Utils {
     public static List<DataRecord> getDescendantsOfType(DataRecord record, String dataType, User user) {
         try {
             return record.getDescendantsOfType(dataType, user);
-        } catch (RemoteException e){
-            LOGGER.error(String.format("Failed to retrieve %s descendents of %s record: %d", dataType, record.getDataTypeName(), record.getRecordId()));
+        } catch (RemoteException e) {
+            LOGGER.error(String.format("Failed to retrieve %s descendants of %s record: %d", dataType, record.getDataTypeName(), record.getRecordId()));
+        } catch (Exception e) {
+            LOGGER.error(String.format("Failed to retrieve %s descendants of %s record: %d", dataType, record.getDataTypeName(), record.getRecordId()));
         }
         return new ArrayList<>();
     }
@@ -742,6 +751,9 @@ public class Utils {
         } catch (IoError | RemoteException e) {
             LOGGER.error(String.format("%s -> Error while getting %s records for %s record with Record Id %d,\n%s",
                     ExceptionUtils.getRootCause(e), targetDataType, record.getDataTypeName(), record.getRecordId(), ExceptionUtils.getStackTrace(e)));
+        } catch (Exception e) {
+            LOGGER.error(String.format("%s -> Error while getting %s records for %s record with Record Id %d,\n%s",
+                    ExceptionUtils.getRootCause(e), targetDataType, record.getDataTypeName(), record.getRecordId(), ExceptionUtils.getStackTrace(e)));
         }
         return records;
     }
@@ -766,6 +778,8 @@ public class Utils {
                 }
             }
         } catch (IoError | RemoteException e) {
+            LOGGER.error(String.format("%s Exception while retrieveing flowcell lanes for sequencing run %s: %s", ExceptionUtils.getRootCause(e), runId, ExceptionUtils.getStackTrace(e)));
+        } catch (Exception e) {
             LOGGER.error(String.format("%s Exception while retrieveing flowcell lanes for sequencing run %s: %s", ExceptionUtils.getRootCause(e), runId, ExceptionUtils.getStackTrace(e)));
         }
         return relatedSamples;

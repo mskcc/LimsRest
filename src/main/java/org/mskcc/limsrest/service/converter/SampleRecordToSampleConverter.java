@@ -3,6 +3,7 @@ package org.mskcc.limsrest.service.converter;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.user.User;
+import com.velox.api.util.ServerException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.CmoSampleInfo;
@@ -16,7 +17,7 @@ import java.util.Map;
 public class SampleRecordToSampleConverter {
     private final static Log LOGGER = LogFactory.getLog(PatientSamplesWithCmoInfoRetriever.class);
 
-    public Sample convert(DataRecord sampleRecord, User user) throws RemoteException, IoError {
+    public Sample convert(DataRecord sampleRecord, User user) throws RemoteException, IoError, ServerException {
         Map<String, Object> fields = sampleRecord.getFields(user);
         String sampleId = (String) fields.get(VeloxConstants.SAMPLE_ID);
 

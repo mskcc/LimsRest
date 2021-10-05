@@ -5,6 +5,7 @@ import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
+import com.velox.api.util.ServerException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.CorrectedCmoSampleView;
@@ -34,7 +35,7 @@ public class PatientSamplesWithCmoInfoRetriever {
     }
 
     public List<CorrectedCmoSampleView> retrieve(String patientId, DataRecordManager dataRecordManager, User user)
-            throws LimsException {
+            throws LimsException, ServerException {
         CommonUtils.requireNonNullNorEmpty(patientId, "Patient id cannot be empty");
 
         LOGGER.info("Retrieving samples needed for CMO Sample Id counter for patient:" + patientId);
@@ -62,7 +63,7 @@ public class PatientSamplesWithCmoInfoRetriever {
     }
 
     private List<DataRecord> getSampleRecords(String patientId, DataRecordManager dataRecordManager, User user)
-            throws NotFound, IoError, RemoteException, LimsException {
+            throws NotFound, IoError, RemoteException, LimsException, ServerException {
         List<DataRecord> sampleInfoRecords = dataRecordManager.queryDataRecords(
                 VeloxConstants.SAMPLE_CMO_INFO_RECORDS, "CmoPatientId = '" + patientId + "'", user);
 

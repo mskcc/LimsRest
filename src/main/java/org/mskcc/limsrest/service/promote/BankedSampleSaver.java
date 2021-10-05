@@ -2,6 +2,7 @@ package org.mskcc.limsrest.service.promote;
 
 import com.velox.api.datarecord.*;
 import com.velox.api.user.User;
+import com.velox.api.util.ServerException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.BankedSample;
@@ -25,7 +26,7 @@ public class BankedSampleSaver implements RecordSaver {
     }
 
     protected DataRecord addBankedSampleRecord(DataRecordManager dataRecordManager, User user) throws IoError,
-            NotFound, AlreadyExists, InvalidValue, RemoteException {
+            NotFound, AlreadyExists, InvalidValue, RemoteException, ServerException {
         return dataRecordManager.addDataRecord("BankedSample", user);
     }
 }

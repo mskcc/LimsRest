@@ -10,10 +10,12 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.util.VeloxConstants;
 import org.springframework.security.access.prepost.PreAuthorize;
 
+import java.io.IOError;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -212,33 +214,36 @@ public class AddOrCreateSet extends LimsTask {
     private List<DataRecord> addExternalSpecimens(Set<String> nameSet) throws NotFound, IoError,
             RemoteException, AlreadyExists, InvalidValue {
         List<DataRecord> externalSamples = new ArrayList<>();
-
-        if (externalSpecimens != null) {
-            for (String externalSpecId : externalSpecimens) {
-                nameSet.add(externalSpecId);
-                List<DataRecord> extSpecRecords = dataRecordManager.queryDataRecords(VeloxConstants
-                        .EXTERNAL_SPECIMEN, "ExternalId = '" + externalSpecId + "'", user);
-
-                if (extSpecRecords.size() == 0) {
-                    DataRecord newExternalSpecimen = createNewExternalSpecimen(externalSpecId);
-                    externalSamples.add(newExternalSpecimen);
-                } else if (extSpecRecords.size() > 1) {
-                    DataRecord recToBeUsed = extSpecRecords.get(0);
-                    externalSamples.add(recToBeUsed);
-                    log.warn(String.format("External Specimen with id %s is ambiguous and matches multiple LIMS " +
-                            "Data Records. First one will be used: %d", externalSpecId, recToBeUsed));
-                } else {
-                    log.info(String.format("External specimen %s already exists in LIMS.", externalSpecId));
-                    externalSamples.add(extSpecRecords.get(0));
+            if (externalSpecimens != null) {
+                for (String externalSpecId : externalSpecimens) {
+                    nameSet.add(externalSpecId);
+                    try {
+                        List<DataRecord> extSpecRecords = dataRecordManager.queryDataRecords(VeloxConstants
+                                .EXTERNAL_SPECIMEN, "ExternalId = '" + externalSpecId + "'", user);
+                        if (extSpecRecords.size() == 0) {
+                            DataRecord newExternalSpecimen = createNewExternalSpecimen(externalSpecId);
+                            externalSamples.add(newExternalSpecimen);
+                        } else if (extSpecRecords.size() > 1) {
+                            DataRecord recToBeUsed = extSpecRecords.get(0);
+                            externalSamples.add(recToBeUsed);
+                            log.warn(String.format("External Specimen with id %s is ambiguous and matches multiple LIMS " +
+                                    "Data Records. First one will be used: %d", externalSpecId, recToBeUsed));
+                        } else {
+                            log.info(String.format("External specimen %s already exists in LIMS.", externalSpecId));
+                            externalSamples.add(extSpecRecords.get(0));
+                        }
+                    } catch (ServerException se) {
+                        log.error(se.getMessage(), se);
+                    }
                 }
             }
-        }
+
 
         return externalSamples;
     }
 
     private DataRecord createNewExternalSpecimen(String externalSpecId) throws IoError, NotFound,
-            AlreadyExists, InvalidValue, RemoteException {
+            AlreadyExists, InvalidValue, RemoteException, ServerException {
         log.info(String.format("External Specimen with id %s doesn't exist in LIMS. New record will " +
                 "be created.", externalSpecId));
 
@@ -250,7 +255,7 @@ public class AddOrCreateSet extends LimsTask {
         return newExternalSpecimen;
     }
 
-    private void addSampleIdsToNameSet(DataRecord parent, Set<String> nameSet) throws RemoteException, ServerException {
+    private void addSampleIdsToNameSet(DataRecord parent, Set<String> nameSet) throws RemoteException, ServerException, IoError {
         if (igoIds != null) {
             List<DataRecord> descSamples = parent.getDescendantsOfType("Sample", user);
             List<Object> names = dataRecordManager.getValueList(descSamples, "SampleId", user);
@@ -261,7 +266,7 @@ public class AddOrCreateSet extends LimsTask {
         }
     }
 
-    List<DataRecord> addOffRequestId(StringBuilder errorList) throws NotFound, IoError, RemoteException {
+    List<DataRecord> addOffRequestId(StringBuilder errorList) throws NotFound, IoError, RemoteException, ServerException {
         String match = Arrays.stream(requestIds).map(r -> String.format("\'%s\'", r)).
                 collect(Collectors.joining(",", "(", ")"));
         List<DataRecord> matchedReq = dataRecordManager.queryDataRecords("Request", "RequestId in " +
@@ -272,7 +277,7 @@ public class AddOrCreateSet extends LimsTask {
         return matchedReq;
     }
 
-    List<DataRecord> addOffIgoIds(StringBuilder errorList) throws NotFound, IoError, RemoteException {
+    List<DataRecord> addOffIgoIds(StringBuilder errorList) throws NotFound, IoError, RemoteException, ServerException {
         String match = Arrays.stream(igoIds).map(s -> String.format("\'%s\'", s)).
                 collect(Collectors.joining(",", "(", ")"));
         List<DataRecord> matchedSamples = dataRecordManager.queryDataRecords("Sample", "SampleId in " +
