@@ -28,6 +28,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.logging.Logger;
 
 import static org.mskcc.limsrest.util.Utils.getBaseSampleId;
 import static org.mskcc.limsrest.util.Utils.getRecordsOfTypeFromParents;
@@ -362,6 +363,8 @@ public class UpdateLimsSampleLevelSequencingQcTask {
             }while (!sampleStack.isEmpty());
         } catch (NotFound | RemoteException | IoError | NullPointerException notFound) {
             log.error(String.format("%s-> Error while getting related Library Samples for run %s:\n%s", ExceptionUtils.getRootCauseMessage(notFound), runId, ExceptionUtils.getStackTrace(notFound)));
+        } catch (Exception e) {
+            log.error(e.getMessage());
         }
         log.info(String.format("Total Samples related to run %d , Sample Ids: %s", flowCellSamples.size(), Arrays.toString(addedSampleIds.toArray())));
         return flowCellSamples;

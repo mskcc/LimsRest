@@ -37,6 +37,10 @@ public class GetDdpcrAssaysTask extends LimsTask {
             e.printStackTrace();
             log.error(String.format("Failed to query DataRecords."));
             return new ArrayList<>();
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(String.format("Failed to query DataRecords."));
+            return new ArrayList<>();
         }
 
         List<DdpcrAssay> assays = new ArrayList<>();

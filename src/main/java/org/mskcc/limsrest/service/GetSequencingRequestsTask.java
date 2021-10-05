@@ -63,6 +63,10 @@ public class GetSequencingRequestsTask extends LimsTask {
             log.error(String.format("Failed to query DataRecords w/ query: '%s' on %s", query,
                     IlluminaSeqExperimentModel.DATA_TYPE_NAME));
             return new ArrayList<>();
+        } catch (Exception e) {
+            log.error(String.format("Failed to query DataRecords w/ query: '%s' on %s", query,
+                    IlluminaSeqExperimentModel.DATA_TYPE_NAME));
+            return new ArrayList<>();
         }
         List<String> runFolders = illuminaSeqExperiments.stream()
                 .map(seqExpRecord -> getRecordStringValue(seqExpRecord, IlluminaSeqExperimentModel.SEQUENCER_RUN_FOLDER, user))
@@ -84,6 +88,10 @@ public class GetSequencingRequestsTask extends LimsTask {
         try {
             records = dataRecordManager.queryDataRecords(FlowCellLaneModel.DATA_TYPE_NAME, flowCellLaneQuery, user);
         } catch (IoError | RemoteException | NotFound e) {
+            log.error(String.format("Failed to query DataRecords w/ query: '%s' on %s", flowCellLaneQuery,
+                    FlowCellLaneModel.DATA_TYPE_NAME));
+            return new ArrayList<>();
+        } catch (Exception e) {
             log.error(String.format("Failed to query DataRecords w/ query: '%s' on %s", flowCellLaneQuery,
                     FlowCellLaneModel.DATA_TYPE_NAME));
             return new ArrayList<>();
@@ -117,6 +125,9 @@ public class GetSequencingRequestsTask extends LimsTask {
                 List<DataRecord> requestRecord = dataRecordManager.queryDataRecords(RequestModel.DATA_TYPE_NAME, requestQuery, user);
                 requestRecords.addAll(requestRecord);
             } catch (RemoteException | NotFound | IoError e) {
+                log.error(String.format("Failed to query Samples w/ query: '%s' on %s", requestQuery,
+                        RequestModel.DATA_TYPE_NAME));
+            } catch (Exception e) {
                 log.error(String.format("Failed to query Samples w/ query: '%s' on %s", requestQuery,
                         RequestModel.DATA_TYPE_NAME));
             }

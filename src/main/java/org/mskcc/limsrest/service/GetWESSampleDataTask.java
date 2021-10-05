@@ -298,7 +298,8 @@ public class GetWESSampleDataTask {
      * @throws RemoteException
      * @throws IoError
      */
-    private List<DataRecord> getChildSamplesWithRequestAsParent(DataRecord sample) throws NotFound, RemoteException, IoError {
+    private List<DataRecord> getChildSamplesWithRequestAsParent(DataRecord sample) throws NotFound, RemoteException,
+            IoError, ServerException {
         List<DataRecord> descendantSamples = sample.getDescendantsOfType("Sample", user);
         log.info("Total Descendant Samples: " + descendantSamples.size());
         List<DataRecord> sampleList = new ArrayList<>();
@@ -477,7 +478,7 @@ public class GetWESSampleDataTask {
      * @throws RemoteException
      * @throws NotFound
      */
-    private String getSequencerTypeUsed(DataRecord sample) throws RemoteException, NotFound {
+    private String getSequencerTypeUsed(DataRecord sample) throws RemoteException, NotFound, IoError, ServerException {
         List<DataRecord> sampleLevelSeqQcRecs = sample.getDescendantsOfType("SeqAnalysisSampleQC", user);
         Set<String> sequencerTypes = new HashSet<>();
         if (sampleLevelSeqQcRecs.size() > 0) {

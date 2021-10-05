@@ -16,7 +16,7 @@ import java.util.Map;
 public class BankedSampleRetriever implements LimsDataRetriever {
     @Override
     public List<BankedSample> getBankedSamples(String query, DataRecordManager dataRecordManager, User user) throws
-            NotFound, IoError, RemoteException {
+            NotFound, IoError, RemoteException, ServerException {
         List<DataRecord> dataRecords = dataRecordManager.queryDataRecords(BankedSample.DATA_TYPE_NAME, query, user);
 
         List<BankedSample> bankedSamples = new ArrayList<>();

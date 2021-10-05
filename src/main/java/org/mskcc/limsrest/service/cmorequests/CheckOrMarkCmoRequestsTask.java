@@ -251,11 +251,13 @@ public class CheckOrMarkCmoRequestsTask {
             log.error(String.format("IoError Exception while setting IsCmoRequest field on Request:\n%s", ExceptionUtils.getStackTrace(ioError)));
         } catch (NotFound notFound) {
             log.error(String.format("NotFound Exception while setting IsCmoRequest field on Request:\n%s", ExceptionUtils.getStackTrace(notFound)));
+        } catch (Exception exp) {
+            log.error(String.format("Exception while setting IsCmoRequest field on Request:\n%s", ExceptionUtils.getStackTrace(exp)));
         }
     }
 
     /**
-     * Methdod to check if request if any other request in parent project is a CMO Request. In case we forgot to check
+     * Method to check if request if any other request in parent project is a CMO Request. In case we forgot to check
      * any cmo requests, this method will mark those requests when run.
      *
      * @param projectId
@@ -282,6 +284,8 @@ public class CheckOrMarkCmoRequestsTask {
             log.error(String.format("Remote Exception while validating if Request is part of existing CMO Study:\n%s", ExceptionUtils.getStackTrace(re)));
         } catch (NotFound notFound) {
             log.error(String.format("NotFound Exception while validating if Request is part of existing CMO Study:\n%s", ExceptionUtils.getStackTrace(notFound)));
+        } catch (Exception ex) {
+            log.error(String.format("Exception while validating if Request is part of existing CMO Study:\n%s", ExceptionUtils.getStackTrace(ex)));
         }
         return false;
     }

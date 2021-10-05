@@ -75,6 +75,9 @@ public class GetIgoRequestsTask extends LimsTask {
         } catch (IoError | RemoteException | NotFound e) {
             log.error(String.format("Failed to query DataRecords w/ query: %s", query));
             return new ArrayList<>();
+        } catch (Exception e) {
+            log.error(String.format("Failed to query DataRecords w/ query: %s", query));
+            return new ArrayList<>();
         }
 
         // Transform requests into a redacted API response

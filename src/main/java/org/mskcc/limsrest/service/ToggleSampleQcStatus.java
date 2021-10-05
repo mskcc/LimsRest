@@ -5,6 +5,7 @@ import com.velox.api.datarecord.InvalidValue;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
+import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.PoolingSampleLibProtocolModel;
 import org.apache.commons.logging.Log;
@@ -40,7 +41,7 @@ public class ToggleSampleQcStatus extends LimsTask {
     String fastqPath;
 
     protected static void setSeqAnalysisSampleQcStatus(DataRecord seqQc, QcStatus qcStatus, String status, User user)
-            throws IoError, InvalidValue, NotFound, RemoteException {
+            throws IoError, InvalidValue, NotFound, RemoteException, ServerException {
         if (qcStatus == QcStatus.IGO_COMPLETE) {
             seqQc.setDataField("PassedQc", Boolean.TRUE, user);
             seqQc.setDataField("SeqQCStatus", QcStatus.PASSED.getText(), user);
@@ -222,6 +223,9 @@ public class ToggleSampleQcStatus extends LimsTask {
                     table,
                     record.getRecordId(),
                     e.getMessage()));
+        } catch (Exception ex) {
+            log.error(String.format("Error getting children from %s dataType for record %s. Error: %s",
+                    table, record.getRecordId(), ex.getMessage()));
         }
         return new DataRecord[0];
     }
@@ -239,6 +243,11 @@ public class ToggleSampleQcStatus extends LimsTask {
             DataRecord[] dataRecordsArray = new DataRecord[dataRecords.size()];
             return dataRecords.toArray(dataRecordsArray);
         } catch (IoError | RemoteException e) {
+            log.error(String.format("Error getting parents from %s dataType for record %s. Error: %s",
+                    table,
+                    record.getRecordId(),
+                    e.getMessage()));
+        } catch (Exception e) {
             log.error(String.format("Error getting parents from %s dataType for record %s. Error: %s",
                     table,
                     record.getRecordId(),

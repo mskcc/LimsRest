@@ -5,6 +5,7 @@ import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
+import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.BankedSampleModel;
 import com.velox.sloan.cmo.recmodels.RequestModel;
@@ -58,7 +59,7 @@ public class GetRequestTrackingTask {
         this.user = conn.getConnection().getUser();
     }
 
-    public Map<String, Object> execute() throws IoError, RemoteException, NotFound {
+    public Map<String, Object> execute() throws IoError, RemoteException, NotFound, ServerException {
         VeloxConnection vConn = conn.getConnection();
         User user = vConn.getUser();
         DataRecordManager drm = vConn.getDataRecordManager();
@@ -175,7 +176,8 @@ public class GetRequestTrackingTask {
      * @throws IoError
      * @throws RemoteException
      */
-    private List<ProjectSample> getProjectSamplesFromDataRecord(DataRecord requestRecord, User user) throws IoError, RemoteException {
+    private List<ProjectSample> getProjectSamplesFromDataRecord(DataRecord requestRecord, User user) throws IoError,
+            RemoteException, ServerException {
         // Immediate samples of record represent physical samples. LIMS creates children of these in the workflow
         DataRecord[] samples = requestRecord.getChildrenOfType(SampleModel.DATA_TYPE_NAME, user);
 
@@ -251,6 +253,9 @@ public class GetRequestTrackingTask {
         try {
             children = root.getRecord().getChildrenOfType(SampleModel.DATA_TYPE_NAME, tree.getUser());
         } catch (IoError | RemoteException e) { /* Expected - No more children of the sample */ }
+        catch (Exception ex) {
+            log.error(ex.getMessage());
+        }
 
         if (children.length == 0) {
             tree.updateTreeOnLeafStatus(root);
@@ -358,6 +363,8 @@ public class GetRequestTrackingTask {
         } catch (RemoteException e) {
             log.error(String.format("Unable to query descending SeqAnalysisSampleQC DataRecords from Sample DataRecord: %d",
                     record.getRecordId()));
+        } catch (Exception ex) {
+            log.error(ex.getMessage());
         }
 
         // Evaluate overall status of sample as complete or not
@@ -476,6 +483,8 @@ public class GetRequestTrackingTask {
         } catch (NotFound | IoError | RemoteException e) {
             log.info(String.format("Could not find BankedSample record for %s", serviceId));
             return null;
+        } catch (Exception ex) {
+            log.error(ex.getMessage());
         }
 
         Boolean wasPromoted;
@@ -521,6 +530,8 @@ public class GetRequestTrackingTask {
         } catch (NotFound | IoError | RemoteException e) {
             log.info(String.format("Could not find BankedSample records w/ RequestId: %s", requestId));
             return null;
+        } catch (Exception ex) {
+            log.error(ex.getMessage());
         }
 
         Set<String> serviceIds = new HashSet<>();

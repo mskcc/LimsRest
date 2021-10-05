@@ -93,7 +93,7 @@ public class GetReadyForIllumina {
      * @throws RemoteException
      * @throws NotFound
      */
-    private List<DataRecord> getNearestParentLibrarySamplesForPool(DataRecord pooledSample, User user) throws IoError, RemoteException, NotFound {
+    private List<DataRecord> getNearestParentLibrarySamplesForPool(DataRecord pooledSample, User user) throws IoError, RemoteException, NotFound, com.velox.api.util.ServerException {
         List<DataRecord> parentLibrarySamplesForPool = new ArrayList<>();
         Stack<DataRecord> sampleTrackingStack = new Stack<>();
         sampleTrackingStack.add(pooledSample);
@@ -124,7 +124,7 @@ public class GetReadyForIllumina {
      * @throws IoError
      * @throws RemoteException
      */
-    private DataRecord getParentSampleWithDesiredChildTypeRecord(DataRecord sample, String childDataType, User user) throws IoError, RemoteException, NotFound {
+    private DataRecord getParentSampleWithDesiredChildTypeRecord(DataRecord sample, String childDataType, User user) throws IoError, RemoteException, NotFound, com.velox.api.util.ServerException {
         if (sample.getChildrenOfType(childDataType, user).length>0){
             return sample;
         }
@@ -153,7 +153,7 @@ public class GetReadyForIllumina {
      * @throws RemoteException
      * @throws IoError
      */
-    private String getSampleLibraryIndexIdAndBarcode(DataRecord sample, User user) throws NotFound, RemoteException, IoError {
+    private String getSampleLibraryIndexIdAndBarcode(DataRecord sample, User user) throws NotFound, RemoteException, IoError, com.velox.api.util.ServerException {
         DataRecord parentSample = getParentSampleWithDesiredChildTypeRecord(sample, "IndexBarcode", user);
         if (parentSample != null && parentSample.getChildrenOfType("IndexBarcode", user)[0].getValue("IndexId", user) != null) {
             DataRecord recordWithIndexBarcodeInfo = parentSample.getChildrenOfType("IndexBarcode", user)[0];
@@ -177,7 +177,7 @@ public class GetReadyForIllumina {
      * @throws ServerException
      * @throws InvalidValue
      */
-    private Double getRequestedReadsForSample(DataRecord sample, User user) throws IoError, RemoteException, NotFound, ServerException, InvalidValue {
+    private Double getRequestedReadsForSample(DataRecord sample, User user) throws IoError, RemoteException, NotFound, ServerException, InvalidValue, com.velox.api.util.ServerException {
         DataRecord sampleWithSeqRequirementAsChild = getParentSampleWithDesiredChildTypeRecord(sample, "SeqRequirement", user);
         if (sampleWithSeqRequirementAsChild !=null && sampleWithSeqRequirementAsChild.getChildrenOfType("SeqRequirement", user)[0].getValue("RequestedReads", user) != null) {
             DataRecord seqRequirements = sampleWithSeqRequirementAsChild.getChildrenOfType("SeqRequirement", user)[0];
@@ -196,7 +196,7 @@ public class GetReadyForIllumina {
      * @throws RemoteException
      * @throws NotFound
      */
-    private String getSequencingRunTypeForSample(DataRecord sample, User user) throws IoError, RemoteException, NotFound {
+    private String getSequencingRunTypeForSample(DataRecord sample, User user) throws IoError, RemoteException, NotFound, com.velox.api.util.ServerException {
         DataRecord sampleWithSeqRequirementAsChild = getParentSampleWithDesiredChildTypeRecord(sample, "SeqRequirement", user);
         if (sampleWithSeqRequirementAsChild != null && sampleWithSeqRequirementAsChild.getChildrenOfType("SeqRequirement", user)[0].getValue("SequencingRunType", user) != null){
             DataRecord sequencingRunTypeRecord = sampleWithSeqRequirementAsChild.getChildrenOfType("SeqRequirement", user)[0]; //continue here
@@ -225,7 +225,7 @@ public class GetReadyForIllumina {
      * @throws InvalidValue
      */
     private RunSummary createRunSummaryForNonPooledSamples(DataRecord unpooledSample, String requestName, User user)
-            throws NotFound, RemoteException, IoError, InvalidValue {
+            throws NotFound, RemoteException, IoError, InvalidValue, com.velox.api.util.ServerException {
         Map<String, Object> sampleFieldValues = unpooledSample.getFields(user);
         String sampleId = (String) sampleFieldValues.get("SampleId");
         log.info("Creating run summary for " + sampleId);
@@ -278,7 +278,8 @@ public class GetReadyForIllumina {
      * @throws IoError
      * @throws InvalidValue
      */
-    private RunSummary createRunSummaryForSampleInPool(DataRecord sampleInPool, RunSummary summary, User user) throws RemoteException, NotFound, IoError, InvalidValue {
+    private RunSummary createRunSummaryForSampleInPool(DataRecord sampleInPool, RunSummary summary, User user) throws
+            RemoteException, NotFound, IoError, InvalidValue, com.velox.api.util.ServerException {
         Map<String, Object> sampleFieldValues = sampleInPool.getFields(user);
         summary.setSampleId((String) sampleFieldValues.get("SampleId"));
         summary.setOtherSampleId((String) sampleFieldValues.getOrDefault("OtherSampleId", ""));
