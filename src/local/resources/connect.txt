@@ -1,4 +1,4 @@
-lims.host=<YOUR_HOST>
+lims.host=<TARGET_HOST>
 lims.port=
 lims.guid=
 
