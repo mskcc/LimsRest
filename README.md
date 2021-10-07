@@ -7,18 +7,19 @@ please commit an unassigned value of that property to the relevant properties fi
 ### Local Setup
 1. Copy properties file from resource path at the LIMS rest host being deployed to
     ```
-    # TODO - Find resource path
-    rsc_path=               # e.g. ".../path/to/sapio/lims/tomcat/webapps/LimsRest##-1.17.3d/WEB-INF"
-    your_host=$(hostname)
-    tgt_path=$(pwd)/src/local/resources
-    
+    # ON LIMSREST HOST
+   
+    # TODO - Provide these values
+    YOUR_HOST=      
+    TGT_PATH=       # path to your ./src/local/resources directory of this project
+    rsc_path=       # e.g. ".../path/to/sapio/lims/tomcat/webapps/LimsRest##-1.17.3d/WEB-INF/classes"
     files="app.properties connect.txt limsrestcredentials.properties"
     for f in ${files}; do
-        scp your_host:src/local/resources/classes/${f} ${your_host}:${tgt_path}
+        scp ${rsc_path}/${f} ${YOUR_HOST}:${TGT_PATH}
     done
     ```
 
-2. Copy over the files pointed to by these fields in `app.properties` 
+2. Copy over the files pointed to the fields in `app.properties` 
     * `nats.keystore_path`
     * `nats.truststore_path`
     
