@@ -44,7 +44,7 @@ public class PromoteBanked extends LimsTask {
             Arrays.asList("IMPACT341", "IMPACT410", "IMPACT410+", "IMPACT468", "HemePACT_v3", "HemePACT_v4", "MSK-ACCESS_v1");
 
     private static final List<String> INDEX_MATERIALS =
-            Arrays.asList("DNA Library", "Pooled Library");
+            Arrays.asList("DNA Library", "Pooled Library", "cDNA Library");
 
 
     private static final HumanSamplePredicate humanSamplePredicate = new HumanSamplePredicate();
