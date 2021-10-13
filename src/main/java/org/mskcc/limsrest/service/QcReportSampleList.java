@@ -85,12 +85,14 @@ public class QcReportSampleList {
             public String rin;
             public Double rqn;
             public Double dV200;
+            public String sourceSampleId;
 
             public RnaReportSample(Map<String, Object> sampleFields) {
                 super(sampleFields);
                 this.rin = (String) sampleFields.get("RIN");
                 this.rqn = (Double) sampleFields.get("RQN");
                 this.dV200 = (Double) sampleFields.get("DV200");
+                this.sourceSampleId = (String) sampleFields.get("SourceSampleId");
             }
         }
 
@@ -99,6 +101,7 @@ public class QcReportSampleList {
             public Double humanPercentage;
             public String specimenType;
             public Double din;
+            public String sourceSampleId;
 
             public DnaReportSample(Map<String, Object> sampleFields) {
                 super(sampleFields);
@@ -106,6 +109,7 @@ public class QcReportSampleList {
                 this.humanPercentage = (Double) sampleFields.get("HumanPercentage");
                 this.specimenType = (String) sampleFields.get("SpecimenType");
                 this.din = (Double) sampleFields.get("DIN");
+                this.sourceSampleId = (String) sampleFields.get("SourceSampleId");
             }
 
         }
@@ -113,11 +117,13 @@ public class QcReportSampleList {
         public static class LibraryReportSample extends ReportSample {
             public String tumorOrNormal;
             public Double avgSize;
+            public String sourceSampleId;
 
             public LibraryReportSample(Map<String, Object> sampleFields) {
                 super(sampleFields);
                 this.tumorOrNormal = (String) sampleFields.get("TumorOrNormal");
                 this.avgSize = (Double) sampleFields.get("AvgSize");
+                this.sourceSampleId = (String) sampleFields.get("SourceSampleId");
             }
 
         }
