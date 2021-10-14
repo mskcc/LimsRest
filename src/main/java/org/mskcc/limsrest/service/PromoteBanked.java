@@ -247,6 +247,7 @@ public class PromoteBanked extends LimsTask {
                 }
                 log.info(igoUser + "  promoted the banked samples " + sb.toString());
                 dataRecordManager.storeAndCommit(igoUser + "  promoted the banked samples " + sb.toString() + "into " + requestId, user);
+
             } catch (Exception e) {
                 log.error(e);
 
@@ -258,13 +259,6 @@ public class PromoteBanked extends LimsTask {
                 if(errMessage != null){
                     headerErr = errMessage.substring(0,Math.min(500,errMessage.length()));
                 }
-                if(samplesWithDifferentNewIgoIdAndRowIndex.size() > 0) {
-                    headerErr += "The following samples were promoted: \n";
-                    for(int i = 0; i < samplesWithDifferentNewIgoIdAndRowIndex.size() - 1; i++) {
-                        headerErr += samplesWithDifferentNewIgoIdAndRowIndex.get(i).toString() + ", ";
-                    }
-                    headerErr += samplesWithDifferentNewIgoIdAndRowIndex.get(samplesWithDifferentNewIgoIdAndRowIndex.size()-1).toString();
-                }
                 headers.add(Constants.ERRORS,
                         Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + headerErr);
 
@@ -275,6 +269,18 @@ public class PromoteBanked extends LimsTask {
         MultiValueMap<String, String> headers = new HttpHeaders();
         headers.add(Constants.WARNINGS, getErrors());
         headers.add(Constants.STATUS, Messages.SUCCESS);
+
+        if(samplesWithDifferentNewIgoIdAndRowIndex.size() > 0) {
+            String warningMessage = "";
+            warningMessage += "The igo id of the following promoted samples do NOT match their row index: \n";
+            for (int i = 0; i < samplesWithDifferentNewIgoIdAndRowIndex.size() - 1; i++) {
+                warningMessage += samplesWithDifferentNewIgoIdAndRowIndex.get(i).toString() + ", ";
+            }
+            warningMessage += samplesWithDifferentNewIgoIdAndRowIndex.get(samplesWithDifferentNewIgoIdAndRowIndex.size() - 1).toString();
+            warningMessage += "\n Successfully promoted sample(s) into " + requestId;
+
+            return new ResponseEntity<>(warningMessage + requestId, headers, HttpStatus.OK );
+        }
 
         return new ResponseEntity<>("Successfully promoted sample(s) into " + requestId, headers, HttpStatus.OK );
     }
@@ -342,7 +348,7 @@ public class PromoteBanked extends LimsTask {
         //copy fields
         String rowIndex = (String) bankedSampleRecord.getDataField("rowIndex", user);
         String newIgoId = requestId + "_" + (maxExistentId + offset);
-        if(!rowIndex.equals(newIgoId)) {
+        if(!rowIndex.equals(newIgoId.split("_")[1])) {
             //Adding sample name to the list
             samplesWithDifferentNewIgoIdAndRowIndex.add(bankedSampleRecord.getDataField("otherSampleId", user));
         }
