@@ -29,7 +29,7 @@ public class UpdateLimsSampleLevelSequencingQc {
     }
 
     @GetMapping("/updateLimsSampleLevelSequencingQc")
-    public Map<String, String> getContent(@RequestParam(value = "runId") String runId) {
+    public Map<String, String> getContent(@RequestParam(value = "requestId") String runId) {
         if (StringUtils.isBlank(runId)){
             final String error = String.format("Invalid RUN ID: '%s'", runId);
             Map<String, String> resp = new HashMap<>();

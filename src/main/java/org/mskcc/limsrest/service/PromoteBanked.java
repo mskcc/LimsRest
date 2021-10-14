@@ -63,6 +63,7 @@ public class PromoteBanked extends LimsTask {
     String materials;
     boolean dryrun = false;
     private Multimap<String, String> errors = HashMultimap.create();
+    private List<Object> samplesWithDifferentNewIgoIdAndRowIndex = new LinkedList<>();
 
     public PromoteBanked() {
     }
@@ -257,7 +258,13 @@ public class PromoteBanked extends LimsTask {
                 if(errMessage != null){
                     headerErr = errMessage.substring(0,Math.min(500,errMessage.length()));
                 }
-
+                if(samplesWithDifferentNewIgoIdAndRowIndex.size() > 0) {
+                    headerErr += "The following samples were promoted: \n";
+                    for(int i = 0; i < samplesWithDifferentNewIgoIdAndRowIndex.size() - 1; i++) {
+                        headerErr += samplesWithDifferentNewIgoIdAndRowIndex.get(i).toString() + ", ";
+                    }
+                    headerErr += samplesWithDifferentNewIgoIdAndRowIndex.get(samplesWithDifferentNewIgoIdAndRowIndex.size()-1).toString();
+                }
                 headers.add(Constants.ERRORS,
                         Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + headerErr);
 
@@ -333,7 +340,12 @@ public class PromoteBanked extends LimsTask {
         }
         //add a sample to requestList.get(0) with a new sample
         //copy fields
+        String rowIndex = (String) bankedSampleRecord.getDataField("rowIndex", user);
         String newIgoId = requestId + "_" + (maxExistentId + offset);
+        if(!rowIndex.equals(newIgoId)) {
+            //Adding sample name to the list
+            samplesWithDifferentNewIgoIdAndRowIndex.add(bankedSampleRecord.getDataField("otherSampleId", user));
+        }
         try {
             DataRecord promotedSampleRecord = req.addChild("Sample", user);
             String barcodeId = bankedSample.getBarcodeId();

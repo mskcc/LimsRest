@@ -67,10 +67,13 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         List<DataRecord> relatedLibrarySamples = getRelatedLibrarySamples(runId);
         log.info(String.format("Total Related Library Samples for run %s: %d", runId, relatedLibrarySamples.size()));
         Map<String, String> statsAdded = new HashMap<>();
+
         //loop through stats data and add/update lims SeqAnalysisSampleQc records
         for (String key : data.keySet()) {
             //get qcDataVals as HashMap
             Map<String, Object> qcDataVals = getQcValues(data.getJSONObject(key));
+            String projectId = String.valueOf(qcDataVals.get("ProjectID"));
+            qcDataVals.put(projectId, null);
             String sampleName = String.valueOf(qcDataVals.get("OtherSampleId"));
             String sampleId = String.valueOf(qcDataVals.get("SampleId"));
             // first find the library sample that is parent of Pool Sample that went on Sequencer.
@@ -96,7 +99,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
             if (existingQc == null) {
                 log.info(String.format("Existing %s record not found for Sample with Id %s", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, igoId));
             }
-            if (existingQc != null) {
+             else if (existingQc != null) {
                 log.info(String.format("Updating values on existing %s record with OtherSampleId %s, and Record Id %d, values are : %s",
                         SeqAnalysisSampleQCModel.DATA_TYPE_NAME, getRecordStringValue(existingQc, SampleModel.OTHER_SAMPLE_ID, user),
                         existingQc.getRecordId(), qcDataVals.toString()));
