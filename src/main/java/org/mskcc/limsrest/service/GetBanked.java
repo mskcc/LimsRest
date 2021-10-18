@@ -174,6 +174,8 @@ public class GetBanked extends LimsTask {
                 } else if (sampleFields.containsKey("Species")) {
                     ss.setOrganism((String) sampleFields.get("Species"));
                 }
+                ss.setRowIndex((Integer) sampleFields.get("RowIndex"));
+                ss.setTransactionId((Long) sampleFields.get("TransactionId"));
 
                 if ("ERROR".equals(ss.getBaseId())) {
                     ss.addBaseId("");

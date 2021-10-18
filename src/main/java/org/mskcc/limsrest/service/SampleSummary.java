@@ -378,4 +378,14 @@ public class SampleSummary {
     public String getCmoPatientId() {
         return cmoPatientId;
     }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public Integer getRowIndex() {
+        return rowIndex;
+    }
+    
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public Long getTransactionId() {
+        return transactionId;
+    }
 }
