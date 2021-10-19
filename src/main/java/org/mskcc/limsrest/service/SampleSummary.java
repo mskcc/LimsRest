@@ -56,6 +56,8 @@ public class SampleSummary {
     private String userId; // expName
     private double volume;
     private double yield;  // missing
+    private int rowIndex;
+    private Long transactionId;
 
     private SampleQcSummary qc;
     private LinkedList<BasicQc> basicQcs;
