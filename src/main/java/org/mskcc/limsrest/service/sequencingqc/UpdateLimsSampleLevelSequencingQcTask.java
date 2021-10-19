@@ -16,6 +16,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
+import org.mskcc.domain.sample.Sample;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.util.BasicMail;
 import org.mskcc.limsrest.util.IGOTools;
@@ -75,7 +76,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
      * @param stats
      */
     private void generateStats(String runId, String projectId, Map<String, String> stats) {
-        Map<String, Object> qcDataVals = null;
+        Map<String, Object> qcDataVals = new HashMap<>();
         if (projectId == null || projectId.isEmpty()) {
             //get stats from ngs-stats db.
             JSONObject data = getStatsFromDb();
@@ -155,11 +156,12 @@ public class UpdateLimsSampleLevelSequencingQcTask {
 
                 List<DataRecord> relatedLibrarySamples = dataRecordManager.queryDataRecords(SampleModel.DATA_TYPE_NAME,
                         SampleModel.EXEMPLAR_SAMPLE_STATUS +
-                        " = 'Completed - Illumina Sequencing' AND " + SampleModel.SAMPLE_ID + " LIKE 'Pooled-%' ", user);
+                        " = 'Completed - Illumina Sequencing' AND " + SampleModel.SAMPLE_ID + " LIKE 'Pooled-%' AND " +
+                                SampleModel.REQUEST_ID + " = '" + projectId + "'", user);
 
                 for (DataRecord sample : relatedLibrarySamples) {
                     String sampleName = (String) sample.getDataField("OtherSampleId", user);
-                    String sampleId = (String) sample.getDataField("IgoId", user);
+                    String sampleId = (String) sample.getDataField("SampleId", user);
                     DataRecord librarySample = getLibrarySample(relatedLibrarySamples, sampleId);
                     if (librarySample == null) {
                         log.error("Could not find related Library Sample for Sample with SampleId: " + sampleId);
@@ -179,7 +181,9 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                         qcDataVals.put("seqQCStatus", inital_qc_status);
                         //TODO check the date created
                         try {
-                            librarySample.addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcDataVals, user);
+                            //List<DataRecord> parentsLibSample = librarySample.getParentsOfType(SampleModel.DATA_TYPE_NAME, user);
+                            //parentsLibSample.get(parentsLibSample.size() - 1).addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcDataVals, user);
+                            librarySample.addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcDataVals, user); //Add qc analysis for the first common parent of all pooled samples
                         } catch (ServerException | RemoteException e) {
                             String error = String.format("Failed to add new %s DataRecord Child for %s. ERROR: %s%s", SampleModel.OTHER_SAMPLE_ID, sampleId,
                                     ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
