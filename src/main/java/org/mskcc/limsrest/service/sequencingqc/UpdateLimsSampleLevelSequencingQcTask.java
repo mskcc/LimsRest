@@ -18,6 +18,7 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.util.BasicMail;
+import org.mskcc.limsrest.util.IGOTools;
 
 import static org.mskcc.limsrest.util.Utils.*;
 
@@ -74,7 +75,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
      * @param stats
      */
     private void generateStats(String runId, String projectId, Map<String, String> stats) {
-
+        Map<String, Object> qcDataVals = null;
         if (projectId == null || projectId.isEmpty()) {
             //get stats from ngs-stats db.
             JSONObject data = getStatsFromDb();
@@ -87,7 +88,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
             //loop through stats data and add/update lims SeqAnalysisSampleQc records
             for (String key : data.keySet()) {
                 //get qcDataVals as HashMap
-                Map<String, Object> qcDataVals = getQcValues(data.getJSONObject(key));
+                qcDataVals = getQcValues(data.getJSONObject(key));
                 String sampleName = String.valueOf(qcDataVals.get("OtherSampleId"));
                 String sampleId = String.valueOf(qcDataVals.get("SampleId"));
                 // first find the library sample that is parent of Pool Sample that went on Sequencer.
@@ -151,6 +152,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
             }
         } else {
             try {
+
                 List<DataRecord> relatedLibrarySamples = dataRecordManager.queryDataRecords(SampleModel.DATA_TYPE_NAME,
                         SampleModel.EXEMPLAR_SAMPLE_STATUS +
                         " = 'Completed - Illumina Sequencing' AND " + SampleModel.SAMPLE_ID + " LIKE 'Pooled-%' ", user);
@@ -164,13 +166,26 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                     }
 
                     String igoId = getRecordStringValue(librarySample, SampleModel.SAMPLE_ID, user);
+                    String requestId = IGOTools.requestFromIgoId(igoId);
                     log.info(String.format("Found Library Sample with Sample ID : %s", igoId));
 
                     DataRecord existingQc = getExistingSequencingQcRecord(relatedLibrarySamples, sampleName, igoId, projectId, false);
                     if (existingQc == null) {
                         log.info(String.format("Existing %s record not found for Sample with Id %s",
                                 SeqAnalysisSampleQCModel.DATA_TYPE_NAME, igoId));
-                        stats.put(sampleId, "");
+                        qcDataVals.put(SampleModel.SAMPLE_ID, igoId);
+                        qcDataVals.put(SampleModel.OTHER_SAMPLE_ID, sampleName);
+                        qcDataVals.put(SampleModel.REQUEST_ID, requestId);
+                        qcDataVals.put("seqQCStatus", inital_qc_status);
+                        //TODO check the date created
+                        try {
+                            librarySample.addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcDataVals, user);
+                        } catch (ServerException | RemoteException e) {
+                            String error = String.format("Failed to add new %s DataRecord Child for %s. ERROR: %s%s", SampleModel.OTHER_SAMPLE_ID, sampleId,
+                                    ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
+                            log.error(error);
+                        }
+                        stats.put(sampleId, (String) librarySample.getDataField("igoId", user));
                     }
                 }
 
