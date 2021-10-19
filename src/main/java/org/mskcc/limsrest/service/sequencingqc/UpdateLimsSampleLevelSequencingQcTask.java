@@ -170,6 +170,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                     if (existingQc == null) {
                         log.info(String.format("Existing %s record not found for Sample with Id %s",
                                 SeqAnalysisSampleQCModel.DATA_TYPE_NAME, igoId));
+                        stats.put(sampleId, "");
                     }
                 }
 
@@ -352,8 +353,9 @@ public class UpdateLimsSampleLevelSequencingQcTask {
     private DataRecord getExistingSequencingQcRecord(List<DataRecord> librarySamples, String otherSampleId, String igoId, String runOrProjectId, boolean isRunId) {
         List<DataRecord> seqAnalysisSampleQCs = null;
         try {
-            if (isRunId)
+            if (isRunId) {
                 log.info(String.format("Searching for existing %s records for %s, %s and %s combination", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, igoId, otherSampleId, runOrProjectId));
+            }
             if (igoId.contains(POOLEDNORMAL_IDENTIFIER) || igoId.contains(CONTROL_IDENTIFIER) || otherSampleId.contains(POOLEDNORMAL_IDENTIFIER)) {
                 String[] igoIdVals = igoId.split("_");
                 String barcode = igoIdVals[igoIdVals.length - 1];
