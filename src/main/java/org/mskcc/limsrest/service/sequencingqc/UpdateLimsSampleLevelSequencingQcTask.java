@@ -18,6 +18,7 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.util.BasicMail;
+
 import static org.mskcc.limsrest.util.Utils.*;
 
 import java.io.BufferedReader;
@@ -62,19 +63,19 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         Map<String, String> statsAdded = new HashMap<>();
         generateStats(runId, projectId, statsAdded);
 
-
+        return statsAdded;
     }
 
     /**
      * Method for Adding/Updating records for sequencing runs and projects
+     *
      * @param runId
      * @param projectId
      * @param stats
-     *
-     *
-     * */
+     */
     private void generateStats(String runId, String projectId, Map<String, String> stats) {
-        if(projectId == null) {
+
+        if (projectId == null || projectId.isEmpty()) {
             //get stats from ngs-stats db.
             JSONObject data = getStatsFromDb();
             if (data.keySet().size() == 0) {
@@ -83,7 +84,6 @@ public class UpdateLimsSampleLevelSequencingQcTask {
             //get all the Library samples that are present on the run
             List<DataRecord> relatedLibrarySamples = getRelatedLibrarySamples(runId);
             log.info(String.format("Total Related Library Samples for run %s: %d", runId, relatedLibrarySamples.size()));
-//            Map<String, String> statsAdded = new HashMap<>();
             //loop through stats data and add/update lims SeqAnalysisSampleQc records
             for (String key : data.keySet()) {
                 //get qcDataVals as HashMap
@@ -103,13 +103,13 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 Object altId = "";
                 try {
                     altId = getValueFromDataRecord(librarySample, "AltId", "String", user);
-                } catch (Exception e){
+                } catch (Exception e) {
                     log.error(String.format("Failed to retrieve AltId from Library Sample: %s", igoId));
                 }
                 qcDataVals.putIfAbsent("AltId", altId);
-                //check if there is an are existing SeqAnalysisSampleQc record. If present update it.
+                //check if there is an existing SeqAnalysisSampleQc record. If present update it.
                 String versionLessRunId = getVersionLessRunId(runId);
-                DataRecord existingQc = getExistingSequencingQcRecord(relatedLibrarySamples, sampleName, igoId, versionLessRunId);
+                DataRecord existingQc = getExistingSequencingQcRecord(relatedLibrarySamples, sampleName, igoId, versionLessRunId, true);
                 if (existingQc == null) {
                     log.info(String.format("Existing %s record not found for Sample with Id %s", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, igoId));
                 }
@@ -126,7 +126,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                         existingQc.setFields(qcDataVals, user);
                         stats.putIfAbsent(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), "");
                         stats.put(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), qcDataVals.toString());
-                    } catch (ServerException | RemoteException e){
+                    } catch (ServerException | RemoteException e) {
                         String error = String.format("Failed to modify %s DataRecord: %s. ERROR: %s%s", SampleModel.OTHER_SAMPLE_ID, igoId,
                                 ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
                         log.error(error);
@@ -149,19 +149,48 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                     }
                 }
             }
+        } else {
             try {
-                dataRecordManager.storeAndCommit(String.format("Added/updated new %s records for Sequencing Run %s", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, runId), null, user);
-            } catch (RemoteException | ServerException e) {
-                log.error("ERROR Message: " + e.getMessage());
-                log.error(String.format("Failed to commit changes for %s\nERROR:\n%s", this.runId, ExceptionUtils.getStackTrace(e)));
-                return new HashMap();
+                List<DataRecord> relatedLibrarySamples = dataRecordManager.queryDataRecords(SampleModel.DATA_TYPE_NAME,
+                        SampleModel.EXEMPLAR_SAMPLE_STATUS +
+                        " 'Completed - Illumina Sequencing' AND " + SampleModel.SAMPLE_ID + " LIKE 'Pooled-%' ", user);
+
+                for (DataRecord sample : relatedLibrarySamples) {
+                    String sampleName = (String) sample.getDataField("OtherSampleId", user);
+                    String sampleId = (String) sample.getDataField("IgoId", user);
+                    DataRecord librarySample = getLibrarySample(relatedLibrarySamples, sampleId);
+                    if (librarySample == null) {
+                        log.error("Could not find related Library Sample for Sample with SampleId: " + sampleId);
+                    }
+
+                    String igoId = getRecordStringValue(librarySample, SampleModel.SAMPLE_ID, user);
+                    log.info(String.format("Found Library Sample with Sample ID : %s", igoId));
+
+                    DataRecord existingQc = getExistingSequencingQcRecord(relatedLibrarySamples, sampleName, igoId, projectId, false);
+                    if (existingQc == null) {
+                        log.info(String.format("Existing %s record not found for Sample with Id %s",
+                                SeqAnalysisSampleQCModel.DATA_TYPE_NAME, igoId));
+                    }
+                }
+
+            } catch (NotFound | IoError | RemoteException e) {
+                log.error(String.format("Error while querying sample for finding completed - illumina sequencing, pooled" +
+                        " samples with projectId: %s.\n%s:%s", SampleModel.REQUEST_ID, ExceptionUtils.getMessage(e),
+                        ExceptionUtils.getStackTrace(e)));
             }
-            log.info(String.format("Added/Updated total %d %s records for Sequencing Run %s",stats.size(), SeqAnalysisSampleQCModel.DATA_TYPE_NAME, runId));
-            return stats;
+
         }
-        else {
-            stats.put();
+        try {
+            dataRecordManager.storeAndCommit(String.format("Added/updated new %s records for Sequencing Run %s",
+                    SeqAnalysisSampleQCModel.DATA_TYPE_NAME, runId), null, user);
+        } catch (RemoteException | ServerException e) {
+            log.error("ERROR Message: " + e.getMessage());
+            log.error(String.format("Failed to commit changes for %s\nERROR:\n%s", this.runId, ExceptionUtils.getStackTrace(e)));
+            return;
         }
+
+        log.info(String.format("Added/Updated total %d %s records for Sequencing Run %s", stats.size(),
+                SeqAnalysisSampleQCModel.DATA_TYPE_NAME, runId));
     }
 
     /**
@@ -184,6 +213,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
 
     /**
      * Method to get path to property file.
+     *
      * @param propertyFile
      * @return
      */
@@ -282,10 +312,10 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         List<String> idVals = Arrays.asList(id.split("_IGO_"));
         if (idVals.size() == 2) {
             String igoId = idVals.get(1);
-            if (igoId.contains(POOLEDNORMAL_IDENTIFIER) || igoId.contains(CONTROL_IDENTIFIER)){
+            if (igoId.contains(POOLEDNORMAL_IDENTIFIER) || igoId.contains(CONTROL_IDENTIFIER)) {
                 String pooledNormalName = idVals.get(0);
-                String [] barcodeVals = idVals.get(1).split("_");
-                String barcode = barcodeVals[barcodeVals.length-1];
+                String[] barcodeVals = idVals.get(1).split("_");
+                String barcode = barcodeVals[barcodeVals.length - 1];
                 return pooledNormalName + "_" + barcode;
             }
             return igoId;
@@ -312,37 +342,48 @@ public class UpdateLimsSampleLevelSequencingQcTask {
 
     /**
      * Method to get the SeqAnalysisSampleQC DataRecord for a sample if already exists.
+     *
      * @param librarySamples
      * @param otherSampleId
      * @param igoId
-     * @param runId
+     * @param runOrProjectId
      * @return
      */
-    private DataRecord getExistingSequencingQcRecord(List<DataRecord> librarySamples, String otherSampleId, String igoId,  String runId) {
-        List<DataRecord> seqAnalysisSampleQCs;
+    private DataRecord getExistingSequencingQcRecord(List<DataRecord> librarySamples, String otherSampleId, String igoId, String runOrProjectId, boolean isRunId) {
+        List<DataRecord> seqAnalysisSampleQCs = null;
         try {
-            log.info(String.format("Searching for existing %s records for %s, %s and %s combination",SeqAnalysisSampleQCModel.DATA_TYPE_NAME,igoId, otherSampleId, runId));
-            if(igoId.contains(POOLEDNORMAL_IDENTIFIER) || igoId.contains(CONTROL_IDENTIFIER) || otherSampleId.contains(POOLEDNORMAL_IDENTIFIER)){
+            if (isRunId)
+                log.info(String.format("Searching for existing %s records for %s, %s and %s combination", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, igoId, otherSampleId, runOrProjectId));
+            if (igoId.contains(POOLEDNORMAL_IDENTIFIER) || igoId.contains(CONTROL_IDENTIFIER) || otherSampleId.contains(POOLEDNORMAL_IDENTIFIER)) {
                 String[] igoIdVals = igoId.split("_");
-                String barcode = igoIdVals[igoIdVals.length-1];
+                String barcode = igoIdVals[igoIdVals.length - 1];
                 DataRecord librarySample = getPooledNormalLibrarySample(librarySamples, barcode);
                 assert librarySample != null;
-                if (librarySample.getChildrenOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user) != null && librarySample.getChildrenOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user).length > 0 ){
+                if (librarySample.getChildrenOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user) != null && librarySample.getChildrenOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user).length > 0) {
                     DataRecord qcrec = librarySample.getChildrenOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user)[0];
-                    log.info(String.format("Found %s record with recordid: %d for poolenormal sample.", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcrec.getRecordId()));
+                    log.info(String.format("Found %s record with recordid: %d for poolednormal sample.", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcrec.getRecordId()));
                     return qcrec;
                 }
             }
-            seqAnalysisSampleQCs = dataRecordManager.queryDataRecords(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, SeqAnalysisSampleQCModel.OTHER_SAMPLE_ID +
-                    " = '" + otherSampleId + "' AND " + SeqAnalysisSampleQCModel.SEQUENCER_RUN_FOLDER + " = '" + runId + "' AND SampleId = '" + igoId + "'", user);
-            log.info("Existing qc records: " + seqAnalysisSampleQCs.size());
+            if (isRunId) {
+                seqAnalysisSampleQCs = dataRecordManager.queryDataRecords(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, SeqAnalysisSampleQCModel.OTHER_SAMPLE_ID +
+                        " = '" + otherSampleId + "' AND " + SeqAnalysisSampleQCModel.SEQUENCER_RUN_FOLDER + " = '" + runOrProjectId + "' AND SampleId = '" + igoId + "'", user);
+            } else {
+                seqAnalysisSampleQCs = dataRecordManager.queryDataRecords(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, SeqAnalysisSampleQCModel.OTHER_SAMPLE_ID +
+                        " = '" + otherSampleId + "' AND " + SeqAnalysisSampleQCModel.REQUEST + " = '" + runOrProjectId + "' AND SampleId = '" + igoId + "'", user);
+            }
+            log.info("Count of existing qc records: " + seqAnalysisSampleQCs.size());
         } catch (Exception e) {
             log.error(String.format("Exception thrown while retrieving SeqAnalysisSampleQC records: %s", ExceptionUtils.getStackTrace(e)));
             return null;
         }
-        if (seqAnalysisSampleQCs.size() > 0) {
+        if (seqAnalysisSampleQCs.size() > 0 && isRunId) {
             log.info(String.format("Found already existing SeqAnalysisSampleQC for sample with Sample Name: %s and run: %s",
-                    otherSampleId, runId));
+                    otherSampleId, runOrProjectId));
+            return seqAnalysisSampleQCs.get(0);
+        } else if (seqAnalysisSampleQCs.size() > 0 && !isRunId) {
+            log.info(String.format("Found already existing SeqAnalysisSampleQC for sample with Sample Name: %s and request: %s",
+                    otherSampleId, runOrProjectId));
             return seqAnalysisSampleQCs.get(0);
         }
         return null;
@@ -358,11 +399,11 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         Set<String> addedSampleIds = new HashSet<>();
         List<DataRecord> flowCellSamples = new ArrayList<>();
         try {
-            List<DataRecord> illuminaSeqExperiments = dataRecordManager.queryDataRecords(IlluminaSeqExperimentModel.DATA_TYPE_NAME,IlluminaSeqExperimentModel.SEQUENCER_RUN_FOLDER + " LIKE '%" + runId + "%'", user);
+            List<DataRecord> illuminaSeqExperiments = dataRecordManager.queryDataRecords(IlluminaSeqExperimentModel.DATA_TYPE_NAME, IlluminaSeqExperimentModel.SEQUENCER_RUN_FOLDER + " LIKE '%" + runId + "%'", user);
             List<DataRecord> relatedSamples = getSamplesRelatedToSeqExperiment(illuminaSeqExperiments, runId, user);
             log.info(String.format("Total Related Samples for IlluminaSeq Run %s: %d", runId, relatedSamples.size()));
             Stack<DataRecord> sampleStack = new Stack<>();
-            if (relatedSamples.isEmpty()){
+            if (relatedSamples.isEmpty()) {
                 return flowCellSamples;
             }
             sampleStack.addAll(relatedSamples);
@@ -380,7 +421,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 } else {
                     sampleStack.addAll(stackSample.getParentsOfType(SampleModel.DATA_TYPE_NAME, user));
                 }
-            }while (!sampleStack.isEmpty());
+            } while (!sampleStack.isEmpty());
         } catch (NotFound | RemoteException | IoError | NullPointerException notFound) {
             log.error(String.format("%s-> Error while getting related Library Samples for run %s:\n%s", ExceptionUtils.getRootCauseMessage(notFound), runId, ExceptionUtils.getStackTrace(notFound)));
         }
@@ -396,19 +437,19 @@ public class UpdateLimsSampleLevelSequencingQcTask {
      */
     private DataRecord getLibrarySample(List<DataRecord> relatedLibrarySamples, String sampleId) {
         try {
-            for (DataRecord sample : relatedLibrarySamples){
+            for (DataRecord sample : relatedLibrarySamples) {
                 String baseId = getBaseSampleId(sample.getStringVal(SampleModel.SAMPLE_ID, user));
-                if(baseId.equalsIgnoreCase(sampleId)){
+                if (baseId.equalsIgnoreCase(sampleId)) {
                     return sample;
                 }
                 // Older SampleId values started with "CTRL" for POOLEDNORMAL control Samples. With last update, the control Samples now
                 // start with actual control sample type eg "FFPEPOOLEDNORMAL, MOUSEPOOLEDNORMAL etc." we need to validate both old and new pattern
                 // for POOLEDNORMAL control samples.
-                if((sampleId.contains(POOLEDNORMAL_IDENTIFIER) && baseId.toUpperCase().contains(POOLEDNORMAL_IDENTIFIER))
-                        || (sampleId.contains(CONTROL_IDENTIFIER) && baseId.toUpperCase().contains(CONTROL_IDENTIFIER))){
+                if ((sampleId.contains(POOLEDNORMAL_IDENTIFIER) && baseId.toUpperCase().contains(POOLEDNORMAL_IDENTIFIER))
+                        || (sampleId.contains(CONTROL_IDENTIFIER) && baseId.toUpperCase().contains(CONTROL_IDENTIFIER))) {
                     String[] pooleNormalIdVals = sampleId.split("_");
                     assert pooleNormalIdVals.length > 1;
-                    String barcode = pooleNormalIdVals[pooleNormalIdVals.length-1];
+                    String barcode = pooleNormalIdVals[pooleNormalIdVals.length - 1];
                     return getPooledNormalLibrarySample(relatedLibrarySamples, barcode);
                 }
             }
@@ -422,6 +463,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
      * Method to get parent poolednormal sample based on barcode. NGS-STATS sampleid for poolednormals is named to contain
      * type of normal (POOLEDNORMAL, FFPEPOOLEDNORMAL, MOUSEPOOLEDNORMAL etc.), Recipe and Index barcode (eg: FFPEPOOLEDNORMAL_IGO_IMPACT468_GTGAAGTG)
      * The only way to find correct pooled normal is to traverse through the library samples on the run and find pooled normal with same barcode.
+     *
      * @param relatedLibrarySamples
      * @param barcode
      * @return
@@ -432,21 +474,21 @@ public class UpdateLimsSampleLevelSequencingQcTask {
             for (DataRecord sam : relatedLibrarySamples) {
                 Object sampleId = sam.getStringVal(SampleModel.SAMPLE_ID, user);
                 Object otherSampleId = sam.getStringVal(SampleModel.OTHER_SAMPLE_ID, user);
-                if ((sampleId != null && sampleId.toString().contains(POOLEDNORMAL_IDENTIFIER)) || (otherSampleId != null && otherSampleId.toString().contains(POOLEDNORMAL_IDENTIFIER))){
-                   List<DataRecord> indexBarcodeRecs = getRecordsOfTypeFromParents(sam, SampleModel.DATA_TYPE_NAME, IndexBarcodeModel.DATA_TYPE_NAME, user);
-                   if (!indexBarcodeRecs.isEmpty()){
-                       Object samBarcode = indexBarcodeRecs.get(0).getValue(IndexBarcodeModel.INDEX_TAG, user);
-                       log.info(indexBarcodeRecs.get(0).getDataTypeName());
-                       log.info("IndexBarcode SampleId: " + indexBarcodeRecs.get(0).getStringVal("SampleId", user));
-                       log.info("Assigned Index Barcode POOLEDNORMAL: " + samBarcode);
-                       if (samBarcode != null){
-                           String i7Barcode = samBarcode.toString().split("-")[0];
-                           if(i7Barcode.equalsIgnoreCase(barcode)){
-                               log.info("Found Library Sample for Pooled Normal");
-                               return sam;
-                           }
-                       }
-                   }
+                if ((sampleId != null && sampleId.toString().contains(POOLEDNORMAL_IDENTIFIER)) || (otherSampleId != null && otherSampleId.toString().contains(POOLEDNORMAL_IDENTIFIER))) {
+                    List<DataRecord> indexBarcodeRecs = getRecordsOfTypeFromParents(sam, SampleModel.DATA_TYPE_NAME, IndexBarcodeModel.DATA_TYPE_NAME, user);
+                    if (!indexBarcodeRecs.isEmpty()) {
+                        Object samBarcode = indexBarcodeRecs.get(0).getValue(IndexBarcodeModel.INDEX_TAG, user);
+                        log.info(indexBarcodeRecs.get(0).getDataTypeName());
+                        log.info("IndexBarcode SampleId: " + indexBarcodeRecs.get(0).getStringVal("SampleId", user));
+                        log.info("Assigned Index Barcode POOLEDNORMAL: " + samBarcode);
+                        if (samBarcode != null) {
+                            String i7Barcode = samBarcode.toString().split("-")[0];
+                            if (i7Barcode.equalsIgnoreCase(barcode)) {
+                                log.info("Found Library Sample for Pooled Normal");
+                                return sam;
+                            }
+                        }
+                    }
                 }
             }
         } catch (NotFound | RemoteException | NullPointerException notFound) {
@@ -457,10 +499,11 @@ public class UpdateLimsSampleLevelSequencingQcTask {
 
     /**
      * Method to get Run Name without Version Number
+     *
      * @param runName
      * @return
      */
-    private String getVersionLessRunId(String runName){
+    private String getVersionLessRunId(String runName) {
         return runName.replaceFirst("_[A-Z][0-9]+$", "");
     }
 }
