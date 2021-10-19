@@ -153,7 +153,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
             try {
                 List<DataRecord> relatedLibrarySamples = dataRecordManager.queryDataRecords(SampleModel.DATA_TYPE_NAME,
                         SampleModel.EXEMPLAR_SAMPLE_STATUS +
-                        " 'Completed - Illumina Sequencing' AND " + SampleModel.SAMPLE_ID + " LIKE 'Pooled-%' ", user);
+                        " = 'Completed - Illumina Sequencing' AND " + SampleModel.SAMPLE_ID + " LIKE 'Pooled-%' ", user);
 
                 for (DataRecord sample : relatedLibrarySamples) {
                     String sampleName = (String) sample.getDataField("OtherSampleId", user);
