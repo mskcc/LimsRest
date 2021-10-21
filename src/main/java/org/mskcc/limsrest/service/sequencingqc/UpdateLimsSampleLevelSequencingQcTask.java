@@ -177,7 +177,8 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                     String requestId = IGOTools.requestFromIgoId(igoId);
                     log.info(String.format("Found Library Sample with Sample ID : %s", igoId));
 
-                    List<DataRecord> samplesAncestors = sample.getParentsOfType(SampleModel.DATA_TYPE_NAME, user);
+                    List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
+                    DataRecord[] samples = requestList.get(0).getChildrenOfType("Sample", user);
                     //String parentSampleName = (String) samplesAncestors.get(samplesAncestors.size() - 1).getDataField("OtherSampleId", user);
                     //String parentIgoId = getRecordStringValue(samplesAncestors.get(samplesAncestors.size() - 1), SampleModel.SAMPLE_ID, user);
                     DataRecord existingQc = getExistingSequencingQcRecord(relatedLibrarySamples, sampleName, igoId, projectId, false);
@@ -185,16 +186,18 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                         log.info(String.format("Existing %s record not found for Sample with Id %s",
                                 SeqAnalysisSampleQCModel.DATA_TYPE_NAME, igoId));
                         qcDataVals.put(SampleModel.SAMPLE_ID, igoId);
+                        log.info("igoId: " + igoId);
                         qcDataVals.put(SampleModel.OTHER_SAMPLE_ID, sampleName);
+                        log.info("Sample name: " + sampleName);
                         qcDataVals.put(SampleModel.REQUEST_ID, requestId);
+                        log.info("request id:" + requestId);
                         qcDataVals.put("seqQCStatus", inital_qc_status);
                         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
                         LocalDateTime now = LocalDateTime.now();
                         qcDataVals.put(SampleModel.DATE_CREATED, dtf.format(now));
 
                         try {
-                            //List<DataRecord> parentsLibSample = librarySample.getParentsOfType(SampleModel.DATA_TYPE_NAME, user);
-                            samplesAncestors.get(samplesAncestors.size() - 1).addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcDataVals, user);
+                            samples[0].addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcDataVals, user);
                             log.info("Added record to seq analysis table other sample id: " + SeqAnalysisSampleQCModel.OTHER_SAMPLE_ID);
                             //librarySample.addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcDataVals, user);
                         } catch (ServerException | RemoteException e) {
