@@ -191,7 +191,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
                         LocalDateTime now = LocalDateTime.now();
                         qcDataVals.put(SampleModel.DATE_CREATED, dtf.format(now));
-                        //TODO check the date created
+
                         try {
                             //List<DataRecord> parentsLibSample = librarySample.getParentsOfType(SampleModel.DATA_TYPE_NAME, user);
                             samplesAncestors.get(samplesAncestors.size() - 1).addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcDataVals, user);
