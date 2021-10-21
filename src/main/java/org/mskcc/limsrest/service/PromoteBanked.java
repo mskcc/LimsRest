@@ -346,11 +346,11 @@ public class PromoteBanked extends LimsTask {
         }
         //add a sample to requestList.get(0) with a new sample
         //copy fields
-        String rowIndex = (String) bankedSampleRecord.getDataField("rowIndex", user);
+        String rowIndex = (String) bankedSampleRecord.getDataField("RowIndex", user);
         String newIgoId = requestId + "_" + (maxExistentId + offset);
         if(!rowIndex.equals(newIgoId.split("_")[1])) {
             //Adding sample name to the list
-            samplesWithDifferentNewIgoIdAndRowIndex.add(bankedSampleRecord.getDataField("otherSampleId", user));
+            samplesWithDifferentNewIgoIdAndRowIndex.add(bankedSampleRecord.getDataField("OtherSampleId", user));
         }
         try {
             DataRecord promotedSampleRecord = req.addChild("Sample", user);
