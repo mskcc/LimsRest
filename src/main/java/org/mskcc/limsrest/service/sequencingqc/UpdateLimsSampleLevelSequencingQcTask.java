@@ -21,6 +21,8 @@ import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.util.BasicMail;
 import org.mskcc.limsrest.util.IGOTools;
 
+import javax.xml.crypto.Data;
+
 import static org.mskcc.limsrest.util.Utils.*;
 
 import java.io.BufferedReader;
@@ -30,6 +32,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.rmi.RemoteException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static org.mskcc.limsrest.util.Utils.getBaseSampleId;
@@ -156,8 +160,10 @@ public class UpdateLimsSampleLevelSequencingQcTask {
 
                 List<DataRecord> relatedLibrarySamples = dataRecordManager.queryDataRecords(SampleModel.DATA_TYPE_NAME,
                         SampleModel.EXEMPLAR_SAMPLE_STATUS +
-                        " = 'Completed - Illumina Sequencing' AND " + SampleModel.SAMPLE_ID + " LIKE 'Pooled-%' AND " +
+                        " = 'Completed - Illumina Sequencing' AND " + SampleModel.SAMPLE_ID + " LIKE 'Pool-%' AND " +
                                 SampleModel.REQUEST_ID + " = '" + projectId + "'", user);
+
+                log.info("relatedLibrarySamples: " + relatedLibrarySamples.size());
 
                 for (DataRecord sample : relatedLibrarySamples) {
                     String sampleName = (String) sample.getDataField("OtherSampleId", user);
@@ -171,6 +177,9 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                     String requestId = IGOTools.requestFromIgoId(igoId);
                     log.info(String.format("Found Library Sample with Sample ID : %s", igoId));
 
+                    List<DataRecord> samplesAncestors = sample.getParentsOfType(SampleModel.DATA_TYPE_NAME, user);
+                    //String parentSampleName = (String) samplesAncestors.get(samplesAncestors.size() - 1).getDataField("OtherSampleId", user);
+                    //String parentIgoId = getRecordStringValue(samplesAncestors.get(samplesAncestors.size() - 1), SampleModel.SAMPLE_ID, user);
                     DataRecord existingQc = getExistingSequencingQcRecord(relatedLibrarySamples, sampleName, igoId, projectId, false);
                     if (existingQc == null) {
                         log.info(String.format("Existing %s record not found for Sample with Id %s",
@@ -179,11 +188,15 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                         qcDataVals.put(SampleModel.OTHER_SAMPLE_ID, sampleName);
                         qcDataVals.put(SampleModel.REQUEST_ID, requestId);
                         qcDataVals.put("seqQCStatus", inital_qc_status);
+                        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+                        LocalDateTime now = LocalDateTime.now();
+                        qcDataVals.put(SampleModel.DATE_CREATED, dtf.format(now));
                         //TODO check the date created
                         try {
                             //List<DataRecord> parentsLibSample = librarySample.getParentsOfType(SampleModel.DATA_TYPE_NAME, user);
-                            //parentsLibSample.get(parentsLibSample.size() - 1).addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcDataVals, user);
-                            librarySample.addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcDataVals, user); //Add qc analysis for the first common parent of all pooled samples
+                            samplesAncestors.get(samplesAncestors.size() - 1).addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcDataVals, user);
+                            log.info("Added record to seq analysis table other sample id: " + SeqAnalysisSampleQCModel.OTHER_SAMPLE_ID);
+                            //librarySample.addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcDataVals, user);
                         } catch (ServerException | RemoteException e) {
                             String error = String.format("Failed to add new %s DataRecord Child for %s. ERROR: %s%s", SampleModel.OTHER_SAMPLE_ID, sampleId,
                                     ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
@@ -372,11 +385,13 @@ public class UpdateLimsSampleLevelSequencingQcTask {
     private DataRecord getExistingSequencingQcRecord(List<DataRecord> librarySamples, String otherSampleId, String igoId, String runOrProjectId, boolean isRunId) {
         List<DataRecord> seqAnalysisSampleQCs = null;
         try {
+            String requestId = IGOTools.requestFromIgoId(igoId);
             if (isRunId) {
                 log.info(String.format("Searching for existing %s records for %s, %s and %s combination", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, igoId, otherSampleId, runOrProjectId));
             }
             if (igoId.contains(POOLEDNORMAL_IDENTIFIER) || igoId.contains(CONTROL_IDENTIFIER) || otherSampleId.contains(POOLEDNORMAL_IDENTIFIER)) {
                 String[] igoIdVals = igoId.split("_");
+
                 String barcode = igoIdVals[igoIdVals.length - 1];
                 DataRecord librarySample = getPooledNormalLibrarySample(librarySamples, barcode);
                 assert librarySample != null;
@@ -391,7 +406,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                         " = '" + otherSampleId + "' AND " + SeqAnalysisSampleQCModel.SEQUENCER_RUN_FOLDER + " = '" + runOrProjectId + "' AND SampleId = '" + igoId + "'", user);
             } else {
                 seqAnalysisSampleQCs = dataRecordManager.queryDataRecords(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, SeqAnalysisSampleQCModel.OTHER_SAMPLE_ID +
-                        " = '" + otherSampleId + "' AND " + SeqAnalysisSampleQCModel.REQUEST + " = '" + runOrProjectId + "' AND SampleId = '" + igoId + "'", user);
+                        " = '" + otherSampleId + "' AND " + SeqAnalysisSampleQCModel.REQUEST + " = '" + requestId + "' AND SampleId = '" + igoId + "'", user);
             }
             log.info("Count of existing qc records: " + seqAnalysisSampleQCs.size());
         } catch (Exception e) {
