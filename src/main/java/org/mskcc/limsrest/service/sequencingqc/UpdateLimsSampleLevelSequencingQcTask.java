@@ -18,6 +18,8 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.util.BasicMail;
+import org.mskcc.limsrest.util.IGOTools;
+
 import static org.mskcc.limsrest.util.Utils.*;
 
 import java.io.BufferedReader;
@@ -27,6 +29,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.rmi.RemoteException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static org.mskcc.limsrest.util.Utils.getBaseSampleId;
@@ -46,10 +50,12 @@ public class UpdateLimsSampleLevelSequencingQcTask {
     User user;
 
     private String runId;
+    private String projectId;
 
-    public UpdateLimsSampleLevelSequencingQcTask(String runId, ConnectionLIMS conn) {
+    public UpdateLimsSampleLevelSequencingQcTask(String runId, String projectId, ConnectionLIMS conn) {
         this.runId = runId;
         this.conn = conn;
+        this.projectId = projectId;
     }
 
     public Map<String, String> execute() {
@@ -58,89 +64,168 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         dataRecordManager = vConn.getDataRecordManager();
         user = conn.getConnection().getUser();
 
-        //get stats from ngs-stats db.
-        JSONObject data = getStatsFromDb();
-        if (data.keySet().size() == 0) {
-            log.error(String.format("Found no NGS-STATS for run with run id %s using url %s", runId, getStatsUrl()));
-        }
-        //get all the Library samples that are present on the run
-        List<DataRecord> relatedLibrarySamples = getRelatedLibrarySamples(runId);
-        log.info(String.format("Total Related Library Samples for run %s: %d", runId, relatedLibrarySamples.size()));
         Map<String, String> statsAdded = new HashMap<>();
-        //loop through stats data and add/update lims SeqAnalysisSampleQc records
-        for (String key : data.keySet()) {
-            //get qcDataVals as HashMap
-            Map<String, Object> qcDataVals = getQcValues(data.getJSONObject(key));
-            String sampleName = String.valueOf(qcDataVals.get("OtherSampleId"));
-            String sampleId = String.valueOf(qcDataVals.get("SampleId"));
-            // first find the library sample that is parent of Pool Sample that went on Sequencer.
-            DataRecord librarySample = getLibrarySample(relatedLibrarySamples, sampleId);
-            if (librarySample == null) {
-                log.error("Could not find related Library Sample for Sample with Stats SampleId: " + sampleId);
-                continue;
+        generateStats(runId, projectId, statsAdded);
+        return statsAdded;
+    }
+
+    /**
+     * Method for Adding/Updating records for sequencing runs and projects
+     *
+     * @param runId
+     * @param projectId
+     * @param stats
+     */
+    private void generateStats(String runId, String projectId, Map<String, String> stats) {
+        Map<String, Object> qcDataVals = new HashMap<>();
+        if (projectId == null || projectId.isEmpty()) {
+            //get stats from ngs-stats db.
+            JSONObject data = getStatsFromDb();
+            if (data.keySet().size() == 0) {
+                log.error(String.format("Found no NGS-STATS for run with run id %s using url %s", runId, getStatsUrl()));
+            }
+            //get all the Library samples that are present on the run
+            List<DataRecord> relatedLibrarySamples = getRelatedLibrarySamples(runId);
+            log.info(String.format("Total Related Library Samples for run %s: %d", runId, relatedLibrarySamples.size()));
+            //loop through stats data and add/update lims SeqAnalysisSampleQc records
+            for (String key : data.keySet()) {
+                //get qcDataVals as HashMap
+                qcDataVals = getQcValues(data.getJSONObject(key));
+                String sampleName = String.valueOf(qcDataVals.get("OtherSampleId"));
+                String sampleId = String.valueOf(qcDataVals.get("SampleId"));
+                // first find the library sample that is parent of Pool Sample that went on Sequencer.
+                DataRecord librarySample = getLibrarySample(relatedLibrarySamples, sampleId);
+                if (librarySample == null) {
+                    log.error("Could not find related Library Sample for Sample with Stats SampleId: " + sampleId);
+                    continue;
+                }
+
+                String igoId = getRecordStringValue(librarySample, SampleModel.SAMPLE_ID, user);
+                log.info(String.format("Found Library Sample with Sample ID : %s", igoId));
+                //add AltId to the values to be updated.
+                Object altId = "";
+                try {
+                    altId = getValueFromDataRecord(librarySample, "AltId", "String", user);
+                } catch (Exception e) {
+                    log.error(String.format("Failed to retrieve AltId from Library Sample: %s", igoId));
+                }
+                qcDataVals.putIfAbsent("AltId", altId);
+                //check if there is an existing SeqAnalysisSampleQc record. If present update it.
+                String versionLessRunId = getVersionLessRunId(runId);
+                DataRecord existingQc = getExistingSequencingQcRecord(relatedLibrarySamples, sampleName, igoId, versionLessRunId);
+                if (existingQc == null) {
+                    log.info(String.format("Existing %s record not found for Sample with Id %s", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, igoId));
+                }
+                if (existingQc != null) {
+                    log.info(String.format("Updating values on existing %s record with OtherSampleId %s, and Record Id %d, values are : %s",
+                            SeqAnalysisSampleQCModel.DATA_TYPE_NAME, getRecordStringValue(existingQc, SampleModel.OTHER_SAMPLE_ID, user),
+                            existingQc.getRecordId(), qcDataVals.toString()));
+                    log.info(String.format("Existing %s datatype Record ID: %d", existingQc.getDataTypeName(), existingQc.getRecordId()));
+                    // remove SeqQcStatus Key,Value from new values so that it does not overwrite existing value.
+                    qcDataVals.remove("SeqQCStatus");
+                    qcDataVals.put(SampleModel.SAMPLE_ID, igoId);
+                    // TODO - else has same logic. Remove duplication and move after else?
+                    try {
+                        existingQc.setFields(qcDataVals, user);
+                        stats.putIfAbsent(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), "");
+                        stats.put(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), qcDataVals.toString());
+                    } catch (ServerException | RemoteException e) {
+                        String error = String.format("Failed to modify %s DataRecord: %s. ERROR: %s%s", SampleModel.OTHER_SAMPLE_ID, igoId,
+                                ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
+                        log.error(error);
+                    }
+                } else { //if there is no existing SeqAnalysisSampleQc record, create a new one on Library Sample
+                    qcDataVals.put(SampleModel.SAMPLE_ID, igoId);
+                    log.info(String.format("Adding new %s child record to %s with SampleId %s, values are : %s",
+                            SeqAnalysisSampleQCModel.DATA_TYPE_NAME,
+                            SampleModel.DATA_TYPE_NAME,
+                            getRecordStringValue(librarySample, SampleModel.SAMPLE_ID, user),
+                            qcDataVals.toString()));
+                    try {
+                        librarySample.addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcDataVals, user);
+                        stats.putIfAbsent(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), "");
+                        stats.put(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), qcDataVals.toString());
+                    } catch (ServerException | RemoteException e) {
+                        String error = String.format("Failed to add new %s DataRecord Child for %s. ERROR: %s%s", SampleModel.OTHER_SAMPLE_ID, sampleId,
+                                ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
+                        log.error(error);
+                    }
+                }
+            }
+        } else {
+            try {
+
+                List<DataRecord> relatedLibrarySamples = dataRecordManager.queryDataRecords(SampleModel.DATA_TYPE_NAME,
+                        SampleModel.EXEMPLAR_SAMPLE_STATUS +
+                                " = 'Completed - Illumina Sequencing' AND " + SampleModel.SAMPLE_ID + " LIKE 'Pool-%' AND " +
+                                SampleModel.REQUEST_ID + " = '" + projectId + "'", user);
+
+                log.info("relatedLibrarySamples: " + relatedLibrarySamples.size());
+
+                for (DataRecord sample : relatedLibrarySamples) {
+                    String sampleName = (String) sample.getDataField("OtherSampleId", user);
+                    String sampleId = (String) sample.getDataField("SampleId", user);
+                    DataRecord librarySample = getLibrarySample(relatedLibrarySamples, sampleId);
+                    if (librarySample == null) {
+                        log.error("Could not find related Library Sample for Sample with SampleId: " + sampleId);
+                    }
+
+                    String igoId = getRecordStringValue(librarySample, SampleModel.SAMPLE_ID, user);
+                    String requestId = IGOTools.requestFromIgoId(igoId);
+                    log.info("requestId: " + requestId);
+                    log.info(String.format("Found Library Sample with Sample ID : %s", igoId));
+
+                    List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + projectId + "'", user);
+                    if (requestList.size() > 0) {
+                        DataRecord[] samples = requestList.get(0).getChildrenOfType("Sample", user);
+                        DataRecord existingQc = getExistingSequencingQcRecord(relatedLibrarySamples, sampleName, igoId, runId);
+                        if (existingQc == null) {
+                            log.info(String.format("Existing %s record not found for Sample with Id %s",
+                                    SeqAnalysisSampleQCModel.DATA_TYPE_NAME, igoId));
+                            qcDataVals.put(SampleModel.SAMPLE_ID, igoId);
+                            log.info("igoId: " + igoId);
+                            qcDataVals.put(SeqAnalysisSampleQCModel.OTHER_SAMPLE_ID, sampleName);
+                            log.info("Sample name: " + sampleName);
+                            qcDataVals.put(SeqAnalysisSampleQCModel.SEQUENCER_RUN_FOLDER, runId);
+                            log.info("run id:" + runId);
+                            qcDataVals.put(SeqAnalysisSampleQCModel.REQUEST, requestId);
+                            log.info("request id:" + requestId);
+                            qcDataVals.put("seqQCStatus", inital_qc_status);
+                            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+                            LocalDateTime now = LocalDateTime.now();
+                            qcDataVals.put(SeqAnalysisSampleQCModel.DATE_CREATED, dtf.format(now));
+
+                            try {
+                                samples[0].addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcDataVals, user);
+                                log.info("Added record to seq analysis table other sample id: " + SeqAnalysisSampleQCModel.OTHER_SAMPLE_ID);
+                            } catch (ServerException | RemoteException e) {
+                                String error = String.format("Failed to add new %s DataRecord Child for %s. ERROR: %s%s", SampleModel.OTHER_SAMPLE_ID, sampleId,
+                                        ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
+                                log.error(error);
+                            }
+                            stats.put(sampleId, (String) librarySample.getDataField("igoId", user));
+                        }
+                    }
+                }
+
+            } catch (NotFound | IoError | RemoteException e) {
+                log.error(String.format("Error while querying sample for finding completed - illumina sequencing, pooled" +
+                                " samples with projectId: %s.\n%s:%s", SampleModel.REQUEST_ID, ExceptionUtils.getMessage(e),
+                        ExceptionUtils.getStackTrace(e)));
             }
 
-            String igoId = getRecordStringValue(librarySample, SampleModel.SAMPLE_ID, user);
-            log.info(String.format("Found Library Sample with Sample ID : %s", igoId));
-            //add AltId to the values to be updated.
-            Object altId = "";
-            try {
-                altId = getValueFromDataRecord(librarySample, "AltId", "String", user);
-            } catch (Exception e){
-                log.error(String.format("Failed to retrieve AltId from Library Sample: %s", igoId));
-            }
-            qcDataVals.putIfAbsent("AltId", altId);
-            //check if there is an are existing SeqAnalysisSampleQc record. If present update it.
-            String versionLessRunId = getVersionLessRunId(runId);
-            DataRecord existingQc = getExistingSequencingQcRecord(relatedLibrarySamples, sampleName, igoId, versionLessRunId);
-            if (existingQc == null) {
-                log.info(String.format("Existing %s record not found for Sample with Id %s", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, igoId));
-            }
-            if (existingQc != null) {
-                log.info(String.format("Updating values on existing %s record with OtherSampleId %s, and Record Id %d, values are : %s",
-                        SeqAnalysisSampleQCModel.DATA_TYPE_NAME, getRecordStringValue(existingQc, SampleModel.OTHER_SAMPLE_ID, user),
-                        existingQc.getRecordId(), qcDataVals.toString()));
-                log.info(String.format("Existing %s datatype Record ID: %d", existingQc.getDataTypeName(), existingQc.getRecordId()));
-                // remove SeqQcStatus Key,Value from new values so that it does not overwrite existing value.
-                qcDataVals.remove("SeqQCStatus");
-                qcDataVals.put(SampleModel.SAMPLE_ID, igoId);
-                // TODO - else has same logic. Remove duplication and move after else?
-                try {
-                    existingQc.setFields(qcDataVals, user);
-                    statsAdded.putIfAbsent(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), "");
-                    statsAdded.put(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), qcDataVals.toString());
-                } catch (ServerException | RemoteException e){
-                    String error = String.format("Failed to modify %s DataRecord: %s. ERROR: %s%s", SampleModel.OTHER_SAMPLE_ID, igoId,
-                            ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
-                    log.error(error);
-                }
-            } else { //if there is no existing SeqAnalysisSampleQc record, create a new one on Library Sample
-                qcDataVals.put(SampleModel.SAMPLE_ID, igoId);
-                log.info(String.format("Adding new %s child record to %s with SampleId %s, values are : %s",
-                        SeqAnalysisSampleQCModel.DATA_TYPE_NAME,
-                        SampleModel.DATA_TYPE_NAME,
-                        getRecordStringValue(librarySample, SampleModel.SAMPLE_ID, user),
-                        qcDataVals.toString()));
-                try {
-                    librarySample.addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcDataVals, user);
-                    statsAdded.putIfAbsent(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), "");
-                    statsAdded.put(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), qcDataVals.toString());
-                } catch (ServerException | RemoteException e) {
-                    String error = String.format("Failed to add new %s DataRecord Child for %s. ERROR: %s%s", SampleModel.OTHER_SAMPLE_ID, sampleId,
-                            ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
-                    log.error(error);
-                }
-            }
         }
         try {
-            dataRecordManager.storeAndCommit(String.format("Added/updated new %s records for Sequencing Run %s", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, runId), null, user);
+            dataRecordManager.storeAndCommit(String.format("Added/updated new %s records for Sequencing Run %s",
+                    SeqAnalysisSampleQCModel.DATA_TYPE_NAME, runId), null, user);
         } catch (RemoteException | ServerException e) {
             log.error("ERROR Message: " + e.getMessage());
             log.error(String.format("Failed to commit changes for %s\nERROR:\n%s", this.runId, ExceptionUtils.getStackTrace(e)));
-            return new HashMap();
+            return;
         }
-        log.info(String.format("Added/Updated total %d %s records for Sequencing Run %s",statsAdded.size(), SeqAnalysisSampleQCModel.DATA_TYPE_NAME, runId));
-        return statsAdded;
+
+        log.info(String.format("Added/Updated total %d %s records for Sequencing Run %s", stats.size(),
+                SeqAnalysisSampleQCModel.DATA_TYPE_NAME, runId));
     }
 
     /**
@@ -163,6 +248,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
 
     /**
      * Method to get path to property file.
+     *
      * @param propertyFile
      * @return
      */
@@ -261,10 +347,10 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         List<String> idVals = Arrays.asList(id.split("_IGO_"));
         if (idVals.size() == 2) {
             String igoId = idVals.get(1);
-            if (igoId.contains(POOLEDNORMAL_IDENTIFIER) || igoId.contains(CONTROL_IDENTIFIER)){
+            if (igoId.contains(POOLEDNORMAL_IDENTIFIER) || igoId.contains(CONTROL_IDENTIFIER)) {
                 String pooledNormalName = idVals.get(0);
-                String [] barcodeVals = idVals.get(1).split("_");
-                String barcode = barcodeVals[barcodeVals.length-1];
+                String[] barcodeVals = idVals.get(1).split("_");
+                String barcode = barcodeVals[barcodeVals.length - 1];
                 return pooledNormalName + "_" + barcode;
             }
             return igoId;
@@ -291,24 +377,25 @@ public class UpdateLimsSampleLevelSequencingQcTask {
 
     /**
      * Method to get the SeqAnalysisSampleQC DataRecord for a sample if already exists.
+     *
      * @param librarySamples
      * @param otherSampleId
      * @param igoId
      * @param runId
      * @return
      */
-    private DataRecord getExistingSequencingQcRecord(List<DataRecord> librarySamples, String otherSampleId, String igoId,  String runId) {
+    private DataRecord getExistingSequencingQcRecord(List<DataRecord> librarySamples, String otherSampleId, String igoId, String runId) {
         List<DataRecord> seqAnalysisSampleQCs;
         try {
-            log.info(String.format("Searching for existing %s records for %s, %s and %s combination",SeqAnalysisSampleQCModel.DATA_TYPE_NAME,igoId, otherSampleId, runId));
-            if(igoId.contains(POOLEDNORMAL_IDENTIFIER) || igoId.contains(CONTROL_IDENTIFIER) || otherSampleId.contains(POOLEDNORMAL_IDENTIFIER)){
+            log.info(String.format("Searching for existing %s records for %s, %s and %s combination", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, igoId, otherSampleId, runId));
+            if (igoId.contains(POOLEDNORMAL_IDENTIFIER) || igoId.contains(CONTROL_IDENTIFIER) || otherSampleId.contains(POOLEDNORMAL_IDENTIFIER)) {
                 String[] igoIdVals = igoId.split("_");
-                String barcode = igoIdVals[igoIdVals.length-1];
+                String barcode = igoIdVals[igoIdVals.length - 1];
                 DataRecord librarySample = getPooledNormalLibrarySample(librarySamples, barcode);
                 assert librarySample != null;
-                if (librarySample.getChildrenOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user) != null && librarySample.getChildrenOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user).length > 0 ){
+                if (librarySample.getChildrenOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user) != null && librarySample.getChildrenOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user).length > 0) {
                     DataRecord qcrec = librarySample.getChildrenOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user)[0];
-                    log.info(String.format("Found %s record with recordid: %d for poolenormal sample.", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcrec.getRecordId()));
+                    log.info(String.format("Found %s record with recordid: %d for poolednormal sample.", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcrec.getRecordId()));
                     return qcrec;
                 }
             }
@@ -337,11 +424,11 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         Set<String> addedSampleIds = new HashSet<>();
         List<DataRecord> flowCellSamples = new ArrayList<>();
         try {
-            List<DataRecord> illuminaSeqExperiments = dataRecordManager.queryDataRecords(IlluminaSeqExperimentModel.DATA_TYPE_NAME,IlluminaSeqExperimentModel.SEQUENCER_RUN_FOLDER + " LIKE '%" + runId + "%'", user);
+            List<DataRecord> illuminaSeqExperiments = dataRecordManager.queryDataRecords(IlluminaSeqExperimentModel.DATA_TYPE_NAME, IlluminaSeqExperimentModel.SEQUENCER_RUN_FOLDER + " LIKE '%" + runId + "%'", user);
             List<DataRecord> relatedSamples = getSamplesRelatedToSeqExperiment(illuminaSeqExperiments, runId, user);
             log.info(String.format("Total Related Samples for IlluminaSeq Run %s: %d", runId, relatedSamples.size()));
             Stack<DataRecord> sampleStack = new Stack<>();
-            if (relatedSamples.isEmpty()){
+            if (relatedSamples.isEmpty()) {
                 return flowCellSamples;
             }
             sampleStack.addAll(relatedSamples);
@@ -359,7 +446,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 } else {
                     sampleStack.addAll(stackSample.getParentsOfType(SampleModel.DATA_TYPE_NAME, user));
                 }
-            }while (!sampleStack.isEmpty());
+            } while (!sampleStack.isEmpty());
         } catch (NotFound | RemoteException | IoError | NullPointerException notFound) {
             log.error(String.format("%s-> Error while getting related Library Samples for run %s:\n%s", ExceptionUtils.getRootCauseMessage(notFound), runId, ExceptionUtils.getStackTrace(notFound)));
         }
@@ -375,19 +462,19 @@ public class UpdateLimsSampleLevelSequencingQcTask {
      */
     private DataRecord getLibrarySample(List<DataRecord> relatedLibrarySamples, String sampleId) {
         try {
-            for (DataRecord sample : relatedLibrarySamples){
+            for (DataRecord sample : relatedLibrarySamples) {
                 String baseId = getBaseSampleId(sample.getStringVal(SampleModel.SAMPLE_ID, user));
-                if(baseId.equalsIgnoreCase(sampleId)){
+                if (baseId.equalsIgnoreCase(sampleId)) {
                     return sample;
                 }
                 // Older SampleId values started with "CTRL" for POOLEDNORMAL control Samples. With last update, the control Samples now
                 // start with actual control sample type eg "FFPEPOOLEDNORMAL, MOUSEPOOLEDNORMAL etc." we need to validate both old and new pattern
                 // for POOLEDNORMAL control samples.
-                if((sampleId.contains(POOLEDNORMAL_IDENTIFIER) && baseId.toUpperCase().contains(POOLEDNORMAL_IDENTIFIER))
-                        || (sampleId.contains(CONTROL_IDENTIFIER) && baseId.toUpperCase().contains(CONTROL_IDENTIFIER))){
+                if ((sampleId.contains(POOLEDNORMAL_IDENTIFIER) && baseId.toUpperCase().contains(POOLEDNORMAL_IDENTIFIER))
+                        || (sampleId.contains(CONTROL_IDENTIFIER) && baseId.toUpperCase().contains(CONTROL_IDENTIFIER))) {
                     String[] pooleNormalIdVals = sampleId.split("_");
                     assert pooleNormalIdVals.length > 1;
-                    String barcode = pooleNormalIdVals[pooleNormalIdVals.length-1];
+                    String barcode = pooleNormalIdVals[pooleNormalIdVals.length - 1];
                     return getPooledNormalLibrarySample(relatedLibrarySamples, barcode);
                 }
             }
@@ -401,6 +488,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
      * Method to get parent poolednormal sample based on barcode. NGS-STATS sampleid for poolednormals is named to contain
      * type of normal (POOLEDNORMAL, FFPEPOOLEDNORMAL, MOUSEPOOLEDNORMAL etc.), Recipe and Index barcode (eg: FFPEPOOLEDNORMAL_IGO_IMPACT468_GTGAAGTG)
      * The only way to find correct pooled normal is to traverse through the library samples on the run and find pooled normal with same barcode.
+     *
      * @param relatedLibrarySamples
      * @param barcode
      * @return
@@ -411,21 +499,21 @@ public class UpdateLimsSampleLevelSequencingQcTask {
             for (DataRecord sam : relatedLibrarySamples) {
                 Object sampleId = sam.getStringVal(SampleModel.SAMPLE_ID, user);
                 Object otherSampleId = sam.getStringVal(SampleModel.OTHER_SAMPLE_ID, user);
-                if ((sampleId != null && sampleId.toString().contains(POOLEDNORMAL_IDENTIFIER)) || (otherSampleId != null && otherSampleId.toString().contains(POOLEDNORMAL_IDENTIFIER))){
-                   List<DataRecord> indexBarcodeRecs = getRecordsOfTypeFromParents(sam, SampleModel.DATA_TYPE_NAME, IndexBarcodeModel.DATA_TYPE_NAME, user);
-                   if (!indexBarcodeRecs.isEmpty()){
-                       Object samBarcode = indexBarcodeRecs.get(0).getValue(IndexBarcodeModel.INDEX_TAG, user);
-                       log.info(indexBarcodeRecs.get(0).getDataTypeName());
-                       log.info("IndexBarcode SampleId: " + indexBarcodeRecs.get(0).getStringVal("SampleId", user));
-                       log.info("Assigned Index Barcode POOLEDNORMAL: " + samBarcode);
-                       if (samBarcode != null){
-                           String i7Barcode = samBarcode.toString().split("-")[0];
-                           if(i7Barcode.equalsIgnoreCase(barcode)){
-                               log.info("Found Library Sample for Pooled Normal");
-                               return sam;
-                           }
-                       }
-                   }
+                if ((sampleId != null && sampleId.toString().contains(POOLEDNORMAL_IDENTIFIER)) || (otherSampleId != null && otherSampleId.toString().contains(POOLEDNORMAL_IDENTIFIER))) {
+                    List<DataRecord> indexBarcodeRecs = getRecordsOfTypeFromParents(sam, SampleModel.DATA_TYPE_NAME, IndexBarcodeModel.DATA_TYPE_NAME, user);
+                    if (!indexBarcodeRecs.isEmpty()) {
+                        Object samBarcode = indexBarcodeRecs.get(0).getValue(IndexBarcodeModel.INDEX_TAG, user);
+                        log.info(indexBarcodeRecs.get(0).getDataTypeName());
+                        log.info("IndexBarcode SampleId: " + indexBarcodeRecs.get(0).getStringVal("SampleId", user));
+                        log.info("Assigned Index Barcode POOLEDNORMAL: " + samBarcode);
+                        if (samBarcode != null) {
+                            String i7Barcode = samBarcode.toString().split("-")[0];
+                            if (i7Barcode.equalsIgnoreCase(barcode)) {
+                                log.info("Found Library Sample for Pooled Normal");
+                                return sam;
+                            }
+                        }
+                    }
                 }
             }
         } catch (NotFound | RemoteException | NullPointerException notFound) {
@@ -436,10 +524,11 @@ public class UpdateLimsSampleLevelSequencingQcTask {
 
     /**
      * Method to get Run Name without Version Number
+     *
      * @param runName
      * @return
      */
-    private String getVersionLessRunId(String runName){
+    private String getVersionLessRunId(String runName) {
         return runName.replaceFirst("_[A-Z][0-9]+$", "");
     }
 }
