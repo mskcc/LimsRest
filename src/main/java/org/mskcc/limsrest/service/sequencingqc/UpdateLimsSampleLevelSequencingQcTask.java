@@ -181,8 +181,6 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                     List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + projectId + "'", user);
                     if(requestList.size() > 0) {
                         DataRecord[] samples = requestList.get(0).getChildrenOfType("Sample", user);
-                        //String parentSampleName = (String) samplesAncestors.get(samplesAncestors.size() - 1).getDataField("OtherSampleId", user);
-                        //String parentIgoId = getRecordStringValue(samplesAncestors.get(samplesAncestors.size() - 1), SampleModel.SAMPLE_ID, user);
                         DataRecord existingQc = getExistingSequencingQcRecord(relatedLibrarySamples, sampleName, igoId, runId);
                         if (existingQc == null) {
                             log.info(String.format("Existing %s record not found for Sample with Id %s",
@@ -203,7 +201,6 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                             try {
                                 samples[0].addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcDataVals, user);
                                 log.info("Added record to seq analysis table other sample id: " + SeqAnalysisSampleQCModel.OTHER_SAMPLE_ID);
-                                //librarySample.addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcDataVals, user);
                             } catch (ServerException | RemoteException e) {
                                 String error = String.format("Failed to add new %s DataRecord Child for %s. ERROR: %s%s", SampleModel.OTHER_SAMPLE_ID, sampleId,
                                         ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
