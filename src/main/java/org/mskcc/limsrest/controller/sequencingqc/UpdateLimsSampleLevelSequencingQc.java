@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Endpoint to Add/Update Sequencing QC Stats to LIMS SeqAnalysisSampleQC DataType. The endpoint is planned to run as
@@ -30,7 +31,7 @@ public class UpdateLimsSampleLevelSequencingQc {
     }
 
     @GetMapping("/updateLimsSampleLevelSequencingQc")
-    public Map<String, String> getContent(@RequestParam(value = "runId") String runId, @RequestParam(value = "projectId") String projectId) {
+    public Map<String, String> getContent(@RequestParam(value = "runId") String runId, @RequestParam(value = "projectId" , required = false) String projectId) {
         Map<String, String> resp = new HashMap<>();
         if (StringUtils.isBlank(runId)){
             final String error = String.format("Invalid RUN ID: '%s'", runId);
