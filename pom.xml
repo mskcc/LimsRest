@@ -154,12 +154,12 @@
     <dependency>
       <groupId>com.github.mskcc</groupId>
       <artifactId>cmo-messaging-java</artifactId>
-      <version>c12bb160613ecf7bab6b3af8ee05044b17b69e3d</version>
+      <version>e01088f714e7f77e2187e1ed5943789a2cacb415</version>
     </dependency>
     <dependency>
       <groupId>com.github.mskcc</groupId>
       <artifactId>cmo-metadb-common</artifactId>
-      <version>v1.6</version>
+      <version>1.1.7.RELEASE</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>
