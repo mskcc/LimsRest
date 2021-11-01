@@ -178,7 +178,8 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                     List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + projectId + "'", user);
                     if (requestList.size() > 0) {
                         DataRecord[] samples = requestList.get(0).getChildrenOfType("Sample", user);
-                        DataRecord existingQc = getExistingSequencingQcRecord(relatedLibrarySamples, sampleName, igoId, runId);
+                        String versionLessRunId = getVersionLessRunId(runId);
+                        DataRecord existingQc = getExistingSequencingQcRecord(relatedLibrarySamples, sampleName, igoId, versionLessRunId);
                         if (existingQc == null) {
                             log.info(String.format("Existing %s record not found for Sample with Id %s",
                                     SeqAnalysisSampleQCModel.DATA_TYPE_NAME, igoId));
