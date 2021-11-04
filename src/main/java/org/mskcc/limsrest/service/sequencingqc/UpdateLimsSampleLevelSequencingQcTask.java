@@ -158,7 +158,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 List<DataRecord> relatedLibrarySamples = dataRecordManager.queryDataRecords(SampleModel.DATA_TYPE_NAME,
                         SampleModel.EXEMPLAR_SAMPLE_STATUS +
                                 " = 'Completed - Illumina Sequencing' AND " + SampleModel.SAMPLE_ID + " LIKE 'Pool-%' AND " +
-                                SampleModel.REQUEST_ID + " = '" + projectId + "'", user);
+                                SampleModel.REQUEST_ID + " LIKE '%" + projectId + "%'", user);
 
                 log.info("relatedLibrarySamples: " + relatedLibrarySamples.size());
 
