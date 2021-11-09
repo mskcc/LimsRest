@@ -1,6 +1,6 @@
-lims.host=
+lims.host=<TARGET_HOST>
 lims.port=
-lims.guid=fe74d8e1-c94b-4002-a04c-eb5c492704ba
+lims.guid=
 
 lims.user1=
 lims.pword1=
