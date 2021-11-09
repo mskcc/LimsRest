@@ -303,13 +303,7 @@ public class GetSampleManifestTask {
 
             runJax0004IsMissingFlowcellInfoInLIMS(origSampleName, sampleManifest, runPassedQC, library);
 
-            // only report this library if it made it to a sequencer/run and has passed fastqs
-            // for example 05257_BS_20 has a library which was sequenced then failed so skip
-            if (library.hasFastqs()) {
-                List<SampleManifest.Library> libraries = sampleManifest.getLibraries();
-                libraries.add(library);
-                sampleManifest.setLibraries(libraries);
-            }
+            // libraries that have no fastqs will be reported such as 05257_BS_20 but that is okay
         }
         return sampleManifest;
     }
