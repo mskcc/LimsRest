@@ -1,16 +1,11 @@
 package org.mskcc.limsrest.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 import org.mskcc.limsrest.service.CMOSampleIdFields;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Sample Level information which describe metadata and wetlab information reported to pipelines.
@@ -42,7 +37,7 @@ public class SampleManifest implements Serializable {
     private String baitSet;
 
     protected List<QcReport> qcReports = new ArrayList<>();
-    protected List<Library> libraries = new ArrayList<>();
+    protected Set<Library> libraries = new HashSet<>();
 
     public enum QcReportType {
         DNA, RNA, LIBRARY;
@@ -122,6 +117,27 @@ public class SampleManifest implements Serializable {
 
         public void addRun(Run r) {
             runs.add(r);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Library library = (Library) o;
+
+            if (barcodeId != null ? !barcodeId.equals(library.barcodeId) : library.barcodeId != null) return false;
+            if (barcodeIndex != null ? !barcodeIndex.equals(library.barcodeIndex) : library.barcodeIndex != null)
+                return false;
+            return libraryIgoId != null ? libraryIgoId.equals(library.libraryIgoId) : library.libraryIgoId == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = barcodeId != null ? barcodeId.hashCode() : 0;
+            result = 31 * result + (barcodeIndex != null ? barcodeIndex.hashCode() : 0);
+            result = 31 * result + (libraryIgoId != null ? libraryIgoId.hashCode() : 0);
+            return result;
         }
     }
 
