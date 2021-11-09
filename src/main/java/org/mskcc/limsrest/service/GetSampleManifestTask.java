@@ -115,13 +115,14 @@ public class GetSampleManifestTask {
                 sampleManifest.setSpecimenType("cfDNA");
                 SampleManifest result = fastqsOnlyManifest(sampleManifest, new HashSet<>());
                 SampleSheet sampleSheet = map06302_AO.get(igoId);
-                result.getLibraries().get(0).barcodeId = sampleSheet.barcodeId;
-                result.getLibraries().get(0).barcodeIndex = sampleSheet.barcodeIndex1+"-"+sampleSheet.barcodeIndex2;
-                result.getLibraries().get(0).captureName = "Pool-06302_AO-A8_1";
-                result.getLibraries().get(0).runs.get(0).setReadLength("101/8/8/101");
-                result.getLibraries().get(0).runs.get(0).setRunMode("NovaSeq S4");
+                SampleManifest.Library l = result.getLibraries().toArray(new SampleManifest.Library[1])[0];
+                l.barcodeId = sampleSheet.barcodeId;
+                l.barcodeIndex = sampleSheet.barcodeIndex1+"-"+sampleSheet.barcodeIndex2;
+                l.captureName = "Pool-06302_AO-A8_1";
+                l.runs.get(0).setReadLength("101/8/8/101");
+                l.runs.get(0).setRunMode("NovaSeq S4");
                 Integer array[] = {1, 2, 3, 4};
-                result.getLibraries().get(0).runs.get(0).setFlowCellLanes(Arrays.asList(array));
+                l.runs.get(0).setFlowCellLanes(Arrays.asList(array));
                 setACCESS2dBarcode(user, dataRecordManager, sampleX, sampleManifest);
                 sampleManifest.setTubeId(getTubeId(sampleX, user));
 
@@ -303,12 +304,9 @@ public class GetSampleManifestTask {
 
             runJax0004IsMissingFlowcellInfoInLIMS(origSampleName, sampleManifest, runPassedQC, library);
 
-            // only report this library if it made it to a sequencer/run and has passed fastqs
-            // for example 05257_BS_20 has a library which was sequenced then failed so skip
+            // libraries that have no fastqs will not be reported such as 05257_BS_20
             if (library.hasFastqs()) {
-                List<SampleManifest.Library> libraries = sampleManifest.getLibraries();
-                libraries.add(library);
-                sampleManifest.setLibraries(libraries);
+                sampleManifest.getLibraries().add(library);
             }
         }
         return sampleManifest;
@@ -453,7 +451,7 @@ public class GetSampleManifestTask {
 
         SampleManifest.Library library = new SampleManifest.Library();
         library.setRuns(runs);
-        List<SampleManifest.Library> libraries = new ArrayList<>();
+        Set<SampleManifest.Library> libraries = new HashSet<>();
         libraries.add(library);
         sampleManifest.setLibraries(libraries);
 
