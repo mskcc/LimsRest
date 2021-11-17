@@ -349,7 +349,7 @@ public class PromoteBanked extends LimsTask {
         String rowIndex = String.valueOf(bankedSampleRecord.getDataField("RowIndex", user));
         int lastIndx = maxExistentId + offset;
         String newIgoId = requestId + "_" + lastIndx;
-        if(!rowIndex.equals((String) newIgoId.split("_")[1])) {
+        if(Integer.parseInt(rowIndex) != lastIndx) {
             //Adding sample name to the list
             samplesWithDifferentNewIgoIdAndRowIndex.add(bankedSampleRecord.getDataField("OtherSampleId", user));
         }
