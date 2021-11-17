@@ -282,7 +282,7 @@ public class PromoteBanked extends LimsTask {
             return new ResponseEntity<>(warningMessage, headers, HttpStatus.OK );
         }
 
-        return new ResponseEntity<>("Successfully promoted sample(s) into ", headers, HttpStatus.OK );
+        return new ResponseEntity<>("Successfully promoted sample(s) into " + requestId, headers, HttpStatus.OK );
     }
 
     private String getErrors() {
