@@ -246,7 +246,7 @@ public class PromoteBanked extends LimsTask {
                     bankedSample.setDataField("RequestId", requestId, user);
                 }
                 log.info(igoUser + "  promoted the banked samples " + sb.toString());
-                dataRecordManager.storeAndCommit(igoUser + "  promoted the banked samples " + sb.toString() + "into " + requestId, user);
+                dataRecordManager.storeAndCommit(igoUser + "  promoted the banked samples " + sb.toString() + "into " + requestId, null, user);
             } catch (Exception e) {
                 log.error(e);
 
@@ -279,7 +279,7 @@ public class PromoteBanked extends LimsTask {
             warningMessage += samplesWithDifferentNewIgoIdAndRowIndex.get(samplesWithDifferentNewIgoIdAndRowIndex.size() - 1).toString();
             warningMessage += "\n Successfully promoted sample(s) into " + requestId;
 
-            return new ResponseEntity<>(warningMessage + requestId, headers, HttpStatus.OK );
+            return new ResponseEntity<>(warningMessage, headers, HttpStatus.OK );
         }
 
         return new ResponseEntity<>("Successfully promoted sample(s) into " + requestId, headers, HttpStatus.OK );
@@ -346,7 +346,7 @@ public class PromoteBanked extends LimsTask {
         }
         //add a sample to requestList.get(0) with a new sample
         //copy fields
-        String rowIndex = (String) bankedSampleRecord.getDataField("RowIndex", user);
+        String rowIndex = String.valueOf(bankedSampleRecord.getDataField("RowIndex", user));
         int lastIndx = maxExistentId + offset;
         String newIgoId = requestId + "_" + lastIndx;
         if(!rowIndex.equals((String) newIgoId.split("_")[1])) {
