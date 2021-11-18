@@ -39,4 +39,9 @@ public class UtilsTest {
         assertEquals(40.0, result, 0.001);
     }
 
+    @Test
+    public void testGetBaseSampleId() {
+        assertEquals("012345_B", Utils.getBaseSampleId("012345_B"));
+        assertEquals("012345_B_1", Utils.getBaseSampleId("012345_B_1_1_2"));
+    }
 }
