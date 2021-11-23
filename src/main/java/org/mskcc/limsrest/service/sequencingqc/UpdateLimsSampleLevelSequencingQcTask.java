@@ -1,16 +1,10 @@
 package org.mskcc.limsrest.service.sequencingqc;
 
-import com.velox.api.datarecord.DataRecord;
-import com.velox.api.datarecord.DataRecordManager;
-import com.velox.api.datarecord.IoError;
-import com.velox.api.datarecord.NotFound;
+import com.velox.api.datarecord.*;
 import com.velox.api.user.User;
 import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
-import com.velox.sloan.cmo.recmodels.IlluminaSeqExperimentModel;
-import com.velox.sloan.cmo.recmodels.IndexBarcodeModel;
-import com.velox.sloan.cmo.recmodels.SampleModel;
-import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
+import com.velox.sloan.cmo.recmodels.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
@@ -42,6 +36,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
     private final static List<String> POOLED_SAMPLE_TYPES = Collections.singletonList("pooled library");
     private final String POOLEDNORMAL_IDENTIFIER = "POOLEDNORMAL";
     private final String CONTROL_IDENTIFIER = "CTRL";
+    private final String FAILED = "Failed";
 
     DataRecordManager dataRecordManager;
     String appPropertyFile = "/app.properties";
@@ -531,5 +526,147 @@ public class UpdateLimsSampleLevelSequencingQcTask {
      */
     private String getVersionLessRunId(String runName) {
         return runName.replaceFirst("_[A-Z][0-9]+$", "");
+    }
+
+    /**
+     * Method to update remaining reads on SeqRequirements record.
+     * @param sampleLevelSequencingQc
+     */
+    private void updateRemainingReadsToSequence(DataRecord sampleLevelSequencingQc){
+        List<DataRecord> seqQcRecords;
+        Object runName;
+
+        try{
+            List<DataRecord> parentSample = sampleLevelSequencingQc.getParentsOfType(SampleModel.DATA_TYPE_NAME, user);
+            runName = sampleLevelSequencingQc.getValue(SeqAnalysisSampleQCModel.SEQUENCER_RUN_FOLDER, user);
+            if (parentSample.size() == 1){
+                seqQcRecords = utils.getSequencingQcRecords(parentSample.get(0), pluginLogger, user, clientCallback);
+                List<DataRecord> seqRequirements = utils.getRecordsOfTypeFromParents(seqQcRecords.get(0),
+                        SampleModel.DATA_TYPE_NAME, SeqRequirementModel.DATA_TYPE_NAME, user, pluginLogger);
+                if (seqRequirements.size()==0){
+                    throw new NotFound(String.format("Cannot find %s DataRecord for Sample with Record Id %d", SeqRequirementModel.DATA_TYPE_NAME, parentSample.get(0).getRecordId()));
+                }
+                DataRecord seqRequirementRecord = seqRequirements.get(0);
+                //logInfo("Sequencing requirement record id: " + seqRequirementRecord.getRecordId());
+                Object readsRequested = seqRequirementRecord.getValue(SeqRequirementModel.REQUESTED_READS, user);
+                if (readsRequested == null) {
+                    log.info("Cannot update remaining reads since reads requested is null.");
+                    return;
+                }
+                //logInfo("Requested Reads : " + readsRequested);
+                long totalReadsExamined = getSumSequencingReadsExamined(seqQcRecords, sampleLevelSequencingQc, runName);
+                //logInfo("Total reads examined : " + totalReadsExamined);
+                assert readsRequested != null;
+                Long remainingReads = 0L;
+                if((Math.floor((double)readsRequested) * 1000000L) > totalReadsExamined){
+                    remainingReads = ((long)Math.floor((double)readsRequested) * 1000000L) - totalReadsExamined;
+                }
+                seqRequirementRecord.setDataField("RemainingReads", remainingReads, user);
+                seqRequirementRecord.setDataField(SeqRequirementModel.READ_TOTAL, totalReadsExamined, user);
+                String msg = String.format("Updated 'RemainingReads' and 'ReadTotal'on %s related to %s record with Record Id: %d",
+                        SeqRequirementModel.DATA_TYPE_NAME, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, sampleLevelSequencingQc.getRecordId());
+                //logInfo(msg);
+            }
+        } catch (IoError | RemoteException | NotFound | InvalidValue e) {
+            log.error(String.format("%s => Error while updating Remaining Reads to Sequence on %s related to %s " +
+                            "Record with Record Id: %d\n%s", ExceptionUtils.getRootCauseMessage(e), SeqRequirementModel.DATA_TYPE_NAME, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, sampleLevelSequencingQc.getRecordId(),
+                    ExceptionUtils.getStackTrace(e)));
+        }
+    }
+
+    /**
+     * Method to get Sum of Sequencing ReadsExamined/Sequenced from SeqAnalysisSampleQcRecords for a sample.
+     * @param seqAnalysisSampleQcRecords
+     * @return
+     */
+    private long getSumSequencingReadsExamined(List<DataRecord>seqAnalysisSampleQcRecords, DataRecord savedSequencingQcRecord, Object runName){
+        //logInfo("Total SeqAnalysis records: " + seqAnalysisSampleQcRecords.size());
+        long sumReadsExamined = 0;
+        boolean isPairedEnd = isPairedEndRun(runName);
+        //logInfo("Is Paired End Run: " + isPairedEnd);
+        try{
+            // this plugin is run before changes are committed changes to db. If the record being saved is new record,
+            // it might not be in the db and therefore not part of SeqAnalysisSampleQcRecords returned by LIMS. Check
+            // and add it's reads towards the sum of reads calculated in this method
+            if (!utils.isIncludedInRecords(seqAnalysisSampleQcRecords, savedSequencingQcRecord, pluginLogger)){
+                //logInfo("Seq Qc Record Id: " + savedSequencingQcRecord.getRecordId());
+                Object readsExamined = getReadsExamined(savedSequencingQcRecord, isPairedEnd);
+                Object seqQcStatus = savedSequencingQcRecord.getValue(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
+                if (readsExamined != null && !seqQcStatus.toString().equalsIgnoreCase(FAILED)){
+                    sumReadsExamined += (long)readsExamined;
+                }
+            }
+            for (DataRecord rec : seqAnalysisSampleQcRecords){
+                //logInfo("Seq Qc Record Id: " + rec.getRecordId());
+                Object readsExamined = getReadsExamined(rec, isPairedEnd);
+                //logInfo("Reads examined: " + readsExamined);
+                Object seqQcStatus = rec.getValue(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
+                if (readsExamined != null && !seqQcStatus.toString().equalsIgnoreCase(FAILED)){
+                    sumReadsExamined += (long)readsExamined;
+                }
+            }
+        } catch (RemoteException | NotFound e) {
+            log.error(String.format("%s => Error while calculating sum of Reads Examined:\n%s", ExceptionUtils.getRootCause(e), ExceptionUtils.getStackTrace(e)));
+        }
+        return sumReadsExamined;
+    }
+
+    /**
+     * Method to get Total Reads from the SeqAnalysisSampleQC record based on Run ReadLength.
+     * @param savedSequencingQcRecord
+     * @param isPairedEnd
+     * @return
+     */
+    private Object getReadsExamined(DataRecord savedSequencingQcRecord, boolean isPairedEnd) {
+        try{
+            if (isPairedEnd){
+                return savedSequencingQcRecord.getValue(SeqAnalysisSampleQCModel.READS_EXAMINED, user);
+            }
+            else{
+                return savedSequencingQcRecord.getValue(SeqAnalysisSampleQCModel.UNPAIRED_READS, user);
+            }
+        } catch (RemoteException | NotFound e) {
+            log.error(String.format("%s => Error while getting Reads Examined from %s record with ID:%d\n%s",
+                    ExceptionUtils.getRootCause(e), SeqAnalysisSampleQCModel.DATA_TYPE_NAME, savedSequencingQcRecord.getRecordId(), ExceptionUtils.getStackTrace(e)));
+        }
+        return 0;
+    }
+
+    /**
+     * Method to get Run ReadLength
+     * @param runName
+     * @return
+     */
+    private String getReadLength(Object runName){
+        try{
+            List<DataRecord> seqRun = dataRecordManager.queryDataRecords(IlluminaSeqExperimentModel.DATA_TYPE_NAME, IlluminaSeqExperimentModel.SEQUENCER_RUN_FOLDER + " LIKE '%" + runName + "%'", user);
+            if (seqRun.size() > 0){
+                //logInfo("Sequender Run Folder: " + seqRun.get(0).getValue(IlluminaSeqExperimentModel.SEQUENCER_RUN_FOLDER, user));
+                Object readLength = seqRun.get(0).getValue("ReadLength", user);
+                if(readLength != null){
+                    return readLength.toString();
+                }
+            }
+        } catch (RemoteException | IoError | NotFound e) {
+            log.error(String.format("%s => Error while getting RunType for run: %s\n%s", ExceptionUtils.getRootCauseMessage(e),
+                    runName, ExceptionUtils.getStackTrace(e)));
+        }
+        return "";
+    }
+
+    /**
+     * Method to check if a run is Single Read or Paired End.
+     * @param runName
+     * @return
+     */
+    private boolean isPairedEndRun(Object runName){
+        //logInfo(String.format("Run name: %s", runName));
+        String readLength = getReadLength(runName);
+        //logInfo("Read Length: " + readLength);
+        if (!StringUtils.isEmpty(readLength)){
+            String [] readLengthVals = readLength.split("/");
+            return readLengthVals.length > 2;
+        }
+        return false;
     }
 }
