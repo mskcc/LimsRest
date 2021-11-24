@@ -531,6 +531,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
 
     /**
      * Method to update remaining reads on SeqRequirements record.
+     * Method to update remaining reads on SeqRequirements record.
      * @param sampleLevelSequencingQc
      */
     private void updateRemainingReadsToSequence(DataRecord sampleLevelSequencingQc){
