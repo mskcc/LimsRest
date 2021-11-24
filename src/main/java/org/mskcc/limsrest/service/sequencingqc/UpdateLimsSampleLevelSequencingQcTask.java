@@ -26,6 +26,7 @@ import java.rmi.RemoteException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.mskcc.limsrest.util.Utils.getBaseSampleId;
 import static org.mskcc.limsrest.util.Utils.getRecordsOfTypeFromParents;
@@ -540,9 +541,9 @@ public class UpdateLimsSampleLevelSequencingQcTask {
             List<DataRecord> parentSample = sampleLevelSequencingQc.getParentsOfType(SampleModel.DATA_TYPE_NAME, user);
             runName = sampleLevelSequencingQc.getValue(SeqAnalysisSampleQCModel.SEQUENCER_RUN_FOLDER, user);
             if (parentSample.size() == 1){
-                seqQcRecords = utils.getSequencingQcRecords(parentSample.get(0), pluginLogger, user, clientCallback);
-                List<DataRecord> seqRequirements = utils.getRecordsOfTypeFromParents(seqQcRecords.get(0),
-                        SampleModel.DATA_TYPE_NAME, SeqRequirementModel.DATA_TYPE_NAME, user, pluginLogger);
+                seqQcRecords = getSequencingQcRecords(parentSample.get(0), user);
+                List<DataRecord> seqRequirements = getRecordsOfTypeFromParents(seqQcRecords.get(0),
+                        SampleModel.DATA_TYPE_NAME, SeqRequirementModel.DATA_TYPE_NAME, user);
                 if (seqRequirements.size()==0){
                     throw new NotFound(String.format("Cannot find %s DataRecord for Sample with Record Id %d", SeqRequirementModel.DATA_TYPE_NAME, parentSample.get(0).getRecordId()));
                 }
@@ -575,6 +576,72 @@ public class UpdateLimsSampleLevelSequencingQcTask {
     }
 
     /**
+     * Method to get all SeqAnalysisSampleQC records for a sample
+     * @param sample
+     * @param user
+     * @return
+     */
+    public List<DataRecord> getSequencingQcRecords(DataRecord sample, User user){
+        List<DataRecord> sequencingQcRecords = new ArrayList<>();
+        try{
+            DataRecord sampleUnderRequest = getParentSampleUnderRequest(sample, user);
+            Object requestId = sample.getValue(SampleModel.REQUEST_ID, user);
+            Stack<DataRecord> sampleStack = new Stack<>();
+            sampleStack.add(sampleUnderRequest);
+            do {
+                DataRecord stackSample = sampleStack.pop();
+                DataRecord [] childSeqQc = stackSample.getChildrenOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
+                if(childSeqQc.length > 0){
+                    Collections.addAll(sequencingQcRecords, childSeqQc);
+                }
+                DataRecord[] stackSampleChildSamples = stackSample.getChildrenOfType(SampleModel.DATA_TYPE_NAME, user);
+                for (DataRecord sa : stackSampleChildSamples) {
+                    Object saReqId = sa.getValue(SampleModel.REQUEST_ID, user);
+                    if (requestId!= null && saReqId != null && requestId.toString().equalsIgnoreCase(saReqId.toString())){
+                        sampleStack.push(sa);
+                    }
+                }
+            }while (!sampleStack.isEmpty());
+        } catch (ServerException | RemoteException | NotFound | IoError e) {
+            log.error(String.format("%s -> Error while getting %s records for Sample with Record Id %d,\n%s",
+                    ExceptionUtils.getRootCause(e), SeqAnalysisSampleQCModel.DATA_TYPE_NAME, sample.getRecordId(), ExceptionUtils.getStackTrace(e)));
+        }
+        return sequencingQcRecords;
+    }
+
+
+    /**
+     * Method to get first parent Sample directly under the same Request in hierarchy.
+     * @param sample
+     * @return
+     * @throws ServerException
+     */
+    public DataRecord getParentSampleUnderRequest(DataRecord sample, User user) throws ServerException {
+        try{
+            Object requestId = sample.getValue(SampleModel.REQUEST_ID, user);
+            Stack<DataRecord> sampleStack = new Stack<>();
+            sampleStack.add(sample);
+            do {
+                DataRecord stackSample = sampleStack.pop();
+                if(stackSample.getParentsOfType(RequestModel.DATA_TYPE_NAME, user).size()>0){
+                    return stackSample;
+                }
+                List<DataRecord> stackSampleParentSamples = stackSample.getParentsOfType(SampleModel.DATA_TYPE_NAME, user);
+                for (DataRecord sa : stackSampleParentSamples) {
+                    Object saReqId = sa.getValue(SampleModel.REQUEST_ID, user);
+                    if (requestId!= null && saReqId != null && requestId.toString().equalsIgnoreCase(saReqId.toString())){
+                        sampleStack.push(sa);
+                    }
+                }
+            }while (!sampleStack.isEmpty());
+        }catch (Exception e){
+            String errMsg = String.format("Error while getting first parent under request for Sample with record ID %d.\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(e));
+            log.error(errMsg);
+        }
+        return null;
+    }
+
+    /**
      * Method to get Sum of Sequencing ReadsExamined/Sequenced from SeqAnalysisSampleQcRecords for a sample.
      * @param seqAnalysisSampleQcRecords
      * @return
@@ -588,7 +655,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
             // this plugin is run before changes are committed changes to db. If the record being saved is new record,
             // it might not be in the db and therefore not part of SeqAnalysisSampleQcRecords returned by LIMS. Check
             // and add it's reads towards the sum of reads calculated in this method
-            if (!utils.isIncludedInRecords(seqAnalysisSampleQcRecords, savedSequencingQcRecord, pluginLogger)){
+            if (!isIncludedInRecords(seqAnalysisSampleQcRecords, savedSequencingQcRecord)){
                 //logInfo("Seq Qc Record Id: " + savedSequencingQcRecord.getRecordId());
                 Object readsExamined = getReadsExamined(savedSequencingQcRecord, isPairedEnd);
                 Object seqQcStatus = savedSequencingQcRecord.getValue(SeqAnalysisSampleQCModel.SEQ_QCSTATUS, user);
@@ -609,6 +676,21 @@ public class UpdateLimsSampleLevelSequencingQcTask {
             log.error(String.format("%s => Error while calculating sum of Reads Examined:\n%s", ExceptionUtils.getRootCause(e), ExceptionUtils.getStackTrace(e)));
         }
         return sumReadsExamined;
+    }
+
+    /**
+     * Check if data record is part of records in List.
+     * @param dataRecords
+     * @param record
+     * @return
+     */
+    public boolean isIncludedInRecords(List<DataRecord> dataRecords, DataRecord record){
+        try{
+            return dataRecords.stream().map(DataRecord::getRecordId).collect(Collectors.toList()).contains(record.getRecordId());
+        }catch (Exception e){
+            log.error(String.format("%s -> Error while checking if data record is included in a collection of records %s", ExceptionUtils.getRootCause(e), ExceptionUtils.getStackTrace(e)));
+        }
+        return false;
     }
 
     /**
