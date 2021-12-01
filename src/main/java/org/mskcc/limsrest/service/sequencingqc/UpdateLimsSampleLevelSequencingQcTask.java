@@ -109,6 +109,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 //check if there is an existing SeqAnalysisSampleQc record. If present update it.
                 String versionLessRunId = getVersionLessRunId(runId);
                 DataRecord existingQc = getExistingSequencingQcRecord(relatedLibrarySamples, sampleName, igoId, versionLessRunId);
+                updateRemainingReadsToSequence(existingQc);
                 if (existingQc == null) {
                     log.info(String.format("Existing %s record not found for Sample with Id %s", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, igoId));
                 }
@@ -138,7 +139,8 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                             getRecordStringValue(librarySample, SampleModel.SAMPLE_ID, user),
                             qcDataVals.toString()));
                     try {
-                        librarySample.addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcDataVals, user);
+                        DataRecord newSeqAnalysisDataRec = librarySample.addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcDataVals, user);
+                        updateRemainingReadsToSequence(newSeqAnalysisDataRec);
                         stats.putIfAbsent(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), "");
                         stats.put(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), qcDataVals.toString());
                     } catch (ServerException | RemoteException e) {
