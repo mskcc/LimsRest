@@ -109,11 +109,11 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 //check if there is an existing SeqAnalysisSampleQc record. If present update it.
                 String versionLessRunId = getVersionLessRunId(runId);
                 DataRecord existingQc = getExistingSequencingQcRecord(relatedLibrarySamples, sampleName, igoId, versionLessRunId);
-                updateRemainingReadsToSequence(existingQc);
                 if (existingQc == null) {
                     log.info(String.format("Existing %s record not found for Sample with Id %s", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, igoId));
                 }
                 if (existingQc != null) {
+                    updateRemainingReadsToSequence(existingQc);
                     log.info(String.format("Updating values on existing %s record with OtherSampleId %s, and Record Id %d, values are : %s",
                             SeqAnalysisSampleQCModel.DATA_TYPE_NAME, getRecordStringValue(existingQc, SampleModel.OTHER_SAMPLE_ID, user),
                             existingQc.getRecordId(), qcDataVals.toString()));
@@ -551,15 +551,15 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                     throw new NotFound(String.format("Cannot find %s DataRecord for Sample with Record Id %d", SeqRequirementModel.DATA_TYPE_NAME, parentSample.get(0).getRecordId()));
                 }
                 DataRecord seqRequirementRecord = seqRequirements.get(0);
-                //logInfo("Sequencing requirement record id: " + seqRequirementRecord.getRecordId());
+                log.info("Sequencing requirement record id: " + seqRequirementRecord.getRecordId());
                 Object readsRequested = seqRequirementRecord.getValue(SeqRequirementModel.REQUESTED_READS, user);
                 if (readsRequested == null) {
                     log.info("Cannot update remaining reads since reads requested is null.");
                     return;
                 }
-                //logInfo("Requested Reads : " + readsRequested);
+                log.info("Requested Reads : " + readsRequested);
                 long totalReadsExamined = getSumSequencingReadsExamined(seqQcRecords, sampleLevelSequencingQc, runName);
-                //logInfo("Total reads examined : " + totalReadsExamined);
+                log.info("Total reads examined : " + totalReadsExamined);
                 assert readsRequested != null;
                 Long remainingReads = 0L;
                 if((Math.floor((double)readsRequested) * 1000000L) > totalReadsExamined){
@@ -569,7 +569,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 seqRequirementRecord.setDataField(SeqRequirementModel.READ_TOTAL, totalReadsExamined, user);
                 String msg = String.format("Updated 'RemainingReads' and 'ReadTotal'on %s related to %s record with Record Id: %d",
                         SeqRequirementModel.DATA_TYPE_NAME, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, sampleLevelSequencingQc.getRecordId());
-                //logInfo(msg);
+                log.info(msg);
             }
         } catch (IoError | RemoteException | NotFound | InvalidValue e) {
             log.error(String.format("%s => Error while updating Remaining Reads to Sequence on %s related to %s " +
