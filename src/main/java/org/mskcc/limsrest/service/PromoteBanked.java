@@ -41,7 +41,7 @@ public class PromoteBanked extends LimsTask {
     private static final Log log = LogFactory.getLog(PromoteBanked.class);
 
     private static final List<String> HUMAN_RECIPES =
-            Arrays.asList("IMPACT341", "IMPACT410", "IMPACT410+", "IMPACT468", "HemePACT_v3", "HemePACT_v4", "MSK-ACCESS_v1");
+            Arrays.asList("IMPACT341", "IMPACT410", "IMPACT410+", "IMPACT468","IMPACT505", "HemePACT_v3", "HemePACT_v4", "MSK-ACCESS_v1");
 
     private static final List<String> INDEX_MATERIALS =
             Arrays.asList("DNA Library", "Pooled Library", "cDNA Library");

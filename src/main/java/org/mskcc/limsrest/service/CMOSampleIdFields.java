@@ -11,4 +11,5 @@ import lombok.*;
 public class CMOSampleIdFields {
     private String naToExtract = "";
     private String normalizedPatientId = "";
+    private String sampleType = "";
 }

@@ -134,7 +134,6 @@ public class GetSampleManifestTask {
         // fastq is named by sample level field not cmo record in case of a sample swap such as 07951_I_12
         String origSampleName = sample.getStringVal("OtherSampleId", user);
 
-
         String recipe = sample.getStringVal(SampleModel.RECIPE, user);
         // for example 07951_S_50_1 is Fingerprinting sample, skip for pipelines for now
         if ("Fingerprinting".equals(recipe))
@@ -143,6 +142,8 @@ public class GetSampleManifestTask {
         SampleManifest sampleManifest = setSampleCMOLevelFields(igoId, sample, samples, dataRecordManager, user);
         String naToExtract = sample.getStringVal("NAtoExtract", user);
         sampleManifest.getCmoSampleIdFields().setNaToExtract(naToExtract);
+        String sampleType = sample.getStringVal("ExemplarSampleType", user);
+        sampleManifest.getCmoSampleIdFields().setSampleType(sampleType);
         sampleManifest.setTubeId(getTubeId(sample, user));
 
         if (!isPipelineRecipe(recipe)) {
