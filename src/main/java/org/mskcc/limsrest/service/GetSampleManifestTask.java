@@ -140,6 +140,8 @@ public class GetSampleManifestTask {
             return new SampleManifest();
 
         SampleManifest sampleManifest = setSampleCMOLevelFields(igoId, sample, samples, dataRecordManager, user);
+        // set fields specifically required for generating CMO style sample names they use to run pipelines
+        sampleManifest.getCmoSampleIdFields().setRecipe(recipe);
         String naToExtract = sample.getStringVal("NAtoExtract", user);
         sampleManifest.getCmoSampleIdFields().setNaToExtract(naToExtract);
         String sampleType = sample.getStringVal("ExemplarSampleType", user);

@@ -12,4 +12,5 @@ public class CMOSampleIdFields {
     private String naToExtract = "";
     private String normalizedPatientId = "";
     private String sampleType = "";
+    private String recipe = "";
 }
