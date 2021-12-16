@@ -58,6 +58,7 @@ public class SampleSummary {
     private double yield;  // missing
     private Integer rowIndex;
     private Long transactionId;
+    private String capturePanel;
 
 
     private SampleQcSummary qc;
@@ -390,5 +391,10 @@ public class SampleSummary {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public Long getTransactionId() {
         return transactionId;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getCapturePanel() {
+        return capturePanel;
     }
 }

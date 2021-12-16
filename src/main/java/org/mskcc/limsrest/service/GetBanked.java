@@ -176,6 +176,7 @@ public class GetBanked extends LimsTask {
                 }
                 ss.setRowIndex((Integer) sampleFields.get("RowIndex"));
                 ss.setTransactionId((Long) sampleFields.get("TransactionId"));
+                ss.setCapturePanel((String) sampleFields.get("CapturePanel"));
 
                 if ("ERROR".equals(ss.getBaseId())) {
                     ss.addBaseId("");
