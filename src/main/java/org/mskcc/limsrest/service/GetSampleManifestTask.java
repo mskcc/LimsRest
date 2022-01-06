@@ -406,6 +406,10 @@ public class GetSampleManifestTask {
             List<DataRecord> qcRecordsLib = sample.getDescendantsOfType("QcReportLibrary", user);
             if (qcRecordsLib.size() > 0) {
                 DataRecord qcRecord = qcRecordsLib.get(0);
+                int i=1;  // if the record has Hide=True look for the correct one
+                while (qcRecord.getBooleanVal("HideFromSampleQC", user)) {
+                    qcRecord = qcRecordsLib.get(i++);
+                }
                 String igoQcRecommendation = qcRecord.getStringVal("IgoQcRecommendation", user);
                 String comments = qcRecord.getStringVal("Comments", user);
                 String id = qcRecord.getStringVal("InvestigatorDecision", user);
