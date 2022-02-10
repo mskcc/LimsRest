@@ -38,15 +38,15 @@ public class App extends SpringBootServletInitializer {
     private String oncotreeRestUrl;
 
     @Value("#{'${human.recipes}'.split(',')}")
-    private List<String> humanRecipes;
+    List<String> humanRecipes;
     
-    //@Autowired
+    @Autowired
     private Gateway messagingGateway;
 
     @Value("${nats.url}")
     private String natsUrl;
 
-    //@Bean
+    @Bean
     public Gateway messagingGateway() throws Exception {
         messagingGateway.connect(natsUrl);
         log.info("Attempting to connecto to CMO MetaDB NATS server...");

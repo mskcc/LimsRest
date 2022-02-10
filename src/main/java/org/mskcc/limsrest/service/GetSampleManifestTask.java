@@ -407,7 +407,7 @@ public class GetSampleManifestTask {
             if (qcRecordsLib.size() > 0) {
                 DataRecord qcRecord = qcRecordsLib.get(0);
                 int i=1;  // if the record has Hide=True look for the correct one
-                while (qcRecord.getBooleanVal("HideFromSampleQC", user)) {
+                while (qcRecord.getBooleanVal("HideFromSampleQC", user) && i < qcRecordsLib.size()) {
                     qcRecord = qcRecordsLib.get(i++);
                 }
                 String igoQcRecommendation = qcRecord.getStringVal("IgoQcRecommendation", user);
