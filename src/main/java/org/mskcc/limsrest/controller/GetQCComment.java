@@ -15,6 +15,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Endpoint triggered when adding comments for a project on QC webapp.
+ *
+* @author Fahimeh Mirhaj
+* */
+
 @RestController
 @RequestMapping("/")
 public class GetQCComment {

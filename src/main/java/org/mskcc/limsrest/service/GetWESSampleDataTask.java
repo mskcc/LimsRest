@@ -367,7 +367,7 @@ public class GetWESSampleDataTask {
                 }
             }
         } catch (Exception e) {
-            log.error(String.format("Error occured while validating Recipe for Sample %s\n%s", sampleId, Arrays.toString(e.getStackTrace())));
+            log.error(String.format("Error occurred while validating Recipe for Sample %s\n%s", sampleId, Arrays.toString(e.getStackTrace())));
         }
         return false;
     }
@@ -392,9 +392,9 @@ public class GetWESSampleDataTask {
             }
         }
         catch (RemoteException e) {
-            log.error(String.format("Error occured while validating Request Type for request with Record ID %d\n%s", request.getRecordId(), Arrays.toString(e.getStackTrace())));
+            log.error(String.format("Error occurred while validating Request Type for request with Record ID %d\n%s", request.getRecordId(), Arrays.toString(e.getStackTrace())));
         } catch (NotFound notFound) {
-            log.error(String.format("Error occured while validating Request Type for request with Record ID %d\n%s", request.getRecordId(), Arrays.toString(notFound.getStackTrace())));
+            log.error(String.format("Error occurred while validating Request Type for request with Record ID %d\n%s", request.getRecordId(), Arrays.toString(notFound.getStackTrace())));
         }
         return false;
     }
@@ -448,7 +448,7 @@ public class GetWESSampleDataTask {
             in.close();
             cvrResponseData = new JSONObject(response.toString());
         } catch (Exception e) {
-            log.error(String.format("Error occured while querying CVR end point for DMP Sample ID %s\n%s", dmpSampleId, Arrays.toString(e.getStackTrace())));
+            log.error(String.format("Error occurred while querying CVR end point for DMP Sample ID %s\n%s", dmpSampleId, Arrays.toString(e.getStackTrace())));
         }
         return cvrResponseData;
     }
@@ -547,7 +547,7 @@ public class GetWESSampleDataTask {
             con.disconnect();
             cvrResponseData = new JSONObject(response.toString());
         } catch (Exception e) {
-            log.error(String.format("Error occured while querying consent '%s' end point.\n", consentType));
+            log.error(String.format("Error occurred while querying consent '%s' end point.\n", consentType));
         }
         return cvrResponseData.getJSONObject("cases");
     }
