@@ -210,15 +210,20 @@ public class GetSampleManifestTask {
             log.info("Processing DNA library: " + libraryIgoId);
             SampleManifest.Library library = getLibraryFields(user, libraryIgoId, aliquot, dnaInputNg);
 
-            List<DataRecord> indexBarcodes = aliquot.getDescendantsOfType("IndexBarcode", user);
-            if (aliquotParent != null) { // TODO get barcodes for WES samples
-                // parent DNA library may have the barcode records
-                indexBarcodes = aliquotParent.getDescendantsOfType("IndexBarcode", user);
-            }
-            if (indexBarcodes != null && indexBarcodes.size() > 0) {
-                DataRecord bc = indexBarcodes.get(0);
-                library.setBarcodeId(bc.getStringVal("IndexId", user));
-                library.setBarcodeIndex(bc.getStringVal("IndexTag", user));
+            if (recipe.contains("ACCESS") ) {
+                List<DataRecord> indexBarcodes = aliquot.getDescendantsOfType("IndexBarcode", user);
+                if (indexBarcodes == null || indexBarcodes.size() == 0) {
+                    List<DataRecord> parentList = aliquot.getParentsOfType("Sample", user);
+                    indexBarcodes = parentList.get(parentList.size() - 1).getDescendantsOfType("IndexBarcode", user);
+                    log.info("indexBarcodes == null");
+                }
+                if (indexBarcodes != null && indexBarcodes.size() > 0) {
+                    DataRecord bc = indexBarcodes.get(0);
+                    library.setBarcodeId(bc.getStringVal("IndexId", user));
+                    library.setBarcodeIndex(bc.getStringVal("IndexTag", user));
+                    log.info("indexBarcodes != null");
+                }
+
             }
 
             // recipe, capture input, capture name
