@@ -48,10 +48,8 @@ public class AddOrCreateQCComment {
         dataRecordManager = vConn.getDataRecordManager();
         user = conn.getConnection().getUser();
 
-        JSONObject projectComments = getCommentsFromDb();
-        for (String key : projectComments.keySet()) {
-            commentToProjectIdDateMap = getQcComments(projectComments.getJSONObject(key));
-        }
+        JSONObject projectComments = getCommentsFromDb(dataRecordManager);
+
 
         String projectId = ""; // parsed projectId from JSON object
         //ProjectCommentsModel.
@@ -59,13 +57,6 @@ public class AddOrCreateQCComment {
 
         }
         return commentToProjectIdDateMap;
-    }
-
-    public Map<String, Pair<String, Date>> getQcComments(JSONObject projectCommentsAndDate) {
-        String projectId = String.valueOf(projectCommentsAndDate.get("projectId"));
-        String comment = String.valueOf(projectCommentsAndDate.get("comment"));
-        Date commentDate = (Date) projectCommentsAndDate.get("commentDate");
-
     }
 
     /**
@@ -85,26 +76,17 @@ public class AddOrCreateQCComment {
     /**
      * Gets comments from the LIMS database
      * */
-    public JSONObject getCommentsFromDb() {
-        HttpURLConnection con;
-        String url = null;
-        StringBuilder response = new StringBuilder();
-        try {
-            assert url != null;
-            con = (HttpURLConnection) new URL(url).openConnection();
-            con.setRequestMethod("GET");
-            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-            String inputLine;
-            while ((inputLine = in.readLine()) != null) {
-                response.append(inputLine);
-            }
-            in.close();
-            con.disconnect();
-            return new JSONObject(response.toString());
-        } catch (Exception e) {
-            log.info(String.format("Error while querying LimsRest endpoint using url %s.\n%s:%s", url, ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e)));
-            return new JSONObject();
-        }
+    public JSONObject getCommentsFromDb(JSONObject projectCommentsAndDate, DataRecordManager dataRecordManager) {
+        String projectId = String.valueOf(projectCommentsAndDate.get("projectId"));
+        String comment = String.valueOf(projectCommentsAndDate.get("comment"));
+        Date commentDate = (Date) projectCommentsAndDate.get("commentDate");
+    }
+
+    /**
+     * Writes comment into LIMS database
+     * */
+    public void addQCCoomment(JSONObject comment) {
+
     }
 
 
