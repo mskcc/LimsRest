@@ -1,8 +1,8 @@
 package org.mskcc.limsrest.service;
 
-import com.velox.api.datarecord.DataRecord;
-import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.datarecord.*;
 import com.velox.api.user.User;
+import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import javafx.util.Pair;
 import org.apache.commons.lang3.StringUtils;
@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.rmi.RemoteException;
 import java.util.*;
 
 public class AddOrCreateQCComment {
@@ -27,14 +28,14 @@ public class AddOrCreateQCComment {
     DataRecordManager dataRecordManager;
     User user;
 
-    String projectId;
+    String requestId;
     String comment;
     Date date;
 
 
 
-    public AddOrCreateQCComment(String projectId, String comment, Date date, ConnectionLIMS conn) {
-        this.projectId = projectId;
+    public AddOrCreateQCComment(String requestId, String comment, Date date, ConnectionLIMS conn) {
+        this.requestId = requestId;
         this.comment = comment;
         this.date = date;
         this.conn = conn;
@@ -47,27 +48,34 @@ public class AddOrCreateQCComment {
         user = vConn.getUser();
         dataRecordManager = vConn.getDataRecordManager();
         user = conn.getConnection().getUser();
+        try {
+            List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
+            addQCComment(commentToProjectIdDateMap, requestList);
+        }
+        catch (NotFound | IoError | RemoteException e) {
+            log.error(String.format("Error while querying request table for requestId: %s.\n %s:%s", requestId,
+                    ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
+        }
+        List<DataRecord> requestComments = getCommentsFromDb();
 
-        JSONObject projectComments = getCommentsFromDb(dataRecordManager);
 
+        String requestId = ""; // parsed projectId from JSON object
 
-        String projectId = ""; // parsed projectId from JSON object
-        //ProjectCommentsModel.
-        if(Objects.isNull(getExistingQCCommentRecods(projectId)) || getExistingQCCommentRecods(projectId).size() == 0) {
+        if(Objects.isNull(getExistingQCCommentRecods(requestId)) || getExistingQCCommentRecods(requestId).size() == 0) {
 
         }
         return commentToProjectIdDateMap;
     }
 
     /**
-     * Returns a list of existing comments for a project
+     * Returns a list of existing comments for a project from QC website
      * */
-    public List<DataRecord> getExistingQCCommentRecods(String projectId) {
+    public List<DataRecord> getExistingQCCommentRecods(String requestId) {
         List<DataRecord> existingComments = new LinkedList<>();
         //ProjectCommentsModel table to be queried for the input projectId
 
         if(existingComments.size() > 0) {
-            log.info(String.format("Found already existing comments for project: %s", projectId));
+            log.info(String.format("Found already existing comments for request: %s", requestId));
         }
 
         return  existingComments;
@@ -76,8 +84,8 @@ public class AddOrCreateQCComment {
     /**
      * Gets comments from the LIMS database
      * */
-    public JSONObject getCommentsFromDb(JSONObject projectCommentsAndDate, DataRecordManager dataRecordManager) {
-        String projectId = String.valueOf(projectCommentsAndDate.get("projectId"));
+    public List<DataRecord> getCommentsFromDb(JSONObject projectCommentsAndDate, DataRecordManager dataRecordManager) {
+        String requestId = String.valueOf(projectCommentsAndDate.get("requestId"));
         String comment = String.valueOf(projectCommentsAndDate.get("comment"));
         Date commentDate = (Date) projectCommentsAndDate.get("commentDate");
     }
@@ -85,7 +93,20 @@ public class AddOrCreateQCComment {
     /**
      * Writes comment into LIMS database
      * */
-    public void addQCCoomment(JSONObject comment) {
+    public void addQCComment(List<Map<String, Pair<String, Date>>> addedQCComment, List<DataRecord> request) {
+        Map<String, Object> qcComments = new HashMap<>();
+        for (Map<String, Pair<String, Date>> qcComment : addedQCComment) {
+            for(Map.Entry<String, Pair<String, Date>> entry : qcComment.entrySet()) {
+                qcComments.put(entry.getKey(), entry.getValue());
+            }
+        }
+        try {
+            request.get(0).addChild("QCComment", user);
+        }
+        catch (RemoteException | ServerException | NotFound | IoError | RemoteException e) {
+
+        }
+
 
     }
 
