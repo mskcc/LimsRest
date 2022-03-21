@@ -12,6 +12,8 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.controller.GetQCComment;
+import org.mskcc.limsrest.service.sequencingqc.SampleSequencingQc;
+import org.mskcc.limsrest.service.sequencingqc.UpdateLimsSampleLevelSequencingQcTask;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -27,10 +29,11 @@ public class AddOrCreateQCComment {
     private ConnectionLIMS conn;
     DataRecordManager dataRecordManager;
     User user;
-
+    String appPropertyFile = "/app.properties";
     String requestId;
     String comment;
     Date date;
+    String createdBy;
 
 
 
@@ -42,21 +45,44 @@ public class AddOrCreateQCComment {
     }
 
 
-    public Map<String, Pair<String, Date>> execute() {
-        Map<String, Pair<String, Date>> commentToProjectIdDateMap = new HashMap<>();
+    public Map<String, Object> execute() {
+        Map<String, Object> qcCommentValues = new HashMap<>();
+        List<Map<String, Object>> listOfCommentsOnAProject = new LinkedList<>();
         VeloxConnection vConn = conn.getConnection();
         user = vConn.getUser();
         dataRecordManager = vConn.getDataRecordManager();
         user = conn.getConnection().getUser();
+
+        JSONObject comments = getQCCommentsFromDb();
+        if (comments.keySet().size() == 0) {
+            log.error(String.format("Found no NGS-STATS for request with request id %s using url %s", requestId, getStatsUrl()));
+        }
+        for (String key : comments.keySet()) {
+            qcCommentValues = getQcComments(comments.getJSONObject(key));
+            requestId = String.valueOf(qcCommentValues.get("RequestId"));
+            comment = String.valueOf(qcCommentValues.get("Comment"));
+            date = (Date) qcCommentValues.get("Comment");
+            createdBy = String.valueOf(qcCommentValues.get("CreatedBy"));
+            // Adding to the list of comments
+
+            //*************HERE***************
+            Map<String, Object> commentToProjectIdDateMap = new HashMap<>();
+            commentToProjectIdDateMap.put("requestId", requestId);
+            commentToProjectIdDateMap.put("comment", comment);
+            commentToProjectIdDateMap.put("dateCreated", date);
+            commentToProjectIdDateMap.put("createdBy", createdBy);
+            listOfCommentsOnAProject.add(commentToProjectIdDateMap);
+
+        }
         try {
             List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
-            addQCComment(commentToProjectIdDateMap, requestList);
+            addQCComment(listOfCommentsOnAProject, requestList);
         }
         catch (NotFound | IoError | RemoteException e) {
             log.error(String.format("Error while querying request table for requestId: %s.\n %s:%s", requestId,
-                    ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
+                    ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e)));
         }
-        List<DataRecord> requestComments = getCommentsFromDb();
+
 
 
         String requestId = ""; // parsed projectId from JSON object
@@ -88,27 +114,103 @@ public class AddOrCreateQCComment {
         String requestId = String.valueOf(projectCommentsAndDate.get("requestId"));
         String comment = String.valueOf(projectCommentsAndDate.get("comment"));
         Date commentDate = (Date) projectCommentsAndDate.get("commentDate");
+
+        return null;
     }
 
     /**
      * Writes comment into LIMS database
      * */
-    public void addQCComment(List<Map<String, Pair<String, Date>>> addedQCComment, List<DataRecord> request) {
-        Map<String, Object> qcComments = new HashMap<>();
-        for (Map<String, Pair<String, Date>> qcComment : addedQCComment) {
-            for(Map.Entry<String, Pair<String, Date>> entry : qcComment.entrySet()) {
-                qcComments.put(entry.getKey(), entry.getValue());
+    public void addQCComment(List<Map<String, Object>> listOfQCComment, List<DataRecord> request) {
+        //Map<String, Object> qcComments = new HashMap<>();
+
+        for (Map<String, Object> qcComment : listOfQCComment) {
+            //for(Map.Entry<String, Object> entry : qcComment.entrySet()) {
+                //qcComments.put(entry.getKey(), entry.getValue());
+            //}
+            try {
+                request.get(0).addChild("QCComment", qcComment, user);
+            }
+            catch (ServerException | RemoteException e) {
+                log.error(String.format("Failed to add record to QCComment table for request: %s, ERROR: %s%s", request.get(0)
+                        , ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e)));
+
             }
         }
-        try {
-            request.get(0).addChild("QCComment", user);
-        }
-        catch (RemoteException | ServerException | NotFound | IoError | RemoteException e) {
-
-        }
-
 
     }
 
+    /**
+     * get run Stats from ngs-stats database.
+     *
+     * @return
+     */
+    private JSONObject getQCCommentsFromDb() {
+        HttpURLConnection con;
+        String url = getStatsUrl();
+        StringBuilder response = new StringBuilder();
+        try {
+            assert url != null;
+            con = (HttpURLConnection) new URL(url).openConnection();
+            con.setRequestMethod("GET");
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+            con.disconnect();
+            return new JSONObject(response.toString());
+        } catch (Exception e) {
+            log.info(String.format("Error while querying ngs-stats endpoint using url %s.\n%s:%s", url, ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e)));
+            return new JSONObject();
+        }
+    }
 
+    /**
+     * Method to get url to get stats from run-stats db.
+     *
+     * @return
+     */
+    private String getStatsUrl() {
+        Properties properties = new Properties();
+        String delphiRestUrl;
+        try {
+            properties.load(new FileReader(getResourceFile(appPropertyFile).replaceAll("%23", "#")));
+            delphiRestUrl = properties.getProperty("delphiRestUrl");
+        } catch (IOException e) {
+            log.error(String.format("Error while parsing properties file:\n%s,%s", ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getStackTrace(e)));
+            return null;
+        }
+        // TODO: Edit the link to retrieve qc comments
+        return StringUtils.join(delphiRestUrl, "ngs-stats/", this.requestId);
+    }
+
+    /**
+     * Method to get path to property file.
+     *
+     * @param propertyFile
+     * @return
+     */
+    private String getResourceFile(String propertyFile) {
+        return UpdateLimsSampleLevelSequencingQcTask.class.getResource(propertyFile).getPath();
+    }
+
+
+    /**
+     * get QcCommentData to store in LIMS from QC Stats JSONObject.
+     *
+     * @param commentsData
+     * @return
+     */
+    private Map<String, Object> getQcComments(JSONObject commentsData) {
+        String requestId = String.valueOf(commentsData.get("requestId"));
+        log.info("QC comments request ID: " + requestId);
+        String comment = String.valueOf(commentsData.get("request"));
+        Date dateCreated = (Date) commentsData.get("DateCreated");
+        String createdBy = String.valueOf(commentsData.get("CreatedBy"));
+
+        ProjectQCComment qc = new ProjectQCComment(requestId, comment, dateCreated, createdBy);
+        return qc.getQcComments();
+    }
 }
