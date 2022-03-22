@@ -5,15 +5,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
-import org.mskcc.limsrest.service.AddOrCreateQCComment;
+import org.mskcc.limsrest.service.GetCreateQCCommentTask;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Endpoint triggered when adding comments for a project on QC webapp.
@@ -30,21 +28,23 @@ public class GetQCComment {
     public GetQCComment(ConnectionLIMS conn) { this.conn = conn; }
 
     @GetMapping("/getQCComments")
-    public Map<String, Object> getContent(
+    public List<Map<String, Object>> getContent(
         @RequestParam(value = "comment") String comment,
         @RequestParam(value = "projectId") String projectId,
         @RequestParam(value = "commentDate") Date commentDate) {
 
-        Map<String, Object> resp = new HashMap<>();
+        List<Map<String, Object>> resp = new LinkedList<>();
+        Map<String, Object> eachComment = new HashMap<>();
 
         if(StringUtils.isBlank(projectId)) {
             log.info("Invalid project id: " + projectId);
             Date d = new Date(); // returns current time in millisecond
-            resp.put("error", new Pair("error", d));
+            eachComment.put("error", new Pair("error", d));
+            resp.add(eachComment);
             return resp;
         }
         log.info(String.format("Starting to Add comment for project: %s in LIMS", projectId));
-        AddOrCreateQCComment task = new AddOrCreateQCComment(projectId, comment, commentDate, conn);
+        GetCreateQCCommentTask task = new GetCreateQCCommentTask(projectId, comment, commentDate, conn);
 
 
         return task.execute();

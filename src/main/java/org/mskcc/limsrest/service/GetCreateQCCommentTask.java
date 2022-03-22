@@ -24,7 +24,7 @@ import java.net.URL;
 import java.rmi.RemoteException;
 import java.util.*;
 
-public class AddOrCreateQCComment {
+public class GetCreateQCCommentTask {
     private static Log log = LogFactory.getLog(GetQCComment.class);
     private ConnectionLIMS conn;
     DataRecordManager dataRecordManager;
@@ -37,7 +37,7 @@ public class AddOrCreateQCComment {
 
 
 
-    public AddOrCreateQCComment(String requestId, String comment, Date date, ConnectionLIMS conn) {
+    public GetCreateQCCommentTask(String requestId, String comment, Date date, ConnectionLIMS conn) {
         this.requestId = requestId;
         this.comment = comment;
         this.date = date;
