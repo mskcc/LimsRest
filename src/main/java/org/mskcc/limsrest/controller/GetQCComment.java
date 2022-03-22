@@ -30,12 +30,12 @@ public class GetQCComment {
     public GetQCComment(ConnectionLIMS conn) { this.conn = conn; }
 
     @GetMapping("/getQCComments")
-    public Map<String, Pair<String, Date>> getContent(
+    public Map<String, Object> getContent(
         @RequestParam(value = "comment") String comment,
         @RequestParam(value = "projectId") String projectId,
         @RequestParam(value = "commentDate") Date commentDate) {
 
-        Map<String, Pair<String, Date>> resp = new HashMap<>();
+        Map<String, Object> resp = new HashMap<>();
 
         if(StringUtils.isBlank(projectId)) {
             log.info("Invalid project id: " + projectId);

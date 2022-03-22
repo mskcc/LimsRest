@@ -45,7 +45,7 @@ public class AddOrCreateQCComment {
     }
 
 
-    public Map<String, Object> execute() {
+    public List<Map<String, Object>> execute() {
         Map<String, Object> qcCommentValues = new HashMap<>();
         List<Map<String, Object>> listOfCommentsOnAProject = new LinkedList<>();
         VeloxConnection vConn = conn.getConnection();
@@ -72,7 +72,6 @@ public class AddOrCreateQCComment {
             commentToProjectIdDateMap.put("dateCreated", date);
             commentToProjectIdDateMap.put("createdBy", createdBy);
             listOfCommentsOnAProject.add(commentToProjectIdDateMap);
-
         }
         try {
             List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
@@ -90,7 +89,7 @@ public class AddOrCreateQCComment {
         if(Objects.isNull(getExistingQCCommentRecods(requestId)) || getExistingQCCommentRecods(requestId).size() == 0) {
 
         }
-        return commentToProjectIdDateMap;
+        return listOfCommentsOnAProject;
     }
 
     /**
