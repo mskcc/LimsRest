@@ -45,6 +45,7 @@ public class SampleQcSummary {
     private double zeroCoveragePercent;
     private Long totalReads;
     private boolean reviewed;
+    private String recipe;
 
 
     public SampleQcSummary() {
@@ -229,5 +230,10 @@ public class SampleQcSummary {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getQcStatus() {
         return this.qcStatus;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getRecipe() {
+        return this.recipe;
     }
 }
