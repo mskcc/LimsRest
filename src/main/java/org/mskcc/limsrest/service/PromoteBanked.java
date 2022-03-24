@@ -417,6 +417,16 @@ public class PromoteBanked extends LimsTask {
             Object requestedCoverage = bankedFields.getOrDefault("RequestedCoverage", null);
             String bankedSampleRequestedReads = bankedSample.getRequestedReads();
 
+            //Populating number of amplicons in MissionBioTapestri lib prep Protocol1 table
+            //Runs if recipe is a MissionBio kind.
+            if(recipe.toLowerCase().contains("missionbio")) {
+                Map<String, Object> missionbiofields = new HashMap<>();
+                missionbiofields.put("SampleId", newIgoId);
+                missionbiofields.put("OtherSampleId", otherSampleId);
+                missionbiofields.put("NumberOfAmplicons", bankedSampleRecord.getValue("NumberOfAmplicons", user));
+                promotedSampleRecord.addChild("MissionBioTapestriLibProtocol1", missionbiofields, user);
+            }
+
             try {
                 // BankedSample values determine whether banked sample values should be re-assigned. Log for debugging
                 String bankedSampleLoggedValues = String.format("Promoting w/ Banked Sample Values. Recipe: %s, TumorOrNormal: %s, CapturePanel: %s, Species: %s, RequestedCoverage: %s, Requested Reads: %s",

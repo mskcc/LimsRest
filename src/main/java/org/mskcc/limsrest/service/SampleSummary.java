@@ -59,6 +59,7 @@ public class SampleSummary {
     private Integer rowIndex;
     private Long transactionId;
     private String capturePanel;
+    private int numberOfAmplicons;
 
 
     private SampleQcSummary qc;
@@ -397,4 +398,7 @@ public class SampleSummary {
     public String getCapturePanel() {
         return capturePanel;
     }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public int getNumberOfAmplicons() { return numberOfAmplicons; }
 }
