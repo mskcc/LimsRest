@@ -18,7 +18,6 @@ import java.util.*;
 public class SampleManifest implements Serializable {
     private String igoId;
     private String cmoInfoIgoId;
-    private String cmoSampleName;
     private String sampleName;
     private String cmoSampleClass;
     private String cmoPatientId;
