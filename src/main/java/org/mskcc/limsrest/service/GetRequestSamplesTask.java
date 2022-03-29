@@ -1,6 +1,5 @@
 package org.mskcc.limsrest.service;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.user.User;
@@ -64,6 +63,7 @@ public class GetRequestSamplesTask {
                     continue;
                 else
                     recipe = sampleRecipe;
+
                 String othersampleId = sample.getStringVal("OtherSampleId", user);
                 boolean igoComplete = samplesIGOComplete.contains(othersampleId);
                 // same othersampleId as other samples but these failed, could check exemplarSampleStatus too
@@ -74,6 +74,7 @@ public class GetRequestSamplesTask {
                 RequestSample rs = new RequestSample(othersampleId, igoId, igoComplete);
                 sampleList.add(rs);
             }
+
             // TODO REMOVE 06302_AO custom demux code
             if (requestId.equals("06302_AO")) {
                 log.info("REPLACING LIMS SAMPLE LIST.");
@@ -89,6 +90,16 @@ public class GetRequestSamplesTask {
             if (requestName != null && requestName.toUpperCase().contains("RNASEQ")) {
                 setRNASeqLibraryTypeAndStrandedness(rsl, requestName);
             }
+
+            // Recipe in LIMS is setup differently for the CMO-CH panel which is submitted as a CustomCapture with "CMO-CH" panel
+            if ("CustomCapture".equals(recipe))  {
+                // copy RUN-QC logic to get recipe from the last aliquot prior to pooling which is CMO-CH, for example project 12405_C
+                List<DataRecord> qcRecords = drm.queryDataRecords("SeqAnalysisSampleQC", "Request = '" + this.requestId + "'", user);
+                DataRecord parentSample = qcRecords.get(0).getParentsOfType("Sample", user).get(0);
+                recipe = parentSample.getStringVal(SampleModel.RECIPE, user);
+                log.info("Updated recipe from CustomCapture to " + recipe);
+            }
+
             rsl.setRecipe(recipe);
             rsl.setPiEmail(requestDataRecord.getStringVal("PIemail", user));
             rsl.setLabHeadName(requestDataRecord.getStringVal("LaboratoryHead", user));
