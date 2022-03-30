@@ -95,9 +95,11 @@ public class GetRequestSamplesTask {
             if ("CustomCapture".equals(recipe))  {
                 // copy RUN-QC logic to get recipe from the last aliquot prior to pooling which is CMO-CH, for example project 12405_C
                 List<DataRecord> qcRecords = drm.queryDataRecords("SeqAnalysisSampleQC", "Request = '" + this.requestId + "'", user);
-                DataRecord parentSample = qcRecords.get(0).getParentsOfType("Sample", user).get(0);
-                recipe = parentSample.getStringVal(SampleModel.RECIPE, user);
-                log.info("Updated recipe from CustomCapture to " + recipe);
+                if (qcRecords.size() > 0) {  // SeqAnalysisSampleQC will only have records after the samples are sequenced
+                    DataRecord parentSample = qcRecords.get(0).getParentsOfType("Sample", user).get(0);
+                    recipe = parentSample.getStringVal(SampleModel.RECIPE, user);
+                    log.info("Updated recipe from CustomCapture to " + recipe);
+                }
             }
 
             rsl.setRecipe(recipe);
