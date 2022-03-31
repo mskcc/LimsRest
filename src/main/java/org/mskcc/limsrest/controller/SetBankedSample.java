@@ -74,7 +74,8 @@ public class SetBankedSample {
             @RequestParam(value = "tubeId", defaultValue = "NULL") String tubeId,
             @RequestParam(value = "patientId", defaultValue = "NULL") String patientId,
             @RequestParam(value = "normalizedPatientId", defaultValue = "NULL") String normalizedPatientId,
-            @RequestParam(value = "cmoPatientId", defaultValue = "NULL") String cmoPatientId) {
+            @RequestParam(value = "cmoPatientId", defaultValue = "NULL") String cmoPatientId,
+            @RequestParam(value = "numberOfAmplicons", defaultValue = "0", required = false) String numberOfAmplicons) {
 
         log.info("Starting to set banked sample " + userId + " by user " + user);
         if (assay == null) {
@@ -143,7 +144,8 @@ public class SetBankedSample {
                 Float.parseFloat(vol),
                 Double.parseDouble(concentration),
                 Integer.parseInt(rowIndex),
-                Long.parseLong(transactionId));
+                Long.parseLong(transactionId),
+                Integer.parseInt(numberOfAmplicons));
 
         Future<Object> result = conn.submitTask(task);
         String returnCode;

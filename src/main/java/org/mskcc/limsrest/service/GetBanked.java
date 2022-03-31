@@ -165,6 +165,10 @@ public class GetBanked extends LimsTask {
                 if (sampleFields.containsKey("TumorType"))
                     ss.setTumorType((String) sampleFields.get("TumorType"));
                 ss.addExpName((String) sampleFields.get("UserSampleID"));
+                Integer numberOfAmplicons = (Integer) sampleFields.get("NumberOfAmplicons");
+                if(numberOfAmplicons != null) {
+                    ss.setNumberOfAmplicons(numberOfAmplicons);
+                }
                 Double volume = (Double) sampleFields.get("Volume");
                 if (volume != null)
                     ss.addVolume(volume);

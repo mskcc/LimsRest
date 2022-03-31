@@ -65,6 +65,7 @@ public class SetOrCreateBanked extends LimsTask {
     double concentration;
     int rowIndex;
     long transactionId;
+    int numberOfAmplicons;
 
     public void init(
             String igoUser,
@@ -110,7 +111,8 @@ public class SetOrCreateBanked extends LimsTask {
             float vol,
             double concentration,
             int rowIndex,
-            long transactionId) {
+            long transactionId,
+            int numberOfAmplicons) {
 
         this.igoUser = igoUser;
         this.investigator = investigator;
@@ -158,6 +160,7 @@ public class SetOrCreateBanked extends LimsTask {
         this.concentration = concentration;
         this.rowIndex = rowIndex;
         this.transactionId = transactionId;
+        this.numberOfAmplicons = numberOfAmplicons;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -322,7 +325,9 @@ public class SetOrCreateBanked extends LimsTask {
             if (!"NULL".equals(numTubes)) {
                 bankedFields.put("NumTubes", numTubes);
             }
-
+            if(numberOfAmplicons > 0) {
+                bankedFields.put("NumberOfAmplicons", numberOfAmplicons);
+            }
             if (concentration > 0.0) {
                 banked.setDataField("Concentration", concentration, user);
             }
