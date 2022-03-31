@@ -75,7 +75,7 @@ public class SetBankedSample {
             @RequestParam(value = "patientId", defaultValue = "NULL") String patientId,
             @RequestParam(value = "normalizedPatientId", defaultValue = "NULL") String normalizedPatientId,
             @RequestParam(value = "cmoPatientId", defaultValue = "NULL") String cmoPatientId,
-            @RequestParam(value = "numberOfAmplicons") String numberOfAmplicons) {
+            @RequestParam(value = "numberOfAmplicons", required = false) String numberOfAmplicons) {
 
         log.info("Starting to set banked sample " + userId + " by user " + user);
         if (assay == null) {
