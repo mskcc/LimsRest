@@ -508,8 +508,7 @@ public class GetSampleManifestTask {
         s.setCollectionYear(cmoInfo.getStringVal("CollectionYear", user));
         s.setSex(cmoInfo.getStringVal("Gender", user));
         s.setSpecies(cmoInfo.getStringVal("Species", user));
-        // No longer IGO responsibility, MetaDB team generates these
-        //s.setCmoSampleName(cmoInfo.getStringVal("CorrectedCMOID", user));
+        s.setCmoSampleName(cmoInfo.getStringVal("CorrectedCMOID", user));
         String normalizedPatientId = cmoInfo.getStringVal("NormalizedPatientId", user);
         s.getCmoSampleIdFields().setNormalizedPatientId(normalizedPatientId);
         return s;
