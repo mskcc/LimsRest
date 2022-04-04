@@ -342,6 +342,7 @@ public class GetSampleQc {
             runAndCatchNpe(() -> rs.setAnalysisType((String) requestFields.get("AnalysisType")));
             runAndCatchNpe(() -> rs.setCmoProjectId((String) requestFields.get("CMOProjectID")));
             runAndCatchNpe(() -> rs.setProjectManager((String) requestFields.get("ProjectManager")));
+            runAndCatchNpe(() -> rs.setRequestName((String) requestFields.get("RequestName")));
         } catch (Throwable e) {
             log.error(e);
             rs.setInvestigator("Annotation failed:" + e.getMessage());

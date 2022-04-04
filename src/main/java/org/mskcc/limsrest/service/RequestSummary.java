@@ -37,6 +37,7 @@ public class RequestSummary {
     private String dataAccessEmails;
     private Boolean isIgoComplete;
     private List<String> runFolders;
+    private String requestName;
 
     public RequestSummary() {
         this("UNKNOWN");
@@ -191,6 +192,11 @@ public class RequestSummary {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getRequestType() {
         return requestType;
+    }
+
+    @JsonInclude(JsonInclude.Include.ALWAYS)
+    public String getRequestName() {
+        return this.requestName;
     }
 
     public String getRestStatus() {
