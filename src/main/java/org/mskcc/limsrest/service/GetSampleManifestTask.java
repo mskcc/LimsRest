@@ -60,7 +60,7 @@ public class GetSampleManifestTask {
             return false;
         // WES = 'WholeExomeSequencing', 'AgilentCapture_51MB', 'IDT_Exome_v1_FP', 'Agilent_v4_51MB_Human'
         if (recipe.contains("PACT") || recipe.contains("ACCESS") || recipe.contains("Exome") || recipe.contains("51MB")
-                || recipe.contains("ShallowWGS")) {
+                || recipe.contains("ShallowWGS") || recipe.contains("CMO-CH")) {
             return true;
         }
         return false;
@@ -138,6 +138,16 @@ public class GetSampleManifestTask {
         // for example 07951_S_50_1 is Fingerprinting sample, skip for pipelines for now
         if ("Fingerprinting".equals(recipe))
             return new SampleManifest();
+        // Recipe in LIMS is setup differently for the CMO-CH panel which is submitted as a CustomCapture with "CMO-CH" panel
+        if ("CustomCapture".equals(recipe))  {
+            // copy RUN-QC logic to get recipe from the last aliquot prior to pooling which is CMO-CH, for example project 12405_C
+            List<DataRecord> qcRecords = dataRecordManager.queryDataRecords("SeqAnalysisSampleQC", "Request = '" + IGOTools.requestFromIgoId(igoId) + "'", user);
+            if (qcRecords.size() > 0) {  // SeqAnalysisSampleQC will only have records after the samples are sequenced
+                DataRecord parentSample = qcRecords.get(0).getParentsOfType("Sample", user).get(0);
+                recipe = parentSample.getStringVal(SampleModel.RECIPE, user);
+                log.info("Updated recipe from CustomCapture to " + recipe);
+            }
+        }
 
         SampleManifest sampleManifest = setSampleCMOLevelFields(igoId, sample, samples, dataRecordManager, user);
         // set fields specifically required for generating CMO style sample names they use to run pipelines
@@ -198,7 +208,7 @@ public class GetSampleManifestTask {
         }
 
         Double dnaInputNg = null;
-        if (recipe.contains("ACCESS") ) {
+        if (recipe.contains("ACCESS")) {
             dnaInputNg = setACCESS2dBarcode(user, dataRecordManager, sample, sampleManifest);
         }
 
@@ -210,7 +220,7 @@ public class GetSampleManifestTask {
             log.info("Processing DNA library: " + libraryIgoId);
             SampleManifest.Library library = getLibraryFields(user, libraryIgoId, aliquot, dnaInputNg);
 
-            if (recipe.contains("ACCESS") ) {
+            if (recipe.contains("ACCESS") || recipe.contains("CMO-CH")) {
                 List<DataRecord> indexBarcodes = aliquot.getDescendantsOfType("IndexBarcode", user);
                 if (indexBarcodes == null || indexBarcodes.size() == 0) {
                     List<DataRecord> parentList = aliquot.getParentsOfType("Sample", user);
@@ -223,7 +233,6 @@ public class GetSampleManifestTask {
                     library.setBarcodeIndex(bc.getStringVal("IndexTag", user));
                     log.info("indexBarcodes != null");
                 }
-
             }
 
             // recipe, capture input, capture name
