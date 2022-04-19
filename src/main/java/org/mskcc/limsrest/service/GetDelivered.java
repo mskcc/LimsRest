@@ -222,6 +222,8 @@ public class GetDelivered extends LimsTask {
                                 }
                             }
                             ss.addBasicQc(qcSummary);
+                        } else {
+                            log.info("Ignoring QC record for: " + qcRequestId);
                         }
                     }
                     rs.addSample(ss);
