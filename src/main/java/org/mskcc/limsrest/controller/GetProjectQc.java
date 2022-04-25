@@ -39,11 +39,14 @@ public class GetProjectQc {
                 return new LinkedList<>();
             }
         }
-
+        long start = System.currentTimeMillis();
         GetSampleQc task = new GetSampleQc(project, conn);
+
         List<RequestSummary> rss = new LinkedList<>();
         try {
             rss = task.execute();
+            long end = System.currentTimeMillis();
+            log.info("Elapsed time to run get project Qc is: " + (end - start));
         } catch(Exception e) {
             RequestSummary rs = new RequestSummary();
             rs.setInvestigator(e.getMessage());

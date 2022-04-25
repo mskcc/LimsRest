@@ -24,11 +24,12 @@ import java.util.stream.Collectors;
 import static org.mskcc.limsrest.util.StatusTrackerConfig.isIgoComplete;
 import static org.mskcc.limsrest.util.Utils.*;
 
-public class GetSequencingRequestsTask extends LimsTask {
+public class GetSequencingRequestsTask {
     private static Log log = LogFactory.getLog(GetSequencingRequestsTask.class);
 
     private Long days;          // Number of days since sequencing
     private Boolean delivered;  // Whether to determine requests that have been marked IGO-COMPLETE
+
 
     public GetSequencingRequestsTask(Long days, Boolean delivered) {
         this.days = days;
@@ -75,7 +76,6 @@ public class GetSequencingRequestsTask extends LimsTask {
     }
 
     @PreAuthorize("hasRole('READ')")
-    @Override
     public List<RequestSummary> execute(VeloxConnection conn) {
         DataRecordManager dataRecordManager = conn.getDataRecordManager();
         User user = conn.getUser();

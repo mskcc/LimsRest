@@ -3,10 +3,13 @@ package org.mskcc.limsrest.service;
 import com.velox.api.datarecord.AuditLog;
 import com.velox.api.datarecord.AuditLogEntry;
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.RequestModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.requesttracker.Request;
 import org.springframework.security.access.prepost.PreAuthorize;
 
@@ -25,8 +28,15 @@ import static org.mskcc.limsrest.util.Utils.*;
  * 
  * @author Aaron Gabow
  */
-public class GetDelivered extends LimsTask {
+public class GetDelivered {
     private static Log log = LogFactory.getLog(GetDelivered.class);
+    private ConnectionLIMS conn;
+
+    public GetDelivered(ConnectionLIMS conn) {
+        this.conn = conn;
+    }
+    DataRecordManager dataRecordManager;
+    User user;
 
     final String ignoreTerm = "Under-Review";
     int time = 0;
@@ -57,8 +67,12 @@ public class GetDelivered extends LimsTask {
     }
 
     @PreAuthorize("hasRole('READ')")
-    @Override
-    public Object execute(VeloxConnection conn) {
+    public Object execute() {
+
+        VeloxConnection vConn = conn.getConnection();
+        dataRecordManager = vConn.getDataRecordManager();
+        user = vConn.getUser();
+
         long now = System.currentTimeMillis();
         long offset = (long) time;
         if (units.equals("m")) {
@@ -78,7 +92,7 @@ public class GetDelivered extends LimsTask {
         List<RequestSummary> delivered = new LinkedList<>();
         try {
             AuditLog auditlog = user.getAuditLog();
-            List<DataRecord> recentDeliveries = null;
+            List<DataRecord> recentDeliveries;
             if (time == -1) {
                 searchPoint = now + offset;
                 List<DataRecord> unreviewed = dataRecordManager.queryDataRecords("SeqAnalysisSampleQC", "DateCreated >  1484508629000 AND SeqQCStatus != 'Passed' AND SeqQCStatus not like 'Failed%'", user);

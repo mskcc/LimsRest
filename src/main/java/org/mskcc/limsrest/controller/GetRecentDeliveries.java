@@ -1,7 +1,9 @@
 package org.mskcc.limsrest.controller;
 
+import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.ConnectionPoolLIMS;
 import org.mskcc.limsrest.service.GetDelivered;
 import org.mskcc.limsrest.service.RequestSummary;
@@ -23,9 +25,10 @@ import java.util.concurrent.Future;
 @RequestMapping("/")
 public class GetRecentDeliveries {
     private static Log log = LogFactory.getLog(GetRecentDeliveries.class);
-    private final ConnectionPoolLIMS conn;
+    private final ConnectionLIMS conn;
 
-    public GetRecentDeliveries(ConnectionPoolLIMS conn) {
+
+    public GetRecentDeliveries(ConnectionLIMS conn) {
         this.conn = conn;
     }
 
@@ -35,7 +38,7 @@ public class GetRecentDeliveries {
                                            @RequestParam(value = "investigator", defaultValue = "NULL") String investigator,
                                            HttpServletRequest request) {
         log.info("Starting /getRecentDeliveries?time=" + time + "&units=" + units + " client IP:" + request.getRemoteAddr());
-        GetDelivered task = new GetDelivered();
+        GetDelivered task = new GetDelivered(conn);
 
         if (!time.equals("NULL") && !investigator.equals("NULL")) {
             // Request Projects: investigator & timeframe
@@ -51,9 +54,14 @@ public class GetRecentDeliveries {
             task.init();
         }
 
-        Future<Object> result = conn.submitTask(task);
         try {
-            return (List<RequestSummary>) result.get();
+            long start = System.currentTimeMillis();
+            List<RequestSummary> result = (List<RequestSummary>) task.execute();
+            long finish = System.currentTimeMillis();
+            long timeElapsed = finish - start;
+            log.info("Elapsed time for running GetDelivered: " + timeElapsed);
+            return result;
+
         } catch (Exception e) {
             List<RequestSummary> values = new LinkedList<>();
             values.add(new RequestSummary("ERROR: " + e.getMessage()));
