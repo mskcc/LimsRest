@@ -24,15 +24,15 @@ import java.util.stream.Stream;
 
 import static org.mskcc.limsrest.util.Utils.runAndCatchNpe;
 
-public class GetSampleQc {
-    private static Log log = LogFactory.getLog(GetSampleQc.class);
+public class GetSampleQcTask {
+    private static Log log = LogFactory.getLog(GetSampleQcTask.class);
     protected String[] projectList;
     private ConnectionLIMS conn;
 
     @Value("${delphiRestUrl}")
     private String delphiRestUrl;
 
-    public GetSampleQc(String[] project, ConnectionLIMS conn) {
+    public GetSampleQcTask(String[] project, ConnectionLIMS conn) {
         this.projectList = project;
         this.conn = conn;
     }

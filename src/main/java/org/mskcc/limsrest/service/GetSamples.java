@@ -70,7 +70,7 @@ public class GetSamples extends LimsTask {
                 String project = (String) (requestFields.get(i).get("RequestId"));
                 String igoBase = project.split("_")[0];
                 RequestSummary rs = new RequestSummary(project);
-                GetSampleQc.annotateRequestSummary(rs, requestFields.get(i));
+                GetSampleQcTask.annotateRequestSummary(rs, requestFields.get(i));
                 for (Map<String, Object> sampleFields : descendantSampleFields.get(i)) {
                     String igoId = (String) sampleFields.get("SampleId");
                     String altId = (String) sampleFields.get("OtherSampleId");
@@ -81,7 +81,7 @@ public class GetSamples extends LimsTask {
                         continue;
                     }
                     SampleSummary ss = new SampleSummary();
-                    GetSampleQc.annotateSampleSummary(ss, sampleFields);
+                    GetSampleQcTask.annotateSampleSummary(ss, sampleFields);
                     try {
                         if (originalName2CorrectedName.containsKey(sampleFields.get("OtherSampleId"))) {
                             ss.setCorrectedCmoId(originalName2CorrectedName.get(sampleFields.get("OtherSampleId")));
