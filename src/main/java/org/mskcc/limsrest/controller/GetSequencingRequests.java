@@ -68,11 +68,13 @@ public class GetSequencingRequests {
             resp.put("status", "Failed");
             return getResponseEntity(resp, HttpStatus.BAD_REQUEST);
         }
-
+        long start= System.currentTimeMillis();
         GetSequencingRequestsTask task = new GetSequencingRequestsTask(numDays, isDelivered);
         List<RequestSummary> requests = task.execute(this.conn.getConnection());
         resp.put("status", "Success");
         resp.put("requests", requests);
+        long end = System.currentTimeMillis();
+        log.info("Time elapsed running Sequencing Requests Task: " + (end - start));
         return getResponseEntity(resp, HttpStatus.OK);
     }
 }

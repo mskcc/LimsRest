@@ -24,15 +24,15 @@ import java.util.stream.Stream;
 
 import static org.mskcc.limsrest.util.Utils.runAndCatchNpe;
 
-public class GetSampleQc {
-    private static Log log = LogFactory.getLog(GetSampleQc.class);
+public class GetSampleQcTask {
+    private static Log log = LogFactory.getLog(GetSampleQcTask.class);
     protected String[] projectList;
     private ConnectionLIMS conn;
 
     @Value("${delphiRestUrl}")
     private String delphiRestUrl;
 
-    public GetSampleQc(String[] project, ConnectionLIMS conn) {
+    public GetSampleQcTask(String[] project, ConnectionLIMS conn) {
         this.projectList = project;
         this.conn = conn;
     }
@@ -118,39 +118,7 @@ public class GetSampleQc {
                             }
                         }
                         DataRecord[] requirements = parentSample.getChildrenOfType("SeqRequirement", user);
-                        List<DataRecord> searchParents = parentSample.getAncestorsOfType("Sample", user);
-                        created = -1;
-                        double mass = 0.00000;
-                        for (DataRecord protoParent : searchParents){
-                            DataRecord[] kProtocols = protoParent.getChildrenOfType("KAPALibPlateSetupProtocol1", user);
-                            DataRecord[] rProtocols = protoParent.getChildrenOfType("TruSeqRNAProtocol", user);
-                            DataRecord[] depProtocols = protoParent.getChildrenOfType("TruSeqRiboDepleteProtocol", user);
-                            for (DataRecord protocol : kProtocols){
-                                long protoCreate = protocol.getDateVal("DateCreated", user);
-                                if (protoCreate  > created){
-                                    mass = protocol.getDoubleVal("TargetMassAliq1", user);
-                                    created = protoCreate;
-                                }
-                            }
-                            for (DataRecord protocol : rProtocols){
-                                long protoCreate = protocol.getDateVal("DateCreated", user);
-                                if (protoCreate  > created){
-                                    mass = protocol.getDoubleVal("Aliq1TargetMass", user);
-                                    created = protoCreate;
-                                }
-                            }
-                            for (DataRecord protocol : depProtocols){
-                                long protoCreate = protocol.getDateVal("DateCreated", user);
-                                if (protoCreate  > created){
-                                    mass = protocol.getDoubleVal("Aliq1TargetMass", user);
-                                    created = protoCreate;
-                                }
-                            }
-                        }
-                        if (mass > 0.000001){
-                            qcSummary.setStartingAmount(mass);
-                        }
-                        ListIterator<DataRecord> ancestorIter = searchParents.listIterator();
+
                         Deque<DataRecord> queue = new LinkedList<>();
                         queue.addLast(parentSample);
                         Set<DataRecord> visited = new HashSet<>();

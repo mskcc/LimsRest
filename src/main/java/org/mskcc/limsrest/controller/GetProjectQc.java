@@ -3,8 +3,7 @@ package org.mskcc.limsrest.controller;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
-import org.mskcc.limsrest.ConnectionPoolLIMS;
-import org.mskcc.limsrest.service.GetSampleQc;
+import org.mskcc.limsrest.service.GetSampleQcTask;
 import org.mskcc.limsrest.service.RequestSummary;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Future;
 
 @RestController
 @RequestMapping("/")
@@ -39,12 +37,15 @@ public class GetProjectQc {
                 return new LinkedList<>();
             }
         }
+        long start = System.currentTimeMillis();
+        GetSampleQcTask task = new GetSampleQcTask(project, conn);
 
-        GetSampleQc task = new GetSampleQc(project, conn);
         List<RequestSummary> rss = new LinkedList<>();
         try {
             rss = task.execute();
-        } catch(Exception e) {
+            long end = System.currentTimeMillis();
+            log.info("Elapsed time to run get project Qc is (ms): " + (end - start));
+        } catch (Exception e) {
             RequestSummary rs = new RequestSummary();
             rs.setInvestigator(e.getMessage());
             rss.add(rs);

@@ -3,15 +3,15 @@ package org.mskcc.limsrest.service;
 import com.velox.api.datarecord.AuditLog;
 import com.velox.api.datarecord.AuditLogEntry;
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.RequestModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.service.requesttracker.Request;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.springframework.security.access.prepost.PreAuthorize;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -25,24 +25,29 @@ import static org.mskcc.limsrest.util.Utils.*;
  * 
  * @author Aaron Gabow
  */
-public class GetDelivered extends LimsTask {
-    private static Log log = LogFactory.getLog(GetDelivered.class);
+public class GetDeliveredTask {
+    private static Log log = LogFactory.getLog(GetDeliveredTask.class);
+    private ConnectionLIMS conn;
 
-    final String ignoreTerm = "Under-Review";
-    int time = 0;
-    String units = "";
-    String investigator = "";
+    private final String ignoreTerm = "Under-Review";
+    private long time = 0;
+    private String units = "";
+    private String investigator = "";
+
+    public GetDeliveredTask(ConnectionLIMS conn) {
+        this.conn = conn;
+    }
 
     public void init(int time, String units) {
         this.time = time;
         this.units = units;
-        investigator = "NULL";
+        this. investigator = "NULL";
     }
 
     public void init(String investigator) {
         this.investigator = investigator;
-        time = 2;
-        units = "w";
+        this.time = 2;
+        this.units = "w";
     }
 
     public void init(String investigator, int time, String units) {
@@ -52,22 +57,25 @@ public class GetDelivered extends LimsTask {
     }
 
     public void init() {
-        time = -1;
-        units = "w";
+        this.time = -1;
+        this.units = "w";
     }
 
     @PreAuthorize("hasRole('READ')")
-    @Override
-    public Object execute(VeloxConnection conn) {
+    public Object execute() {
+        VeloxConnection vConn = conn.getConnection();
+        DataRecordManager dataRecordManager = vConn.getDataRecordManager();
+        User user = vConn.getUser();
+
         long now = System.currentTimeMillis();
-        long offset = (long) time;
+        long offset = time;
         if (units.equals("m")) {
             offset *= 60l * 1000;
         } else if (units.equals("h")) {
             offset *= 60l * 60 * 1000;
         } else if (units.equals("w")) {
             offset *= 7l * 24 * 60 * 60 * 1000;
-        } else { //don't worry about anything exotic and just assume it's days
+        } else { //don't worry about anything exotic and just assume it is days
             offset *= 24l * 60 * 60 * 1000;
         }
         long searchPoint = now - offset;
@@ -78,7 +86,7 @@ public class GetDelivered extends LimsTask {
         List<RequestSummary> delivered = new LinkedList<>();
         try {
             AuditLog auditlog = user.getAuditLog();
-            List<DataRecord> recentDeliveries = null;
+            List<DataRecord> recentDeliveries;
             if (time == -1) {
                 searchPoint = now + offset;
                 List<DataRecord> unreviewed = dataRecordManager.queryDataRecords("SeqAnalysisSampleQC", "DateCreated >  1484508629000 AND SeqQCStatus != 'Passed' AND SeqQCStatus not like 'Failed%'", user);
@@ -133,7 +141,6 @@ public class GetDelivered extends LimsTask {
                             }
                         } catch (NullPointerException npe) {
                         }
-
                     }
                 }
 
@@ -233,11 +240,7 @@ public class GetDelivered extends LimsTask {
                 }
             }
         } catch (Throwable e) {
-            log.info(e.getMessage());
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            log.info(e.getMessage() + " TRACE: " + sw.toString());
+            log.error(e.getMessage(), e);
             RequestSummary errorRs = new RequestSummary();
             delivered.add(errorRs);
         }
