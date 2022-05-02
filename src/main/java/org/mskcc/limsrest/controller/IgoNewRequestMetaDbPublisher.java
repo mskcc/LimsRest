@@ -1,8 +1,7 @@
 package org.mskcc.limsrest.controller;
 
 import com.google.gson.Gson;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -64,7 +63,7 @@ public class IgoNewRequestMetaDbPublisher {
         String[] parts = requestId.split("_");
         String projectId = parts[0];
         RequestSampleList requestDetails = getRequestSampleListDetails(requestId);
-        List<SampleManifest> sampleManifestList = getSampleManifestListByRequestId(requestDetails);
+        List<Map<String, Object>> sampleManifestList = getSampleManifestListByRequestId(requestDetails);
         publishIgoNewRequestToMetaDb(projectId, requestDetails, sampleManifestList);
     }
 
@@ -94,13 +93,15 @@ public class IgoNewRequestMetaDbPublisher {
      * @param requestId
      * @return
      */
-    private List<SampleManifest> getSampleManifestListByRequestId(RequestSampleList sl) {
+    private List<Map<String, Object>> getSampleManifestListByRequestId(RequestSampleList sl) {
         // construct list of igo id strings for the 'GetSampleManifestTask'
         List<RequestSample> requestSamples = sl.getSamples();
         String[] igoIds = new String[requestSamples.size()];
+        Map<String, Boolean> igoCompleteMap = new HashMap<>();
         for (int i = 0; i < requestSamples.size(); i++) {
             RequestSample rs = requestSamples.get(i);
             igoIds[i] = rs.getIgoSampleId();
+            igoCompleteMap.put(rs.getIgoSampleId(), rs.isIgoComplete());
         }
 
         // fetch list of sample manifests for request sample (igo)ids
@@ -117,7 +118,15 @@ public class IgoNewRequestMetaDbPublisher {
             log.error("Sample Manifest generation failed with error: " + result.error);
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, result.error);
         }
-        return sampleManifestList;
+        List<Map<String, Object>> toReturn = new ArrayList<>();
+        Gson gson = new Gson();
+        for (SampleManifest sm : sampleManifestList) {
+            Map<String, Object> smMap = gson.fromJson(gson.toJson(sm), Map.class);
+            smMap.put("igoComplete", igoCompleteMap.get(sm.getIgoId()));
+            toReturn.add(smMap);
+        }
+
+        return toReturn;
     }
 
     /**
@@ -126,7 +135,7 @@ public class IgoNewRequestMetaDbPublisher {
      * @param requestId
      * @param sampleManifestList
      */
-    private void publishIgoNewRequestToMetaDb(String projectId, RequestSampleList requestDetails, List<SampleManifest> sampleManifestList) {
+    private void publishIgoNewRequestToMetaDb(String projectId, RequestSampleList requestDetails, List<Map<String, Object>> sampleManifestList) {
         // construct igo request entity to publish to metadb
         Gson gson = new Gson();
         Map<String, Object> igoRequestMap = gson.fromJson(gson.toJson(requestDetails), Map.class);
