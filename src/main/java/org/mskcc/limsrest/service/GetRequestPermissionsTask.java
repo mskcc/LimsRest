@@ -46,10 +46,12 @@ public class GetRequestPermissionsTask {
             Boolean isCmoRequest = Boolean.FALSE;
             Boolean bicAnalysis = Boolean.FALSE;
             String analysisType = "";
+            String requestName = "";
             try {
                 isCmoRequest = dataRecord.getBooleanVal("IsCmoRequest", user);
                 bicAnalysis = dataRecord.getBooleanVal("BICAnalysis", user);
                 analysisType = dataRecord.getStringVal("AnalysisType", user);
+                requestName = dataRecord.getStringVal("RequestName", user);
             } catch (NullPointerException e) {
                 log.warn("Correct invalid null valid in database for request: " + requestId);
             }
@@ -58,7 +60,7 @@ public class GetRequestPermissionsTask {
 
             String labName = labHeadEmailToLabName(labHeadEmail);
 
-            return new RequestPermissions(requestId, labName, labHeadEmail, isCmoRequest, isBicRequest, dataAccessEmails);
+            return new RequestPermissions(requestId, requestName, labName, labHeadEmail, isCmoRequest, isBicRequest, dataAccessEmails);
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
             return null;
@@ -112,6 +114,7 @@ public class GetRequestPermissionsTask {
     @AllArgsConstructor
     public static class RequestPermissions {
         public String requestId;
+        public String requestName;
         public String labName;
         public String labHeadEmail;
         public Boolean isCmoRequest;
