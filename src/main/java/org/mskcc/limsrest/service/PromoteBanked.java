@@ -11,9 +11,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.*;
-import org.mskcc.limsrest.service.cmoinfo.SampleTypeCorrectedCmoSampleIdGenerator;
-import org.mskcc.limsrest.service.cmoinfo.converter.BankedSampleToCorrectedCmoSampleIdConverter;
-import org.mskcc.limsrest.service.cmoinfo.converter.CorrectedCmoIdConverter;
 import org.mskcc.limsrest.service.promote.BankedSampleToSampleConverter;
 import org.mskcc.limsrest.util.Constants;
 import org.mskcc.limsrest.util.Messages;
@@ -40,19 +37,8 @@ import java.util.regex.Pattern;
 public class PromoteBanked extends LimsTask {
     private static final Log log = LogFactory.getLog(PromoteBanked.class);
 
-    private static final List<String> HUMAN_RECIPES =
-            Arrays.asList("IMPACT341", "IMPACT410", "IMPACT410+", "IMPACT468","IMPACT505", "HemePACT_v3", "HemePACT_v4", "MSK-ACCESS_v1");
+    private static final List<String> INDEX_MATERIALS = Arrays.asList("DNA Library", "Pooled Library", "cDNA Library");
 
-    private static final List<String> INDEX_MATERIALS =
-            Arrays.asList("DNA Library", "Pooled Library", "cDNA Library");
-
-
-    private static final HumanSamplePredicate humanSamplePredicate = new HumanSamplePredicate();
-    //private static final String LIBRARY_SAMPLE_TYPE = "DNA Library";
-
-    private final CorrectedCmoIdConverter<BankedSample> bankedSampleToCorrectedCmoSampleIdConverter = new BankedSampleToCorrectedCmoSampleIdConverter();
-    //@Autowired
-    private SampleTypeCorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator = new SampleTypeCorrectedCmoSampleIdGenerator();
     private final BankedSampleToSampleConverter bankedSampleToSampleConverter = new BankedSampleToSampleConverter();
 
     String[] bankedIds;
@@ -108,7 +94,6 @@ public class PromoteBanked extends LimsTask {
         } else {
 
             try {
-
                 //GET ALL BANKED SAMPLES
                 StringBuffer sb = new StringBuffer();
                 for (int i = 0; i < bankedIds.length - 1; i++) {
@@ -122,7 +107,6 @@ public class PromoteBanked extends LimsTask {
 
                 List<DataRecord> bankedList = dataRecordManager.queryDataRecords("BankedSample", "RecordId in (" + sb.toString() + ") order by transactionId, rowIndex", user);
                 SloanCMOUtils util = new SloanCMOUtils(managerContext);
-
 
                 //GET INDEXES IF MATERIAL IS INDEX MATERIAL
                 boolean indexNeeded = false;
@@ -143,7 +127,6 @@ public class PromoteBanked extends LimsTask {
                                 ("IndexTag", user));
                     }
                 }
-
 
                 DataRecord req = null;
                 //TODO THREAD WARNING: Not thread safe. Depends on the queue being single consumer thread to handle concurrency
@@ -327,9 +310,6 @@ public class PromoteBanked extends LimsTask {
                     "promoted to sample", bankedSample.getUserSampleID()));
         }
 
-        String correctedCmoSampleId = getCorrectedCmoSampleId(bankedSample, requestId);
-        log.info(String.format("Generated corrected cmo id: %s", correctedCmoSampleId));
-
         String otherSampleId = bankedSample.getOtherSampleId();
         if (existentIds.contains(otherSampleId)) {
             throw new LimsException("There already is a sample in the project with the name: " + otherSampleId);
@@ -404,7 +384,7 @@ public class PromoteBanked extends LimsTask {
                 req.addChild("PairingInfo", pairingMap, user);
             }
 
-            Map<String, Object> cmoFields = getCmoFields(bankedFields, correctedCmoSampleId, requestId, newIgoId, uuid);
+            Map<String, Object> cmoFields = getCmoFields(bankedFields, requestId, newIgoId, uuid);
             promotedSampleRecord.addChild("SampleCMOInfoRecords", cmoFields, user);
             Map<String, Object> seqRequirementMap = new HashMap<>();
             seqRequirementMap.put("OtherSampleId", otherSampleId);
@@ -462,22 +442,19 @@ public class PromoteBanked extends LimsTask {
                 "%s", bankedSample.getId()));
     }
 
-
     private Sample getPromotedSample(BankedSample bankedSample, String uuid, String newIgoId, String
             assignedRequestId) {
         return bankedSampleToSampleConverter.convert(bankedSample, uuid, newIgoId, assignedRequestId);
     }
 
-
-    Map<String, Object> getCmoFields(Map<String, Object> bankedFields, String correctedCmoSampleId, String
-            assignedRequestId, String igoId, String uuid) {
+    Map<String, Object> getCmoFields(Map<String, Object> bankedFields, String assignedRequestId, String igoId, String uuid) {
         Map<String, Object> cmoFields = new HashMap<>();
         cmoFields.put(CmoSampleInfo.ALT_ID, uuid);
         cmoFields.put(CmoSampleInfo.CLINICAL_INFO, bankedFields.get(BankedSample.CLINICAL_INFO));
         cmoFields.put(CmoSampleInfo.CMO_PATIENT_ID, bankedFields.get(BankedSample.CMO_PATIENT_ID));
         cmoFields.put(CmoSampleInfo.CMOSAMPLE_CLASS, bankedFields.get(BankedSample.SAMPLE_CLASS));
         cmoFields.put(CmoSampleInfo.COLLECTION_YEAR, bankedFields.get(BankedSample.COLLECTION_YEAR));
-        cmoFields.put(CmoSampleInfo.CORRECTED_CMOID, correctedCmoSampleId);
+        cmoFields.put(CmoSampleInfo.CORRECTED_CMOID, "");
 
         cmoFields.put(CmoSampleInfo.CORRECTED_INVEST_PATIENT_ID, bankedFields.get(BankedSample.PATIENT_ID));
 
@@ -509,43 +486,6 @@ public class PromoteBanked extends LimsTask {
         cmoFields.put(CmoSampleInfo.USER_SAMPLE_ID, bankedFields.get(BankedSample.USER_SAMPLE_ID));
 
         return cmoFields;
-    }
-
-    String getCorrectedCmoSampleId(BankedSample bankedSample, String requestId) {
-        try {
-            checkSampleTypeAndPatientId(bankedSample);
-
-            if (shouldGenerateCmoId(bankedSample)) {
-                CorrectedCmoSampleView sampleView = createFrom(bankedSample);
-                String cmoSampleId = correctedCmoSampleIdGenerator.generate(sampleView, requestId, dataRecordManager, user);
-                log.info(String.format("Generated CMO Sample id for banked sample with id: %s (%s) is: %s", bankedSample
-                        .getUserSampleID(), bankedSample.getOtherSampleId(), cmoSampleId));
-                return cmoSampleId;
-            } else {
-                log.info(String.format("Non-Human sample: %s with species: %s won't have cmo sample id generated.",
-                        bankedSample.getUserSampleID(), bankedSample.getSpecies()));
-                return "";
-            }
-        } catch (Exception e) {
-            String message = String.format("Corrected cmo id autogeneration failed for banked sample: %s",
-                    bankedSample.getUserSampleID());
-            log.warn(message, e);
-            errors.put(bankedSample.getUserSampleID(), String.format("%s. Cause: %s", message, e.getMessage()));
-
-            return "";
-        }
-    }
-
-    protected static boolean shouldGenerateCmoId(BankedSample bankedSample) {
-        return isHumanSample(bankedSample) || HUMAN_RECIPES.contains(bankedSample.getRecipe());
-    }
-
-    protected static boolean isHumanSample(BankedSample bankedSample) {
-        return !StringUtils.isEmpty(bankedSample.getSpecies()) && humanSamplePredicate.test(bankedSample);
-    }
-
-    private CorrectedCmoSampleView createFrom(BankedSample bankedSample) throws LimsException {
-        return bankedSampleToCorrectedCmoSampleIdConverter.convert(bankedSample);
     }
 
     /**
