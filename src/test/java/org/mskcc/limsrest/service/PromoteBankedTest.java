@@ -28,7 +28,6 @@ import static org.mskcc.domain.Recipe.*;
 public class PromoteBankedTest {
 
     private PromoteBanked promoteBanked;
-    private CorrectedCmoSampleIdGenerator correctedCmoSampleIdGenerator;
     private ConnectionLIMS conn;
     private List<DataRecord> readCoverageRefs;
     private DataRecordManager dataRecordManager;
@@ -36,7 +35,6 @@ public class PromoteBankedTest {
 
     @Before
     public void setup() {
-        correctedCmoSampleIdGenerator = Mockito.mock(CorrectedCmoSampleIdGenerator.class);
         this.conn = new ConnectionLIMS("igo-lims04.mskcc.org", 1088, "fe74d8e1-c94b-4002-a04c-eb5c492704ba", "test-runner", "password1");
         dataRecordManager= conn.getConnection().getDataRecordManager();
         user = conn.getConnection().getUser();
@@ -71,59 +69,6 @@ public class PromoteBankedTest {
     }
 
     @Test
-    public void getCorrectedCmoSampleId_whenSpeciesIsNotHuman() {
-        //given
-        Map<String, Object> fields = ImmutableMap.<String, Object>builder()
-                .put("CMOPatientId", "pid343")
-                .put("SampleType", "DNA")
-                .put("Species", "Mouse")
-                .build();
-        BankedSample bankedSample = new BankedSample("123", fields);
-
-        //when
-        String id = promoteBanked.getCorrectedCmoSampleId(bankedSample, "123_S");
-
-        //then
-        Assertions.assertThat(id).isEmpty();
-    }
-
-    @Test
-    public void whenSpeciesIsHumanOrRecipeIsTreatedAsHuman_shouldGenerateCmoSampleId() throws Exception {
-        assertShouldGenerateCmoId("Mouse", IMPACT_341.getValue(), true);
-        assertShouldGenerateCmoId("Mouse", HEME_PACT_V_3.getValue(), true);
-        assertShouldGenerateCmoId("Human", HEME_PACT_V_3.getValue(), true);
-        assertShouldGenerateCmoId("Human", MSK_ACCESS_V1.getValue(), true);
-        assertShouldGenerateCmoId("", MSK_ACCESS_V1.getValue(), true);
-    }
-
-    @Test
-    public void whenRecipeIsNotTreatedAsHumanOrEmpty_shouldNotGenerateCmoSampleId() throws Exception {
-        assertShouldGenerateCmoId("Mouse", RNA_SEQ.getValue(), false);
-        assertShouldGenerateCmoId(RequestSpecies.BACTERIA.getValue(), Recipe.SMARTER_AMP_SEQ.getValue(), false);
-        assertShouldGenerateCmoId("", "", false);
-    }
-
-    private void assertShouldGenerateCmoId(String species, String recipe, boolean expected) {
-        //given
-        Map<String, Object> fields = ImmutableMap.<String, Object>builder()
-                .put("CMOPatientId", "pid343")
-                .put("SampleType", "DNA")
-                .put("Species", species)
-                .put("Recipe", recipe)
-                .put("UserSampleID", "U2343")
-                .put("OtherSampleId", "O34234")
-                .put("SpecimenType", "Resection")
-                .build();
-        BankedSample bankedSample = new BankedSample("123", fields);
-
-        //when
-        boolean result = PromoteBanked.shouldGenerateCmoId(bankedSample);
-
-        //then
-        Assertions.assertThat(result).isEqualTo(expected);
-    }
-
-    @Test
     public void getCmoFields() {
         Map<String, Object> bankedFields = ImmutableMap.<String, Object>builder()
                 .put("CMOPatientId", "pid343")
@@ -147,8 +92,7 @@ public class PromoteBankedTest {
                 .put(BankedSample.SAMPLE_ORIGIN, "")
                 .build();
 
-        Map<String, Object> cmoFields = promoteBanked.getCmoFields(bankedFields, "C-AAAAA1-V001-d", "123_S", "igo-2",
-                "UIFDF");
+        Map<String, Object> cmoFields = promoteBanked.getCmoFields(bankedFields, "123_S", "igo-2", "UIFDF");
         Assertions.assertThat(cmoFields).containsKeys(
                 CmoSampleInfo.ALT_ID, CmoSampleInfo.CLINICAL_INFO, CmoSampleInfo.CMO_PATIENT_ID,
                 CmoSampleInfo.CMOSAMPLE_CLASS, CmoSampleInfo.COLLECTION_YEAR, CmoSampleInfo
