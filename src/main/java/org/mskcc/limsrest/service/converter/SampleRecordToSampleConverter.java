@@ -7,14 +7,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.CmoSampleInfo;
 import org.mskcc.domain.sample.Sample;
-import org.mskcc.limsrest.service.PatientSamplesWithCmoInfoRetriever;
 import org.mskcc.util.VeloxConstants;
 
 import java.rmi.RemoteException;
 import java.util.Map;
 
 public class SampleRecordToSampleConverter {
-    private final static Log LOGGER = LogFactory.getLog(PatientSamplesWithCmoInfoRetriever.class);
+    private final static Log LOGGER = LogFactory.getLog(SampleRecordToSampleConverter.class);
 
     public Sample convert(DataRecord sampleRecord, User user) throws RemoteException, IoError {
         Map<String, Object> fields = sampleRecord.getFields(user);
