@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  * @author Aaron Gabow
  */
 public class AddOrCreateSet extends LimsTask {
-    private final static Log log = LogFactory.getLog(GenerateSampleCmoIdTask.class);
+    private final static Log log = LogFactory.getLog(AddOrCreateSet.class);
 
     String[] requestIds;
     String[] igoIds;
