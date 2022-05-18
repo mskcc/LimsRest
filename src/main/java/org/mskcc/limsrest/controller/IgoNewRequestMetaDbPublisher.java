@@ -1,8 +1,19 @@
 package org.mskcc.limsrest.controller;
 
 import com.google.gson.Gson;
+
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import javax.servlet.http.HttpServletRequest;
+
+import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.datarecord.IoError;
+import com.velox.api.datarecord.NotFound;
+import com.velox.api.user.User;
+import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -13,6 +24,7 @@ import org.mskcc.limsrest.model.RequestSample;
 import org.mskcc.limsrest.model.RequestSampleList;
 import org.mskcc.limsrest.model.SampleManifest;
 import org.mskcc.limsrest.service.GetProjectDetails;
+import org.mskcc.limsrest.service.GetRequestPermissionsTask;
 import org.mskcc.limsrest.service.GetRequestSamplesTask;
 import org.mskcc.limsrest.service.GetSampleManifestTask;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +46,7 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 @RequestMapping("/")
 public class IgoNewRequestMetaDbPublisher {
+    private final Log log = LogFactory.getLog(IgoNewRequestMetaDbPublisher.class);
 
     @Value("${nats.igo_request_validator_topic}")
     private String IGO_REQUEST_VALIDATOR_TOPIC;
@@ -41,16 +54,21 @@ public class IgoNewRequestMetaDbPublisher {
     @Autowired
     private Gateway messagingGateway;
 
+    @Value("${airflow_pass}")
+    private String airflow_pass;
+
     private final GetProjectDetails task = new GetProjectDetails();
-    private Log log = LogFactory.getLog(IgoNewRequestMetaDbPublisher.class);
     private final ConnectionLIMS conn;
-    private final ConnectionPoolLIMS connPool;
 
     public IgoNewRequestMetaDbPublisher(ConnectionLIMS conn, ConnectionPoolLIMS connPool) throws Exception {
         this.conn = conn;
-        this.connPool = connPool;
     }
 
+    /**
+     * Called by sloancmo.jar when the "Mark Delivery" button is clicked in the LIMS
+     * @param requestId
+     * @param request
+     */
     @GetMapping("/publishIgoRequestToMetaDb")
     public void getContent(@RequestParam(value = "requestId") String requestId, HttpServletRequest request) {
         log.info("/publishIgoRequestToMetaDb for request: " + requestId + " " + request.getRemoteAddr());
@@ -59,12 +77,49 @@ public class IgoNewRequestMetaDbPublisher {
             log.error("FAILURE: requestId is not using a valid format.");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "FAILURE: requestId is not using a valid format.");
         }
+
+        callAirflowDeliverPipeline(requestId);
+
         // get project id from request id
         String[] parts = requestId.split("_");
         String projectId = parts[0];
         RequestSampleList requestDetails = getRequestSampleListDetails(requestId);
         List<Map<String, Object>> sampleManifestList = getSampleManifestListByRequestId(requestDetails);
         publishIgoNewRequestToMetaDb(projectId, requestDetails, sampleManifestList);
+    }
+
+    /**
+     * Call the Airflow pipeline to deliver pipeline output for a project.
+     * @param requestId
+     */
+    private void callAirflowDeliverPipeline(String requestId) {
+        try {
+            VeloxConnection vConn = conn.getConnection();
+            User user = vConn.getUser();
+            DataRecordManager drm = vConn.getDataRecordManager();
+            List<DataRecord> requestList = drm.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
+            DataRecord requestDataRecord = requestList.get(0);
+            String piEmail = requestDataRecord.getStringVal("PIemail", user);
+            String pi = GetRequestPermissionsTask.labHeadEmailToLabName(piEmail);
+            String recipe = requestDataRecord.getStringVal("RequestName", user);
+
+            //2021-01-01T15:00:00Z - airflow format
+            DateFormat airflowFormat = new SimpleDateFormat( "yyyy-MM-ddTHH:mm:ssZ");
+            String exec_date = airflowFormat.format(new Date(System.currentTimeMillis() + 10000));
+            // create json body like:
+            // {"execution_date": "2022-05-19", "conf": {"project":"13097","pi":"abdelwao","recipe":"RNASeq-TruSeqPolyA"}}
+            String conf = "\"conf\":{\"project\":\""+requestId+"\",\"pi\":\""+pi+"\",\"recipe\":\""+recipe+"\"}";
+            String body ="{\"execution_date\":\""+exec_date+"\",\""+conf+"}";
+
+            log.info("Calling airflow pipeline: " + body);
+            String cmd = "curl -X POST -d '" + body + "' 'http://igo-ln01:8080/api/v1/dags/deliver_pipeline/dagRuns' -H 'content-type: application/json' --user \"airflow-api:"+airflow_pass+"\"";
+            Runtime.getRuntime().exec(cmd);
+        } catch (IoError | IOException ex) {
+            log.error(ex);
+            ex.printStackTrace();
+        } catch (NotFound e) {
+            e.printStackTrace();
+        }
     }
 
     /**
