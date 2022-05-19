@@ -75,7 +75,7 @@ public class GetRequestPermissionsTask {
         return false;
     }
 
-    protected static String labHeadEmailToLabName(String labHeadEmail) {
+    public static String labHeadEmailToLabName(String labHeadEmail) {
         if (emailToLabMap.containsKey(labHeadEmail))
             return emailToLabMap.get(labHeadEmail);
         // there are 10 old LIMS projects with a @sloankettering.edu labHeadEmail address
