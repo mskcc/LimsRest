@@ -2,7 +2,9 @@ package org.mskcc.limsrest.controller;
 
 import com.google.gson.Gson;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -106,13 +108,24 @@ public class IgoNewRequestMetaDbPublisher {
             Date execDate = new Date(System.currentTimeMillis() + 10000);
             String body = formatDeliverPipelineJSON(requestId, pi, recipe, execDate);
             log.info("Calling airflow pipeline with json body: " + body);
-            String cmd = "curl -X POST -d '" + body + "' 'http://igo-ln01:8080/api/v1/dags/deliver_pipeline/dagRuns' -H 'content-type: application/json' --user \"airflow-api:"+airflow_pass+"\"";
-
-            Runtime.getRuntime().exec(cmd);
+            String cmd = "/bin/curl -X POST -d '" + body + "' \"http://igo-ln01:8080/api/v1/dags/deliver_pipeline/dagRuns\" -H \"content-type:application/json\" --user \"airflow-api:"+airflow_pass+"\"";
+            System.out.println("CMD:" + cmd);
+            Process process = Runtime.getRuntime().exec(cmd);
+            logResults(process, log);
         } catch (IoError | NotFound | IOException ex) {
             log.error(ex);
             ex.printStackTrace();
         }
+    }
+
+    public static void logResults(Process process, Log log) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+        String line = "";
+        log.info("Airflow exec pipeline error results:");
+        while ((line = reader.readLine()) != null) {
+            log.info(line);
+        }
+        reader.close();
     }
 
     protected static String formatDeliverPipelineJSON(String requestId, String pi, String recipe, Date execDate) {
