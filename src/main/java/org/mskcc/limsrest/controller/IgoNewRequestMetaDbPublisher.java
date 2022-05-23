@@ -117,9 +117,10 @@ public class IgoNewRequestMetaDbPublisher {
 
     protected static String formatDeliverPipelineJSON(String requestId, String pi, String recipe, Date execDate) {
         //2021-01-01T15:00:00Z - airflow format
-        DateFormat airflowFormat = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ssZ");
+        DateFormat airflowFormat = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");
+        airflowFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         String dateStr = airflowFormat.format(execDate);
-        dateStr = dateStr.replace(' ', 'T');
+        dateStr = dateStr.replace(' ', 'T') + "Z";
         // create json body like:
         // {"execution_date": "2022-05-19", "conf": {"project":"13097","pi":"abdelwao","recipe":"RNASeq-TruSeqPolyA"}}
         String conf = "\"conf\":{\"project\":\""+requestId+"\",\"pi\":\""+pi+"\",\"recipe\":\""+recipe+"\"}";
