@@ -3,6 +3,7 @@ package org.mskcc.limsrest.controller;
 import com.google.gson.Gson;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.DateFormat;
@@ -108,9 +109,11 @@ public class IgoNewRequestMetaDbPublisher {
             Date execDate = new Date(System.currentTimeMillis() + 10000);
             String body = formatDeliverPipelineJSON(requestId, pi, recipe, execDate);
             log.info("Calling airflow pipeline with json body: " + body);
-            String cmd = "/bin/curl -X POST -d '" + body + "' \"http://igo-ln01:8080/api/v1/dags/deliver_pipeline/dagRuns\" -H \"content-type:application/json\" --user \"airflow-api:"+airflow_pass+"\"";
+            String cmd = "curl -X POST -d '" + body + "' \"http://igo-ln01:8080/api/v1/dags/deliver_pipeline/dagRuns\" -H \"content-type:application/json\" --user \"airflow-api:"+airflow_pass+"\"";
             System.out.println("CMD:" + cmd);
-            Process process = Runtime.getRuntime().exec(cmd);
+            // instead of separating each command argument for processBuilder just use "sh"
+            ProcessBuilder builder = new ProcessBuilder("sh", "-c", cmd);
+            Process process = builder.start();
             logResults(process, log);
         } catch (IoError | NotFound | IOException ex) {
             log.error(ex);
