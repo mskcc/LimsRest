@@ -17,7 +17,6 @@ import org.mskcc.domain.RequestSpecies;
 import org.mskcc.domain.sample.BankedSample;
 import org.mskcc.domain.sample.CmoSampleInfo;
 import org.mskcc.limsrest.ConnectionLIMS;
-import org.mskcc.limsrest.service.cmoinfo.CorrectedCmoSampleIdGenerator;
 
 import java.rmi.RemoteException;
 import java.util.*;

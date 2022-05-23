@@ -2,7 +2,10 @@ package org.mskcc.limsrest.controller;
 
 import com.google.gson.Gson;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -103,21 +106,42 @@ public class IgoNewRequestMetaDbPublisher {
             String pi = GetRequestPermissionsTask.labHeadEmailToLabName(piEmail);
             String recipe = requestDataRecord.getStringVal("RequestName", user);
 
-            //2021-01-01T15:00:00Z - airflow format
-            DateFormat airflowFormat = new SimpleDateFormat( "yyyy-MM-ddTHH:mm:ssZ");
-            String exec_date = airflowFormat.format(new Date(System.currentTimeMillis() + 10000));
-            // create json body like:
-            // {"execution_date": "2022-05-19", "conf": {"project":"13097","pi":"abdelwao","recipe":"RNASeq-TruSeqPolyA"}}
-            String conf = "\"conf\":{\"project\":\""+requestId+"\",\"pi\":\""+pi+"\",\"recipe\":\""+recipe+"\"}";
-            String body ="{\"execution_date\":\""+exec_date+"\",\""+conf+"}";
-
+            Date execDate = new Date(System.currentTimeMillis() + 10000);
+            String body = formatDeliverPipelineJSON(requestId, pi, recipe, execDate);
             log.info("Calling airflow pipeline with json body: " + body);
-            String cmd = "curl -X POST -d '" + body + "' 'http://igo-ln01:8080/api/v1/dags/deliver_pipeline/dagRuns' -H 'content-type: application/json' --user \"airflow-api:"+airflow_pass+"\"";
-            Runtime.getRuntime().exec(cmd);
+            String cmd = "curl -X POST -d '" + body + "' \"http://igo-ln01:8080/api/v1/dags/deliver_pipeline/dagRuns\" -H \"content-type:application/json\" --user \"airflow-api:"+airflow_pass+"\"";
+            System.out.println("CMD:" + cmd);
+            // instead of separating each command argument for processBuilder just use "sh"
+            ProcessBuilder builder = new ProcessBuilder("sh", "-c", cmd);
+            Process process = builder.start();
+            logResults(process, log);
         } catch (IoError | NotFound | IOException ex) {
             log.error(ex);
             ex.printStackTrace();
         }
+    }
+
+    public static void logResults(Process process, Log log) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+        String line = "";
+        log.info("Airflow exec pipeline error results:");
+        while ((line = reader.readLine()) != null) {
+            log.info(line);
+        }
+        reader.close();
+    }
+
+    protected static String formatDeliverPipelineJSON(String requestId, String pi, String recipe, Date execDate) {
+        //2021-01-01T15:00:00Z - airflow format
+        DateFormat airflowFormat = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");
+        airflowFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        String dateStr = airflowFormat.format(execDate);
+        dateStr = dateStr.replace(' ', 'T') + "Z";
+        // create json body like:
+        // {"execution_date": "2022-05-19", "conf": {"project":"13097","pi":"abdelwao","recipe":"RNASeq-TruSeqPolyA"}}
+        String conf = "\"conf\":{\"project\":\""+requestId+"\",\"pi\":\""+pi+"\",\"recipe\":\""+recipe+"\"}";
+        String body ="{\"execution_date\":\""+dateStr+"\","+conf+"}";
+        return body;
     }
 
     /**
@@ -143,7 +167,7 @@ public class IgoNewRequestMetaDbPublisher {
 
     /**
      * Returns list of sample manifest instances given a request id.
-     * @param requestId
+     * @param sl
      * @return
      */
     private List<Map<String, Object>> getSampleManifestListByRequestId(RequestSampleList sl) {
@@ -185,7 +209,7 @@ public class IgoNewRequestMetaDbPublisher {
     /**
      * Packages message for CMO MetaDB and publishes to MetaDB NATS server.
      * @param projectId
-     * @param requestId
+     * @param requestDetails
      * @param sampleManifestList
      */
     private void publishIgoNewRequestToMetaDb(String projectId, RequestSampleList requestDetails, List<Map<String, Object>> sampleManifestList) {
