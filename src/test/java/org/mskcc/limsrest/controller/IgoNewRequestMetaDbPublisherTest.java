@@ -9,8 +9,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class IgoNewRequestMetaDbPublisherTest {
 
     @Test
-    static void formatDeliverPipelineJSON() {
+    void formatDeliverPipelineJSON() {
         Date now = new Date();
-        IgoNewRequestMetaDbPublisher.formatDeliverPipelineJSON("12345","Curie","WGS", now);
+        String result = IgoNewRequestMetaDbPublisher.formatDeliverPipelineJSON("12345","Curie","WGS", now);
+        System.out.println(result);
     }
 }
