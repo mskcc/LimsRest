@@ -10,7 +10,7 @@ public class UtilsTest {
     @Test
     public void getOncotreeTumorType(){
         assertEquals("Thyroid Cancer", Utils.getOncotreeTumorType("THAP"));
-        assertEquals("Breast Cancer, NOS", Utils.getOncotreeTumorType("Breast"));
+        assertEquals("Breast Cancer", Utils.getOncotreeTumorType("Breast"));
     }
 
     @Test

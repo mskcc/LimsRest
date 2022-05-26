@@ -11,18 +11,13 @@ import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
-import org.mskcc.domain.Recipe;
-import org.mskcc.domain.RequestSpecies;
 import org.mskcc.domain.sample.BankedSample;
 import org.mskcc.domain.sample.CmoSampleInfo;
 import org.mskcc.limsrest.ConnectionLIMS;
-import org.mskcc.limsrest.service.cmoinfo.CorrectedCmoSampleIdGenerator;
 
 import java.rmi.RemoteException;
 import java.util.*;
 
-import static org.junit.Assert.*;
 import static org.mskcc.domain.Recipe.*;
 
 public class PromoteBankedTest {
