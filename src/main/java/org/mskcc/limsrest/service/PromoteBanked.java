@@ -21,6 +21,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.MultiValueMap;
 
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.*;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -230,6 +235,7 @@ public class PromoteBanked extends LimsTask {
                 }
                 log.info(igoUser + "  promoted the banked samples " + sb.toString());
                 dataRecordManager.storeAndCommit(igoUser + "  promoted the banked samples " + sb.toString() + "into " + requestId, null, user);
+                sendEmailToTeamwork();
             } catch (Exception e) {
                 log.error(e);
 
@@ -264,7 +270,6 @@ public class PromoteBanked extends LimsTask {
 
             return new ResponseEntity<>(warningMessage, headers, HttpStatus.OK );
         }
-
         return new ResponseEntity<>("Successfully promoted sample(s) into " + requestId, headers, HttpStatus.OK );
     }
 
@@ -502,5 +507,42 @@ public class PromoteBanked extends LimsTask {
             return sampleName;
         }
         return sampleName.replaceFirst("(_[0-9]+)[0-9_]*$", endMatch.group(1));
+    }
+
+    public void sendEmailToTeamwork() {
+        String recipient = "348494_786768@tasks.teamwork.com";
+        String sender = "skigodata@mskcc.org";
+        String host = "localhost";
+
+        Properties properties = System.getProperties();
+
+        // Setting up mail server
+        properties.setProperty("mail.smtp.host", host);
+
+        // creating session object to get properties
+        Session session = Session.getDefaultInstance(properties);
+
+        try
+        {
+            MimeMessage message = new MimeMessage(session);
+
+            message.setFrom(new InternetAddress(sender));
+            message.addRecipient(Message.RecipientType.TO, new InternetAddress(recipient));
+            /*
+            * Adding tag(s) if required
+            * Assigning to some member
+            * Notifying others
+            * Setting priority
+            * */
+            message.setSubject("This is the Title of the Task");
+            String iLabComment = "";
+            message.setText(iLabComment);
+
+            Transport.send(message);
+
+            log.info("Mail successfully sent");
+        } catch (MessagingException mex) {
+            log.error(String.format("Failed to send the email to Teamwork. %s:", mex.getStackTrace()));
+        }
     }
 }
