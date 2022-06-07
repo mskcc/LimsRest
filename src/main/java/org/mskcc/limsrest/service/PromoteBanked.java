@@ -510,7 +510,8 @@ public class PromoteBanked extends LimsTask {
     }
 
     public void sendEmailToTeamwork() {
-        String recipient = "348494_786768@tasks.teamwork.com";
+        String recipient = "348494_786768@tasks.teamwork.com"; // Update it to IGO VMP list address and change the
+        // appropriate column setting so the card gets there
         String sender = "skigodata@mskcc.org";
         String host = "localhost";
 
