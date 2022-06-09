@@ -1,5 +1,7 @@
 package org.mskcc.limsrest.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.velox.api.datarecord.*;
@@ -7,6 +9,7 @@ import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.utilities.SloanCMOUtils;
 import com.velox.sloan.cmo.utilities.UuidGenerator;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -18,19 +21,28 @@ import org.mskcc.limsrest.util.Utils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.yaml.snakeyaml.Yaml;
 
 /**
  * A queued task that takes banked ids, a service id and optionally a request  and project.
@@ -55,6 +67,10 @@ public class PromoteBanked extends LimsTask {
     boolean dryrun = false;
     private Multimap<String, String> errors = HashMultimap.create();
     private List<Object> samplesWithDifferentNewIgoIdAndRowIndex = new LinkedList<>();
+
+    private RestTemplate restTemplateIGO;
+    private static final String baseUrl = "https://api.ilabsolutions.com/";
+    private static final String ILABS_CONFIG = "/srv/www/sapio/lims/tomcat/webapps/ilabs.yml";
 
     public PromoteBanked() {
     }
@@ -235,7 +251,7 @@ public class PromoteBanked extends LimsTask {
                 }
                 log.info(igoUser + "  promoted the banked samples " + sb.toString());
                 dataRecordManager.storeAndCommit(igoUser + "  promoted the banked samples " + sb.toString() + "into " + requestId, null, user);
-                sendEmailToTeamwork();
+                sendEmailToTeamwork(requestId);
             } catch (Exception e) {
                 log.error(e);
 
@@ -509,10 +525,10 @@ public class PromoteBanked extends LimsTask {
         return sampleName.replaceFirst("(_[0-9]+)[0-9_]*$", endMatch.group(1));
     }
 
-    public void sendEmailToTeamwork() {
-        String recipient = "348494_786768@tasks.teamwork.com"; // Update it to IGO VMP list address and change the
+    public void sendEmailToTeamwork(String requestId) {
+        String recipient = "348494_786768@tasks.teamwork.com"; // Update it to IGO VMB list address and change the
         // appropriate column setting so the card gets there
-        String sender = "skigodata@mskcc.org";
+        String sender = "mirhajf@mskcc.org";//"skigodata@mskcc.org";
         String host = "localhost";
 
         Properties properties = System.getProperties();
@@ -536,14 +552,63 @@ public class PromoteBanked extends LimsTask {
             * Setting priority
             * */
             message.setSubject("This is the Title of the Task");
-            String iLabComment = "";
+
+            org.apache.commons.lang3.tuple.Pair<String, String> ilabsConfigIGO = getIlabConfig("IGO");
+            String token_igo = ilabsConfigIGO.getValue();
+            String core_id_igo = ilabsConfigIGO.getKey();
+            log.info("core id is: " + core_id_igo);
+            this.restTemplateIGO = restTemplate(token_igo);
+
+            log.info("serviceRequest was not null!");
+            String url = String.format("%s/custom_form/load_expansion/6892820", baseUrl, core_id_igo);
+            ObjectNode res = restTemplateIGO.getForObject(url, ObjectNode.class);
+            JsonNode arrayNode = res.get("ilab_response").get("service_requests");
+            JsonNode serviceRequest = arrayNode.get(0);
+            log.info("res value retrieved!");
+
+            log.info("arraynode value retrieved!");
+
+            ObjectMapper mapper = new ObjectMapper();
+            String pretty = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(serviceRequest);
+            log.info("ilab response, service requests is: " + pretty);
+            String iLabComment = serviceRequest.get("description").asText();
+            log.info("The comment extracted from iLab request is: " + iLabComment);
+
             message.setText(iLabComment);
 
-            Transport.send(message);
+            //Transport.send(message);
 
             log.info("Mail successfully sent");
-        } catch (MessagingException mex) {
+        } catch (MessagingException | JsonProcessingException mex) {
             log.error(String.format("Failed to send the email to Teamwork. %s:", mex.getStackTrace()));
         }
+    }
+
+    public org.apache.commons.lang3.tuple.Pair<String, String> getIlabConfig(String core) {
+        Map<String, Map<String, String>> config = null;
+        try {
+            config = new Yaml().load(new FileInputStream(new File(ILABS_CONFIG)));
+        } catch (FileNotFoundException e) {
+            String info = "Had trouble updating some general info files: missing ilabs yml file. " + e.toString();
+            log.info(info);
+            throw new RuntimeException(e);
+        }
+        String core_id = String.valueOf(config.get("core_ids").get(core));
+        String token = config.get("tokens").get(Integer.valueOf(core_id));
+        return org.apache.commons.lang3.tuple.Pair.of(core_id, token);
+    }
+
+    public RestTemplate restTemplate(String accessToken) {
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.getInterceptors().add(getBearerTokenInterceptor(accessToken));
+        return restTemplate;
+    }
+
+    public static ClientHttpRequestInterceptor getBearerTokenInterceptor(String accessToken) {
+        ClientHttpRequestInterceptor interceptor = (request, body, execution) -> {
+            request.getHeaders().add("Authorization", "Bearer " + accessToken);
+            return execution.execute(request, body);
+        };
+        return interceptor;
     }
 }
