@@ -31,9 +31,15 @@ import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.*;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.*;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.*;
@@ -42,6 +48,12 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -69,7 +81,7 @@ public class PromoteBanked extends LimsTask {
     private List<Object> samplesWithDifferentNewIgoIdAndRowIndex = new LinkedList<>();
 
     private RestTemplate restTemplateIGO;
-    private static final String baseUrl = "https://api.ilabsolutions.com/";
+    private static final String baseUrl = "https://my.ilabsolutions.com/custom_form/load_expansion";
     private static final String ILABS_CONFIG = "/srv/www/sapio/lims/tomcat/webapps/ilabs.yml";
 
     public PromoteBanked() {
@@ -251,7 +263,7 @@ public class PromoteBanked extends LimsTask {
                 }
                 log.info(igoUser + "  promoted the banked samples " + sb.toString());
                 dataRecordManager.storeAndCommit(igoUser + "  promoted the banked samples " + sb.toString() + "into " + requestId, null, user);
-                sendEmailToTeamwork(requestId);
+                sendEmailToTeamwork("13276");
             } catch (Exception e) {
                 log.error(e);
 
@@ -528,7 +540,7 @@ public class PromoteBanked extends LimsTask {
     public void sendEmailToTeamwork(String requestId) {
         String recipient = "348494_786768@tasks.teamwork.com"; // Update it to IGO VMB list address and change the
         // appropriate column setting so the card gets there
-        String sender = "mirhajf@mskcc.org";//"skigodata@mskcc.org";
+        String sender = "mirhajf@mskcc.org";//"skigodata@mskcc.org" does not work!
         String host = "localhost";
 
         Properties properties = System.getProperties();
@@ -551,38 +563,88 @@ public class PromoteBanked extends LimsTask {
             * Notifying others
             * Setting priority
             * */
-            message.setSubject("This is the Title of the Task");
 
             org.apache.commons.lang3.tuple.Pair<String, String> ilabsConfigIGO = getIlabConfig("IGO");
             String token_igo = ilabsConfigIGO.getValue();
             String core_id_igo = ilabsConfigIGO.getKey();
             log.info("core id is: " + core_id_igo);
             this.restTemplateIGO = restTemplate(token_igo);
+            String formId = "6913631";
+            //https://my.ilabsolutions.com/custom_form/load_expansion/6907681
+            String url = String.format("%s/%s", baseUrl, formId);
+            log.info("url is: " + url);
+//            File xmlFile = new File(url);
+//            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+//            DocumentBuilder builder = factory.newDocumentBuilder();
+//            Document doc = builder.parse(xmlFile);
+//            log.info("parsing is done!");
 
-            log.info("serviceRequest was not null!");
-            String url = String.format("%s/custom_form/load_expansion/6892820", baseUrl, core_id_igo);
-            ObjectNode res = restTemplateIGO.getForObject(url, ObjectNode.class);
-            JsonNode arrayNode = res.get("ilab_response").get("service_requests");
-            JsonNode serviceRequest = arrayNode.get(0);
-            log.info("res value retrieved!");
 
-            log.info("arraynode value retrieved!");
+//            String xmlString = doc.getTextContent();
+//            System.out.println("Pretty printing by Transformer");
+//            System.out.println("=============================================");
+//            System.out.println(prettyPrintByTransformer(xmlString, 2, true));
+            //list of constant form ids??
+            List<String> formIds = Collections.unmodifiableList(new LinkedList<String>() {{
+                add("6907681");
+                add("6906592");
+                add("6907645");
 
-            ObjectMapper mapper = new ObjectMapper();
-            String pretty = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(serviceRequest);
-            log.info("ilab response, service requests is: " + pretty);
-            String iLabComment = serviceRequest.get("description").asText();
-            log.info("The comment extracted from iLab request is: " + iLabComment);
+            }});
+//            NodeList formNodeList = doc.getElementsByTagName("td");
+//            log.info("formNodeList extracted!");
+//            Node formElement = formNodeList.item(formNodeList.getLength()-1);
+//            log.info("formElement extracted!");
+//            ObjectNode res = restTemplateIGO.getForObject(url, ObjectNode.class);
+//            log.info("res value retrieved!");
+//            JsonNode arrayNode = res.get("ilab_response").get("service_requests");
+//            log.info("arraynode value retrieved!");
+//            JsonNode serviceRequest = arrayNode.get(0);
+//            log.info("serviceRequest extracted!");
 
-            message.setText(iLabComment);
+//            ObjectMapper mapper = new ObjectMapper();
+//            String pretty = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(serviceRequest);
+//            log.info("ilab response, service requests is: " + pretty);
+
+//            Element element = (Element) formElement;
+//            log.info("element extracted!");
+            //String iLabComment = element.getElementsByTagName("textarea").item(0).getTextContent();
+//            log.info("The comment extracted from iLab request is: " + iLabComment);
+//
+//
+//            message.setSubject("This is the Title of the Task");
+//            message.setText(iLabComment);
 
             //Transport.send(message);
 
             log.info("Mail successfully sent");
-        } catch (MessagingException | JsonProcessingException mex) {
+        } catch (MessagingException mex) {
             log.error(String.format("Failed to send the email to Teamwork. %s:", mex.getStackTrace()));
         }
     }
+
+
+    public static String prettyPrintByTransformer(String xmlString, int indent, boolean ignoreDeclaration) {
+
+        try {
+            InputSource src = new InputSource(new StringReader(xmlString));
+            Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(src);
+
+            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            transformerFactory.setAttribute("indent-number", indent);
+            Transformer transformer = transformerFactory.newTransformer();
+            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, ignoreDeclaration ? "yes" : "no");
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+
+            Writer out = new StringWriter();
+            transformer.transform(new DOMSource(document), new StreamResult(out));
+            return out.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("Error occurs when pretty-printing xml:\n" + xmlString, e);
+        }
+    }
+
 
     public org.apache.commons.lang3.tuple.Pair<String, String> getIlabConfig(String core) {
         Map<String, Map<String, String>> config = null;
