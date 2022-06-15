@@ -10,8 +10,12 @@ import com.velox.api.datarecord.NotFound;
 import com.velox.api.sqlbuilder.*;
 import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.sloan.cmo.staticstrings.datatypes.DT_Sample;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.service.assignedprocess.AssignedProcess;
+import org.mskcc.limsrest.service.assignedprocess.AssignedProcessCreator;
+import org.mskcc.limsrest.service.assignedprocess.QcStatusAwareProcessAssigner;
 import org.mskcc.limsrest.util.Messages;
 import org.springframework.security.access.prepost.PreAuthorize;
 
@@ -28,6 +32,7 @@ public class SetQcInvestigatorDecisionTask extends LimsTask {
 
     private static Log log = LogFactory.getLog(SetQcInvestigatorDecisionTask.class);
     List<Map<String, Object>> data;
+    protected QcStatusAwareProcessAssigner qcStatusAwareProcessAssigner = new QcStatusAwareProcessAssigner();
 
     public SetQcInvestigatorDecisionTask() {
     }
@@ -57,6 +62,11 @@ public class SetQcInvestigatorDecisionTask extends LimsTask {
                     for (Map field : decisions) {
                         if (String.valueOf(match.getRecordId()).equals(String.valueOf(field.get("RecordId")))) {
                             match.setDataField("InvestigatorDecision", field.get("InvestigatorDecision"), user);
+                            if(field.get("InvestigatorDecision").toString().toLowerCase().contains("Continue processing")) {
+                                String newStatus = "Ready for - Decision made assign lab process";
+                                match.setDataField(DT_Sample.EXEMPLAR_SAMPLE_STATUS, newStatus, user);
+                            }
+
                             count++;
                         }
                     }
