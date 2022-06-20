@@ -753,12 +753,12 @@ public class Utils {
      * @param user
      * @return
      */
-    public static List<DataRecord> getSamplesRelatedToSeqExperiment(List<DataRecord> seqExperiments, String runId, User user){
+    public static List<DataRecord> getSamplesRelatedToSeqExperiment(List<DataRecord> seqExperiments, String runId, User user) {
         List<DataRecord> relatedSamples = new ArrayList<>();
-        try{
-            for (DataRecord exp : seqExperiments){
+        try {
+            for (DataRecord exp : seqExperiments) {
                 DataRecord [] flowCells = exp.getChildrenOfType(FlowCellModel.DATA_TYPE_NAME, user);
-                for (DataRecord fc : flowCells){
+                for (DataRecord fc : flowCells) {
                     DataRecord [] flowCellLanes = fc.getChildrenOfType(FlowCellLaneModel.DATA_TYPE_NAME, user);
                     for (DataRecord fcl : flowCellLanes){
                         relatedSamples.addAll(fcl.getParentsOfType(SampleModel.DATA_TYPE_NAME, user));
@@ -766,7 +766,7 @@ public class Utils {
                 }
             }
         } catch (IoError | RemoteException e) {
-            LOGGER.error(String.format("%s Exception while retrieveing flowcell lanes for sequencing run %s: %s", ExceptionUtils.getRootCause(e), runId, ExceptionUtils.getStackTrace(e)));
+            LOGGER.error(String.format("%s Exception while retrieving flow cell lanes for sequencing run %s: %s", ExceptionUtils.getRootCause(e), runId, ExceptionUtils.getStackTrace(e)));
         }
         return relatedSamples;
     }

@@ -423,7 +423,9 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         Set<String> addedSampleIds = new HashSet<>();
         List<DataRecord> flowCellSamples = new ArrayList<>();
         try {
+            log.info(String.format("Querying table %s where field %s LIKE RUN %s", IlluminaSeqExperimentModel.DATA_TYPE_NAME, IlluminaSeqExperimentModel.SEQUENCER_RUN_FOLDER, runId));
             List<DataRecord> illuminaSeqExperiments = dataRecordManager.queryDataRecords(IlluminaSeqExperimentModel.DATA_TYPE_NAME, IlluminaSeqExperimentModel.SEQUENCER_RUN_FOLDER + " LIKE '%" + runId + "%'", user);
+            log.info("Calling getSamplesRelatedToSeqExperiment " + illuminaSeqExperiments.size());
             List<DataRecord> relatedSamples = getSamplesRelatedToSeqExperiment(illuminaSeqExperiments, runId, user);
             log.info(String.format("Total Related Samples for IlluminaSeq Run %s: %d", runId, relatedSamples.size()));
             Stack<DataRecord> sampleStack = new Stack<>();
