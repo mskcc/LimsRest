@@ -1,17 +1,14 @@
 package org.mskcc.limsrest.service;
 
-import com.velox.api.datarecord.DataRecord;
-import com.velox.api.datarecord.InvalidValue;
-import com.velox.api.datarecord.IoError;
-import com.velox.api.datarecord.NotFound;
+import com.velox.api.datarecord.*;
 import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.PoolingSampleLibProtocolModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.assignedprocess.QcStatus;
 import org.mskcc.limsrest.service.assignedprocess.QcStatusAwareProcessAssigner;
-import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.rmi.RemoteException;
 import java.util.List;
@@ -23,21 +20,22 @@ import static org.mskcc.util.VeloxConstants.SAMPLE;
  *
  * @author Aaron Gabow
  */
-public class ToggleSampleQcStatus extends LimsTask {
+public class ToggleSampleQcStatusTask {
+    private static Log log = LogFactory.getLog(ToggleSampleQcStatusTask.class);
     // Pooling protocol that is used to identify sample that should be re-pooled
     private final static String POOLING_PROTOCOL = PoolingSampleLibProtocolModel.DATA_TYPE_NAME;
-    private static Log log = LogFactory.getLog(ToggleSampleQcStatus.class);
     protected QcStatusAwareProcessAssigner qcStatusAwareProcessAssigner = new QcStatusAwareProcessAssigner();
     boolean isSeqAnalysisSampleqc = true; // which LIMS table to update
-    long recordId;
-    String status;
-    String requestId;
-    String sampleId;
-    String correctedSampleId;
-    String run;
-    String analyst;
-    String note;
-    String fastqPath;
+    private ConnectionLIMS conn;
+    private long recordId;
+    private String status;
+    private String requestId;
+    private String sampleId;
+    private String correctedSampleId;
+    private String run;
+    private String analyst;
+    private String note;
+    private String fastqPath;
 
     protected static void setSeqAnalysisSampleQcStatus(DataRecord seqQc, QcStatus qcStatus, String status, User user)
             throws IoError, InvalidValue, NotFound, RemoteException {
@@ -51,7 +49,9 @@ public class ToggleSampleQcStatus extends LimsTask {
         }
     }
 
-    public void init(long recordId, String status, String requestId, String correctedSampleId, String run, String qcType, String analyst, String note, String fastqPath) {
+    public ToggleSampleQcStatusTask(long recordId, String status, String requestId, String correctedSampleId,
+                                    String run, String qcType, String analyst, String note, String fastqPath,
+                                    ConnectionLIMS conn) {
         this.recordId = recordId;
         this.status = status;
         this.requestId = requestId;
@@ -63,13 +63,16 @@ public class ToggleSampleQcStatus extends LimsTask {
         if ("Post".equals(qcType)) {
             isSeqAnalysisSampleqc = false;
         }
+        this.conn = conn;
     }
 
-    @PreAuthorize("hasRole('USER')")
-    @Override
-    public Object execute(VeloxConnection conn) {
+    public String execute() {
         // designed to update either SeqAnalysisSampleQC or PostSeqAnalysisQC LIMS status tables
         try {
+            VeloxConnection vConn = conn.getConnection();
+            User user = vConn.getUser();
+            DataRecordManager dataRecordManager = vConn.getDataRecordManager();
+
             if (isSeqAnalysisSampleqc) {
                 log.info("SeqAnalysisSampleQC updating to " + status + " for record:" + recordId);
                 DataRecord seqQc = dataRecordManager.querySystemForRecord(recordId, "SeqAnalysisSampleQC", user);
@@ -78,7 +81,7 @@ public class ToggleSampleQcStatus extends LimsTask {
                 // Failed status is terminal on Qc site and can't be changed.
                 if (QcStatus.FAILED.getText().equals(currentStatusLIMS)) {
                     log.info("QC status already failed and can't be updated from there via REST interface.");
-                    return QcStatus.FAILED;
+                    return QcStatus.FAILED.toString();
                 }
 
                 QcStatus qcStatus = QcStatus.fromString(status);
@@ -87,11 +90,13 @@ public class ToggleSampleQcStatus extends LimsTask {
                 if (qcStatus == QcStatus.RESEQUENCE_POOL) {
                     qcStatusAwareProcessAssigner.assign(dataRecordManager, user, seqQc, qcStatus);
                 } else if (qcStatus == QcStatus.REPOOL_SAMPLE) {
-                    repoolByPoolingProtocol(seqQc, qcStatus);
+                    repoolByPoolingProtocol(seqQc, qcStatus, dataRecordManager, user);
                 }
                 dataRecordManager.storeAndCommit("SeqAnalysisSampleQC updated to " + status, null, user);
 
                 log.info("SeqAnalysisSampleQC updated to:" + status + " from:" + currentStatusLIMS);
+
+                // TODO call Apache Airflow workflow to delete failed fastq.gz files
             } else {
                 List<DataRecord> request = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
                 if (request.size() != 1) {
@@ -103,7 +108,7 @@ public class ToggleSampleQcStatus extends LimsTask {
                 //we must do it this was because otherwise if the cmo info records resolve a sample swap we could miss it
                 for (int i = 0; i < childSamples.length; i++) {
                     DataRecord[] cmoInfo = childSamples[i].getChildrenOfType("SampleCMOInfoRecords", user);
-                    if (cmoInfo.length > 0 && cmoInfoCheck(correctedSampleId, cmoInfo[0])) {
+                    if (cmoInfo.length > 0 && cmoInfoCheck(correctedSampleId, cmoInfo[0], user)) {
                         matchedSample = childSamples[i];
                     }
                 }
@@ -165,6 +170,20 @@ public class ToggleSampleQcStatus extends LimsTask {
         return status;
     }
 
+    public boolean cmoInfoCheck(String correctedId, DataRecord cmoInfo, User user) {
+        try {
+            if (correctedId.equals(cmoInfo.getStringVal("CorrectedCMOID", user)) && !cmoInfo.getStringVal
+                    ("CorrectedCMOID", user).equals("")) {
+                return true;
+            } else if (correctedId.equals(cmoInfo.getStringVal("OtherSampleId", user))) {
+                return true;
+            }
+        } catch (NullPointerException npe) {
+        } catch (NotFound | RemoteException e) {
+        }
+        return false;
+    }
+
     /**
      * Searches for record w/ @POOLING_PROTOCOL and assigns process based on that record. Samples with both Statuses
      * of "Ready for - Pooling of Sample Libraries by Volume" & "Ready for - Pooling of Sample Libraries for Sequencing"
@@ -174,21 +193,21 @@ public class ToggleSampleQcStatus extends LimsTask {
      * @param seqQc
      * @param qcStatus
      */
-    private void repoolByPoolingProtocol(DataRecord seqQc, QcStatus qcStatus) {
-        DataRecord[] childSamples = getParentsOfType(seqQc, SAMPLE);
+    private void repoolByPoolingProtocol(DataRecord seqQc, QcStatus qcStatus, DataRecordManager dataRecordManager, User user) {
+        DataRecord[] childSamples = getParentsOfType(seqQc, SAMPLE, user);
         if (childSamples != null && childSamples.length > 0) {
             log.info(String.format("Found record %s. Searching for child sample with Protocol: %s",
                     recordId, POOLING_PROTOCOL));
             DataRecord record;
             while (childSamples != null && childSamples.length > 0) {
                 record = childSamples[0];
-                if (isRecordForRepooling(record)) {
+                if (isRecordForRepooling(record, user)) {
                     String pooledSampleRecord = Long.toString(record.getRecordId());
                     log.info(String.format("Found sample, %s, with Protocol: %s", pooledSampleRecord, POOLING_PROTOCOL));
                     qcStatusAwareProcessAssigner.assign(dataRecordManager, user, record, qcStatus);
                     return;
                 }
-                childSamples = getChildrenOfType(record, SAMPLE);
+                childSamples = getChildrenOfType(record, SAMPLE, user);
             }
         }
         log.error(String.format("Failed to assign Repool Process for %s. No associated sample with %s",
@@ -202,8 +221,8 @@ public class ToggleSampleQcStatus extends LimsTask {
      * @param record
      * @return boolean
      */
-    private boolean isRecordForRepooling(DataRecord record) {
-        DataRecord[] poolingSampleLibProtocol = getChildrenOfType(record, POOLING_PROTOCOL);
+    private boolean isRecordForRepooling(DataRecord record, User user) {
+        DataRecord[] poolingSampleLibProtocol = getChildrenOfType(record, POOLING_PROTOCOL, user);
         return poolingSampleLibProtocol.length > 0;
     }
 
@@ -214,7 +233,7 @@ public class ToggleSampleQcStatus extends LimsTask {
      * @param table
      * @return
      */
-    private DataRecord[] getChildrenOfType(DataRecord record, String table) {
+    private DataRecord[] getChildrenOfType(DataRecord record, String table, User user) {
         try {
             return record.getChildrenOfType(table, user);
         } catch (IoError | RemoteException e) {
@@ -233,7 +252,7 @@ public class ToggleSampleQcStatus extends LimsTask {
      * @param table
      * @return
      */
-    private DataRecord[] getParentsOfType(DataRecord record, String table) {
+    private DataRecord[] getParentsOfType(DataRecord record, String table, User user) {
         try {
             List<DataRecord> dataRecords = record.getParentsOfType(table, user);
             DataRecord[] dataRecordsArray = new DataRecord[dataRecords.size()];
