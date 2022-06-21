@@ -24,6 +24,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.client.RestTemplate;
 
 import javax.mail.Message;
@@ -31,16 +32,7 @@ import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.*;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import java.io.*;
-import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -48,12 +40,6 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -81,7 +67,7 @@ public class PromoteBanked extends LimsTask {
     private List<Object> samplesWithDifferentNewIgoIdAndRowIndex = new LinkedList<>();
 
     private RestTemplate restTemplateIGO;
-    private static final String baseUrl = "https://my.ilabsolutions.com/custom_form/load_expansion";
+    private static final String baseUrl = "https://api.ilabsolutions.com/v1/cores";
     private static final String ILABS_CONFIG = "/srv/www/sapio/lims/tomcat/webapps/ilabs.yml";
 
     public PromoteBanked() {
@@ -263,7 +249,7 @@ public class PromoteBanked extends LimsTask {
                 }
                 log.info(igoUser + "  promoted the banked samples " + sb.toString());
                 dataRecordManager.storeAndCommit(igoUser + "  promoted the banked samples " + sb.toString() + "into " + requestId, null, user);
-                sendEmailToTeamwork("13276");
+                sendEmailToTeamwork();
             } catch (Exception e) {
                 log.error(e);
 
@@ -537,7 +523,7 @@ public class PromoteBanked extends LimsTask {
         return sampleName.replaceFirst("(_[0-9]+)[0-9_]*$", endMatch.group(1));
     }
 
-    public void sendEmailToTeamwork(String requestId) {
+    public void sendEmailToTeamwork() {
         String recipient = "348494_786768@tasks.teamwork.com"; // Update it to IGO VMB list address and change the
         // appropriate column setting so the card gets there
         String sender = "mirhajf@mskcc.org";//"skigodata@mskcc.org" does not work!
@@ -569,51 +555,56 @@ public class PromoteBanked extends LimsTask {
             String core_id_igo = ilabsConfigIGO.getKey();
             log.info("core id is: " + core_id_igo);
             this.restTemplateIGO = restTemplate(token_igo);
-            String formId = "6913631";
-            //https://my.ilabsolutions.com/custom_form/load_expansion/6907681
-            String url = String.format("%s/%s", baseUrl, formId);
-            log.info("url is: " + url);
-//            File xmlFile = new File(url);
-//            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-//            DocumentBuilder builder = factory.newDocumentBuilder();
-//            Document doc = builder.parse(xmlFile);
-//            log.info("parsing is done!");
+            log.info("restTemplateIGO has been extracted!!");
+            List<CustomForm> customForms = new ArrayList<>();
+            boolean hasMilestone = false;
+            boolean hasCustomForm = false;
+            boolean hasCharge = false;
 
-
-//            String xmlString = doc.getTextContent();
-//            System.out.println("Pretty printing by Transformer");
-//            System.out.println("=============================================");
-//            System.out.println(prettyPrintByTransformer(xmlString, 2, true));
-            //list of constant form ids??
-            List<String> formIds = Collections.unmodifiableList(new LinkedList<String>() {{
-                add("6907681");
-                add("6906592");
-                add("6907645");
-
-            }});
-//            NodeList formNodeList = doc.getElementsByTagName("td");
-//            log.info("formNodeList extracted!");
-//            Node formElement = formNodeList.item(formNodeList.getLength()-1);
-//            log.info("formElement extracted!");
-//            ObjectNode res = restTemplateIGO.getForObject(url, ObjectNode.class);
-//            log.info("res value retrieved!");
-//            JsonNode arrayNode = res.get("ilab_response").get("service_requests");
-//            log.info("arraynode value retrieved!");
-//            JsonNode serviceRequest = arrayNode.get(0);
-//            log.info("serviceRequest extracted!");
-
-//            ObjectMapper mapper = new ObjectMapper();
-//            String pretty = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(serviceRequest);
-//            log.info("ilab response, service requests is: " + pretty);
-
-//            Element element = (Element) formElement;
-//            log.info("element extracted!");
-            //String iLabComment = element.getElementsByTagName("textarea").item(0).getTextContent();
-//            log.info("The comment extracted from iLab request is: " + iLabComment);
-//
-//
-//            message.setSubject("This is the Title of the Task");
-//            message.setText(iLabComment);
+            String url = String.format("%s/%s/service_requests.json?name=%s", baseUrl, core_id_igo, requestId);
+            ObjectNode res = restTemplateIGO.getForObject(url, ObjectNode.class);
+            JsonNode arrayNode = res.get("ilab_response").get("service_requests");
+            JsonNode serviceRequest = arrayNode.get(0);
+            String serviceRequestId = serviceRequest.get("id").asText();
+            JsonNode serviceRows = serviceRequest.get("service_rows");
+            if (!ObjectUtils.isEmpty(serviceRows)) {
+                Iterator<JsonNode> iterator = serviceRows.iterator();
+                while (iterator.hasNext()) {
+                    JsonNode node = iterator.next();
+                    String type = node.get("type").asText();
+                    if ("CustomForm".equalsIgnoreCase(type)) {
+                        hasCustomForm = true;
+                    } else if ("Milestone".equalsIgnoreCase(type)) {
+                        hasMilestone = true;
+                    } else if ("Charge".equalsIgnoreCase(type)) {
+                        hasCharge = true;
+                    } else {
+                        throw new RuntimeException("Unrecognized service_row type, check to see if API changed: " + type);
+                    }
+                }
+            } else {
+                throw new RuntimeException("Could not get service_row for service request id, " +
+                        "check to see if API changed: " + requestId);
+            }
+            log.info("requestId is: " + requestId);
+            log.info("hasCustomForm value: " + hasCustomForm);
+            if (hasCustomForm) {
+                customForms = parseCustomForms(String.format("%s/%s/service_requests/%s/custom_forms.json", baseUrl, core_id_igo, serviceRequestId), restTemplateIGO);
+            }
+            log.info("customForms size is: " + customForms.size());
+            CustomForm customForm = customForms.get(0);
+            log.info("customForm id is:" + customForm.getId());
+            log.info("customForm name is:" + customForm.getName());
+            for (String field : customForm.getFields().keySet()) {
+                log.info("custom form fields are: " + field + "\n");
+            }
+            String iLabComment = customForm.getFields().get("Additional comments or instructions:");
+            log.info("The comment extracted from iLab request is: " + iLabComment);
+            String subject = customForm.getFields().get("Project Name:");
+            if (subject != null)
+                message.setSubject(subject);
+            if (iLabComment != null)
+                message.setText(iLabComment);
 
             //Transport.send(message);
 
@@ -622,29 +613,6 @@ public class PromoteBanked extends LimsTask {
             log.error(String.format("Failed to send the email to Teamwork. %s:", mex.getStackTrace()));
         }
     }
-
-
-    public static String prettyPrintByTransformer(String xmlString, int indent, boolean ignoreDeclaration) {
-
-        try {
-            InputSource src = new InputSource(new StringReader(xmlString));
-            Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(src);
-
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            transformerFactory.setAttribute("indent-number", indent);
-            Transformer transformer = transformerFactory.newTransformer();
-            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, ignoreDeclaration ? "yes" : "no");
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-
-            Writer out = new StringWriter();
-            transformer.transform(new DOMSource(document), new StreamResult(out));
-            return out.toString();
-        } catch (Exception e) {
-            throw new RuntimeException("Error occurs when pretty-printing xml:\n" + xmlString, e);
-        }
-    }
-
 
     public org.apache.commons.lang3.tuple.Pair<String, String> getIlabConfig(String core) {
         Map<String, Map<String, String>> config = null;
@@ -672,5 +640,45 @@ public class PromoteBanked extends LimsTask {
             return execution.execute(request, body);
         };
         return interceptor;
+    }
+
+    private List<CustomForm> parseCustomForms(String url, RestTemplate restTemplate) {
+        log.info("in the parsing method!");
+        ObjectNode customFormsJson = restTemplate.getForObject(url, ObjectNode.class);
+        log.info("customFormsJson extracted!");
+        List<CustomForm> parsedCustomForms = new ArrayList<>();
+        JsonNode arrayNode = customFormsJson.get("ilab_response").get("custom_forms");
+        log.info("arrayNode extracted!");
+        if (arrayNode == null || arrayNode.size() == 0) {
+            throw new RuntimeException("Could not get custom form, check to see if API changed");
+        }
+
+        log.info("in parse forms..");
+        Iterator<JsonNode> iterator = arrayNode.iterator();
+        while (iterator.hasNext()) {
+            JsonNode customForm = iterator.next();
+            if (ObjectUtils.isEmpty(customForm.get("fields"))) continue;
+            String id = customForm.get("id").asText();
+            String name = customForm.get("name").asText();
+            String note = customForm.get("note").asText();
+            CustomForm parsedCustomForm = new CustomForm(id, name, note);
+            JsonNode fields = customForm.get("fields");
+            fields.forEach(field -> {
+                if (field.get("value") != null) {
+                    String lcFormName = field.get("name").asText();
+                    String lcFormValue = "";
+                    if (field.get("value").isArray()) {
+                        List<String> vals = new ArrayList<>();
+                        field.get("value").forEach(jsonNode -> vals.add(jsonNode.asText()));
+                        lcFormValue = String.join(";", vals);
+                    } else {
+                        lcFormValue = field.get("value").asText();
+                    }
+                    parsedCustomForm.addField(lcFormName, lcFormValue);
+                }
+            });
+            parsedCustomForms.add(parsedCustomForm);
+        }
+        return parsedCustomForms;
     }
 }
