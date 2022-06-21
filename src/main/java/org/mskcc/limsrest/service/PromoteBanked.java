@@ -600,9 +600,8 @@ public class PromoteBanked extends LimsTask {
             }
             String iLabComment = customForm.getFields().get("Additional comments or instructions:");
             log.info("The comment extracted from iLab request is: " + iLabComment);
-            String subject = customForm.getFields().get("Project Name:");
-            if (subject != null)
-                message.setSubject(subject);
+            String numOfSamples = customForm.getFields().get("Number of Samples:");
+            message.setSubject(requestId + "(" + numOfSamples + ")");
             if (iLabComment != null)
                 message.setText(iLabComment);
 
