@@ -62,11 +62,11 @@ public class SetQcInvestigatorDecisionTask extends LimsTask {
                     for (Map field : decisions) {
                         if (String.valueOf(match.getRecordId()).equals(String.valueOf(field.get("RecordId")))) {
                             match.setDataField("InvestigatorDecision", field.get("InvestigatorDecision"), user);
-                            if(field.get("InvestigatorDecision").toString().toLowerCase().contains("Continue processing")) {
+                            if(field.get("InvestigatorDecision").toString().toLowerCase().contains("continue processing")) {
                                 String newStatus = "Ready for - Pending User Decision";
-                                match.setDataField(DT_Sample.EXEMPLAR_SAMPLE_STATUS, newStatus, user);
+                                match.getParentsOfType("Sample", user).get(0).setDataField(DT_Sample.
+                                        EXEMPLAR_SAMPLE_STATUS, newStatus, user);
                             }
-
                             count++;
                         }
                     }
