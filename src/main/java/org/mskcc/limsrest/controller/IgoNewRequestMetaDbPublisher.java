@@ -108,9 +108,11 @@ public class IgoNewRequestMetaDbPublisher {
             Date execDate = new Date(System.currentTimeMillis() + 10000);
             String body = formatDeliverPipelineJSON(requestId, lab, recipe, execDate);
 
-            log.info("Calling airflow pipeline with json body: " + body);
-            String cmd = "curl -X POST -d '" + body + "' 'http://igo-ln01:8080/api/v1/dags/deliver_pipeline/dagRuns' -H 'content-type: application/json' --user \"airflow-api:"+airflow_pass+"\"";
-            Runtime.getRuntime().exec(cmd);
+            String cmd = "/bin/curl -X POST -d '" + body + "' \"http://igo-ln01:8080/api/v1/dags/deliver_pipeline/dagRuns\" -H 'content-type: application/json' --user \"airflow-api:" + airflow_pass + "\"";
+            log.info("Calling airflow pipeline: " + cmd);
+            ProcessBuilder processBuilder = new ProcessBuilder();
+            processBuilder.command("bash", "-c", cmd);
+            Process process = processBuilder.start();
         } catch (IoError | NotFound | IOException ex) {
             log.error(ex);
             ex.printStackTrace();
