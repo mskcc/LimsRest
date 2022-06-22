@@ -2,22 +2,20 @@ package org.mskcc.limsrest.controller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.ConnectionPoolLIMS;
-import org.mskcc.limsrest.service.ToggleSampleQcStatus;
+import org.mskcc.limsrest.ConnectionLIMS;
+import org.mskcc.limsrest.service.ToggleSampleQcStatusTask;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.concurrent.Future;
 
 
 @RestController
 @RequestMapping("/")
 public class SetQcStatus {
     private final static Log log = LogFactory.getLog(SetQcStatus.class);
-    private final ConnectionPoolLIMS conn;
+    private final ConnectionLIMS conn;
 
-    public SetQcStatus(ConnectionPoolLIMS conn) {
+    public SetQcStatus(ConnectionLIMS conn) {
         this.conn = conn;
     }
 
@@ -54,11 +52,9 @@ public class SetQcStatus {
 
         if (recordId != null) {
             long record = Long.parseLong(recordId);
-            ToggleSampleQcStatus task = new ToggleSampleQcStatus();
-            task.init(record, status, request, sample, run, qcType, analyst, note, fastqPath);
-            Future<Object> result = conn.submitTask(task);
+            ToggleSampleQcStatusTask task = new ToggleSampleQcStatusTask(record, status, request, sample, run, qcType, analyst, note, fastqPath, conn);
             try {
-                return "NewStatus:" + result.get();
+                return "NewStatus:" + task.execute();
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
                 return "ERROR IN SETTING REQUEST STATUS: " + e.getMessage();

@@ -170,22 +170,4 @@ public abstract class LimsTask implements VeloxExecutable<Object>, Callable<Obje
             projectSummary.setCmoProjectId("Annotation failed: " + e.getMessage());
         }
     }
-
-    /**
-     * put as a method in LimsTask because it reoccurs in sevaral tasks and how this record is being used keeps
-     * shifting. Maybe once it stabilizes we can put this elsewhere.
-     */
-    public boolean cmoInfoCheck(String correctedId, DataRecord cmoInfo) {
-        try {
-            if (correctedId.equals(cmoInfo.getStringVal("CorrectedCMOID", user)) && !cmoInfo.getStringVal
-                    ("CorrectedCMOID", user).equals("")) {
-                return true;
-            } else if (correctedId.equals(cmoInfo.getStringVal("OtherSampleId", user))) {
-                return true;
-            }
-        } catch (NullPointerException npe) {
-        } catch (NotFound | RemoteException e) {
-        }
-        return false;
-    }
 }
