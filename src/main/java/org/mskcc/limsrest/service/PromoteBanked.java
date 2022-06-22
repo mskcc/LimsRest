@@ -555,12 +555,10 @@ public class PromoteBanked extends LimsTask {
             String core_id_igo = ilabsConfigIGO.getKey();
             log.info("core id is: " + core_id_igo);
             this.restTemplateIGO = restTemplate(token_igo);
-            log.info("restTemplateIGO has been extracted!!");
             List<CustomForm> customForms = new ArrayList<>();
             boolean hasCustomForm = false;
 
             String url = String.format("%s/%s/service_requests.json?name=%s", baseUrl, core_id_igo, serviceId);
-            log.info("url: " + url);
             ObjectNode res = restTemplateIGO.getForObject(url, ObjectNode.class);
             JsonNode arrayNode = res.get("ilab_response").get("service_requests");
             JsonNode serviceRequest = arrayNode.get(0);
@@ -650,17 +648,13 @@ public class PromoteBanked extends LimsTask {
     }
 
     private List<CustomForm> parseCustomForms(String url, RestTemplate restTemplate) {
-        log.info("in the parsing method!");
         ObjectNode customFormsJson = restTemplate.getForObject(url, ObjectNode.class);
-        log.info("customFormsJson extracted!");
         List<CustomForm> parsedCustomForms = new ArrayList<>();
         JsonNode arrayNode = customFormsJson.get("ilab_response").get("custom_forms");
-        log.info("arrayNode extracted!");
         if (arrayNode == null || arrayNode.size() == 0) {
             throw new RuntimeException("Could not get custom form, check to see if API changed");
         }
 
-        log.info("in parse forms..");
         Iterator<JsonNode> iterator = arrayNode.iterator();
         while (iterator.hasNext()) {
             JsonNode customForm = iterator.next();
