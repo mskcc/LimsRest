@@ -557,11 +557,10 @@ public class PromoteBanked extends LimsTask {
             this.restTemplateIGO = restTemplate(token_igo);
             log.info("restTemplateIGO has been extracted!!");
             List<CustomForm> customForms = new ArrayList<>();
-            boolean hasMilestone = false;
             boolean hasCustomForm = false;
-            boolean hasCharge = false;
 
-            String url = String.format("%s/%s/service_requests.json?name=%s", baseUrl, core_id_igo, requestId);
+            String url = String.format("%s/%s/service_requests.json?name=%s", baseUrl, core_id_igo, serviceId);
+            log.info("url: " + url);
             ObjectNode res = restTemplateIGO.getForObject(url, ObjectNode.class);
             JsonNode arrayNode = res.get("ilab_response").get("service_requests");
             JsonNode serviceRequest = arrayNode.get(0);
@@ -574,11 +573,7 @@ public class PromoteBanked extends LimsTask {
                     String type = node.get("type").asText();
                     if ("CustomForm".equalsIgnoreCase(type)) {
                         hasCustomForm = true;
-                    } else if ("Milestone".equalsIgnoreCase(type)) {
-                        hasMilestone = true;
-                    } else if ("Charge".equalsIgnoreCase(type)) {
-                        hasCharge = true;
-                    } else {
+                    } else if (!"Milestone".equalsIgnoreCase(type) && !"Charge".equalsIgnoreCase(type)) {
                         throw new RuntimeException("Unrecognized service_row type, check to see if API changed: " + type);
                     }
                 }
@@ -591,17 +586,30 @@ public class PromoteBanked extends LimsTask {
             if (hasCustomForm) {
                 customForms = parseCustomForms(String.format("%s/%s/service_requests/%s/custom_forms.json", baseUrl, core_id_igo, serviceRequestId), restTemplateIGO);
             }
-            log.info("customForms size is: " + customForms.size());
             CustomForm customForm = customForms.get(0);
             log.info("customForm id is:" + customForm.getId());
             log.info("customForm name is:" + customForm.getName());
+
+            Pattern commentPattern = Pattern.compile("comment", Pattern.CASE_INSENSITIVE);
+            Pattern numOfSamplePattern = Pattern.compile("number of samples", Pattern.CASE_INSENSITIVE);
+            String iLabComment = "";
+            String numOfSamples = "";
             for (String field : customForm.getFields().keySet()) {
-                log.info("custom form fields are: " + field + "\n");
+                log.info("custom form fields are: " + field + customForm.getFields().get(field));
+                Matcher commentMatcher = commentPattern.matcher(field);
+                Matcher numOfSampleMatcher = numOfSamplePattern.matcher(field);
+                boolean commentMatchFound = commentMatcher.find();
+                boolean numOfSamplesMatchFound = numOfSampleMatcher.find();
+                if (commentMatchFound) {
+                    iLabComment = customForm.getFields().get(field);
+                }
+                if(numOfSamplesMatchFound) {
+                    numOfSamples = customForm.getFields().get(field);
+                }
             }
-            String iLabComment = customForm.getFields().get("Additional comments or instructions:");
             log.info("The comment extracted from iLab request is: " + iLabComment);
-            String numOfSamples = customForm.getFields().get("Number of Samples:");
-            message.setSubject(requestId + "(" + numOfSamples + ")");
+            log.info("num of samples = " + numOfSamples);
+            message.setSubject(requestId + " (" + numOfSamples + ")");
             if (iLabComment != null)
                 message.setText(iLabComment);
 
