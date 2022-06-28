@@ -1,26 +1,16 @@
 package org.mskcc.limsrest.service;
 
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-import com.velox.api.datarecord.DataRecord;
-import com.velox.api.datarecord.InvalidValue;
-import com.velox.api.datarecord.IoError;
-import com.velox.api.datarecord.NotFound;
-import com.velox.api.sqlbuilder.*;
+import com.velox.api.datarecord.*;
 import com.velox.api.user.User;
-import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
-import com.velox.sloan.cmo.staticstrings.datatypes.DT_AssignedProcess;
 import com.velox.sloan.cmo.staticstrings.datatypes.DT_Sample;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.domain.Workflow;
 import org.mskcc.limsrest.service.assignedprocess.*;
 import org.mskcc.limsrest.util.Messages;
 import org.springframework.security.access.prepost.PreAuthorize;
 
-import java.rmi.RemoteException;
 import java.util.*;
 
 /*
@@ -71,42 +61,55 @@ public class SetQcInvestigatorDecisionTask extends LimsTask {
                         if (String.valueOf(match.getRecordId()).equals(String.valueOf(field.get("RecordId")))) {
                             match.setDataField("InvestigatorDecision", field.get("InvestigatorDecision"), user);
                             if(field.get("InvestigatorDecision").toString().toLowerCase().contains("continue processing")) {
+                                log.info("investigator decision is continue processing.");
                                 String newStatus = "Ready for - Assign from Investigator Decisions";
                                 if(match.getParentsOfType("Sample", user) != null && match.getParentsOfType
                                         ("Sample", user).size() > 0) {
                                     match.getParentsOfType("Sample", user).get(0).setDataField(DT_Sample.
                                             EXEMPLAR_SAMPLE_STATUS, newStatus, user);
+                                    log.info("After assigning sample status to new status!");
 
                                     DataRecord sample = match.getParentsOfType("Sample", user).get(0);
-                                    String status = match.getParentsOfType("Sample", user).get(0).
-                                            getDataField(DT_Sample.EXEMPLAR_SAMPLE_STATUS, user).toString();
-
-                                    AssignedProcessConfig assignedProcessConfig = getProcessAssignerConfig(status, sample, user);
-                                    AssignedProcess assignedProcess = assignedProcessConfig.getProcessToAssign();
-                                    Map<String, Object> assignedProcessMap = AssignedProcessCreator.create(sample, assignedProcess, user);
-
-                                    List<DataRecord> assignedProcesses = dataRecordManager.addDataRecords(DT_AssignedProcess.DATA_TYPE,
-                                            Collections.singletonList(assignedProcessMap), user);
-                                    validateAssignedProcessAdded(assignedProcessMap, assignedProcesses);
-                                    //assignedProcesses.get(0);
-
-
-
-                                    // Add a record in "Assigned Process" table
-                                    String sampleId = match.getParentsOfType("Sample", user).
-                                            get(0).getDataField("SampleId", user).toString();
-                                    List<DataRecord> assigned = dataRecordManager.queryDataRecords("AssignedProcess",
-                                            "SampleId = '" + sampleId + "'", user);
-                                    log.info("assigned size: " + assigned.size());
-                                    if (assigned.size() != 1) {
-                                        return "Failed to set status for " + sampleId + " because it maps to multiple assigned Processes";
+                                    String igoId = sample.getDataField("SampleId", user).toString();
+                                    log.info("Sample's IGO Id is: " + igoId);
+                                    List<DataRecord> qcRecordDna = dataRecordManager.queryDataRecords("QcReportDna",
+                                            "SampleId = '" + igoId + "'", user);
+                                    List<DataRecord> qcRecordRna = dataRecordManager.queryDataRecords("QcReportRna",
+                                            "SampleId = '" + igoId + "'", user);
+                                    List<DataRecord> qcRecordLibrary = dataRecordManager.queryDataRecords("QcReportLibrary",
+                                            "SampleId = '" + igoId + "'", user);
+                                    DataRecord qcStat = null;
+                                    if(qcRecordDna != null && qcRecordDna.size() > 0) {
+                                        qcStat = qcRecordDna.get(0);
+                                        log.info("seqQc is assigned with a dna qc report record!");
                                     }
-                                    DataRecord[] childSamples = assigned.get(0).getChildrenOfType("Sample", user);
-                                    log.info("childSamples length: " + childSamples.length);
-                                    if (childSamples.length == 0) {
-                                        log.info("no sample under assigned process -> adding the sample as a child to assigned process");
-                                        assigned.get(0).addChild(match.getParentsOfType("Sample", user).get(0), user);
+                                    else if(qcRecordRna != null && qcRecordRna.size() > 0) {
+                                        qcStat = qcRecordRna.get(0);
+                                        log.info("seqQc is assigned with a rna qc report record!");
                                     }
+                                    else if(qcRecordLibrary != null && qcRecordLibrary.size() > 0) {
+                                        qcStat = qcRecordLibrary.get(0);
+                                        log.info("seqQc is assigned with a rna qc report record!");
+                                    }
+                                    log.info("qcStat igo id is:" + qcStat.getDataField("SampleId", user));
+                                    qcStatusAwareProcessAssigner.assign(dataRecordManager, user, qcStat, QcStatus.fromString(newStatus));
+                                    log.info("After assign is completed!");
+
+//                                    String status = match.getParentsOfType("Sample", user).get(0).
+//                                            getDataField(DT_Sample.EXEMPLAR_SAMPLE_STATUS, user).toString();
+//
+//                                    // Add a record in "Assigned Process" table
+//                                    String sampleId = match.getParentsOfType("Sample", user).
+//                                            get(0).getDataField("SampleId", user).toString();
+//                                    List<DataRecord> assigned = dataRecordManager.queryDataRecords("AssignedProcess",
+//                                            "SampleId = '" + sampleId + "'", user);
+//                                    log.info("assigned size: " + assigned.size());
+//                                    DataRecord[] childSamples = assigned.get(0).getChildrenOfType("Sample", user);
+//                                    log.info("childSamples length: " + childSamples.length);
+//                                    if (childSamples.length == 0) {
+//                                        log.info("no sample under assigned process -> adding the sample as a child to assigned process");
+//                                        assigned.get(0).addChild(match.getParentsOfType("Sample", user).get(0), user);
+//                                    }
                                 }
                             }
                             count++;
@@ -123,12 +126,5 @@ public class SetQcInvestigatorDecisionTask extends LimsTask {
             return Messages.ERROR_IN + " SETTING INVESTIGATOR DECISION: " + e.getMessage();
         }
         return count + " Investigator Decisions set";
-    }
-
-    private void validateAssignedProcessAdded(Map<String, Object> assignedProcessMap, List<DataRecord> assignedProcesses) {
-        if (assignedProcesses.size() == 0)
-            throw new RuntimeException(String.format("Unable to assign process to sample: %s (%s)",
-                    assignedProcessMap.get(DT_AssignedProcess.SAMPLE_ID), assignedProcessMap.get(DT_AssignedProcess
-                            .OTHER_SAMPLE_ID)));
     }
 }
