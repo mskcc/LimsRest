@@ -13,6 +13,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.tomcat.jni.Time;
 import org.mskcc.domain.sample.*;
 import org.mskcc.limsrest.service.promote.BankedSampleToSampleConverter;
 import org.mskcc.limsrest.util.Constants;
@@ -34,6 +35,7 @@ import javax.mail.Transport;
 import javax.mail.internet.*;
 import java.io.*;
 import java.rmi.RemoteException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -524,9 +526,9 @@ public class PromoteBanked extends LimsTask {
     }
 
     public void sendEmailToTeamwork() {
-        String recipient = "348494_786768@tasks.teamwork.com"; // Update it to IGO VMB list address and change the
+        String recipient = "348494_786768@tasks.teamwork.com"; // Update it to IGO VMB list address: 348494_400757@tasks.teamwork.com
         // appropriate column setting so the card gets there
-        String sender = "mirhajf@mskcc.org";//"skigodata@mskcc.org" does not work!
+        String sender = "duniganm@mskcc.org";//"skigodata@mskcc.org" does not work!
         String host = "localhost";
 
         Properties properties = System.getProperties();
@@ -607,11 +609,20 @@ public class PromoteBanked extends LimsTask {
             }
             log.info("The comment extracted from iLab request is: " + iLabComment);
             log.info("num of samples = " + numOfSamples);
-            message.setSubject(requestId + " (" + numOfSamples + ")");
+            String pattern = "MM/dd/yyyy";
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+            String date = simpleDateFormat.format(new Date());
+            log.info("start date is: " + date);
+            long timeDiff = 21 * 24 * 60 * 60 * 1000;
+            long time = System.currentTimeMillis() + timeDiff;
+            String dueDate = simpleDateFormat.format(new Date(time));
+            log.info("Due date: " + dueDate);
+            message.setSubject("[" + date + "][" + dueDate + "]" + requestId + " (" + numOfSamples + ")");
             if (iLabComment != null)
+                message.setText("");
                 message.setText(iLabComment);
 
-            //Transport.send(message);
+            Transport.send(message);
 
             log.info("Mail successfully sent");
         } catch (MessagingException mex) {
