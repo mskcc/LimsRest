@@ -33,14 +33,6 @@ public class SetQcInvestigatorDecisionTask extends LimsTask {
         this.data = data;
 
     }
-    public static AssignedProcessConfig getProcessAssignerConfig(String qcStatus, DataRecord sample, User user) throws Exception {
-        switch (qcStatus) {
-            case "Assign from Investigator Decisions":
-                return new ResequencePoolAssignedProcessConfig(sample, user);
-            default:
-                throw new RuntimeException(String.format("Not supported qc status: %s", qcStatus));
-        }
-    }
 
     @PreAuthorize("hasRole('READ')")
     @Override
