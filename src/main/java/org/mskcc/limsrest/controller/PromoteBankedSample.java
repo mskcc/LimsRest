@@ -29,7 +29,7 @@ public class PromoteBankedSample {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @RequestMapping("/promoteBankedSample")  // POST called by REX
+    @RequestMapping("/promoteBankedSample")
     public ResponseEntity<String> getContent(@RequestParam(value = "bankedId") String[] bankedId,
                                              @RequestParam(value = "user") String user,
                                              @RequestParam(value = "requestId", defaultValue = "NULL") String request,
@@ -49,23 +49,19 @@ public class PromoteBankedSample {
 
         if (!Whitelists.textMatches(igoUser))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("igoUser is not using a valid format. " + Whitelists.textFormatText());
-
         if (!Whitelists.textMatches(materials))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("material is not using a valid format. " + Whitelists.textFormatText());
-
         if (!Whitelists.requestMatches(request))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("requestId is not using a valid format. " + Whitelists.requestFormatText());
-
         if (!Whitelists.requestMatches(project))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("projectId is not using a valid format. " + Whitelists.requestFormatText());
-
         if (!Whitelists.serviceMatches(service))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("serviceId is not using a valid format. " + Whitelists.serviceFormatText());
 
-        PromoteBanked task = new PromoteBanked();
-        task.init(bankedId, project, request, service, igoUser, materials, dryrun);
+        PromoteBanked promoteBankedTask = new PromoteBanked();
+        promoteBankedTask.init(bankedId, project, request, service, igoUser, materials, dryrun);
         log.info("Starting promote");
-        Future<Object> result = conn.submitTask(task);
+        Future<Object> result = conn.submitTask(promoteBankedTask);
         try {
             ResponseEntity<String> returnCode = (ResponseEntity<String>) result.get();
 
@@ -76,10 +72,8 @@ public class PromoteBankedSample {
             }
             return returnCode;
         } catch (Exception e) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            log.error("Promote error:" + e + "\nTRACE: " + sw.toString());
+            log.error("Promote error:" + e);
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }

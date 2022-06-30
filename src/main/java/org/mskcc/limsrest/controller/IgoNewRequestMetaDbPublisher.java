@@ -82,11 +82,14 @@ public class IgoNewRequestMetaDbPublisher {
 
         callAirflowDeliverPipeline(requestId);
 
-        // get project id from request id
-        String[] parts = requestId.split("_");
-        String projectId = parts[0];
+        sendToMetaDb(requestId);
+    }
+
+    public void sendToMetaDb(String requestId) {
         RequestSampleList requestDetails = getRequestSampleListDetails(requestId);
         List<Map<String, Object>> sampleManifestList = getSampleManifestListByRequestId(requestDetails);
+        // get project id from request id
+        String projectId = requestId.split("_")[0];
         publishIgoNewRequestToMetaDb(projectId, requestDetails, sampleManifestList);
     }
 

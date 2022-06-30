@@ -11,10 +11,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.domain.sample.*;
+import org.mskcc.limsrest.controller.IgoNewRequestMetaDbPublisher;
 import org.mskcc.limsrest.service.promote.BankedSampleToSampleConverter;
 import org.mskcc.limsrest.util.Constants;
 import org.mskcc.limsrest.util.Messages;
 import org.mskcc.limsrest.util.Utils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,18 +38,18 @@ import java.util.regex.Pattern;
  */
 public class PromoteBanked extends LimsTask {
     private static final Log log = LogFactory.getLog(PromoteBanked.class);
-
     private static final List<String> INDEX_MATERIALS = Arrays.asList("DNA Library", "Pooled Library", "cDNA Library");
-
     private final BankedSampleToSampleConverter bankedSampleToSampleConverter = new BankedSampleToSampleConverter();
 
-    String[] bankedIds;
-    String requestId;
-    String serviceId;
-    String projectId;
-    String igoUser;
-    String materials;
-    boolean dryrun = false;
+    @Autowired
+    private IgoNewRequestMetaDbPublisher metaDbPublisher;
+    private String[] bankedIds;
+    private String requestId;
+    private String serviceId;
+    private String projectId;
+    private String igoUser;
+    private String materials;
+    private boolean dryrun = false;
     private Multimap<String, String> errors = HashMultimap.create();
     private List<Object> samplesWithDifferentNewIgoIdAndRowIndex = new LinkedList<>();
 
@@ -92,7 +94,6 @@ public class PromoteBanked extends LimsTask {
 
             return ResponseEntity.ok(nextRequest);
         } else {
-
             try {
                 //GET ALL BANKED SAMPLES
                 StringBuffer sb = new StringBuffer();
@@ -119,7 +120,6 @@ public class PromoteBanked extends LimsTask {
                 }
                 log.info((indexNeeded ? "" : "No ") + "Index needed.");
                 if (indexNeeded) {
-
                     List<DataRecord> validBarcodeList = dataRecordManager.queryDataRecords("IndexAssignment", "IndexType != " +
                             "'IDT_TRIM'", user);
                     for (DataRecord knownBarcode : validBarcodeList) {
@@ -230,6 +230,7 @@ public class PromoteBanked extends LimsTask {
                 }
                 log.info(igoUser + "  promoted the banked samples " + sb.toString());
                 dataRecordManager.storeAndCommit(igoUser + "  promoted the banked samples " + sb.toString() + "into " + requestId, null, user);
+                metaDbPublisher.sendToMetaDb(requestId);
             } catch (Exception e) {
                 log.error(e);
 
