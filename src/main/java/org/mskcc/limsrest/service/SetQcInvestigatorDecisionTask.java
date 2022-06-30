@@ -86,22 +86,6 @@ public class SetQcInvestigatorDecisionTask extends LimsTask {
                                     log.info("qcStat igo id is:" + qcStat.getDataField("SampleId", user));
                                     qcStatusAwareProcessAssigner.assign(dataRecordManager, user, qcStat, QcStatus.fromString(newStatus));
                                     log.info("After assign is completed!");
-
-//                                    String status = match.getParentsOfType("Sample", user).get(0).
-//                                            getDataField(DT_Sample.EXEMPLAR_SAMPLE_STATUS, user).toString();
-//
-//                                    // Add a record in "Assigned Process" table
-//                                    String sampleId = match.getParentsOfType("Sample", user).
-//                                            get(0).getDataField("SampleId", user).toString();
-//                                    List<DataRecord> assigned = dataRecordManager.queryDataRecords("AssignedProcess",
-//                                            "SampleId = '" + sampleId + "'", user);
-//                                    log.info("assigned size: " + assigned.size());
-//                                    DataRecord[] childSamples = assigned.get(0).getChildrenOfType("Sample", user);
-//                                    log.info("childSamples length: " + childSamples.length);
-//                                    if (childSamples.length == 0) {
-//                                        log.info("no sample under assigned process -> adding the sample as a child to assigned process");
-//                                        assigned.get(0).addChild(match.getParentsOfType("Sample", user).get(0), user);
-//                                    }
                                 }
                             }
                             count++;

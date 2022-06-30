@@ -32,6 +32,6 @@ public class QcStatusAwareProcessAssignerTest {
                 .thenReturn(Arrays.asList
                         (mock(DataRecord.class)));
 
-        when(AssignedProcessCreator.create(any(), any(), any())).thenReturn(assProcMap);
+        when(AssignedProcessCreator.create(any(), any(), false, any())).thenReturn(assProcMap);
     }
 }

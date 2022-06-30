@@ -33,7 +33,7 @@ public class AssignedProcessCreatorTest {
         when(sample.getStringVal(DT_Sample.REQUEST_RECORD_ID_LIST, userMock)).thenReturn("12345_A,23456_B,34567_C");
 
         //when
-        Map<String, Object> assignedProcessMap = AssignedProcessCreator.create(sample, assignedProcess, userMock);
+        Map<String, Object> assignedProcessMap = AssignedProcessCreator.create(sample, assignedProcess, false, userMock);
 
         //then
         assertThat(assignedProcessMap.containsKey(DT_AssignedProcess.SAMPLE_ID), is(true));
