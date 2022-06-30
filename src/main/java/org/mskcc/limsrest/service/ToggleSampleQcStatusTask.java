@@ -9,9 +9,14 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.assignedprocess.QcStatus;
 import org.mskcc.limsrest.service.assignedprocess.QcStatusAwareProcessAssigner;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.rmi.RemoteException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 import static org.mskcc.util.VeloxConstants.SAMPLE;
 
@@ -36,6 +41,8 @@ public class ToggleSampleQcStatusTask {
     private String analyst;
     private String note;
     private String fastqPath;
+    @Value("${airflow_pass}")
+    private String airflow_pass;
 
     protected static void setSeqAnalysisSampleQcStatus(DataRecord seqQc, QcStatus qcStatus, String status, User user)
             throws IoError, InvalidValue, NotFound, RemoteException {
@@ -47,6 +54,19 @@ public class ToggleSampleQcStatusTask {
             seqQc.setDataField("SeqQCStatus", status, user);
             seqQc.setDataField("PassedQc", Boolean.FALSE, user);
         }
+    }
+
+    protected static String formatMoveFailedFastqJSON(String igoId, String run, Date execDate) {
+        //2021-01-01T15:00:00Z - airflow format
+        DateFormat airflowFormat = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");
+        airflowFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        String dateStr = airflowFormat.format(execDate);
+        dateStr = dateStr.replace(' ', 'T') + "Z";
+        // create json body like:
+        // {"execution_date": "2022-05-19", "conf": {"igo_id":"12345_1","run":"xyz"}}
+        String conf = "\"conf\":{\"igo_id\":\""+igoId+"\",\"run\":\""+run+"\"}";
+        String body ="{\"execution_date\":\""+dateStr+"\","+conf+"}";
+        return body;
     }
 
     public ToggleSampleQcStatusTask(long recordId, String status, String requestId, String correctedSampleId,
@@ -96,7 +116,23 @@ public class ToggleSampleQcStatusTask {
 
                 log.info("SeqAnalysisSampleQC updated to:" + status + " from:" + currentStatusLIMS);
 
-                // TODO call Apache Airflow workflow to delete failed fastq.gz files
+                // Call Airflow to move the fastq.gz files if failed
+                if (qcStatus == QcStatus.FAILED) {
+                    if (airflow_pass == null || airflow_pass == "")
+                        log.error("Airflow password not initialized, can't move failed fastq.gz files.");
+                    else {
+                        String igoIdFromLims = (String) seqQc.getDataField("SampleId", user); // IGO ID
+                        String runFromLims = (String) seqQc.getDataField("SequencerRunFolder", user);
+
+                        Date execDate = new Date(System.currentTimeMillis() + 10000);
+                        String body = formatMoveFailedFastqJSON(igoIdFromLims, runFromLims, execDate);
+                        String cmd = "/bin/curl -X POST -d '" + body + "' \"http://igo-ln01:8080/api/v1/dags/move_failed_fastqs/dagRuns\" -H 'content-type: application/json' --user \"airflow-api:" + airflow_pass + "\"";
+                        log.info("Calling airflow pipeline to move failed fastq.gz files: " + cmd);
+                        ProcessBuilder processBuilder = new ProcessBuilder();
+                        processBuilder.command("bash", "-c", cmd);
+                        Process process = processBuilder.start();
+                    }
+                }
             } else {
                 List<DataRecord> request = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
                 if (request.size() != 1) {
