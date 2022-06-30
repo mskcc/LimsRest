@@ -230,7 +230,11 @@ public class PromoteBanked extends LimsTask {
                 }
                 log.info(igoUser + "  promoted the banked samples " + sb.toString());
                 dataRecordManager.storeAndCommit(igoUser + "  promoted the banked samples " + sb.toString() + "into " + requestId, null, user);
-                metaDbPublisher.sendToMetaDb(requestId);
+                try {
+                    metaDbPublisher.sendToMetaDb(requestId);
+                } catch (Exception e) {
+                    log.error("Failed to publish to MetaDb " + e);
+                }
             } catch (Exception e) {
                 log.error(e);
 
@@ -239,12 +243,11 @@ public class PromoteBanked extends LimsTask {
                 // Avoid HeadersTooLargeException
                 String errMessage = e.getMessage();
                 String headerErr = "";
-                if(errMessage != null){
-                    headerErr = errMessage.substring(0,Math.min(500,errMessage.length()));
+                if (errMessage != null) {
+                    headerErr = errMessage.substring(0, Math.min(500,errMessage.length()));
                 }
 
-                headers.add(Constants.ERRORS,
-                        Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + headerErr);
+                headers.add(Constants.ERRORS, Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + headerErr);
 
                 return new ResponseEntity<>(headers, HttpStatus.OK);
             }
