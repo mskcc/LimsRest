@@ -38,6 +38,7 @@ public class RequestSummary {
     private Boolean isIgoComplete;
     private List<String> runFolders;
     private String requestName;
+    private int numOfComments;
 
     public RequestSummary() {
         this("UNKNOWN");
@@ -192,6 +193,10 @@ public class RequestSummary {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getRequestType() {
         return requestType;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public int getNumOfComments() { return numOfComments;
     }
 
     @JsonInclude(JsonInclude.Include.ALWAYS)

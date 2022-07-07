@@ -1,10 +1,10 @@
-lims.host=localhost
-lims.port=
-lims.guid=
+lims.host=igo-lims04.mskcc.org
+lims.port=1088
+lims.guid=fe74d8e1-c94b-4002-a04c-eb5c492704ba
 
-lims.user1=
-lims.pword1=
-lims.user2=
-lims.pword2=
+lims.user1=bicapi
+lims.pword1=9geeseonapond
+lims.user2=bicapi6
+lims.pword2=9geeseonapond
 
 # TODO - get credentials

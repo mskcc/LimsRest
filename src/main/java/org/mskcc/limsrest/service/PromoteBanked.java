@@ -617,10 +617,10 @@ public class PromoteBanked extends LimsTask {
             long time = System.currentTimeMillis() + timeDiff;
             String dueDate = simpleDateFormat.format(new Date(time));
             log.info("Due date: " + dueDate);
-            message.setSubject("[" + date + "][" + dueDate + "]" + requestId + " (" + numOfSamples + ")");
+            message.setSubject(requestId + " (" + numOfSamples + ")");
+            String repliesRecipient = "348494_786768@replies.teamwork.com";
             if (iLabComment != null)
-                message.setText("");
-                message.setText(iLabComment);
+                message.setText(iLabComment + " #end");
 
             Transport.send(message);
 

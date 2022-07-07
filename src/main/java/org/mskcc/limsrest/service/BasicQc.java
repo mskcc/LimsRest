@@ -19,6 +19,7 @@ public class BasicQc {
     private Long totalReads;
     private Long createDate;
     private HashMap<Long, String> statusEvents;
+    private Integer numOfComments;
 
     public BasicQc() {
         restStatus = "SUCCESS";
@@ -67,6 +68,11 @@ public class BasicQc {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public Long getTotalReads() {
         return this.totalReads;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public Integer getNumOfcomments() {
+        return this.numOfComments;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

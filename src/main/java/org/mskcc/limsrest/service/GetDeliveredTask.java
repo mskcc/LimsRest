@@ -217,6 +217,10 @@ public class GetDeliveredTask {
                                 qcSummary.setAlias((String) qcFields.get("Alias"));
                             } catch (NullPointerException npe) {
                             }
+                            try {
+                                qcSummary.setNumOfComments(0);
+                            } catch (NullPointerException npe) {
+                            }
                             qcSummary.setCreateDate((Long) qcFields.get("DateCreated"));
                             String qcStatus = (String) qcFields.get("SeqQCStatus");
                             if (qcStatus != null) {
