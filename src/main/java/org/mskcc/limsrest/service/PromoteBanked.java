@@ -528,7 +528,7 @@ public class PromoteBanked extends LimsTask {
     public void sendEmailToTeamwork() {
         String recipient = "348494_786768@tasks.teamwork.com"; // Update it to IGO VMB list address: 348494_400757@tasks.teamwork.com
         // appropriate column setting so the card gets there
-        String sender = "duniganm@mskcc.org";//"skigodata@mskcc.org" does not work!
+        String sender = "duniganm@mskcc.org";// group mailing addresses like "skigodata@mskcc.org" do not work!
         String host = "localhost";
 
         Properties properties = System.getProperties();
@@ -617,11 +617,19 @@ public class PromoteBanked extends LimsTask {
             long time = System.currentTimeMillis() + timeDiff;
             String dueDate = simpleDateFormat.format(new Date(time));
             log.info("Due date: " + dueDate);
-            message.setSubject(requestId + " (" + numOfSamples + ")");
-            String repliesRecipient = "348494_786768@replies.teamwork.com";
-            if (iLabComment != null)
-                message.setText(iLabComment + " #end");
 
+            String subject = requestId;
+            if(numOfSamples != null && numOfSamples.length() > 0) {
+                subject += " (" + numOfSamples + ")";
+            }
+
+            if(iLabComment != null &&  iLabComment.trim().length() > 0) {
+                subject += " #[IGO: iLab Comment]";
+            }
+            if (iLabComment != null)
+                message.setText(iLabComment + " \n#end");
+
+            message.setSubject(subject);
             Transport.send(message);
 
             log.info("Mail successfully sent");
