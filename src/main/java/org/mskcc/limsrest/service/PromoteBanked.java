@@ -618,11 +618,7 @@ public class PromoteBanked extends LimsTask {
             String dueDate = simpleDateFormat.format(new Date(time));
             log.info("Due date: " + dueDate);
 
-            String subject = requestId;
-            if(numOfSamples != null && numOfSamples.length() > 0) {
-                subject += " (" + numOfSamples + ")";
-            }
-
+            String subject = requestId + " (" + numOfSamples + ")";
             if(iLabComment != null &&  iLabComment.trim().length() > 0) {
                 subject += " #[IGO: iLab Comment]";
             }
