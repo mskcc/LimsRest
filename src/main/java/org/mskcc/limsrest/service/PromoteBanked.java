@@ -526,8 +526,7 @@ public class PromoteBanked extends LimsTask {
     }
 
     public void sendEmailToTeamwork() {
-        String recipient = "348494_786768@tasks.teamwork.com"; // Update it to IGO VMB list address: 348494_400757@tasks.teamwork.com
-        // appropriate column setting so the card gets there
+        String recipient = "348494_400757@tasks.teamwork.com" // Updated with IGO VMB list | Data tema board list address: "348494_786768@tasks.teamwork.com";
         String sender = "duniganm@mskcc.org";// group mailing addresses like "skigodata@mskcc.org" do not work!
         String host = "localhost";
         Properties properties = System.getProperties();
