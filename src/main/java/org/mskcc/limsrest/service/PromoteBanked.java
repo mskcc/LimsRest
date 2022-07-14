@@ -530,15 +530,11 @@ public class PromoteBanked extends LimsTask {
         // appropriate column setting so the card gets there
         String sender = "duniganm@mskcc.org";// group mailing addresses like "skigodata@mskcc.org" do not work!
         String host = "localhost";
-
         Properties properties = System.getProperties();
-
         // Setting up mail server
         properties.setProperty("mail.smtp.host", host);
-
         // creating session object to get properties
         Session session = Session.getDefaultInstance(properties);
-
         try
         {
             MimeMessage message = new MimeMessage(session);
@@ -546,12 +542,10 @@ public class PromoteBanked extends LimsTask {
             message.setFrom(new InternetAddress(sender));
             message.addRecipient(Message.RecipientType.TO, new InternetAddress(recipient));
             /*
-            * Adding tag(s) if required
             * Assigning to some member
             * Notifying others
             * Setting priority
             * */
-
             org.apache.commons.lang3.tuple.Pair<String, String> ilabsConfigIGO = getIlabConfig("IGO");
             String token_igo = ilabsConfigIGO.getValue();
             String core_id_igo = ilabsConfigIGO.getKey();
@@ -609,6 +603,7 @@ public class PromoteBanked extends LimsTask {
             }
             log.info("The comment extracted from iLab request is: " + iLabComment);
             log.info("num of samples = " + numOfSamples);
+            // Logic related to start and due dates, not used for now
             String pattern = "MM/dd/yyyy";
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
             String date = simpleDateFormat.format(new Date());
@@ -624,10 +619,9 @@ public class PromoteBanked extends LimsTask {
             }
             if (iLabComment != null)
                 message.setText(iLabComment + " \n#end");
-
             message.setSubject(subject);
-            Transport.send(message);
 
+            Transport.send(message);
             log.info("Mail successfully sent");
         } catch (MessagingException mex) {
             log.error(String.format("Failed to send the email to Teamwork. %s:", mex.getStackTrace()));
