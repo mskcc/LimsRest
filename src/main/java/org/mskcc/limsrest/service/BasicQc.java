@@ -19,7 +19,6 @@ public class BasicQc {
     private Long totalReads;
     private Long createDate;
     private HashMap<Long, String> statusEvents;
-    private Integer numOfComments;
 
     public BasicQc() {
         restStatus = "SUCCESS";
