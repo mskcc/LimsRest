@@ -136,7 +136,6 @@ public class GetSequencingRequestsTask {
             // rs.setReceivedDate(getRecordLongValue(request, RequestModel.RECEIVED_DATE, user));
             rs.setRecentDeliveryDate(getRecordLongValue(request, RequestModel.RECENT_DELIVERY_DATE, user));
             // rs.setCompletedDate(getRecordLongValue(request, RequestModel.COMPLETED_DATE, user));
-            rs.setNumOfComments(0);
             rs.setIsIgoComplete(isIgoComplete(request, user));
             requests.add(rs);
         }

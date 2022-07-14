@@ -71,11 +71,6 @@ public class BasicQc {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public Integer getNumOfcomments() {
-        return this.numOfComments;
-    }
-
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public List<QcStatusEvent> getReviewedDates() {
         LinkedList<QcStatusEvent> reviewedDates = new LinkedList<>();
         for (Map.Entry<Long, String> eventPair : statusEvents.entrySet()) {
