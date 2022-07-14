@@ -71,6 +71,7 @@ public class PromoteBanked extends LimsTask {
     private RestTemplate restTemplateIGO;
     private static final String baseUrl = "https://api.ilabsolutions.com/v1/cores";
     private static final String ILABS_CONFIG = "/srv/www/sapio/lims/tomcat/webapps/ilabs.yml";
+    private static final String OUTBOX = "/pskis34/vialelab/LIMS/AutomatedEmails/teamworkCard/";
 
     public PromoteBanked() {
     }
@@ -603,7 +604,7 @@ public class PromoteBanked extends LimsTask {
             log.info("The comment extracted from iLab request is: " + iLabComment);
             log.info("num of samples = " + numOfSamples);
             // Logic related to start and due dates, not used for now
-            String pattern = "MM/dd/yyyy";
+            String pattern = "MM-dd-yyyy";
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
             String date = simpleDateFormat.format(new Date());
             log.info("start date is: " + date);
@@ -620,7 +621,20 @@ public class PromoteBanked extends LimsTask {
                 message.setText(iLabComment + " \n#end");
             message.setSubject(subject);
 
-            Transport.send(message);
+            /* Writing subject and body of the email in a txt file to store it on "/pskis34/vialelab/LIMS/AutomatedEmails"
+             the sendEmail crontab script will send the email (for card creation)to Teamwork */
+            try {
+                String filename = OUTBOX + "TeamworkCard-" + date + ".txt";
+                BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
+                writer.write(subject + "\n" + iLabComment + " \n#end");
+                writer.close();
+                System.out.println("Successfully wrote to the teamwork card file.");
+            } catch (IOException e) {
+                System.out.println("An error occurred while writing teamwork card file.");
+                e.printStackTrace();
+            }
+
+            //Transport.send(message);
             log.info("Mail successfully sent");
         } catch (MessagingException mex) {
             log.error(String.format("Failed to send the email to Teamwork. %s:", mex.getStackTrace()));

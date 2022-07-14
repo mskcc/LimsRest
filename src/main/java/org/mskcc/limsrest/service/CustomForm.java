@@ -3,6 +3,10 @@ package org.mskcc.limsrest.service;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Represents iLab request form intances.
+ * @author Fahimeh Mirhaj
+ */
 public class CustomForm {
     private String id;
     private String name;
