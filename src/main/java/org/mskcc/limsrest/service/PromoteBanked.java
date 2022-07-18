@@ -70,7 +70,7 @@ public class PromoteBanked extends LimsTask {
 
     private RestTemplate restTemplateIGO;
     private static final String baseUrl = "https://api.ilabsolutions.com/v1/cores";
-    private static final String ILABS_CONFIG = "/srv/www/sapio/lims/tomcat/webapps/ilabs.yml";
+    private static final String ILABS_CONFIG = "/srv/www/sapio/lims/lims-scripts/ilabs/ilabs.yml"; // Dev (lims04) ilabs.yml dir: /srv/www/sapio/lims/tomcat/webapps
     private static final String OUTBOX = "/pskis34/vialelab/LIMS/AutomatedEmails/teamworkCard/";
 
     public PromoteBanked() {
