@@ -1,5 +1,7 @@
 package org.mskcc.limsrest.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.velox.api.datarecord.*;
@@ -7,9 +9,11 @@ import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.utilities.SloanCMOUtils;
 import com.velox.sloan.cmo.utilities.UuidGenerator;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.tomcat.jni.Time;
 import org.mskcc.domain.sample.*;
 import org.mskcc.limsrest.service.promote.BankedSampleToSampleConverter;
 import org.mskcc.limsrest.util.Constants;
@@ -18,14 +22,27 @@ import org.mskcc.limsrest.util.Utils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.ObjectUtils;
+import org.springframework.web.client.RestTemplate;
 
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.*;
+import java.io.*;
 import java.rmi.RemoteException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.yaml.snakeyaml.Yaml;
 
 /**
  * A queued task that takes banked ids, a service id and optionally a request  and project.
@@ -50,6 +67,11 @@ public class PromoteBanked extends LimsTask {
     boolean dryrun = false;
     private Multimap<String, String> errors = HashMultimap.create();
     private List<Object> samplesWithDifferentNewIgoIdAndRowIndex = new LinkedList<>();
+
+    private RestTemplate restTemplateIGO;
+    private static final String baseUrl = "https://api.ilabsolutions.com/v1/cores";
+    private static final String ILABS_CONFIG = "/srv/www/sapio/lims/lims-scripts/ilabs/ilabs.yml"; // Dev (lims04) ilabs.yml dir: /srv/www/sapio/lims/tomcat/webapps
+    private static final String OUTBOX = "/pskis34/vialelab/LIMS/AutomatedEmails/teamworkCard/";
 
     public PromoteBanked() {
     }
@@ -230,6 +252,7 @@ public class PromoteBanked extends LimsTask {
                 }
                 log.info(igoUser + "  promoted the banked samples " + sb.toString());
                 dataRecordManager.storeAndCommit(igoUser + "  promoted the banked samples " + sb.toString() + "into " + requestId, null, user);
+                sendEmailToTeamwork();
             } catch (Exception e) {
                 log.error(e);
 
@@ -264,7 +287,6 @@ public class PromoteBanked extends LimsTask {
 
             return new ResponseEntity<>(warningMessage, headers, HttpStatus.OK );
         }
-
         return new ResponseEntity<>("Successfully promoted sample(s) into " + requestId, headers, HttpStatus.OK );
     }
 
@@ -502,5 +524,184 @@ public class PromoteBanked extends LimsTask {
             return sampleName;
         }
         return sampleName.replaceFirst("(_[0-9]+)[0-9_]*$", endMatch.group(1));
+    }
+
+    public void sendEmailToTeamwork() {
+        String recipient = "348494_400757@tasks.teamwork.com"; // Updated with IGO VMB list | Data team board list address: "348494_786768@tasks.teamwork.com"
+        String sender = "duniganm@mskcc.org";// group mailing addresses like "skigodata@mskcc.org" do not work!
+        String host = "localhost";
+        Properties properties = System.getProperties();
+        // Setting up mail server
+        properties.setProperty("mail.smtp.host", host);
+        // creating session object to get properties
+        Session session = Session.getDefaultInstance(properties);
+        try
+        {
+            MimeMessage message = new MimeMessage(session);
+
+            message.setFrom(new InternetAddress(sender));
+            message.addRecipient(Message.RecipientType.TO, new InternetAddress(recipient));
+            /*
+            * Assigning to some member
+            * Notifying others
+            * Setting priority
+            * */
+            org.apache.commons.lang3.tuple.Pair<String, String> ilabsConfigIGO = getIlabConfig("IGO");
+            String token_igo = ilabsConfigIGO.getValue();
+            String core_id_igo = ilabsConfigIGO.getKey();
+            log.info("core id is: " + core_id_igo);
+            this.restTemplateIGO = restTemplate(token_igo);
+            List<CustomForm> customForms = new ArrayList<>();
+            boolean hasCustomForm = false;
+
+            String url = String.format("%s/%s/service_requests.json?name=%s", baseUrl, core_id_igo, serviceId);
+            ObjectNode res = restTemplateIGO.getForObject(url, ObjectNode.class);
+            JsonNode arrayNode = res.get("ilab_response").get("service_requests");
+            JsonNode serviceRequest = arrayNode.get(0);
+            String serviceRequestId = serviceRequest.get("id").asText();
+            JsonNode serviceRows = serviceRequest.get("service_rows");
+            if (!ObjectUtils.isEmpty(serviceRows)) {
+                Iterator<JsonNode> iterator = serviceRows.iterator();
+                while (iterator.hasNext()) {
+                    JsonNode node = iterator.next();
+                    String type = node.get("type").asText();
+                    if ("CustomForm".equalsIgnoreCase(type)) {
+                        hasCustomForm = true;
+                    } else if (!"Milestone".equalsIgnoreCase(type) && !"Charge".equalsIgnoreCase(type)) {
+                        throw new RuntimeException("Unrecognized service_row type, check to see if API changed: " + type);
+                    }
+                }
+            } else {
+                throw new RuntimeException("Could not get service_row for service request id, " +
+                        "check to see if API changed: " + requestId);
+            }
+            log.info("requestId is: " + requestId);
+            log.info("hasCustomForm value: " + hasCustomForm);
+            if (hasCustomForm) {
+                customForms = parseCustomForms(String.format("%s/%s/service_requests/%s/custom_forms.json", baseUrl, core_id_igo, serviceRequestId), restTemplateIGO);
+            }
+            CustomForm customForm = customForms.get(0);
+            log.info("customForm id is:" + customForm.getId());
+            log.info("customForm name is:" + customForm.getName());
+
+            Pattern commentPattern = Pattern.compile("comment", Pattern.CASE_INSENSITIVE);
+            Pattern numOfSamplePattern = Pattern.compile("number of samples", Pattern.CASE_INSENSITIVE);
+            String iLabComment = "";
+            String numOfSamples = "";
+            for (String field : customForm.getFields().keySet()) {
+                log.info("custom form fields are: " + field + customForm.getFields().get(field));
+                Matcher commentMatcher = commentPattern.matcher(field);
+                Matcher numOfSampleMatcher = numOfSamplePattern.matcher(field);
+                boolean commentMatchFound = commentMatcher.find();
+                boolean numOfSamplesMatchFound = numOfSampleMatcher.find();
+                if (commentMatchFound) {
+                    iLabComment = customForm.getFields().get(field);
+                }
+                if(numOfSamplesMatchFound) {
+                    numOfSamples = customForm.getFields().get(field);
+                }
+            }
+            log.info("The comment extracted from iLab request is: " + iLabComment);
+            log.info("num of samples = " + numOfSamples);
+            // Logic related to start and due dates, not used for now
+            String pattern = "MM-dd-yyyy";
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+            String date = simpleDateFormat.format(new Date());
+            log.info("start date is: " + date);
+            long timeDiff = 21 * 24 * 60 * 60 * 1000;
+            long time = System.currentTimeMillis() + timeDiff;
+            String dueDate = simpleDateFormat.format(new Date(time));
+            log.info("Due date: " + dueDate);
+
+            String subject = requestId + " (" + numOfSamples + ")";
+            if(iLabComment != null &&  iLabComment.trim().length() > 0) {
+                subject += " #[IGO: iLab Comment]";
+            }
+            if (iLabComment != null)
+                message.setText(iLabComment + " \n#end");
+            message.setSubject(subject);
+
+            /* Writing subject and body of the email in a txt file to store it on "/pskis34/vialelab/LIMS/AutomatedEmails"
+             the sendEmail crontab script will send the email (for card creation)to Teamwork */
+            try {
+                String filename = OUTBOX + "TeamworkCard-" + date + ".txt";
+                BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
+                writer.write(subject + "\n" + iLabComment + " \n#end");
+                writer.close();
+                System.out.println("Successfully wrote to the teamwork card file.");
+            } catch (IOException e) {
+                System.out.println("An error occurred while writing teamwork card file.");
+                e.printStackTrace();
+            }
+
+            //Transport.send(message);
+            log.info("Mail successfully sent");
+        } catch (MessagingException mex) {
+            log.error(String.format("Failed to send the email to Teamwork. %s:", mex.getStackTrace()));
+        }
+    }
+
+    public org.apache.commons.lang3.tuple.Pair<String, String> getIlabConfig(String core) {
+        Map<String, Map<String, String>> config = null;
+        try {
+            config = new Yaml().load(new FileInputStream(new File(ILABS_CONFIG)));
+        } catch (FileNotFoundException e) {
+            String info = "Had trouble updating some general info files: missing ilabs yml file. " + e.toString();
+            log.info(info);
+            throw new RuntimeException(e);
+        }
+        String core_id = String.valueOf(config.get("core_ids").get(core));
+        String token = config.get("tokens").get(Integer.valueOf(core_id));
+        return org.apache.commons.lang3.tuple.Pair.of(core_id, token);
+    }
+
+    public RestTemplate restTemplate(String accessToken) {
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.getInterceptors().add(getBearerTokenInterceptor(accessToken));
+        return restTemplate;
+    }
+
+    public static ClientHttpRequestInterceptor getBearerTokenInterceptor(String accessToken) {
+        ClientHttpRequestInterceptor interceptor = (request, body, execution) -> {
+            request.getHeaders().add("Authorization", "Bearer " + accessToken);
+            return execution.execute(request, body);
+        };
+        return interceptor;
+    }
+
+    private List<CustomForm> parseCustomForms(String url, RestTemplate restTemplate) {
+        ObjectNode customFormsJson = restTemplate.getForObject(url, ObjectNode.class);
+        List<CustomForm> parsedCustomForms = new ArrayList<>();
+        JsonNode arrayNode = customFormsJson.get("ilab_response").get("custom_forms");
+        if (arrayNode == null || arrayNode.size() == 0) {
+            throw new RuntimeException("Could not get custom form, check to see if API changed");
+        }
+
+        Iterator<JsonNode> iterator = arrayNode.iterator();
+        while (iterator.hasNext()) {
+            JsonNode customForm = iterator.next();
+            if (ObjectUtils.isEmpty(customForm.get("fields"))) continue;
+            String id = customForm.get("id").asText();
+            String name = customForm.get("name").asText();
+            String note = customForm.get("note").asText();
+            CustomForm parsedCustomForm = new CustomForm(id, name, note);
+            JsonNode fields = customForm.get("fields");
+            fields.forEach(field -> {
+                if (field.get("value") != null) {
+                    String lcFormName = field.get("name").asText();
+                    String lcFormValue = "";
+                    if (field.get("value").isArray()) {
+                        List<String> vals = new ArrayList<>();
+                        field.get("value").forEach(jsonNode -> vals.add(jsonNode.asText()));
+                        lcFormValue = String.join(";", vals);
+                    } else {
+                        lcFormValue = field.get("value").asText();
+                    }
+                    parsedCustomForm.addField(lcFormName, lcFormValue);
+                }
+            });
+            parsedCustomForms.add(parsedCustomForm);
+        }
+        return parsedCustomForms;
     }
 }
