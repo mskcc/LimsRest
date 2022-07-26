@@ -3,15 +3,12 @@ package org.mskcc.limsrest.service.ilabs;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Splitter;
 import org.apache.commons.lang3.StringUtils;
+import org.mskcc.limsrest.service.CustomForm;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.*;
 
 // CHANGES TO BE MADE FOR DELIVERY UPDATE:
@@ -37,9 +34,6 @@ public class GetGeneralInfo {
         put(630887, "Achaibar");
         put(19726, "Leung");
     }};
-
-    public GetGeneralInfo() {
-    }
 
     public GetGeneralInfo(String core_id_igo, String token_igo, String core_id_cmo, String token_cmo) {
         this.restTemplateIGO = restTemplate(token_igo);
@@ -291,75 +285,11 @@ public class GetGeneralInfo {
         return parsedCustomForms;
     }
 
-
     public void printMapping(Map<String, String> ilabValues) {
         for (Map.Entry<String, String> entry : ilabValues.entrySet()) {
             System.out.println(entry.getKey() + ":");
             System.out.println("  " + entry.getValue());
         }
         System.out.println();
-
-    }
-
-    @Deprecated
-    public HashMap<String, String> getGeneralInfoByApi(String projectName) throws
-            IOException, InterruptedException {
-//request_name  ilabs_pi_first_name ilabs_pi_last_name  ilabs_pi_email  ilabs_invest_first_name ilabs_invest_last_name  ilabs_invest_email  form_lab_head form_lab_head_email form_invest_email form_phone_number form_fax_number form_room_number  form_project_name form_sample_number
-        Runtime r = Runtime.getRuntime();
-        if (!projectName.matches("^[0-9_A-Z]+$")) {
-            throw new IOException("Improper project name: " + projectName);
-        }
-        Process p = r.exec("/opt/common/ruby/ruby-2.1.1/bin/ruby  /home/gabow/pipeline_kickoff/trunk/lib/pull_sr_from_ilabs.rb -e /home/gabow/pipeline_kickoff/trunk/data/invalid_pis.txt  -t /home/gabow/pipeline_kickoff/trunk/config/ilabs.yml -d . -p /home/gabow/pipeline_kickoff/trunk/data/corrected_pi.txt -s " + projectName);
-        p.waitFor();
-        BufferedReader b = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String expectedHeader = "request_name\tilabs_pi_first_name\tilabs_pi_last_name\tilabs_pi_email\tilabs_invest_first_name\tilabs_invest_last_name\tilabs_invest_email\tform_lab_head\tform_lab_head_email\tform_invest_email\tform_phone_number\tform_fax_number\tform_room_number\tform_project_name\tform_sample_number\tform_all_emails\tform_fastq_only\tilabs_summary";
-
-        String header = b.readLine();
-        System.out.println(header);
-        if (!expectedHeader.equals(header)) {
-            throw new IOException("Call not returning expected header:" + header);
-
-        }
-        String line = b.readLine();
-        String[] generalInfo;
-        if (line != null) {
-            generalInfo = Splitter.on('\t').splitToList(line).toArray(header.split("\t"));
-        } else {
-            generalInfo = new String[header.split("\t").length];
-        }
-        HashMap<String, String> key2val = new HashMap<>();
-        System.out.println(line);
-        System.out.println(generalInfo.length);
-        String requestId = generalInfo[0];
-        String emptyValue = "FIELD NOT IN ILABS";
-        if (line == null) {
-            emptyValue = "PROJECT NOT IN ILABS";
-        }
-        for (int i = 0; i < generalInfo.length; i++) {
-            if (generalInfo[i] == null || generalInfo[i].equals("")) {
-                generalInfo[i] = emptyValue;
-            }
-            System.out.println(i + " " + generalInfo[i]);
-        }
-
-        String piName = (generalInfo[1] + " " + generalInfo[2]);
-        String investigatorName = (generalInfo[4] + " " + generalInfo[5]);
-
-        key2val.put("PI", piName);
-        key2val.put("INVEST", investigatorName);
-        key2val.put("ROOM", generalInfo[12]);
-        key2val.put("PHONE", generalInfo[10]);
-        key2val.put("FAX", generalInfo[11]);
-        key2val.put("PROJ", generalInfo[13]);
-        key2val.put("PIEMAIL", generalInfo[3]);
-        key2val.put("INVESTEMAIL", generalInfo[6]);
-        key2val.put("CC", "FIELD NOT ACCESSIBLE");
-        key2val.put("FUND", "FIELD NOT ACCESSIBLE");
-        key2val.put("COUNT", generalInfo[14]);
-        key2val.put("ALLEMAILS", generalInfo[15]);
-        key2val.put("FASTQ", generalInfo[16]);
-        key2val.put("SUMMARY", generalInfo[17]);
-        b.close();
-        return key2val;
     }
 }
