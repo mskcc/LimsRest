@@ -26,23 +26,30 @@ public class UpdateFromILabsTask {
                     "04500", "05054", "04996", "04531", "04864", "05080", "05226", "05107", "04657", "05220", "05268", "04931", "05108", "05197", "04971", "05605", "04755", "04376", "05359", "05574", "05751", "05699", "04920", "04298", "02756", "05822", "05427", "05665", "05638", "04592", "05632", "05028", "06642", "05309", "04622", "05043", "09094", "09095"};
     private ConnectionLIMS conn;
 
+    private String tokenIGO, tokenCMO;
+
+    public UpdateFromILabsTask(ConnectionLIMS conn, String tokenIGO, String tokenCMO) {
+        this.conn = conn;
+        this.tokenIGO = tokenIGO;
+        this.tokenCMO = tokenCMO;
+    }
+
     public Object execute() {
         VeloxConnection vConn = conn.getConnection();
         DataRecordManager dataRecordManager = vConn.getDataRecordManager();
         User user = vConn.getUser();
 
         System.out.println("Run " + LocalDateTime.now());
-        UpdateFromILabsTask updateLIMSfromILabs = new UpdateFromILabsTask();
-        Pair<String, String> ilabsConfigIGO = updateLIMSfromILabs.getIlabConfig("IGO");
-        Pair<String, String> ilabsConfigCMO = updateLIMSfromILabs.getIlabConfig("CMO");
-        System.out.println("Getting requests from lims");
-        List<String> requests = updateLIMSfromILabs.getRequestIds(vConn, dataRecordManager, user);
+        Pair<String, String> ilabsConfigIGO = getIlabConfig("IGO");
+        Pair<String, String> ilabsConfigCMO = getIlabConfig("CMO");
+        System.out.println("Getting requests from LIMS");
+        List<String> requests = getRequestIds(vConn, dataRecordManager, user);
         if (requests.isEmpty()) {
-            System.out.println("Empty requests: lims update will not run.");
+            System.out.println("Empty requests: LIMS update will not run.");
             return "";
         }
 
-        for (String status : updateLIMSfromILabs.updateLims(vConn, dataRecordManager, user, ilabsConfigIGO, ilabsConfigCMO, requests)) {
+        for (String status : updateLims(vConn, dataRecordManager, user, ilabsConfigIGO, ilabsConfigCMO, requests)) {
             System.out.println(status);
         }
 
@@ -110,12 +117,6 @@ public class UpdateFromILabsTask {
                                    List<String> matchReqs, Map<String, Map<String, String>> allIlabs) {
         List<String> updateStatuses = new ArrayList<>();
         Map<String, String> igoPmName2ilabsPmName = new HashMap<>();
-        igoPmName2ilabsPmName.put("Duygu Selcuklu", "Selcuklu, S. Duygu");
-        igoPmName2ilabsPmName.put("Xiaohong Jing", "Jing, Xiaohong");
-        igoPmName2ilabsPmName.put("Krithika Ravichandran", "Ravichandran, Krithika");
-        igoPmName2ilabsPmName.put("Caitlin Bourque", "Bourque, Caitlin");
-        igoPmName2ilabsPmName.put("Katelynd Vanness", "Vanness, Katelynd");
-        igoPmName2ilabsPmName.put("Lilan Ling", "Ling, Lilan");
         igoPmName2ilabsPmName.put("Pavitra Rao", "Rao, Pavitra");
 
         try {
@@ -153,7 +154,7 @@ public class UpdateFromILabsTask {
                     problemFound = true;
                     continue;
                 }
-//                add header fields, these are expected on every form and always filled with at least "FIELD NOT IN ILABS"
+                // add header fields, these are expected on every form and always filled with at least "FIELD NOT IN ILABS"
                 Map<String, String> field2val = allIlabs.get(reqId);
                 requestFields.put("LaboratoryHead", Filter.toAscii(field2val.get("PI")));
                 requestFields.put("Investigator", Filter.toAscii(field2val.get("INVEST")));
@@ -215,11 +216,11 @@ public class UpdateFromILabsTask {
                 } else {
                     updateStatuses.add("UPDATED: " + reqId);
                 }
-//              NEW FIELDS
-//              Add new email fields, they are part of the header/always expected fields and will always be in the field2val map
+                // NEW FIELDS
+                // Add new email fields, they are part of the header/always expected fields and will always be in the field2val map
                 requestFields.put("DataAccessEmails", Filter.toAscii(field2val.get("DATA_ACCESS_EMAILS")));
                 requestFields.put("QcAccessEmails", Filter.toAscii(field2val.get("QC_ACCESS_EMAILS")));
-//              IF new fields are not in iLab but old one is, copy old field into new fields
+                // IF new fields are not in iLab but old one is, copy old field into new fields
                 if ((field2val.get("DATA_ACCESS_EMAILS").equals("FIELD NOT IN ILABS") || field2val.get("DATA_ACCESS_EMAILS").equals("")) &&
                         (field2val.get("QC_ACCESS_EMAILS").equals("FIELD NOT IN ILABS") || field2val.get("QC_ACCESS_EMAILS").equals("")) &&
                         !field2val.get("ALLEMAILS").equals("FIELD NOT IN ILABS")) {
@@ -229,7 +230,6 @@ public class UpdateFromILabsTask {
 //              IF old field not in iLab but new ones are, append and copy new fields into old field
                 if (!field2val.get("DATA_ACCESS_EMAILS").equals("FIELD NOT IN ILABS") && !field2val.get("QC_ACCESS_EMAILS").equals("FIELD NOT IN ILABS") &&
                         (field2val.get("ALLEMAILS").equals("FIELD NOT IN ILABS") || field2val.get("ALLEMAILS").equals(""))) {
-
                     requestFields.put("MailTo", Filter.toAscii(field2val.get("DATA_ACCESS_EMAILS")) + "," + Filter.toAscii(field2val.get("QC_ACCESS_EMAILS")));
                 }
 
@@ -260,7 +260,6 @@ public class UpdateFromILabsTask {
                     } else {
                         requestFields.put("AnalysisType", "FASTQ ONLY");
                     }
-
                 }
 //                IF new field analysis type NOT present, set new fields according to old
                 if (field2val.get("ANALYSIS_TYPE").equals("FIELD NOT IN ILABS") && !field2val.get("FASTQ").equals("FIELD NOT IN ILABS")) {
@@ -325,11 +324,10 @@ public class UpdateFromILabsTask {
     }
 
     private Pair<String, String> getIlabConfig(String core) {
-        // TODO read token from config file
         if ("CMO".equals(core))
-            return Pair.of("2892", "");
+            return Pair.of("2892", tokenCMO);
         if ("IGO".equals(core))
-            return Pair.of("3276", "");
+            return Pair.of("3276", tokenIGO);
         return null;
     }
 }
