@@ -5,7 +5,8 @@ import java.util.Map;
 
 /**
  * Represents iLab request form instances.
- * It's used in promoteBanked.java to parse iLab forms and retrieve its information to input into Teamwork cards.
+ * It's used in promoteBanked.java to parse iLab forms and retrieve its information to input into Teamwork cards and
+ * in UpdateFromILabsTask.java to pull iLab data into LIMS.
  * @author Fahimeh Mirhaj
  */
 public class CustomForm {
