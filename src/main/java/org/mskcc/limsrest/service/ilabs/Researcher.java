@@ -1,5 +1,8 @@
 package org.mskcc.limsrest.service.ilabs;
 
+/**
+ * ILabs fields for a lab head.
+ */
 public class Researcher {
     private Integer id;
     private String email;
