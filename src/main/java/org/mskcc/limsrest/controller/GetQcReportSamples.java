@@ -25,12 +25,8 @@ public class GetQcReportSamples {
     private static Log log = LogFactory.getLog(GetProjectQc.class);
     private final ConnectionPoolLIMS conn;
 
-
-
     public GetQcReportSamples(ConnectionPoolLIMS conn) {
         this.conn = conn;
-
-
     }
 
     @RequestMapping("/getQcReportSamples")
@@ -41,7 +37,6 @@ public class GetQcReportSamples {
             log.error("FAILURE: requestId is not using a valid format.");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "FAILURE: requestId is not using a valid format.");
         }
-
 
         GetQcReportSamplesTask task = new GetQcReportSamplesTask();
         task.init(requestId, otherSampleIds);
@@ -55,8 +50,5 @@ public class GetQcReportSamples {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
         return rsl;
-
     }
-
-
-    }
+}
