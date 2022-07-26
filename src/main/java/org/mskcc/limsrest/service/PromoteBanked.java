@@ -71,6 +71,7 @@ public class PromoteBanked extends LimsTask {
     private RestTemplate restTemplateIGO;
     private static final String baseUrl = "https://api.ilabsolutions.com/v1/cores";
     private static final String ILABS_CONFIG = "/srv/www/sapio/lims/lims-scripts/ilabs/ilabs.yml"; // Dev (lims04) ilabs.yml dir: /srv/www/sapio/lims/tomcat/webapps
+    // /srv/www/sapio/lims/lims-scripts/ilabs/
     private static final String OUTBOX = "/pskis34/vialelab/LIMS/AutomatedEmails/teamworkCard/";
     private boolean iLabAbsent = false;
 
@@ -571,15 +572,18 @@ public class PromoteBanked extends LimsTask {
                 iLabAbsent = true;
                 return;
             }
+            log.info("iLabAbsent1: " + iLabAbsent);
             JsonNode arrayNode = res.get("ilab_response").get("service_requests");
             if (arrayNode == null) {
                 iLabAbsent = true;
+                log.info("iLabAbsent2: " + iLabAbsent);
                 return;
             }
             JsonNode serviceRequest = arrayNode.get(0);
             String serviceRequestId = serviceRequest.get("id").asText();
             if (serviceRequestId == null && !serviceRequestId.equals("")) {
                 iLabAbsent = true;
+                log.info("iLabAbsent3: " + iLabAbsent);
                 return;
             }
             JsonNode serviceRows = serviceRequest.get("service_rows");
@@ -647,7 +651,7 @@ public class PromoteBanked extends LimsTask {
             /* Writing subject and body of the email in a txt file to store it on "/pskis34/vialelab/LIMS/AutomatedEmails"
              the sendEmail crontab script will send the email (for card creation)to Teamwork */
             try {
-                String filename = OUTBOX + requestId + "-TeamworkCard-" + date + ".txt";
+                String filename = OUTBOX + "TeamworkCard-" + date + ".txt";
                 BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
                 writer.write(subject + "\n" + iLabComment + " \n#end");
                 writer.close();
