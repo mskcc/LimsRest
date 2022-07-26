@@ -70,8 +70,9 @@ public class PromoteBanked extends LimsTask {
 
     private RestTemplate restTemplateIGO;
     private static final String baseUrl = "https://api.ilabsolutions.com/v1/cores";
-    private static final String ILABS_CONFIG = "/srv/www/sapio/lims/lims-scripts/ilabs/ilabs.yml"; // Dev (lims04) ilabs.yml dir: /srv/www/sapio/lims/tomcat/webapps
+    private static final String ILABS_CONFIG = "/srv/www/sapio/lims/lims-scripts/ilabs/ilabs.yml";
     private static final String OUTBOX = "/pskis34/vialelab/LIMS/AutomatedEmails/teamworkCard/";
+    private boolean iLabAbsent = false;
 
     public PromoteBanked() {
     }
@@ -252,7 +253,15 @@ public class PromoteBanked extends LimsTask {
                 }
                 log.info(igoUser + "  promoted the banked samples " + sb.toString());
                 dataRecordManager.storeAndCommit(igoUser + "  promoted the banked samples " + sb.toString() + "into " + requestId, null, user);
+
+                MultiValueMap<String, String> headers = new HttpHeaders();
+                headers.add(Constants.WARNINGS, getErrors());
+                headers.add(Constants.STATUS, Messages.SUCCESS);
+
                 sendEmailToTeamwork();
+                if (iLabAbsent) {
+                    return new ResponseEntity<>("No iLab request found. Successfully promoted sample(s) into " + requestId, headers, HttpStatus.OK );
+                }
             } catch (Exception e) {
                 log.error(e);
 
@@ -542,6 +551,7 @@ public class PromoteBanked extends LimsTask {
             message.setFrom(new InternetAddress(sender));
             message.addRecipient(Message.RecipientType.TO, new InternetAddress(recipient));
             /*
+            Available Teamwork Emailing Feature:
             * Assigning to some member
             * Notifying others
             * Setting priority
@@ -556,9 +566,24 @@ public class PromoteBanked extends LimsTask {
 
             String url = String.format("%s/%s/service_requests.json?name=%s", baseUrl, core_id_igo, serviceId);
             ObjectNode res = restTemplateIGO.getForObject(url, ObjectNode.class);
+            if (res == null || res.equals("")) {
+                iLabAbsent = true;
+                log.info("iLabAbsent1: " + iLabAbsent);
+                return;
+            }
             JsonNode arrayNode = res.get("ilab_response").get("service_requests");
+            if (arrayNode == null || arrayNode.equals("")) {
+                iLabAbsent = true;
+                log.info("iLabAbsent2: " + iLabAbsent);
+                return;
+            }
             JsonNode serviceRequest = arrayNode.get(0);
             String serviceRequestId = serviceRequest.get("id").asText();
+            if (serviceRequestId == null || serviceRequestId.equals("")) {
+                iLabAbsent = true;
+                log.info("iLabAbsent3: " + iLabAbsent);
+                return;
+            }
             JsonNode serviceRows = serviceRequest.get("service_rows");
             if (!ObjectUtils.isEmpty(serviceRows)) {
                 Iterator<JsonNode> iterator = serviceRows.iterator();
