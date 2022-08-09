@@ -89,8 +89,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 qcDataVals = getQcValues(data.getJSONObject(key));
                 String sampleName = String.valueOf(qcDataVals.get("OtherSampleId"));
                 String sampleId = String.valueOf(qcDataVals.get("SampleId")); // aka base IGO ID
-                if (!sampleId.contains("13333_B"))
-                    continue; // TODO REMOVE
+
                 // first find the library sample that is parent of Pool Sample that went on Sequencer.
                 DataRecord librarySample = getLibrarySample(relatedLibrarySamples, sampleId);
                 if (librarySample == null) {
@@ -106,25 +105,27 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                         List<DataRecord> baseSamples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sampleId + "'", user);
                         DataRecord baseSample = baseSamples.get(0);
                         // should return two items, one for alpha and one for beta
-                        List<DataRecord> tcrSeqIndices = baseSample.getDescendantsOfType("DNALibraryPrepProtocol3", user);
+                        List<DataRecord> tcrSeqIndices = baseSample.getDescendantsOfType("IgoTcrSeqIndexBarcode", user);
                         log.info("Found descendants of base sample " + tcrSeqIndices.size());
-                        DataRecord sampleOne = null, sampleTwo = null;
-                        for (int startIndex = 0;
-                             tcrSeqIndices.get(startIndex).getParentsOfType("Sample", user).get(0).getStringVal("SampleStatus", user).equals("Completed - Pooling of Sample Libraries for Sequencing");
-                             startIndex++) {
-                            sampleOne = tcrSeqIndices.get(startIndex).getParentsOfType("Sample", user).get(0);
-                            sampleTwo = tcrSeqIndices.get(startIndex + 1).getParentsOfType("Sample", user).get(0);
+                        List<DataRecord> dnaLibSamples = new LinkedList<>();
+                        for (int startIndex = 0; startIndex < tcrSeqIndices.size(); startIndex++) {
+                            log.info("inside for loop!");
+                            DataRecord dnaLibrarySample = tcrSeqIndices.get(startIndex).getParentsOfType("Sample", user)
+                                    .get(0).getChildrenOfType("Sample", user)[0];
+                            if (dnaLibrarySample.getStringVal("ExemplarSampleStatus", user).equals("Completed - Pooling of Sample Libraries for Sequencing")) {
+                                dnaLibSamples.add(dnaLibrarySample);
+                            }
                         }
 
                         DataRecord sampleAlpha, sampleBeta;
-                        if (sampleOne.getStringVal("Recipe", user).toLowerCase().contains("alpha")) {
+                        if (dnaLibSamples.get(0).getStringVal("Recipe", user).toLowerCase().contains("alpha")) {
                             log.info("Found alpha sample");
-                            sampleAlpha = sampleOne;
-                            sampleBeta = sampleTwo;
+                            sampleAlpha = dnaLibSamples.get(0);
+                            sampleBeta = dnaLibSamples.get(1);
                         } else {
                             log.info("Found beta sample");
-                            sampleBeta = sampleOne;
-                            sampleAlpha = sampleTwo;
+                            sampleBeta = dnaLibSamples.get(0);
+                            sampleAlpha = dnaLibSamples.get(1);
                         }
                         if (sampleName.contains("alpha"))
                             librarySample = sampleAlpha;
