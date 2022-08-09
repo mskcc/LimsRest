@@ -42,6 +42,7 @@ public class GetRequestPermissionsTask {
             DataRecord dataRecord = requestList.get(0);
             String dataAccessEmails = dataRecord.getStringVal("DataAccessEmails", user);
             String labHeadEmail = dataRecord.getStringVal("LabHeadEmail", user).toLowerCase();
+            String investigatorEmail = dataRecord.getStringVal("Investigatoremail", user).toLowerCase();
 
             Boolean isCmoRequest = Boolean.FALSE;
             Boolean bicAnalysis = Boolean.FALSE;
@@ -60,7 +61,7 @@ public class GetRequestPermissionsTask {
 
             String labName = labHeadEmailToLabName(labHeadEmail);
 
-            return new RequestPermissions(requestId, requestName, labName, labHeadEmail, isCmoRequest, isBicRequest, dataAccessEmails);
+            return new RequestPermissions(requestId, requestName, labName, labHeadEmail, investigatorEmail, isCmoRequest, isBicRequest, dataAccessEmails);
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
             return null;
@@ -117,6 +118,7 @@ public class GetRequestPermissionsTask {
         public String requestName;
         public String labName;
         public String labHeadEmail;
+        public String investigatorEmail;
         public Boolean isCmoRequest;
         public Boolean isBicRequest;
         public String dataAccessEmails;
