@@ -88,12 +88,51 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 //get qcDataVals as HashMap
                 qcDataVals = getQcValues(data.getJSONObject(key));
                 String sampleName = String.valueOf(qcDataVals.get("OtherSampleId"));
-                String sampleId = String.valueOf(qcDataVals.get("SampleId"));
+                String sampleId = String.valueOf(qcDataVals.get("SampleId")); // aka base IGO ID
+                if (!sampleId.contains("13333_B"))
+                    continue; // TODO REMOVE
                 // first find the library sample that is parent of Pool Sample that went on Sequencer.
                 DataRecord librarySample = getLibrarySample(relatedLibrarySamples, sampleId);
                 if (librarySample == null) {
                     log.error("Could not find related Library Sample for Sample with Stats SampleId: " + sampleId);
                     continue;
+                }
+                try {
+                    String recipe = librarySample.getStringVal("Recipe", user);
+                    // For TCRSeq samples split into alpha/beta aliquots attach we'll attach the QC record
+                    // at the same level as the IGO TCR Seq Assigned Indices record in LIMS
+                    if (recipe.toLowerCase().contains("tcrseq")) {
+                        log.info("Recipe contains tcrseq, searching for parent IGO ID: " + sampleId);
+                        List<DataRecord> baseSamples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sampleId + "'", user);
+                        DataRecord baseSample = baseSamples.get(0);
+                        // should return two items, one for alpha and one for beta
+                        List<DataRecord> tcrSeqIndices = baseSample.getDescendantsOfType("DNALibraryPrepProtocol3", user);
+                        log.info("Found descendants of base sample " + tcrSeqIndices.size());
+                        DataRecord sampleOne = null, sampleTwo = null;
+                        for (int startIndex = 0;
+                             tcrSeqIndices.get(startIndex).getParentsOfType("Sample", user).get(0).getStringVal("SampleStatus", user).equals("Completed - Pooling of Sample Libraries for Sequencing");
+                             startIndex++) {
+                            sampleOne = tcrSeqIndices.get(startIndex).getParentsOfType("Sample", user).get(0);
+                            sampleTwo = tcrSeqIndices.get(startIndex + 1).getParentsOfType("Sample", user).get(0);
+                        }
+
+                        DataRecord sampleAlpha, sampleBeta;
+                        if (sampleOne.getStringVal("Recipe", user).toLowerCase().contains("alpha")) {
+                            log.info("Found alpha sample");
+                            sampleAlpha = sampleOne;
+                            sampleBeta = sampleTwo;
+                        } else {
+                            log.info("Found beta sample");
+                            sampleBeta = sampleOne;
+                            sampleAlpha = sampleTwo;
+                        }
+                        if (sampleName.contains("alpha"))
+                            librarySample = sampleAlpha;
+                        else
+                            librarySample = sampleBeta;
+                    }
+                } catch (Exception e) {
+                    log.error(String.format("TCR Seq specific error for : %s", sampleId));
                 }
 
                 String igoId = getRecordStringValue(librarySample, SampleModel.SAMPLE_ID, user);
