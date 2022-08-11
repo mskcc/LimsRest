@@ -9,7 +9,6 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.assignedprocess.QcStatus;
 import org.mskcc.limsrest.service.assignedprocess.QcStatusAwareProcessAssigner;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.rmi.RemoteException;
 import java.text.DateFormat;
@@ -41,7 +40,6 @@ public class ToggleSampleQcStatusTask {
     private String analyst;
     private String note;
     private String fastqPath;
-    @Value("${airflow_pass}")
     private String airflow_pass;
 
     protected static void setSeqAnalysisSampleQcStatus(DataRecord seqQc, QcStatus qcStatus, String status, User user)
@@ -71,7 +69,7 @@ public class ToggleSampleQcStatusTask {
 
     public ToggleSampleQcStatusTask(long recordId, String status, String requestId, String correctedSampleId,
                                     String run, String qcType, String analyst, String note, String fastqPath,
-                                    ConnectionLIMS conn) {
+                                    ConnectionLIMS conn, String airflow_pass) {
         this.recordId = recordId;
         this.status = status;
         this.requestId = requestId;
@@ -84,6 +82,7 @@ public class ToggleSampleQcStatusTask {
             isSeqAnalysisSampleqc = false;
         }
         this.conn = conn;
+        this.airflow_pass = airflow_pass;
     }
 
     public String execute() {

@@ -62,7 +62,7 @@ public class IgoNewRequestMetaDbPublisher {
     private final GetProjectDetails task = new GetProjectDetails();
     private final ConnectionLIMS conn;
 
-    public IgoNewRequestMetaDbPublisher(ConnectionLIMS conn, ConnectionPoolLIMS connPool) throws Exception {
+    public IgoNewRequestMetaDbPublisher(ConnectionLIMS conn) throws Exception {
         this.conn = conn;
     }
 

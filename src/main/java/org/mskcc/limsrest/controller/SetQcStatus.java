@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.ToggleSampleQcStatusTask;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,6 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class SetQcStatus {
     private final static Log log = LogFactory.getLog(SetQcStatus.class);
     private final ConnectionLIMS conn;
+
+    @Value("${airflow_pass}")
+    private String airflow_pass;
 
     public SetQcStatus(ConnectionLIMS conn) {
         this.conn = conn;
@@ -52,7 +56,7 @@ public class SetQcStatus {
 
         if (recordId != null) {
             long record = Long.parseLong(recordId);
-            ToggleSampleQcStatusTask task = new ToggleSampleQcStatusTask(record, status, request, sample, run, qcType, analyst, note, fastqPath, conn);
+            ToggleSampleQcStatusTask task = new ToggleSampleQcStatusTask(record, status, request, sample, run, qcType, analyst, note, fastqPath, conn, airflow_pass);
             try {
                 return "NewStatus:" + task.execute();
             } catch (Exception e) {
