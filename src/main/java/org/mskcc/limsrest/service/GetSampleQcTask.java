@@ -337,6 +337,7 @@ public class GetSampleQcTask {
             ss.addRequest((String) sampleFields.get("RequestId"));
             ss.addBaseId((String) sampleFields.get("SampleId"));
             ss.addCmoId((String) sampleFields.get("OtherSampleId"));
+            ss.addUniqueIdentifier((String) (sampleFields.get("OtherSampleId").toString() + "_" + sampleFields.get("SampleId").toString()));
             runAndCatchNpe(() -> ss.addExpName((String) sampleFields.get("UserSampleID")));
             runAndCatchNpe(() -> ss.setSpecimenType((String) sampleFields.get("SpecimenType")));
             runAndCatchNpe(() -> ss.addConcentration((Double) sampleFields.get("Concentration")));
