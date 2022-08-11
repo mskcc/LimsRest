@@ -60,6 +60,7 @@ public class SampleSummary {
     private Long transactionId;
     private String capturePanel;
     private int numberOfAmplicons;
+    private String uniqueIdentifier;
 
 
     private SampleQcSummary qc;
@@ -105,6 +106,8 @@ public class SampleSummary {
     public void addVolume(double volume) {
         this.volume = volume;
     }
+
+    public void addUniqueIdentifier(String uniqueId) { this.uniqueIdentifier = uniqueId; }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getBaseId() {
@@ -401,4 +404,9 @@ public class SampleSummary {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public int getNumberOfAmplicons() { return numberOfAmplicons; }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getUniqueIdentifier() {
+        return uniqueIdentifier;
+    }
 }
