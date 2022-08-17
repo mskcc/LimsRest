@@ -59,7 +59,7 @@ public class SetQcInvestigatorDecisionTask extends LimsTask {
                                         ("Sample", user).size() > 0) {
                                     match.getParentsOfType("Sample", user).get(0).setDataField(DT_Sample.
                                             EXEMPLAR_SAMPLE_STATUS, newStatus, user);
-                                    log.info("After assigning sample status to new status!");
+                                    log.info("After assigning sample status to " + newStatus + "!");
 
                                     DataRecord sample = match.getParentsOfType("Sample", user).get(0);
                                     String igoId = sample.getDataField("SampleId", user).toString();
@@ -86,6 +86,14 @@ public class SetQcInvestigatorDecisionTask extends LimsTask {
                                     log.info("qcStat igo id is:" + qcStat.getDataField("SampleId", user));
                                     qcStatusAwareProcessAssigner.assign(dataRecordManager, user, qcStat, QcStatus.fromString(newStatus));
                                     log.info("After assign is completed!");
+                                }
+                            } else if (field.get("InvestigatorDecision").toString().toLowerCase().contains("stop processing")) {
+                                String newStatus = "Awaiting Processing";
+                                if(match.getParentsOfType("Sample", user) != null && match.getParentsOfType
+                                        ("Sample", user).size() > 0) {
+                                    match.getParentsOfType("Sample", user).get(0).setDataField(DT_Sample.
+                                            EXEMPLAR_SAMPLE_STATUS, newStatus, user);
+                                    log.info("After assigning sample status to " + newStatus + "!");
                                 }
                             }
                             count++;
