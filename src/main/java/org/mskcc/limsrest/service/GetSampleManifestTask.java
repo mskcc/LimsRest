@@ -218,7 +218,11 @@ public class GetSampleManifestTask {
             DataRecord aliquot = aliquotEntry.getValue().record;
             DataRecord aliquotParent = aliquotEntry.getValue().parent;
             log.info("Processing DNA library: " + libraryIgoId);
-            SampleManifest.Library library = getLibraryFields(user, libraryIgoId, aliquot, dnaInputNg);
+            SampleManifest.Library library;
+            if (recipe.contains("CMO-CH"))
+                library = getLibraryFields(user, libraryIgoId, aliquotParent, dnaInputNg);
+            else
+                library = getLibraryFields(user, libraryIgoId, aliquot, dnaInputNg);
 
             if (recipe.contains("ACCESS") || recipe.contains("CMO-CH")) {
                 List<DataRecord> indexBarcodes = aliquot.getDescendantsOfType("IndexBarcode", user);
