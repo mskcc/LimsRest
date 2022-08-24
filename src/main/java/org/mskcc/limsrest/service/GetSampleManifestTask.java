@@ -207,8 +207,8 @@ public class GetSampleManifestTask {
             dnaLibraries.put(igoId, new LibraryDataRecord(sample));
         }
 
-        Double dnaInputNg = null;
-        if (recipe.contains("ACCESS")) {
+        Double dnaInputNg = null;  // leave null for WES & IMPACT
+        if (recipe.contains("ACCESS") || recipe.contains("CMO-CH")) {
             dnaInputNg = setACCESS2dBarcode(user, dataRecordManager, sample, sampleManifest);
         }
 
@@ -218,7 +218,11 @@ public class GetSampleManifestTask {
             DataRecord aliquot = aliquotEntry.getValue().record;
             DataRecord aliquotParent = aliquotEntry.getValue().parent;
             log.info("Processing DNA library: " + libraryIgoId);
-            SampleManifest.Library library = getLibraryFields(user, libraryIgoId, aliquot, dnaInputNg);
+            SampleManifest.Library library;
+            if (recipe.contains("CMO-CH"))
+                library = getLibraryFields(user, libraryIgoId, aliquotParent, dnaInputNg);
+            else
+                library = getLibraryFields(user, libraryIgoId, aliquot, dnaInputNg);
 
             if (recipe.contains("ACCESS") || recipe.contains("CMO-CH")) {
                 List<DataRecord> indexBarcodes = aliquot.getDescendantsOfType("IndexBarcode", user);
@@ -235,27 +239,50 @@ public class GetSampleManifestTask {
                 }
             }
 
-            // recipe, capture input, capture name
-            List<DataRecord> nimbleGen = aliquot.getDescendantsOfType("NimbleGenHybProtocol", user);
-            log.info("Found nimbleGen records: " + nimbleGen.size());
-            for (DataRecord n : nimbleGen) {
-                Object valid = n.getValue("Valid", user); // 05359_B_1 null
-                if (valid != null && new Boolean(valid.toString())) {
-                    String poolName = n.getStringVal("Protocol2Sample", user);
-                    String baitSetRecipe = n.getStringVal("Recipe", user); // LIMS display name "bait set"
-                    Object val = n.getValue("SourceMassToUse", user);
-                    if (val != null) {
-                        Double captureInput = n.getDoubleVal("SourceMassToUse", user);
-                        library.setCaptureInputNg(captureInput.toString());
-                        library.setCaptureName(poolName);
-                        Double captureVolume = n.getDoubleVal("VolumeToUse", user);
-                        library.setCaptureConcentrationNm(captureVolume.toString());
-                        sampleManifest.addLibrary(library);
+            if (recipe.contains("CMO-CH")) { // capture info is in different protocol for CMO-CH
+                List<DataRecord> records = aliquotParent.getDescendantsOfType("KAPAAgilentCaptureProtocol1", user);
+                log.info("Found capture records: " + records.size());
+                for (DataRecord n : records) {
+                    Object valid = n.getValue("Valid", user); // 05359_B_1 null
+                    if (valid != null && new Boolean(valid.toString())) {
+                        String poolName = "";
+                        Object val = n.getValue("Aliq1TargetMass", user);
+                        if (val != null) {
+                            Double captureInput = n.getDoubleVal("Aliq1TargetMass", user);
+                            library.setCaptureInputNg(captureInput.toString());
+                            library.setCaptureName(poolName);
+                            Double captureVolume = n.getDoubleVal("Aliq1StartingConcentration", user);
+                            library.setCaptureConcentrationNm(captureVolume.toString());
+                            sampleManifest.addLibrary(library);
+                        }
+                    } else {
+                        log.warn("Capture records not valid.");
                     }
-                } else {
-                    log.warn("Nimblegen records not valid.");
+                }
+            } else {
+                // bait set recipe, capture input, capture name
+                List<DataRecord> nimbleGen = aliquot.getDescendantsOfType("NimbleGenHybProtocol", user);
+                log.info("Found nimbleGen records: " + nimbleGen.size());
+                for (DataRecord n : nimbleGen) {
+                    Object valid = n.getValue("Valid", user); // 05359_B_1 null
+                    if (valid != null && new Boolean(valid.toString())) {
+                        String poolName = n.getStringVal("Protocol2Sample", user);
+                        String baitSetRecipe = n.getStringVal("Recipe", user); // LIMS display name "bait set"
+                        Object val = n.getValue("SourceMassToUse", user);
+                        if (val != null) {
+                            Double captureInput = n.getDoubleVal("SourceMassToUse", user);
+                            library.setCaptureInputNg(captureInput.toString());
+                            library.setCaptureName(poolName);
+                            Double captureVolume = n.getDoubleVal("VolumeToUse", user);
+                            library.setCaptureConcentrationNm(captureVolume.toString());
+                            sampleManifest.addLibrary(library);
+                        }
+                    } else {
+                        log.warn("Nimblegen records not valid.");
+                    }
                 }
             }
+
 
             // for each flow cell ID a sample may be on multiple lanes
             // (currently all lanes are demuxed to same fastq file)
@@ -329,9 +356,19 @@ public class GetSampleManifestTask {
         return sampleManifest;
     }
 
+    /**
+     * Set Values unique to the ACCESS & CMO-CH recipes.
+     * @param user
+     * @param dataRecordManager
+     * @param sample
+     * @param sampleManifest
+     * @return
+     * @throws NotFound
+     * @throws IoError
+     * @throws RemoteException
+     */
     private Double setACCESS2dBarcode(User user, DataRecordManager dataRecordManager, DataRecord sample, SampleManifest sampleManifest) throws NotFound, IoError, RemoteException {
-        Double dnaInputNg;
-        dnaInputNg = findDNAInputForLibraryForMSKACCESS(sample, user);
+        Double dnaInputNg = findDNAInputForLibraryForMSKACCESS(sample, user);
         log.info("Searching for ACCESS 2D barcode with base IGO sample ID=" + sampleManifest.getCmoInfoIgoId());
         List<DataRecord> baseSamples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sampleManifest.getCmoInfoIgoId() + "'", user);
         if (baseSamples.size() > 0) {
@@ -437,7 +474,7 @@ public class GetSampleManifestTask {
     }
 
     /*
-     * The ACCESS team has requested DNA input for library.
+     * ACCESS & CMO-CHO have requested dna Input for each library.
      */
     protected Double findDNAInputForLibraryForMSKACCESS(DataRecord sample, User user) {
         try {
