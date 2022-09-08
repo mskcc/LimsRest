@@ -22,6 +22,9 @@ public class QcStatusAwareProcessAssigner {
                 return new ResequencePoolAssignedProcessConfig(sample, user);
             case REPOOL_SAMPLE:
                 return new RepoolSampleAssignedProcessConfig(sample);
+            case CONTINUE_PROCESSING:
+                log.info("Here I am!");
+                return new InvestigatorDecisionAssignedProcessConfig(sample);
             default:
                 throw new RuntimeException(String.format("Not supported qc status: %s", qcStatus));
         }
@@ -29,15 +32,28 @@ public class QcStatusAwareProcessAssigner {
 
     public void assign(DataRecordManager dataRecordManager, User user, DataRecord seqQc, QcStatus status) {
         DataRecord sample = null;
+        boolean isSetInvestigatorDecision = false;
+        log.info("status is:" + status);
         try {
+            if(status.equals(QcStatus.CONTINUE_PROCESSING)) {
+                log.info("Setting isSetInvestigatorDecision to true");
+                isSetInvestigatorDecision = true;
+            }
             AssignedProcessConfig assignedProcessConfig = getProcessAssignerConfig(status, seqQc, user);
-
             sample = assignedProcessConfig.getSample();
-            DataRecord assignedProcess = addAssignedProcess(dataRecordManager, user, assignedProcessConfig);
-            changeSampleStatus(sample, assignedProcessConfig, user);
+            log.info("AssignedProcessConfig: sample id is: " + sample.getDataField("SampleId", user));
+            DataRecord assignedProcess = addAssignedProcess(dataRecordManager, user, assignedProcessConfig, isSetInvestigatorDecision);
 
+            if (!isSetInvestigatorDecision) {
+                changeSampleStatus(sample, assignedProcessConfig, user);
+            }
+            if (isSetInvestigatorDecision) {
+                sample = sample.getParentsOfType("Sample", user).get(0);
+            }
             addSampleAsChild(user, sample, assignedProcess);
-            removeSampleFromBatch(user, sample);
+            if (!isSetInvestigatorDecision) {
+                removeSampleFromBatch(user, sample);
+            }
         } catch (Exception e) {
             String sampleId = tryToGetSampleId(user, sample);
             log.warn(String.format("Unable to assign process with status: %s for sample: %s", status, sampleId), e);
@@ -67,12 +83,12 @@ public class QcStatusAwareProcessAssigner {
     }
 
     private DataRecord addAssignedProcess(DataRecordManager dataRecordManager, User user, AssignedProcessConfig
-            assignedProcessConfig) throws Exception {
+            assignedProcessConfig, boolean isInvestigatorDecision) throws Exception {
         AssignedProcess assignedProcess = assignedProcessConfig.getProcessToAssign();
-
+        log.info("assigned process is: " + assignedProcess.getName());
         DataRecord sample = assignedProcessConfig.getSample();
-        Map<String, Object> assignedProcessMap = AssignedProcessCreator.create(sample, assignedProcess, user);
-
+        Map<String, Object> assignedProcessMap = AssignedProcessCreator.create(sample, assignedProcess, isInvestigatorDecision, user);
+        log.info("assigned process map size = " + assignedProcessMap);
         log.info(String.format("Assigning process: %s to sample: %s (%s)", assignedProcess.getName(),
                 assignedProcessMap.get(DT_AssignedProcess.SAMPLE_ID), assignedProcessMap.get(DT_AssignedProcess
                         .OTHER_SAMPLE_ID)));
@@ -109,9 +125,11 @@ public class QcStatusAwareProcessAssigner {
     }
 
     private void validateAssignedProcessAdded(Map<String, Object> assignedProcessMap, List<DataRecord> assignedProcesses) {
-        if (assignedProcesses.size() == 0)
+        if (assignedProcesses.size() == 0) {
+            log.info("in validate assigned process added, assignedProcesses.size() == 0");
             throw new RuntimeException(String.format("Unable to assign process to sample: %s (%s)",
                     assignedProcessMap.get(DT_AssignedProcess.SAMPLE_ID), assignedProcessMap.get(DT_AssignedProcess
                             .OTHER_SAMPLE_ID)));
+        }
     }
 }

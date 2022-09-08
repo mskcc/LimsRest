@@ -1,5 +1,7 @@
 package org.mskcc.limsrest.service.assignedprocess;
 
+import org.mskcc.limsrest.controller.CheckOrMarkCmoRequests;
+
 public enum QcStatus {
     FAILED("Failed"),
     NEW_LIBRARY_NEEDED("New-Library-Needed"),
@@ -9,7 +11,9 @@ public enum QcStatus {
     REPOOL_SAMPLE("Repool-Sample"),
     REQUIRED_ADDITIONAL_READS("Required-Additional-Reads"),
     RESEQUENCE_POOL("Resequence-Pool"),
-    UNDER_REVIEW("Under-Review");
+    UNDER_REVIEW("Under-Review"),
+    //sample status when investigator decision is "Continue Processing"
+    CONTINUE_PROCESSING("Ready for - Assign from Investigator Decisions");
 
     private String text;
 

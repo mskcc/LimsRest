@@ -1,21 +1,16 @@
 package org.mskcc.limsrest.service;
 
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-import com.velox.api.datarecord.DataRecord;
-import com.velox.api.datarecord.InvalidValue;
-import com.velox.api.datarecord.IoError;
-import com.velox.api.datarecord.NotFound;
-import com.velox.api.sqlbuilder.*;
-import com.velox.api.util.ServerException;
+import com.velox.api.datarecord.*;
+import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.sloan.cmo.staticstrings.datatypes.DT_Sample;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.service.assignedprocess.*;
 import org.mskcc.limsrest.util.Messages;
 import org.springframework.security.access.prepost.PreAuthorize;
 
-import java.rmi.RemoteException;
 import java.util.*;
 
 /*
@@ -28,6 +23,7 @@ public class SetQcInvestigatorDecisionTask extends LimsTask {
 
     private static Log log = LogFactory.getLog(SetQcInvestigatorDecisionTask.class);
     List<Map<String, Object>> data;
+    protected QcStatusAwareProcessAssigner qcStatusAwareProcessAssigner = new QcStatusAwareProcessAssigner();
 
     public SetQcInvestigatorDecisionTask() {
     }
@@ -37,7 +33,6 @@ public class SetQcInvestigatorDecisionTask extends LimsTask {
         this.data = data;
 
     }
-
 
     @PreAuthorize("hasRole('READ')")
     @Override
@@ -53,10 +48,54 @@ public class SetQcInvestigatorDecisionTask extends LimsTask {
                 List<DataRecord> matched = dataRecordManager.queryDataRecords(datatype, "RecordId", records, user);
 
                 for (DataRecord match :
-                        matched) {
+                        matched) { //match is of type QC RNA/DNA/Library Report
                     for (Map field : decisions) {
                         if (String.valueOf(match.getRecordId()).equals(String.valueOf(field.get("RecordId")))) {
                             match.setDataField("InvestigatorDecision", field.get("InvestigatorDecision"), user);
+                            if(field.get("InvestigatorDecision").toString().toLowerCase().contains("continue processing")) {
+                                log.info("investigator decision is continue processing.");
+                                String newStatus = "Ready for - Assign from Investigator Decisions";
+                                if(match.getParentsOfType("Sample", user) != null && match.getParentsOfType
+                                        ("Sample", user).size() > 0) {
+                                    match.getParentsOfType("Sample", user).get(0).setDataField(DT_Sample.
+                                            EXEMPLAR_SAMPLE_STATUS, newStatus, user);
+                                    log.info("After assigning sample status to " + newStatus + "!");
+
+                                    DataRecord sample = match.getParentsOfType("Sample", user).get(0);
+                                    String igoId = sample.getDataField("SampleId", user).toString();
+                                    log.info("Sample's IGO Id is: " + igoId);
+                                    List<DataRecord> qcRecordDna = dataRecordManager.queryDataRecords("QcReportDna",
+                                            "SampleId = '" + igoId + "'", user);
+                                    List<DataRecord> qcRecordRna = dataRecordManager.queryDataRecords("QcReportRna",
+                                            "SampleId = '" + igoId + "'", user);
+                                    List<DataRecord> qcRecordLibrary = dataRecordManager.queryDataRecords("QcReportLibrary",
+                                            "SampleId = '" + igoId + "'", user);
+                                    DataRecord qcStat = null;
+                                    if(qcRecordDna != null && qcRecordDna.size() > 0) {
+                                        qcStat = qcRecordDna.get(0);
+                                        log.info("seqQc is assigned with a dna qc report record!");
+                                    }
+                                    else if(qcRecordRna != null && qcRecordRna.size() > 0) {
+                                        qcStat = qcRecordRna.get(0);
+                                        log.info("seqQc is assigned with a rna qc report record!");
+                                    }
+                                    else if(qcRecordLibrary != null && qcRecordLibrary.size() > 0) {
+                                        qcStat = qcRecordLibrary.get(0);
+                                        log.info("seqQc is assigned with a rna qc report record!");
+                                    }
+                                    log.info("qcStat igo id is:" + qcStat.getDataField("SampleId", user));
+                                    qcStatusAwareProcessAssigner.assign(dataRecordManager, user, qcStat, QcStatus.fromString(newStatus));
+                                    log.info("After assign is completed!");
+                                }
+                            } else if (field.get("InvestigatorDecision").toString().toLowerCase().contains("stop processing")) {
+                                String newStatus = "Awaiting Processing";
+                                if(match.getParentsOfType("Sample", user) != null && match.getParentsOfType
+                                        ("Sample", user).size() > 0) {
+                                    match.getParentsOfType("Sample", user).get(0).setDataField(DT_Sample.
+                                            EXEMPLAR_SAMPLE_STATUS, newStatus, user);
+                                    log.info("After assigning sample status to " + newStatus + "!");
+                                }
+                            }
                             count++;
                         }
                     }
@@ -72,5 +111,4 @@ public class SetQcInvestigatorDecisionTask extends LimsTask {
         }
         return count + " Investigator Decisions set";
     }
-
 }
