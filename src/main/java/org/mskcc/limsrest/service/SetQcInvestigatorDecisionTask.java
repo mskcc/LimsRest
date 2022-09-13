@@ -56,7 +56,8 @@ public class SetQcInvestigatorDecisionTask extends LimsTask {
                                 log.info("investigator decision is continue processing.");
                                 String newStatus = "Ready for - Assign from Investigator Decisions";
                                 if(match.getParentsOfType("Sample", user) != null && match.getParentsOfType
-                                        ("Sample", user).size() > 0) {
+                                        ("Sample", user).size() > 0 && match.getParentsOfType("Sample", user).get(0)
+                                        .getStringVal("ExemplarSampleStatus", user).equals("Ready for - Pending User Decision")) {
                                     match.getParentsOfType("Sample", user).get(0).setDataField(DT_Sample.
                                             EXEMPLAR_SAMPLE_STATUS, newStatus, user);
                                     log.info("After assigning sample status to " + newStatus + "!");
