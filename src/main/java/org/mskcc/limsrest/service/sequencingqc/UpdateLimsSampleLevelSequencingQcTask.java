@@ -11,7 +11,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
 import org.mskcc.limsrest.ConnectionLIMS;
-import org.mskcc.limsrest.util.BasicMail;
 import org.mskcc.limsrest.util.IGOTools;
 
 import static org.mskcc.limsrest.util.Utils.*;
