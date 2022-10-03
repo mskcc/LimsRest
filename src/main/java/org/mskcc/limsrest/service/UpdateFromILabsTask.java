@@ -160,7 +160,6 @@ public class UpdateFromILabsTask {
                 requestFields.put("Investigator", Filter.toAscii(field2val.get("INVEST")));
                 requestFields.put("RoomNum", Filter.toAscii(field2val.get("ROOM")));
                 requestFields.put("TelephoneNum", Filter.toAscii(field2val.get("PHONE")));
-                requestFields.put("FaxNum", Filter.toAscii(field2val.get("FAX")));
                 requestFields.put("LabHeadEmail", Filter.toAscii(field2val.get("PIEMAIL")));
                 requestFields.put("Investigatoremail", Filter.toAscii(field2val.get("INVESTEMAIL")));
                 requestFields.put("MailTo", Filter.toAscii(field2val.get("ALLEMAILS")));
