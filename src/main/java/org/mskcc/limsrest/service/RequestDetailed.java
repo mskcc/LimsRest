@@ -9,7 +9,6 @@ public class RequestDetailed {
 
    private ArrayList<SampleSummary> samples;
    private String projectName;
-
    private String applications;
    private String bicReadme;
    private String clinicalCorrelative;
@@ -25,7 +24,6 @@ public class RequestDetailed {
    private String cmoPiName;
    private String cmoPiEmail;
    private String requestId;
-   private String faxNumber;
    private String furthest;  
    private String investigator;
    private String irbWaiverComments;
@@ -55,12 +53,8 @@ public class RequestDetailed {
    private String studyId;
    private String communicationNotes;
    private String analysisType;
-
-
-
    private long completedDate;
    private long deliveryDate;
-   private long partialReceivedDate;
    private long recievedDate;
    private long portalDate;
    private long portalUploadDate;
@@ -69,11 +63,8 @@ public class RequestDetailed {
    private long ilabsRequestDate;
    private long irbDate;
    private long samplesReceivedDate;
-
-   private boolean pipelinable;
    private boolean fastqRequested;
    private boolean analysisRequested;
-   private Boolean highPriority;
 
    public RequestDetailed(){
      this("UNKNOWN");
@@ -86,9 +77,6 @@ public class RequestDetailed {
    }
    public void setReceivedDate(long recievedDate){
 	this.recievedDate = recievedDate;
-   }
-   public void setAutorunnable(boolean pipelinable){
-	this.pipelinable = pipelinable;
    }
   
   public ArrayList<SampleSummary> getSamples(){
@@ -154,10 +142,6 @@ public class RequestDetailed {
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public String getCmoProjectId(){
 	return cmoProjectId;
-   }
-   @JsonInclude(JsonInclude.Include.NON_EMPTY)
-   public String getFaxNumber(){
-	return faxNumber;
    }
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public String getInvestigator(){
@@ -281,10 +265,6 @@ public class RequestDetailed {
 	return deliveryDate;
    }
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-   public long getPartialReceivedDate(){
-	return partialReceivedDate;
-   }
-   @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public long getReceivedDate(){
 	return recievedDate;
    }
@@ -308,7 +288,6 @@ public class RequestDetailed {
    public long getIlabsRequestDate(){
 	return ilabsRequestDate;
    }
-
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public long getIrbDate(){
      return irbDate;
@@ -316,11 +295,6 @@ public class RequestDetailed {
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public long getSamplesReceivedDate(){
 	return samplesReceivedDate;
-   }
-
-   @JsonInclude(JsonInclude.Include.NON_EMPTY)
-   public boolean getAutorunnable(){
-	return pipelinable;
    }
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public boolean getFastqRequested(){
@@ -330,11 +304,6 @@ public class RequestDetailed {
    public boolean getAnalysisRequested(){
 	return analysisRequested;
    }
-
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public Boolean getHighPriority(){
-      return highPriority; 
-    }
   public static RequestDetailed errorMessage(String e){
     RequestDetailed rd = new RequestDetailed("ERROR");
     rd.setInvestigator(e);
