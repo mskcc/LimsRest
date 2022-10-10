@@ -37,7 +37,6 @@ public class RequestDetailed {
    private String groupLeader;
    private String investigatorEmail;
    private String irbId;
-   private String irbVerifier;
    private String piEmail;
    private String projectManager;
    private String requestDescription;
@@ -56,7 +55,6 @@ public class RequestDetailed {
    private long completedDate;
    private long deliveryDate;
    private long recievedDate;
-   private long portalDate;
    private long portalUploadDate;
    private long investigatorDate;
    private long inprocessDate;
@@ -129,14 +127,12 @@ public class RequestDetailed {
    public String getCmoContactName(){
      return cmoContactName;
   }
-
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getCmoPiName(){
+   @JsonInclude(JsonInclude.Include.NON_EMPTY)
+   public String getCmoPiName(){
      return cmoPiName;
   }
-   
- @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public String getCmoPiEmail(){
+   @JsonInclude(JsonInclude.Include.NON_EMPTY)
+   public String getCmoPiEmail(){
      return cmoPiEmail;
   }
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -151,7 +147,6 @@ public class RequestDetailed {
    public String getIrbWaiverComments(){
 	return irbWaiverComments;
    }
-
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public String getMailTo(){
      return mailTo;
@@ -183,10 +178,6 @@ public class RequestDetailed {
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public String getIrbId(){
 	return irbId;
-   }
-   @JsonInclude(JsonInclude.Include.NON_EMPTY)
-   public String getIrbVerifier(){
-	return irbVerifier;
    }
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public String getPiEmail(){
@@ -255,7 +246,6 @@ public class RequestDetailed {
    public String getCommunicationNotes(){
 	return communicationNotes;
    }
-
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public long getCompletedDate(){
 	return completedDate;
@@ -267,10 +257,6 @@ public class RequestDetailed {
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public long getReceivedDate(){
 	return recievedDate;
-   }
-   @JsonInclude(JsonInclude.Include.NON_EMPTY)
-   public long getPortalDate(){
-	return portalDate;
    }
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public long getPortalUploadDate(){

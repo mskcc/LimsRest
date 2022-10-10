@@ -97,7 +97,6 @@ public abstract class LimsTask implements VeloxExecutable<Object>, Callable<Obje
             runAndCatchNpe(() -> requestDetailed.setGroupLeader((String) requestFields.get("GroupLeader")));
             runAndCatchNpe(() -> requestDetailed.setInvestigatorEmail((String) requestFields.get("Investigatoremail")));
             runAndCatchNpe(() -> requestDetailed.setIrbId((String) requestFields.get("IRBandWaiverNumber")));
-            runAndCatchNpe(() -> requestDetailed.setIrbVerifier((String) requestFields.get("IRBVerifier")));
             runAndCatchNpe(() -> requestDetailed.setPiEmail((String) requestFields.get("LabHeadEmail")));
             runAndCatchNpe(() -> requestDetailed.setProjectManager((String) requestFields.get("ProjectManager")));
             runAndCatchNpe(() -> requestDetailed.setRequestDescription((String) requestFields.get("RequestDescription")));
@@ -116,9 +115,6 @@ public abstract class LimsTask implements VeloxExecutable<Object>, Callable<Obje
             runAndCatchNpe(() -> requestDetailed.setCompletedDate((long) requestFields.get("CompletedDate")));
             runAndCatchNpe(() -> requestDetailed.setDeliveryDate((long) requestFields.get("SampleDeliveryDate")));
             runAndCatchNpe(() -> requestDetailed.setReceivedDate((long) requestFields.get("ReceivedDate")));
-            runAndCatchNpe(() -> requestDetailed.setPortalDate((long) requestFields.get("InformaticsReceipt")));
-            runAndCatchNpe(() -> requestDetailed.setPortalUploadDate((long) requestFields.get("PortalDate")));
-            runAndCatchNpe(() -> requestDetailed.setInvestigatorDate((long) requestFields.get("DateSentInvestigator")));
             runAndCatchNpe(() -> requestDetailed.setInprocessDate((long) requestFields.get("InProcessDate")));
             runAndCatchNpe(() -> requestDetailed.setIlabsRequestDate((long) requestFields.get("RequestStartDate")));
             runAndCatchNpe(() -> requestDetailed.setIrbDate((long) requestFields.get("DateIRBandWaiverCheckout")));
