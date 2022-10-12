@@ -116,20 +116,13 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                             }
                         }
 
-                        DataRecord sampleAlpha, sampleBeta;
-                        if (dnaLibSamples.get(0).getStringVal("Recipe", user).toLowerCase().contains("alpha")) {
-                            log.info("Found alpha sample");
-                            sampleAlpha = dnaLibSamples.get(0);
-                            sampleBeta = dnaLibSamples.get(1);
-                        } else {
-                            log.info("Found beta sample");
-                            sampleBeta = dnaLibSamples.get(0);
-                            sampleAlpha = dnaLibSamples.get(1);
+                        for (DataRecord sample: dnaLibSamples) {
+                            if (sampleName.contains("alpha") && sample.getStringVal("Recipe", user).toLowerCase().contains("alpha")) {
+                                librarySample = sample;
+                            } else if (sampleName.contains("beta") && sample.getStringVal("Recipe", user).toLowerCase().contains("beta")) {
+                                librarySample = sample;
+                            }
                         }
-                        if (sampleName.contains("alpha"))
-                            librarySample = sampleAlpha;
-                        else
-                            librarySample = sampleBeta;
                     }
                 } catch (Exception e) {
                     log.error(String.format("TCR Seq specific error for : %s", sampleId));
