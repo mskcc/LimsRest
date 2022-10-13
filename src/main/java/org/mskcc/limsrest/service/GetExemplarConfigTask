@@ -1,0 +1,25 @@
+public class getExemplarConfigTask {
+    private static Log log = LogFactory.getLog(GetSampleQcTask.class);
+    private ConnectionLIMS conn;
+
+    public getExemplarConfigTask(ConnectionLIMS conn) {
+        this.conn = conn;
+    }
+    public List<ExemplarConfig> execute(conn) {
+        //Datatype = ExemplarConfig
+        // Field = VisiumImagePath
+        VeloxConnection vConn = conn.getConnection();
+        User user = vConn.getUser();
+        DataRecordManager dataRecordManager = vConn.getDataRecordManager();
+        List<ExemplarConfig> configInfo;
+        try {
+            configInfo = dataRecordManager.queryDataRecords("ExemplarConfig", user);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            return null;
+        }
+        return configInfo;
+    }
+}
