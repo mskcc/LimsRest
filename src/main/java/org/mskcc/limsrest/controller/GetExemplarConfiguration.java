@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.mskcc.limsrest.model.ExemplarConfig;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -17,24 +19,24 @@ import java.util.List;
 @RequestMapping("/")
 public class GetExemplarConfiguration {
     private static Log log = LogFactory.getLog(GetExemplarConfiguration.class);
-    private final ConnectionPoolLIMS conn;
+    private final ConnectionLIMS conn;
 
-    public GetExemplarConfiguration(ConnectionPoolLIMS conn){
+    public GetExemplarConfiguration(ConnectionLIMS conn){
         this.conn = conn;
     }
 
     @GetMapping("/getConfig")
-    public List<ExemplarConfig> getConfig() {
+    public ExemplarConfig getConfig() {
 
         log.info("Starting /getConfig");
 
-        GetExemplarConfigTask exemplarConfigTask = new GetExemplarConfigTask();
-        List<ExemplarConfig> configData = new LinkedList<>();
+        GetExemplarConfigTask exemplarConfigTask = new GetExemplarConfigTask(conn);
+        ExemplarConfig configData = new ExemplarConfig();
         try {
-            configData = exemplarConfigTask.execute(conn);
+            configData = exemplarConfigTask.execute();
         }
         catch(Exception e) {
-            log.info(String.format("While getting exemplar configuration data an exeption is thrown: %s"), e.getMessage());
+            log.info(String.format("While getting exemplar configuration data an exeption is thrown: %s", e.getMessage()));
         }
         return configData;
 
