@@ -8,6 +8,8 @@ import org.mskcc.limsrest.service.CustomForm;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.client.RestTemplate;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.util.*;
 
@@ -15,6 +17,7 @@ import java.util.*;
 // FASTQ field to Analysis_Type: FastQ only (Raw Data), Analysis by Bioinformatics core (bic), Analysis by Computational Services Core
 // all emails => qc_access, data_access
 public class GetGeneralInfo {
+    private static final Log log = LogFactory.getLog(GetGeneralInfo.class);
     private static final String baseUrl = "https://api.ilabsolutions.com/v1/cores";
     private RestTemplate restTemplateIGO;
     private RestTemplate restTemplateCMO;
@@ -22,7 +25,7 @@ public class GetGeneralInfo {
     private String core_id_cmo;
     private static final String PROJECT_NOT_IN_ILABS = "PROJECT NOT IN ILABS";
     private static final String FIELD_NOT_IN_ILABS = "FIELD NOT IN ILABS";
-    private static String[] HEADER = {"CC", "FUND", "PHONE", "FASTQ", "ANALYSIS_TYPE", "INVEST", "SUMMARY", "INVESTEMAIL", "ALLEMAILS", "DATA_ACCESS_EMAILS", "QC_ACCESS_EMAILS", "PIEMAIL", "PROJ", "PI", "COUNT", "FAX", "ROOM"};
+    private static String[] HEADER = {"CC", "FUND", "PHONE", "FASTQ", "ILAB_SERVICE_REQUEST_ID", "ANALYSIS_TYPE", "INVEST", "SUMMARY", "INVESTEMAIL", "ALLEMAILS", "DATA_ACCESS_EMAILS", "QC_ACCESS_EMAILS", "PIEMAIL", "PROJ", "PI", "COUNT", "FAX", "ROOM"};
     private static Map<Integer, String> CORRECTED_PIS = new HashMap<Integer, String>() {{
         put(437751, "geissmaf@mskcc.org,Geissmann");
         put(356959, "pentsove@mskcc.org,Pentsova,Elena");
@@ -71,6 +74,7 @@ public class GetGeneralInfo {
         String url = String.format("%s/%s/service_requests.json?name=%s", baseUrl, core_id_igo, srName);
 
         ObjectNode res = restTemplateIGO.getForObject(url, ObjectNode.class);
+
         try {
             JsonNode arrayNode = res.get("ilab_response").get("service_requests");
             if (arrayNode == null || arrayNode.size() != 1) {
@@ -96,6 +100,9 @@ public class GetGeneralInfo {
 
             formValues.put("INVEST", investigatorFirstName + " " + investigatorLastName);
             formValues.put("INVESTEMAIL", investigatorEmail);
+
+            formValues.put("ILAB_SERVICE_REQUEST_ID", serviceRequestId);
+            System.out.println("iLab service request id has been published! " + serviceRequestId);
 
             ArrayNode labPis = (ArrayNode) serviceRequest.get("lab").get("principal_investigators");
             if (!ObjectUtils.isEmpty(labPis)) {
