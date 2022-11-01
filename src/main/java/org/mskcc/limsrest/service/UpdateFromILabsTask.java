@@ -69,12 +69,8 @@ public class UpdateFromILabsTask {
             String core_id_cmo = ilabsConfigCMO.getKey();
             String token_cmo = ilabsConfigCMO.getValue();
 
-            log.info("core_id_igo = " + core_id_igo);
-            log.info("token_igo = " + token_igo);
-
             GetGeneralInfo ggi = new GetGeneralInfo(core_id_igo, token_igo, core_id_cmo, token_cmo);
 
-            log.info("General info res template is: " + ggi);
             for (String request : requests) {
                 System.out.println(request);
                 try {

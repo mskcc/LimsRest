@@ -74,7 +74,6 @@ public class GetGeneralInfo {
         String url = String.format("%s/%s/service_requests.json?name=%s", baseUrl, core_id_igo, srName);
 
         ObjectNode res = restTemplateIGO.getForObject(url, ObjectNode.class);
-
         try {
             JsonNode arrayNode = res.get("ilab_response").get("service_requests");
             if (arrayNode == null || arrayNode.size() != 1) {
