@@ -17,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -77,70 +78,53 @@ public class GetSequencingRequestsTask {
 
     @PreAuthorize("hasRole('READ')")
     public List<RequestSummary> execute(VeloxConnection conn) {
-        DataRecordManager dataRecordManager = conn.getDataRecordManager();
+        DataRecordManager drm = conn.getDataRecordManager();
         User user = conn.getUser();
-        String flowCellLaneQuery = getFlowCellLaneQuery();
-        List<DataRecord> records = new ArrayList<>();
+
+        // query seqanalysissampleqc for samples in last n days awaiting top-up
+        // subtract all request IDs that have status 'Under-Review' (already topped up)
+        // query request tables for the remaining set of request IDs to get info for return type like PI
+
         try {
-            records = dataRecordManager.queryDataRecords(FlowCellLaneModel.DATA_TYPE_NAME, flowCellLaneQuery, user);
-        } catch (IoError | RemoteException | NotFound e) {
-            log.error(String.format("Failed to query DataRecords w/ query: '%s' on %s", flowCellLaneQuery,
-                    FlowCellLaneModel.DATA_TYPE_NAME));
-            return new ArrayList<>();
-        }
+            String query = "DATECREATED > " + getSearchPoint() + " and SEQQCSTATUS NOT IN ('Failed', 'Passed')";
+            log.info("Querying seqanalysissampleqc WHERE " + query);
+            List<DataRecord> qcRecords = drm.queryDataRecords("seqanalysissampleqc", query, user);
+            String queryUnderReview = "DATECREATED > " + getSearchPoint() + " and SEQQCSTATUS IN ('Under-Review')";
+            List<DataRecord> qcUnderReview = drm.queryDataRecords("seqanalysissampleqc", queryUnderReview, user);
 
-        List<List<DataRecord>> parentSamples = new ArrayList<>();
-        try {
-            parentSamples = dataRecordManager.getParentsOfType(records, "Sample", user);
-        } catch (RemoteException | ServerException e) {
-            log.error("Failed to query Samples");
-        }
-
-        List<String> reqIds = new LinkedList<>();
-        for (List<DataRecord> samples : parentSamples) {
-            for (DataRecord sample : samples) {
-                String possibleReqId = getRecordStringValue(sample, RequestModel.REQUEST_ID, user);
-                log.info(String.format("Original RequestID: %s", possibleReqId));
-                String[] cSplit = possibleReqId.split(",");
-                for (String reqId : cSplit) {
-                    if (!reqIds.contains(reqId)) {
-                        log.info(String.format("Adding RequestID: %s", reqId));
-                        reqIds.add(reqId);
-                    }
-                }
+            HashSet<String> requestIDs = new HashSet<>();
+            for (DataRecord qcRecord : qcRecords) {
+                String request = qcRecord.getStringVal("Request", user);
+                requestIDs.add(request);
             }
-        }
-        List<DataRecord> requestRecords = new LinkedList<>();
-        for (String rid : reqIds) {
-            String requestQuery = getRequestQuery(rid);
-            try {
-                List<DataRecord> requestRecord = dataRecordManager.queryDataRecords(RequestModel.DATA_TYPE_NAME, requestQuery, user);
-                requestRecords.addAll(requestRecord);
-            } catch (RemoteException | NotFound | IoError e) {
-                log.error(String.format("Failed to query Samples w/ query: '%s' on %s", requestQuery,
-                        RequestModel.DATA_TYPE_NAME));
+            for (DataRecord qcRecord : qcUnderReview) {
+                String request = qcRecord.getStringVal("Request", user);
+                requestIDs.remove(request);
             }
+
+            log.info("Found requests that need to be topped up: " + requestIDs.toString());
+            String s = "\"" + String.join("\", \"", requestIDs) + "\"";
+            query = "REQUESTID IN (" + s + ")";
+            log.info("Sending requests query: " + query);
+            List<DataRecord> requestRecords = drm.queryDataRecords(RequestModel.DATA_TYPE_NAME, query, user);
+            List<RequestSummary> requests = new ArrayList<>();
+            for (DataRecord request : requestRecords) {
+                String requestId = getRecordStringValue(request, RequestModel.REQUEST_ID, user);
+
+                RequestSummary rs = new RequestSummary(requestId);
+                //rs.setRunFolders(seqFolders); // TODO get recent run folder from qc query above
+                rs.setInvestigator(getRecordStringValue(request, RequestModel.INVESTIGATOR, user));
+                rs.setPi(getRecordStringValue(request, RequestModel.LABORATORY_HEAD, user));
+                rs.setRequestType(getRecordStringValue(request, RequestModel.REQUEST_NAME, user));
+                rs.setIsIgoComplete(isIgoComplete(request, user));
+                requests.add(rs);
+            }
+            return requests;
+
+        } catch (RemoteException | NotFound | IoError e) {
+            log.error(e.getMessage());
         }
-
-        List<RequestSummary> requests = new ArrayList<>();
-
-        for (DataRecord request : requestRecords) {
-            List<String> seqFolders = getSequencingFoldersOfRequest(dataRecordManager, request, user);
-            String requestId = getRecordStringValue(request, RequestModel.REQUEST_ID, user);
-
-            RequestSummary rs = new RequestSummary(requestId);
-            rs.setRunFolders(seqFolders);
-            rs.setInvestigator(getRecordStringValue(request, RequestModel.INVESTIGATOR, user));
-            rs.setPi(getRecordStringValue(request, RequestModel.LABORATORY_HEAD, user));
-            rs.setRequestType(getRecordStringValue(request, RequestModel.REQUEST_NAME, user));
-            // rs.setReceivedDate(getRecordLongValue(request, RequestModel.RECEIVED_DATE, user));
-            rs.setRecentDeliveryDate(getRecordLongValue(request, RequestModel.RECENT_DELIVERY_DATE, user));
-            // rs.setCompletedDate(getRecordLongValue(request, RequestModel.COMPLETED_DATE, user));
-            rs.setIsIgoComplete(isIgoComplete(request, user));
-            requests.add(rs);
-        }
-
-        return requests;
+        return null;
     }
 
     private long getSearchPoint() {
