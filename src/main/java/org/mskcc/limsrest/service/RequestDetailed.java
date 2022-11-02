@@ -6,18 +6,14 @@ import lombok.Setter;
 
 @Setter
 public class RequestDetailed {
-
    private ArrayList<SampleSummary> samples;
    private String projectName;
    private String applications;
-   private String bicReadme;
    private String clinicalCorrelative;
    private String costCenter;
    private String fundNumber;
    private String contactName;
    private String dataAnalyst;
-   //   to be replaced by dataAccessEmails
-   private String dataAnalystEmail;
    private String dataDeliveryType;
    private String cmoProjectId;
    private String cmoContactName;
@@ -27,8 +23,6 @@ public class RequestDetailed {
    private String furthest;  
    private String investigator;
    private String irbWaiverComments;
-   //   to be replaced by dataAccessEmails and qcAccessEmails
-   private String mailTo;
    private String dataAccessEmails;
    private String qcAccessEmails;
    private String pi;
@@ -55,14 +49,12 @@ public class RequestDetailed {
    private long completedDate;
    private long deliveryDate;
    private long recievedDate;
-   private long portalUploadDate;
    private long investigatorDate;
    private long inprocessDate;
    private long ilabsRequestDate;
    private long irbDate;
    private long samplesReceivedDate;
    private boolean fastqRequested;
-   private boolean analysisRequested;
 
    public RequestDetailed(){
      this("UNKNOWN");
@@ -76,22 +68,15 @@ public class RequestDetailed {
    public void setReceivedDate(long recievedDate){
 	this.recievedDate = recievedDate;
    }
-  
-  public ArrayList<SampleSummary> getSamples(){
+   public ArrayList<SampleSummary> getSamples(){
     return samples;
   }
-
-  public String getRequestId(){
+   public String getRequestId(){
     return requestId;
   }
-
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public String getApplications(){
 	return applications;
-   }
-   @JsonInclude(JsonInclude.Include.NON_EMPTY)
-   public String getbicReadme(){
-	return bicReadme;
    }
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public String getClinicalCorrelative(){
@@ -112,10 +97,6 @@ public class RequestDetailed {
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public String getDataAnalyst(){
 	return dataAnalyst;
-   }
-   @JsonInclude(JsonInclude.Include.NON_EMPTY)
-   public String getDataAnalystEmail(){
-	return dataAnalystEmail;
    }
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public String getDataDeliveryType(){
@@ -146,10 +127,6 @@ public class RequestDetailed {
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public String getIrbWaiverComments(){
 	return irbWaiverComments;
-   }
-   @JsonInclude(JsonInclude.Include.NON_EMPTY)
-   public String getMailTo(){
-     return mailTo;
    }
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public String getDataAccessEmails(){ return dataAccessEmails; }
@@ -216,12 +193,10 @@ public class RequestDetailed {
    public String getStatus(){
 	return status;
    }
-  
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public String getFurthestSample(){
      return furthest;
    }
- 
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public String getTelephoneNum(){
      return telephoneNum;
@@ -259,10 +234,6 @@ public class RequestDetailed {
 	return recievedDate;
    }
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-   public long getPortalUploadDate(){
-	return portalUploadDate;
-   }
-   @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public long getInvestigatorDate(){
 	return investigatorDate;
    }
@@ -285,10 +256,6 @@ public class RequestDetailed {
    @JsonInclude(JsonInclude.Include.NON_EMPTY)
    public boolean getFastqRequested(){
 	return fastqRequested;
-   }
-   @JsonInclude(JsonInclude.Include.NON_EMPTY)
-   public boolean getAnalysisRequested(){
-	return analysisRequested;
    }
   public static RequestDetailed errorMessage(String e){
     RequestDetailed rd = new RequestDetailed("ERROR");

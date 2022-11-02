@@ -70,14 +70,12 @@ public abstract class LimsTask implements VeloxExecutable<Object>, Callable<Obje
             Map<String, Object> requestFields = request.getFields(user);
 
             runAndCatchNpe(() -> requestDetailed.setApplications((String) requestFields.get("PlatformApplication")));
-            runAndCatchNpe(() -> requestDetailed.setBicReadme((String) requestFields.get("ReadMe")));
             runAndCatchNpe(() -> requestDetailed.setClinicalCorrelative((String) requestFields.get
                     ("ClinicalCorrelativeType")));
             runAndCatchNpe(() -> requestDetailed.setCostCenter((String) requestFields.get("CostCenter")));
             runAndCatchNpe(() -> requestDetailed.setFundNumber((String) requestFields.get("FundNum")));
             runAndCatchNpe(() -> requestDetailed.setContactName((String) requestFields.get("ContactName")));
             runAndCatchNpe(() -> requestDetailed.setDataAnalyst((String) requestFields.get("DataAnalyst")));
-            runAndCatchNpe(() -> requestDetailed.setDataAnalystEmail((String) requestFields.get("DataAnalystEmail")));
 
             runAndCatchNpe(() -> requestDetailed.setDataDeliveryType((String) requestFields.get("DataDeliveryType")));
             runAndCatchNpe(() -> requestDetailed.setCmoContactName((String) requestFields.get("ContactName")));
@@ -86,7 +84,6 @@ public abstract class LimsTask implements VeloxExecutable<Object>, Callable<Obje
             runAndCatchNpe(() -> requestDetailed.setCmoPiEmail((String) requestFields.get("PIemail")));
             runAndCatchNpe(() -> requestDetailed.setCmoProjectId((String) requestFields.get("CMOProjectID")));
             runAndCatchNpe(() -> requestDetailed.setRequestId((String) requestFields.get("RequestId")));
-            runAndCatchNpe(() -> requestDetailed.setMailTo((String) requestFields.get("MailTo")));
             runAndCatchNpe(() -> requestDetailed.setDataAccessEmails((String) requestFields.get("DataAccessEmails")));
             runAndCatchNpe(() -> requestDetailed.setQcAccessEmails((String) requestFields.get("QcAccessEmails")));
             runAndCatchNpe(() -> requestDetailed.setInvestigator((String) requestFields.get("Investigator")));
@@ -120,7 +117,6 @@ public abstract class LimsTask implements VeloxExecutable<Object>, Callable<Obje
             runAndCatchNpe(() -> requestDetailed.setIrbDate((long) requestFields.get("DateIRBandWaiverCheckout")));
             runAndCatchNpe(() -> requestDetailed.setSamplesReceivedDate((long) requestFields.get("RequestDate")));
             runAndCatchNpe(() -> requestDetailed.setFastqRequested((Boolean) requestFields.get("FASTQ")));
-            runAndCatchNpe(() -> requestDetailed.setAnalysisRequested((Boolean) requestFields.get("BICAnalysis")));
             runAndCatchNpe(() -> requestDetailed.setAnalysisType((String) requestFields.get("AnalysisType")));
         } catch (Throwable e) {
             requestDetailed.setInvestigator("Annotation failed: " + e.getMessage());
