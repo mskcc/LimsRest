@@ -36,7 +36,7 @@ public class GetExemplarConfiguration {
             configData = exemplarConfigTask.execute();
         }
         catch(Exception e) {
-            log.info(String.format("While getting exemplar configuration data an exeption is thrown: %s", e.getMessage()));
+            log.info(String.format("While getting exemplar configuration data an exception is thrown: %s", e.getMessage()));
         }
         return configData;
 
