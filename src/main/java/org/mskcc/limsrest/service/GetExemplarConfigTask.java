@@ -26,8 +26,10 @@ public class GetExemplarConfigTask {
         ExemplarConfig exemConfig = new ExemplarConfig();
         try {
             log.info("Inside the execute!");
-            configInfo = dataRecordManager.queryDataRecords("ExemplarConfig", null, user).get(0);
-            exemConfig.setVisiumImagePath(configInfo.getStringVal("VisiumImagePath", user));
+            # configInfo = dataRecordManager.queryDataRecords("ExemplarConfig", null, user).get(0);
+            # exemConfig.setVisiumImagePath(configInfo.getStringVal("VisiumImagePath", user));
+            configInfo = dataRecordManager.queryDataRecords("VisiumcDNAPrepProtocol1", null, user).get(0);
+            exemConfig.setVisiumImagePath(configInfo.getStringVal("ChipId", user));
         }
         catch (Exception e) {
             e.printStackTrace();
