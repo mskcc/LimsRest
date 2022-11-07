@@ -8,7 +8,6 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.user.User;
-import java.util.List;
 
 
 public class GetExemplarConfigTask {
@@ -26,12 +25,11 @@ public class GetExemplarConfigTask {
         ExemplarConfig exemConfig = new ExemplarConfig();
         try {
             log.info("Inside the execute!");
-            # configInfo = dataRecordManager.queryDataRecords("ExemplarConfig", null, user).get(0);
-            # exemConfig.setVisiumImagePath(configInfo.getStringVal("VisiumImagePath", user));
+            //configInfo = dataRecordManager.queryDataRecords("ExemplarConfig", null, user).get(0);
+            //exemConfig.setVisiumImagePath(configInfo.getStringVal("VisiumImagePath", user));
             configInfo = dataRecordManager.queryDataRecords("VisiumcDNAPrepProtocol1", null, user).get(0);
             exemConfig.setVisiumImagePath(configInfo.getStringVal("ChipId", user));
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             log.error(e.getMessage());
             return null;
