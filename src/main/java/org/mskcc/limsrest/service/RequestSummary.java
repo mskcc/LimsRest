@@ -1,7 +1,6 @@
 package org.mskcc.limsrest.service;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.velox.sloan.cmo.recmodels.RequestModel;
 import lombok.Setter;
 
 import java.util.ArrayList;
@@ -23,7 +22,6 @@ public class RequestSummary {
     private String piEmail;
     private String projectManager;
     private String analysisType;
-    private boolean pipelinable;
     private boolean analysisRequested;
     private Boolean isCmoRequest = Boolean.FALSE;
     private long recordId;
@@ -49,11 +47,6 @@ public class RequestSummary {
         requestId = request;
         investigator = "UNKNOWN";
         restStatus = "SUCCESS";
-    }
-
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public boolean getAutorunnable() {
-        return pipelinable;
     }
 
     public Boolean getIsCmoRequest() { return isCmoRequest; }
@@ -111,10 +104,6 @@ public class RequestSummary {
 
     public void addDeliveryDate(Long date) {
         deliveryDates.add(date);
-    }
-
-    public void setAutorunnable(boolean pipelinable) {
-        this.pipelinable = pipelinable;
     }
 
     public List<Long> getDeliveryDate() {

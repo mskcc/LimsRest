@@ -7,9 +7,9 @@ import com.velox.api.servermanager.PickListConfig;
 import com.velox.api.servermanager.PickListManager;
 import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
-import lombok.NoArgsConstructor;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.util.DdpcrAssay;
 import org.springframework.security.access.prepost.PreAuthorize;
 
@@ -17,22 +17,25 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-@NoArgsConstructor
-public class GetDdpcrAssaysTask extends LimsTask {
+
+public class GetDdpcrAssaysTask {
     private static Log log = LogFactory.getLog(GetDdpcrAssaysTask.class);
     private static final String assayDataType = "ddPCRAssayDatabase";
 
-    public void init() {
+    private ConnectionLIMS conn;
 
+    public GetDdpcrAssaysTask(ConnectionLIMS conn) {
+        this.conn = conn;
     }
 
     @PreAuthorize("hasRole('READ')")
-    @Override
-    public List<DdpcrAssay> execute(VeloxConnection conn) {
-        User user = conn.getUser();
+    public List<DdpcrAssay> execute() {
+        VeloxConnection vConn = conn.getConnection();
+        User user = vConn.getUser();
+
         List<DataRecord> records;
         try {
-            records = conn.getDataRecordManager().queryDataRecords(assayDataType, null, user);
+            records = vConn.getDataRecordManager().queryDataRecords(assayDataType, null, user);
         } catch (IoError | RemoteException | NotFound e) {
             e.printStackTrace();
             log.error(String.format("Failed to query DataRecords."));
@@ -60,7 +63,7 @@ public class GetDdpcrAssaysTask extends LimsTask {
 //        Keep assay picklist n'synch with assay datatype
 //        To be removed when picklist can be safely removed (sample submission still needs it as of 11/2020)
         try {
-            PickListManager picklister = conn.getDataMgmtServer().getPickListManager(user);
+            PickListManager picklister = vConn.getDataMgmtServer().getPickListManager(user);
             PickListConfig pickConfig = picklister.getPickListConfig("ddPCR Assay");
             pickConfig.setEntryList(assayNames);
             picklister.storePickListConfig(user, pickConfig);
@@ -72,6 +75,4 @@ public class GetDdpcrAssaysTask extends LimsTask {
 
         return assays;
     }
-
-
 }

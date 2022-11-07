@@ -246,7 +246,6 @@ public class GetSampleQcTask {
             runAndCatchNpe(() -> qcSummary.setRecordId((Long) qcFields.get("RecordId")));
             runAndCatchNpe(() -> qcSummary.setSampleName((String) qcFields.get("OtherSampleId")));
             runAndCatchNpe(() -> qcSummary.setBaitSet((String) qcFields.get("BaitSet")));
-            runAndCatchNpe(() -> qcSummary.setMskq((Double) qcFields.get("Mskq")));
             runAndCatchNpe(() -> qcSummary.setMeanTargetCoverage((Double) qcFields.get("MeanTargetCoverage")));
             runAndCatchNpe(() -> qcSummary.setMEAN_COVERAGE((Double) qcFields.get("MeanCoverage")));
             runAndCatchNpe(() -> qcSummary.setPercentAdapters((Double) qcFields.get("PercentAdapters")));
@@ -304,7 +303,6 @@ public class GetSampleQcTask {
             runAndCatchNpe(() -> rs.setPiEmail((String) requestFields.get("LabHeadEmail")));
             runAndCatchNpe(() -> rs.setDataAccessEmails((String) requestFields.get("DataAccessEmails")));
             runAndCatchNpe(() -> rs.setInvestigatorEmail((String) requestFields.get("Investigatoremail")));
-            runAndCatchNpe(() -> rs.setAutorunnable((Boolean) requestFields.get("BicAutorunnable")));
             runAndCatchNpe(() -> rs.setIsCmoRequest((Boolean)requestFields.get("IsCmoRequest")));
             runAndCatchNpe(() -> rs.setAnalysisRequested((Boolean) requestFields.get("BICAnalysis")));
             runAndCatchNpe(() -> rs.setAnalysisType((String) requestFields.get("AnalysisType")));
