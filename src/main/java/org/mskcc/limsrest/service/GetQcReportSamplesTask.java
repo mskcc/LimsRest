@@ -46,7 +46,7 @@ public class GetQcReportSamplesTask {
             getQcSamples(rsl, "QcReportRna", drm, user);
             getQcSamples(rsl, "QcReportLibrary", drm, user);
             rsl.setPathologyReportSamples(getPathologySamples("QcDatum", drm, user));
-            rsl.setCovidReportSamples(getCovidSamples("Covid19TestProtocol5", drm, user));
+            //rsl.setCovidReportSamples(getCovidSamples("Covid19TestProtocol5", drm, user));
 
             log.info("Gathering Attachments for " + requestId + ".");
             List<HashMap<String, Object>> attachments = new ArrayList<>();
