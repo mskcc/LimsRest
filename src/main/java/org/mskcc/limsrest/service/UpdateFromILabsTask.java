@@ -8,6 +8,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.ilabs.Filter;
 import org.mskcc.limsrest.service.ilabs.GetGeneralInfo;
+import org.yaml.snakeyaml.Yaml;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.*;
 import java.text.DateFormat;
@@ -19,6 +22,7 @@ import java.util.*;
  * Pull ILabs request info and store it in the LIMS.
  */
 public class UpdateFromILabsTask {
+    private static final Log log = LogFactory.getLog(UpdateFromILabsTask.class);
     private static final String OUTBOX = "/pskis34/vialelab/LIMS/AutomatedEmails/outbox/";
     private static final String[] WHITELIST =
             new String[]{"04525_B", "04430", "05281_B", "05681_B_9", "04495", "05001", "05783_B", "05783_C", "05783_D", "05884_B", "03498", "CTRL-1095", "05737_B", "05022", "05500_AY", "06713", "06711",
@@ -66,6 +70,7 @@ public class UpdateFromILabsTask {
             String token_cmo = ilabsConfigCMO.getValue();
 
             GetGeneralInfo ggi = new GetGeneralInfo(core_id_igo, token_igo, core_id_cmo, token_cmo);
+
             for (String request : requests) {
                 System.out.println(request);
                 try {
@@ -157,6 +162,7 @@ public class UpdateFromILabsTask {
                 // add header fields, these are expected on every form and always filled with at least "FIELD NOT IN ILABS"
                 Map<String, String> field2val = allIlabs.get(reqId);
                 requestFields.put("LaboratoryHead", Filter.toAscii(field2val.get("PI")));
+                requestFields.put("iLabServiceRequestId", Filter.toAscii(field2val.get("ILAB_SERVICE_REQUEST_ID")));
                 requestFields.put("Investigator", Filter.toAscii(field2val.get("INVEST")));
                 requestFields.put("RoomNum", Filter.toAscii(field2val.get("ROOM")));
                 requestFields.put("TelephoneNum", Filter.toAscii(field2val.get("PHONE")));
