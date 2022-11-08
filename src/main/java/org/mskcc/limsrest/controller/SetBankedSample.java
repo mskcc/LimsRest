@@ -20,7 +20,6 @@ public class SetBankedSample {
     private static Log log = LogFactory.getLog(SetBankedSample.class);
     private final ConnectionPoolLIMS conn;
 
-
     public SetBankedSample(ConnectionPoolLIMS conn) {
         this.conn = conn;
     }
