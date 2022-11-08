@@ -45,8 +45,9 @@ public class GetSequencingRequests {
     public ResponseEntity<Map<String, Object>> getContent(@RequestParam(value = "days", defaultValue = "7") String days,
                                                           @RequestParam(value = "delivered", defaultValue = "true") String delivered,
                                                           HttpServletRequest request) {
-        String.format("Starting /getSequencingRequests?days=%s&igoComplete=%s client IP: %s",
+        String msg = String.format("Starting /getSequencingRequests?days=%s&igoComplete=%s client IP: %s",
                 days, delivered, request.getRemoteAddr());
+        log.info(msg);
 
         Map<String, Object> resp = new HashMap<>();
 

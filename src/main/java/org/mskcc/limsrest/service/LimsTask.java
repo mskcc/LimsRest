@@ -65,7 +65,7 @@ public abstract class LimsTask implements VeloxExecutable<Object>, Callable<Obje
         }
     }
 
-    public void annotateRequestDetailed(RequestDetailed requestDetailed, DataRecord request) {
+    public static void annotateRequestDetailed(RequestDetailed requestDetailed, DataRecord request, User user) {
         try {
             Map<String, Object> requestFields = request.getFields(user);
 
@@ -124,7 +124,7 @@ public abstract class LimsTask implements VeloxExecutable<Object>, Callable<Obje
 
     }
 
-    public void annotateProjectSummary(ProjectSummary projectSummary, DataRecord project) {
+    public static void annotateProjectSummary(ProjectSummary projectSummary, DataRecord project, User user) {
         try {
             Map<String, Object> projectFields = project.getFields(user);
 

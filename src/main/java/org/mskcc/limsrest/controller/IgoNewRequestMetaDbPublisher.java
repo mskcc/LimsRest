@@ -21,11 +21,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.cmo.messaging.Gateway;
 import org.mskcc.limsrest.ConnectionLIMS;
-import org.mskcc.limsrest.ConnectionPoolLIMS;
 import org.mskcc.limsrest.model.RequestSample;
 import org.mskcc.limsrest.model.RequestSampleList;
 import org.mskcc.limsrest.model.SampleManifest;
-import org.mskcc.limsrest.service.GetProjectDetails;
 import org.mskcc.limsrest.service.GetRequestPermissionsTask;
 import org.mskcc.limsrest.service.GetRequestSamplesTask;
 import org.mskcc.limsrest.service.GetSampleManifestTask;
@@ -58,8 +56,6 @@ public class IgoNewRequestMetaDbPublisher {
 
     @Value("${airflow_pass}")
     private String airflow_pass;
-
-    private final GetProjectDetails task = new GetProjectDetails();
     private final ConnectionLIMS conn;
 
     public IgoNewRequestMetaDbPublisher(ConnectionLIMS conn) throws Exception {
@@ -207,7 +203,6 @@ public class IgoNewRequestMetaDbPublisher {
     /**
      * Packages message for CMO MetaDB and publishes to MetaDB NATS server.
      * @param projectId
-     * @param requestId
      * @param sampleManifestList
      */
     private void publishIgoNewRequestToMetaDb(String projectId, RequestSampleList requestDetails, List<Map<String, Object>> sampleManifestList) {

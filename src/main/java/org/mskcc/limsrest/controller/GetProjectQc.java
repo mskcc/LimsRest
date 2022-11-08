@@ -24,9 +24,9 @@ public class GetProjectQc {
         this.conn = conn;
     }
 
-    @GetMapping("/getProjectQc")
+    @GetMapping("/getProjectQc")  // Called by Run-QC application
     public List<RequestSummary> getProjectSummary(@RequestParam(value="project", required = true) String[] project) {
-        log.info("Starting get /getProjectQc for projects: " + Arrays.toString(project));
+        log.info("Starting /getProjectQc for projects: " + Arrays.toString(project));
 
         if (project == null)
             return new LinkedList<>();

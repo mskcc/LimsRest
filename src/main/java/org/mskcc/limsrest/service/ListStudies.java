@@ -28,7 +28,7 @@ public class ListStudies extends LimsTask {
             List<DataRecord> limsProjectList = dataRecordManager.queryDataRecords("Project", null, user);
             for (DataRecord p : limsProjectList) {
                 ProjectSummary ps = new ProjectSummary(p.getStringVal("ProjectId", user));
-                annotateProjectSummary(ps, p);
+                LimsTask.annotateProjectSummary(ps, p, conn.getUser());
                 DataRecord[] requests = p.getChildrenOfType("Request", user);
                 for (int i = 0; i < requests.length; i++) {
                     try {

@@ -2,24 +2,21 @@ package org.mskcc.limsrest.controller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.ConnectionPoolLIMS;
-import org.mskcc.limsrest.service.GetProjectDetails;
+import org.mskcc.limsrest.ConnectionLIMS;
+import org.mskcc.limsrest.service.GetProjectDetailsTask;
 import org.mskcc.limsrest.service.ProjectSummary;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.concurrent.Future;
-
 @RestController
 @RequestMapping("/")
 public class GetProjectDetailed {
     private static Log log = LogFactory.getLog(GetProjectDetailed.class);
-    private final ConnectionPoolLIMS conn;
-    private final GetProjectDetails task = new GetProjectDetails();
-   
-    public GetProjectDetailed(ConnectionPoolLIMS conn){
+    private final ConnectionLIMS conn;
+
+    public GetProjectDetailed(ConnectionLIMS conn){
         this.conn = conn;
     }
 
@@ -30,15 +27,9 @@ public class GetProjectDetailed {
               eSum.setRestStatus( "FAILURE: project is not using a valid format");
                 return eSum;
        }
-       log.info("Getting project detailed for " + project);
-       task.init(project);
-       Future<Object> result = conn.submitTask(task);
-       ProjectSummary ps = new ProjectSummary();
-       try{
-         ps = (ProjectSummary)result.get();
-       } catch(Exception e){
-         ps.setCmoProjectId(e.getMessage());
-       }
+       log.info("/getProjectDetailed " + project);
+       GetProjectDetailsTask task = new GetProjectDetailsTask(project, conn);
+       ProjectSummary ps = task.execute();
        return ps;
    }
 }

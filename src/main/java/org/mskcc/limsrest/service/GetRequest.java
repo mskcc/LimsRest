@@ -49,7 +49,7 @@ public class GetRequest extends LimsTask {
 
             for (DataRecord request : matchedRequests) {
                 RequestDetailed rd = new RequestDetailed();
-                annotateRequestDetailed(rd, request);
+                LimsTask.annotateRequestDetailed(rd, request, conn.getUser());
                 rds.push(rd);
             }
         } catch (Throwable e) {
