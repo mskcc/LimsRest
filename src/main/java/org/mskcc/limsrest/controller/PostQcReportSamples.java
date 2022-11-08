@@ -4,7 +4,7 @@ package org.mskcc.limsrest.controller;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.ConnectionPoolLIMS;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.GetQcReportSamplesTask;
 import org.mskcc.limsrest.service.QcReportSampleList;
 import org.springframework.http.HttpStatus;
@@ -26,9 +26,9 @@ import java.util.stream.Stream;
 @RequestMapping("/")
 public class PostQcReportSamples {
     private static Log log = LogFactory.getLog(GetProjectQc.class);
-    private final ConnectionPoolLIMS conn;
+    private final ConnectionLIMS conn;
 
-    public PostQcReportSamples(ConnectionPoolLIMS conn) {
+    public PostQcReportSamples(ConnectionLIMS conn) {
         this.conn = conn;
     }
 
@@ -42,7 +42,7 @@ public class PostQcReportSamples {
 
         String requestId = payload.get("requestId");
         String otherSampleIdsString = payload.get("otherSampleIds");
-        List<Object> otherSampleIds = Stream.of(otherSampleIdsString.split(",", -1))
+        List<String> otherSampleIds = Stream.of(otherSampleIdsString.split(",", -1))
                 .collect(Collectors.toList());
 
         log.info("Starting get /postQcReportSamples for request: " + requestId);
@@ -51,20 +51,9 @@ public class PostQcReportSamples {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "FAILURE: requestId is not using a valid format.");
         }
 
-        GetQcReportSamplesTask task = new GetQcReportSamplesTask();
-        task.init(requestId, otherSampleIds);
-        Future<Object> result = conn.submitTask(task);
-        QcReportSampleList rsl;
+        GetQcReportSamplesTask task = new GetQcReportSamplesTask(otherSampleIds, requestId, conn);
+        QcReportSampleList rsl = task.execute();
 
-        try {
-            rsl = (QcReportSampleList) result.get();
-        } catch (Exception e) {
-            log.error(e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-        }
         return rsl;
-
     }
-
-
 }

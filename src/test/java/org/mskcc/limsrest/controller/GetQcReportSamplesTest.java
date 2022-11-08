@@ -3,6 +3,7 @@ package org.mskcc.limsrest.controller;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.ConnectionPoolLIMS;
 import org.mskcc.limsrest.service.QcReportSampleList;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -21,13 +22,13 @@ public class GetQcReportSamplesTest {
 
     @Before
     public void setUp() throws Exception {
-        getQcReportSamples = new GetQcReportSamples(mock(ConnectionPoolLIMS.class));
+        getQcReportSamples = new GetQcReportSamples(mock(ConnectionLIMS.class));
     }
 
     @Test(expected = ResponseStatusException.class)
     public void whenRequestIdIsInIncorrectFormat_shouldThrowAnException() throws Exception {
 
-        List<Object> samples = new ArrayList<>();
+        List<String> samples = new ArrayList<>();
         samples.add("sample1");
         samples.add("sample2");
 

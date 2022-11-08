@@ -1,9 +1,11 @@
 package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.RequestModel;
-import lombok.NoArgsConstructor;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.QcReportSampleList.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -19,40 +21,36 @@ import java.util.stream.Collectors;
  *
  * @author Lisa Wagner
  */
-@NoArgsConstructor
-public class GetQcReportSamplesTask extends LimsTask {
+public class GetQcReportSamplesTask {
     private static Log log = LogFactory.getLog(GetQcReportSamplesTask.class);
-    public List<Object> otherSampleIds;
+    public List<String> otherSampleIds;
     protected String requestId;
+    private ConnectionLIMS conn;
 
-    public GetQcReportSamplesTask(List<Object> otherSampleIds, String requestId) {
+    public GetQcReportSamplesTask(List<String> otherSampleIds, String requestId, ConnectionLIMS conn) {
         this.otherSampleIds = otherSampleIds;
         this.requestId = requestId;
+        this.conn = conn;
     }
-
-    public void init(final String requestId, final List<Object> otherSampleIds) {
-        this.otherSampleIds = otherSampleIds;
-        this.requestId = requestId;
-    }
-
 
     @PreAuthorize("hasRole('READ')")
-    @Override
-    public Object execute(VeloxConnection conn) {
+    public QcReportSampleList execute() {
+        VeloxConnection vConn = conn.getConnection();
+        User user = vConn.getUser();
+        DataRecordManager drm = vConn.getDataRecordManager();
 
         QcReportSampleList rsl = new QcReportSampleList(requestId, otherSampleIds);
-
         try {
             log.info("Gathering Report samples for " + otherSampleIds.size() + " samples.");
-            getQcSamples(rsl, "QcReportDna");
-            getQcSamples(rsl, "QcReportRna");
-            getQcSamples(rsl, "QcReportLibrary");
-            rsl.setPathologyReportSamples(getPathologySamples("QcDatum"));
-            rsl.setCovidReportSamples(getCovidSamples("Covid19TestProtocol5"));
+            getQcSamples(rsl, "QcReportDna", drm, user);
+            getQcSamples(rsl, "QcReportRna", drm, user);
+            getQcSamples(rsl, "QcReportLibrary", drm, user);
+            rsl.setPathologyReportSamples(getPathologySamples("QcDatum", drm, user));
+            rsl.setCovidReportSamples(getCovidSamples("Covid19TestProtocol5", drm, user));
 
             log.info("Gathering Attachments for " + requestId + ".");
             List<HashMap<String, Object>> attachments = new ArrayList<>();
-            attachments.addAll(getAttachments(requestId));
+            attachments.addAll(getAttachments(requestId, drm, user));
 
             rsl.setAttachments(attachments);
         } catch (Throwable e) {
@@ -62,9 +60,9 @@ public class GetQcReportSamplesTask extends LimsTask {
         return rsl;
     }
 
-    protected void getQcSamples(QcReportSampleList rsl, String dataType) throws Exception {
+    protected void getQcSamples(QcReportSampleList rsl, String dataType, DataRecordManager drm, User user) throws Exception {
 //      only include samples where SampleId contains RequestId
-        List<DataRecord> reportSamplesByRequest = dataRecordManager.queryDataRecords(dataType, "SampleId LIKE '%" + requestId + "%'", this.user);
+        List<DataRecord> reportSamplesByRequest = drm.queryDataRecords(dataType, "SampleId LIKE '%" + requestId + "%'", user);
 //        convert otherSampleIds to List<String>
         List<String> otherSampleIdsInRequest = otherSampleIds.stream()
                 .map(object -> Objects.toString(object, null))
@@ -75,7 +73,7 @@ public class GetQcReportSamplesTask extends LimsTask {
             return;
         } else {
 //        fetch chip ids for DLP pool samples, done here to avoid loop issues
-            List<String> chipIds = getChipIds(requestId);
+            List<String> chipIds = getChipIds(requestId, drm, user);
             try {
                 ReportSample reportSample;
                 for (DataRecord sampleRecord : reportSamplesByRequest) {
@@ -151,9 +149,9 @@ public class GetQcReportSamplesTask extends LimsTask {
     }
 
 
-    protected List<PathologySample> getPathologySamples(String dataType) throws Exception {
+    protected List<PathologySample> getPathologySamples(String dataType, DataRecordManager drm, User user) throws Exception {
 //      check whether request exists in QC Report table, speeds up by ~30 %
-        List<DataRecord> reportSamplesByRequest = dataRecordManager.queryDataRecords(dataType, "SampleId LIKE '" + requestId + "%'", this.user);
+        List<DataRecord> reportSamplesByRequest = drm.queryDataRecords(dataType, "SampleId LIKE '" + requestId + "%'", user);
         List<PathologySample> pathologySamples = new ArrayList<>();
 
         if (reportSamplesByRequest.isEmpty()) {
@@ -181,19 +179,19 @@ public class GetQcReportSamplesTask extends LimsTask {
     }
 
     // COVID19 samples can be linked to a request by their OtherSampleId being the concatenation of investigatorId and iLabServiceId
-    protected List<CovidSample> getCovidSamples(String dataType) throws Exception {
+    protected List<CovidSample> getCovidSamples(String dataType, DataRecordManager drm, User user) throws Exception {
         List<CovidSample> covidSamples = new ArrayList<>();
 
         final String query = String.format("RequestId = '%s'",  requestId);
-        List<DataRecord> requestRecordList = dataRecordManager.queryDataRecords("Request", query, this.user);
+        List<DataRecord> requestRecordList = drm.queryDataRecords("Request", query, user);
         if (requestRecordList.isEmpty()){
             log.info(requestId + " not found in " + RequestModel.DATA_TYPE_NAME);
             return covidSamples;
         }
         DataRecord requestRecord = requestRecordList.get(0);
-        String serviceId = (String) requestRecord.getDataField("IlabRequest", this.user);
+        String serviceId = (String) requestRecord.getDataField("IlabRequest", user);
 
-        List<DataRecord> reportSamples = dataRecordManager.queryDataRecords(dataType, "OtherSampleId", otherSampleIds, this.user);
+        List<DataRecord> reportSamples = drm.queryDataRecords(dataType, "OtherSampleId", Collections.singletonList(otherSampleIds), user);
 
         CovidSample covidSample;
         for (DataRecord sampleRecord : reportSamples) {
@@ -211,10 +209,10 @@ public class GetQcReportSamplesTask extends LimsTask {
     }
 
 
-    protected List<HashMap<String, Object>> getAttachments(String requestId) {
+    protected List<HashMap<String, Object>> getAttachments(String requestId, DataRecordManager drm, User user) {
         List<HashMap<String, Object>> attachments = new ArrayList<>();
         try {
-            List<DataRecord> attachmentRequestRecords = dataRecordManager.queryDataRecords("Attachment", "FilePath LIKE '%" + requestId + "%'", this.user);
+            List<DataRecord> attachmentRequestRecords = drm.queryDataRecords("Attachment", "FilePath LIKE '%" + requestId + "%'", user);
             if (attachmentRequestRecords.size() > 0) {
                 String attachmentPattern = requestId + "_(DNA_QC|RNA_QC|Library_QC|Pool_QC|cDNA_QC)_*\\d*\\.pdf";
                 Pattern pattern = Pattern.compile(attachmentPattern, Pattern.CASE_INSENSITIVE);
@@ -237,8 +235,8 @@ public class GetQcReportSamplesTask extends LimsTask {
         }
     }
 
-    protected List<String> getChipIds(String requestId) throws Exception {
-        List<DataRecord> dlpSamples = dataRecordManager.queryDataRecords("DLPLibraryPreparationProtocol1", "SampleId LIKE '%" + requestId + "%'", this.user);
+    protected List<String> getChipIds(String requestId, DataRecordManager drm, User user) throws Exception {
+        List<DataRecord> dlpSamples = drm.queryDataRecords("DLPLibraryPreparationProtocol1", "SampleId LIKE '%" + requestId + "%'", user);
         List<String> chipIds = new ArrayList<>();
         for (DataRecord dlpSample : dlpSamples) {
             Map<String, Object> dlpFields = dlpSample.getFields(user);

@@ -13,7 +13,7 @@ import java.util.Map;
 @Getter @Setter
 public class QcReportSampleList {
     public String requestId;
-    public List<Object> requestSampleIds;
+    public List<String> requestSampleIds;
     public List<ReportSample> dnaReportSamples;
     public List<ReportSample> rnaReportSamples;
     public List<ReportSample> libraryReportSamples;
@@ -25,7 +25,7 @@ public class QcReportSampleList {
     public QcReportSampleList() {
     }
 
-    public QcReportSampleList(String requestId, List<Object> requestSampleIds) {
+    public QcReportSampleList(String requestId, List<String> requestSampleIds) {
         this.requestId = requestId;
         this.requestSampleIds = requestSampleIds;
         dnaReportSamples = new ArrayList<>();
