@@ -2,7 +2,10 @@ package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.AlreadyExists;
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.io.PrintWriter;
@@ -16,26 +19,30 @@ import java.util.List;
  * 
  * @author Aaron Gabow
  */
-public class AddPoolToLane extends LimsTask {
+public class AddPoolToLane {
   String flowcell; 
   String sampleId;
   String removeSampleId;
   String igoUser;
   Long laneId;
   boolean force;
+  ConnectionLIMS conn;
 
-  public void init(String flowcell, String sampleId, String removeSampleId, String igoUser, Long lane, boolean force){ 
+  public AddPoolToLane(String flowcell, String sampleId, String removeSampleId, String igoUser, Long lane, boolean force, ConnectionLIMS conn){
     this.flowcell = flowcell;
     this.sampleId = sampleId;
     this.removeSampleId = removeSampleId;
     this.laneId = lane;
     this.igoUser = igoUser; 
     this.force = force;
+    this.conn = conn;
   }
 
 @PreAuthorize("hasRole('ADMIN')")
-@Override
- public Object execute(VeloxConnection conn){
+ public String execute(){
+    VeloxConnection vConn = conn.getConnection();
+    User user = vConn.getUser();
+    DataRecordManager dataRecordManager = vConn.getDataRecordManager();
   try { 
      List<DataRecord> lanes = dataRecordManager.queryDataRecords("FlowCellLane", "RelatedRecord134 = '" + flowcell +  "' and LaneNum = '" + laneId + "'", user);
     
