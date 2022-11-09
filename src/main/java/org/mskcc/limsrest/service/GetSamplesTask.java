@@ -1,9 +1,12 @@
 package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.HashMap;
@@ -17,20 +20,25 @@ import java.util.Map;
  * 
  * @author Aaron Gabow
  */
-public class GetSamples extends LimsTask {
-    private static Log log = LogFactory.getLog(GetSamples.class);
+public class GetSamplesTask {
+    private static Log log = LogFactory.getLog(GetSamplesTask.class);
     protected String[] projects;
     private boolean filter;
+    private ConnectionLIMS conn;
 
-    public void init(final String[] projects, final String filter) {
+    public GetSamplesTask(final String[] projects, final String filter, ConnectionLIMS conn) {
         if (projects != null)
             this.projects = projects.clone();
         this.filter = "true".equals(filter);
+        this.conn = conn;
     }
 
     @PreAuthorize("hasRole('READ')")
-    @Override
-    public Object execute(VeloxConnection conn) {
+    public List<RequestSummary> execute() {
+        VeloxConnection vConn = conn.getConnection();
+        User user = vConn.getUser();
+        DataRecordManager dataRecordManager = vConn.getDataRecordManager();
+
         List<RequestSummary> rss = new LinkedList<>();
         HashSet<String> known = new HashSet<>();
 

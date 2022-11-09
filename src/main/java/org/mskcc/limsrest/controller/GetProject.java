@@ -1,10 +1,9 @@
 package org.mskcc.limsrest.controller;
 
-import java.util.concurrent.Future;
 import java.util.List;
 import java.util.LinkedList;
 
-import org.mskcc.limsrest.ConnectionPoolLIMS;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,14 +18,17 @@ import org.apache.commons.logging.LogFactory;
 @RequestMapping("/")
 public class GetProject {
     private static Log log = LogFactory.getLog(GetProject.class);
-    private final ConnectionPoolLIMS conn;
+    private final ConnectionLIMS conn;
    
-    public GetProject(ConnectionPoolLIMS conn) {
+    public GetProject(ConnectionLIMS conn) {
         this.conn = conn;
     }
 
     @RequestMapping("/getPmProject")  // POST method called by REX
-    public List<RequestSummary> getContent(@RequestParam(value = "project") String[] project, @RequestParam(value = "filter", defaultValue = "false") String filter) {
+    public List<RequestSummary> getContent(@RequestParam(value = "project") String[] project,
+                                           @RequestParam(value = "filter", defaultValue = "false") String filter) {
+        log.info("Starting /getPmProject");
+
         List<RequestSummary> rss = new LinkedList<>();
         StringBuffer sb = new StringBuffer();
         for (int i = 0; i < project.length; i++) {
@@ -42,16 +44,7 @@ public class GetProject {
         }
         log.info("Starting get PM project for projects: " + sb.toString());
 
-        GetSamples task = new GetSamples();
-        task.init(project, filter.toLowerCase());
-        Future<Object> result = conn.submitTask(task);
-        try {
-            rss = (List<RequestSummary>) result.get();
-        } catch (Exception e) {
-            RequestSummary rs = new RequestSummary();
-            rs.setInvestigator(e.getMessage());
-            rss.add(rs);
-        }
-        return rss;
+        GetSamplesTask task = new GetSamplesTask(project, filter, conn);
+        return task.execute();
     }
 }

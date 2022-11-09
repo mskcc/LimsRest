@@ -1,7 +1,10 @@
 package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.io.PrintWriter;
@@ -16,27 +19,32 @@ import java.util.regex.Pattern;
  * 
  * @author Aaron Gabow
  */
-public class AddChildSample extends LimsTask {
+public class AddChildSample {
     String sampleId;
     String status;
     String igoUser;
     String additionalType;
     String childId;
+    ConnectionLIMS conn;
 
-    public void init(String sampleId, String status, String additionalType, String igoUser, String childId) {
+    public AddChildSample(String sampleId, String status, String additionalType, String igoUser, String childId, ConnectionLIMS conn) {
         this.status = status;
         this.sampleId = sampleId;
         this.igoUser = igoUser;
         this.additionalType = additionalType;
         this.childId = childId;
+        this.conn = conn;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @Override
-    public Object execute(VeloxConnection conn) {
+    public String execute() {
+        VeloxConnection vConn = conn.getConnection();
+        User user = vConn.getUser();
+        DataRecordManager drm = vConn.getDataRecordManager();
+
         String newId = "";
         try {
-            List<DataRecord> samps = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sampleId + "'", user);
+            List<DataRecord> samps = drm.queryDataRecords("Sample", "SampleId = '" + sampleId + "'", user);
 
             if (samps.size() != 1) {
                 return "ERROR: This service must match exactly one sample";
@@ -44,12 +52,12 @@ public class AddChildSample extends LimsTask {
             DataRecord parentSample = samps.get(0);
 
             if (!childId.equals("NULL")) {
-                List<DataRecord> destSamps = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + childId + "'", user);
+                List<DataRecord> destSamps = drm.queryDataRecords("Sample", "SampleId = '" + childId + "'", user);
                 if (destSamps.size() != 1) {
                     return "ERROR: If a child sample is specified, it must already exist";
                 }
                 parentSample.addChild(destSamps.get(0), user);
-                dataRecordManager.storeAndCommit(igoUser + " made " + childId + " a child sample for " + sampleId, user);
+                drm.storeAndCommit(igoUser + " made " + childId + " a child sample for " + sampleId, user);
                 return "Existing sample " + childId;
             }
 
@@ -90,7 +98,7 @@ public class AddChildSample extends LimsTask {
             child.setDataField("TumorOrNormal", parentFields.get("TumorOrNormal"), user);
             child.setDataField("ExemplarSampleStatus", status, user);
 
-            dataRecordManager.storeAndCommit(igoUser + " made a child sample for " + sampleId, user);
+            drm.storeAndCommit(igoUser + " made a child sample for " + sampleId, user);
         } catch (Throwable e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);

@@ -32,8 +32,8 @@ public class GetSampleQcTask {
     @Value("${delphiRestUrl}")
     private String delphiRestUrl;
 
-    public GetSampleQcTask(String[] project, ConnectionLIMS conn) {
-        this.projectList = project;
+    public GetSampleQcTask(String[] projectList, ConnectionLIMS conn) {
+        this.projectList = projectList;
         this.conn = conn;
     }
 

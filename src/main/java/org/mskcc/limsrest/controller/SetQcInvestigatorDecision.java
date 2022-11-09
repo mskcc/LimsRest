@@ -6,21 +6,14 @@ import io.swagger.annotations.ApiOperation;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionPoolLIMS;
-import org.mskcc.limsrest.service.GetQcReportSamplesTask;
-import org.mskcc.limsrest.service.LimsException;
-import org.mskcc.limsrest.service.QcReportSampleList;
-
-
 
 import org.mskcc.limsrest.service.SetQcInvestigatorDecisionTask;
-import org.mskcc.limsrest.util.Messages;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.sql.Struct;
 import java.util.*;
 import java.util.concurrent.Future;
 
@@ -33,7 +26,6 @@ public class SetQcInvestigatorDecision {
     private final ConnectionPoolLIMS conn;
     private static ObjectMapper objectMapper;
 
-
     public SetQcInvestigatorDecision(ConnectionPoolLIMS conn) {
         this.conn = conn;
         objectMapper = new ObjectMapper();
@@ -42,7 +34,6 @@ public class SetQcInvestigatorDecision {
     @PostMapping("/setInvestigatorDecision")
     @ApiOperation(tags="/setInvestigatorDecision", httpMethod = "POST", notes = "Set investigator decisions for records in Sample QC tables. Expects json object [{datatype:\"report\",samples: [{\"RecordId\" : recordId, \"InvestigatorDecision\": decision}]}]", response = String.class, value = "Set investigator decisions.")
     public ResponseEntity<String> response(@RequestBody String body) {
-
         log.info("Starting post /setQcInvestigatorDecision");
 
         JsonNode jsonNode = null;
@@ -110,6 +101,4 @@ public class SetQcInvestigatorDecision {
         fields.put("InvestigatorDecision", node.get("investigatorDecision").textValue());
         return fields;
     }
-
-
 }
