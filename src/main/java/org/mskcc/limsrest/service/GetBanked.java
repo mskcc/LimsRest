@@ -1,9 +1,12 @@
 package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.util.Messages;
 import org.springframework.security.access.prepost.PreAuthorize;
 
@@ -17,28 +20,30 @@ import java.util.Map;
  *
  * @author Aaron Gabow
  */
-public class GetBanked extends LimsTask {
+public class GetBanked {
     private static final Log log = LogFactory.getLog(GetBanked.class);
 
     protected String project;
     protected String[] sampleNames;
     protected String investigator;
     protected String serviceId;
+    private ConnectionLIMS conn;
 
-    public void init(String project) {
-        this.project = project;
+    public GetBanked(ConnectionLIMS conn) {
+        this.conn = conn;
     }
 
-    public void init(String[] names) {
+    public void setProject(String project) {
+        this.project = project;
+    }
+    public void setNames(String[] names) {
         if (names != null)
             this.sampleNames = names.clone();
     }
-
-    public void initInvestigator(String name) {
+    public void setInvestigator(String name) {
         this.investigator = name;
     }
-
-    public void initServiceId(String id) {
+    public void setServiceId(String id) {
         this.serviceId = id;
     }
 
@@ -91,8 +96,11 @@ public class GetBanked extends LimsTask {
     }
 
     @PreAuthorize("hasRole('READ')")
-    @Override
-    public Object execute(VeloxConnection conn) {
+    public LinkedList<SampleSummary> execute() {
+        VeloxConnection vConn = conn.getConnection();
+        User user = vConn.getUser();
+        DataRecordManager dataRecordManager = vConn.getDataRecordManager();
+
         LinkedList<SampleSummary> sampleInfoList = new LinkedList();
 
         try {
