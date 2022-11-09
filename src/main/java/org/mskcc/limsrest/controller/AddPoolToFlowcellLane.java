@@ -2,25 +2,20 @@ package org.mskcc.limsrest.controller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.ConnectionPoolLIMS;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.AddPoolToLane;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.concurrent.Future;
-
 @RestController
 @RequestMapping("/")
 public class AddPoolToFlowcellLane{
     private static Log log = LogFactory.getLog(AddPoolToFlowcellLane.class);
-    private final ConnectionPoolLIMS conn;
-    private final AddPoolToLane task = new AddPoolToLane();
+    private final ConnectionLIMS conn;
    
-    public AddPoolToFlowcellLane( ConnectionPoolLIMS conn){
+    public AddPoolToFlowcellLane( ConnectionLIMS conn){
         this.conn = conn;
     }
 
@@ -28,7 +23,7 @@ public class AddPoolToFlowcellLane{
     public String getContent(@RequestParam(value="sample") String sample, @RequestParam(value="removeSample", defaultValue="NULL") String removeSample,
                            @RequestParam(value="flowcell") String flowcell, @RequestParam(value="igoUser") String igoUser,
                             @RequestParam(value="lane") String lane, @RequestParam(value="force", defaultValue="NULL") String force){
-        log.info("Starting to add pool " + sample + " to flowcell lane " + lane  + "  by user " + igoUser);
+        log.info("Starting /addPoolToFlowcellLane to add pool " + sample + " to flowcell lane " + lane  + "  by user " + igoUser);
         if(!Whitelists.sampleMatches(lane))
             return "FAILURE: lane is not using a valid format";
         if(!Whitelists.textMatches(flowcell))
@@ -44,17 +39,7 @@ public class AddPoolToFlowcellLane{
        if(force.toUpperCase().equals("TRUE")){
             isForce = true;
        }
-       task.init(flowcell, sample, removeSample, igoUser, Long.parseLong(lane), isForce);
-       Future<Object> result = conn.submitTask(task);
-       String returnCode = "";
-       try{
-         returnCode = "Record Id:" + result.get();
-       } catch(Exception e){
-          StringWriter sw = new StringWriter();
-          PrintWriter pw = new PrintWriter(sw);
-          e.printStackTrace(pw);
-          returnCode = "ERROR IN ADDING POOL TO LANE: " + e.getMessage() + " TRACE: " + sw.toString();
-       }
-       return returnCode;
+       AddPoolToLane task = new AddPoolToLane(flowcell, sample, removeSample, igoUser, Long.parseLong(lane), isForce, conn);
+       return task.execute();
     }
 }

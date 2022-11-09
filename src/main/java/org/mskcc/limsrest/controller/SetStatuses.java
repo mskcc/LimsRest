@@ -27,7 +27,7 @@ public class SetStatuses {
 
     @GetMapping("/setRequestStatuses")
     public List<String> getContent() {
-        log.info("Starting to set request statuses");
+        log.info("Starting /setRequestStatuses");
         SetRequestStatus task = new SetRequestStatus();
         Future<Object> result = conn.submitTask(task);
         List<String> values = new LinkedList<>();
