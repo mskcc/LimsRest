@@ -237,9 +237,9 @@ public class GetRequestTrackingTask {
 
         // Add any DNA updates
         String rStage = root.getStage();
-        if(STAGE_LIBRARY_PREP.equals(rStage) || STAGE_LIBRARY_CAPTURE.equals(rStage)){
+        //if(STAGE_LIBRARY_PREP.equals(rStage) || STAGE_LIBRARY_CAPTURE.equals(rStage)){
             tree.enrichQuantity(root.getRecord(), rStage);
-        }
+        //}
 
         if (hasFailedQcStage(root)) {
             root.setFailed(Boolean.TRUE);
