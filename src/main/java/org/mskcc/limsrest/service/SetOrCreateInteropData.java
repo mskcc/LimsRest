@@ -1,37 +1,41 @@
 package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.*;
+import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.util.Messages;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class SetOrCreateInteropData extends LimsTask {
-
-    List<Map<String, Object>> data;
+public class SetOrCreateInteropData {
     private static Log log = LogFactory.getLog(SetOrCreateInteropData.class);
+    private List<Map<String, Object>> data;
+    private User user;
+    private DataRecordManager drm;
 
-    public void init(List<Map<String, Object>> data) {
+    public SetOrCreateInteropData(List<Map<String, Object>> data, ConnectionLIMS conn) {
         this.data = data;
+        VeloxConnection vConn = conn.getConnection();
+        user = vConn.getUser();
+        drm = vConn.getDataRecordManager();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @Override
-    public Object execute(VeloxConnection conn) {
+    public String execute() {
         try {
             log.info("interops to be inserted: " + data.size());
             List<Long> recordIds = data.stream().map(this::addOrSetSingleDataRecord)
                 .filter(Optional::isPresent).map(Optional::get)
                 .collect(Collectors.toList());
-            dataRecordManager.storeAndCommit(user.getUsername() + " added " + recordIds.size() + " interop records", user);
+            drm.storeAndCommit(user.getUsername() + " added " + recordIds.size() + " interop records", user);
             log.info("interops inserted: " + recordIds.size());
             return StringUtils.join(recordIds, ",");
         } catch (Exception e) {
@@ -45,10 +49,10 @@ public class SetOrCreateInteropData extends LimsTask {
             String run = String.valueOf(fields.get("i_Run"));
             String read = String.valueOf(fields.get("i_Read"));
             String lane = String.valueOf(fields.get("i_Lane"));
-            List<DataRecord> matchedInterop = dataRecordManager.queryDataRecords("InterOpsDatum",
+            List<DataRecord> matchedInterop = drm.queryDataRecords("InterOpsDatum",
                     "i_Run = '" + run + "' and i_Read = '" + read + "' and i_Lane = '" + lane + "'", user);
             DataRecord interopRecord = matchedInterop.size() < 1 ?
-                    dataRecordManager.addDataRecord("InterOpsDatum", user) : matchedInterop.get(0);
+                    drm.addDataRecord("InterOpsDatum", user) : matchedInterop.get(0);
             interopRecord.setFields(fields, user);
             return Optional.of(interopRecord.getRecordId());
         } catch (Exception e) {

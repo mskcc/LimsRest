@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.ConnectionPoolLIMS;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.LimsException;
 import org.mskcc.limsrest.service.SetOrCreateInteropData;
 import org.mskcc.limsrest.util.Messages;
@@ -17,23 +17,23 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.Future;
 
 @RestController
 @RequestMapping("/")
 public class AddInteropData {
-
     private static final Log log = LogFactory.getLog(AddInteropData.class);
-    private ConnectionPoolLIMS connectionQueue;
+    private ConnectionLIMS conn;
     private static ObjectMapper objectMapper;
 
-    public AddInteropData(ConnectionPoolLIMS connectionQueue) {
-        this.connectionQueue = connectionQueue;
+    public AddInteropData(ConnectionLIMS connectionQueue) {
+        this.conn = connectionQueue;
         objectMapper = new ObjectMapper();
     }
 
     @RequestMapping(value = "/addInteropData", method = RequestMethod.POST)
     public ResponseEntity<String> addInteropData(@RequestBody String body) {
+        log.info("Starting /addInteropData");
+
         JsonNode jsonNode = null;
         try {
             jsonNode = objectMapper.readTree(body);
@@ -54,13 +54,9 @@ public class AddInteropData {
             node.get("data").forEach(lane -> allFields.add(singleLaneSummary(run, lane)));
         }
 
-        SetOrCreateInteropData setOrCreateInteropData = new SetOrCreateInteropData();
-        setOrCreateInteropData.init(allFields);
-        Future<Object> result = connectionQueue.submitTask(setOrCreateInteropData);
-        String returnCode = "";
-
+        SetOrCreateInteropData setOrCreateInteropData = new SetOrCreateInteropData(allFields, conn);
+        String returnCode = setOrCreateInteropData.execute();
         try {
-            returnCode = (String) result.get();
             if (returnCode.startsWith(Messages.ERROR_IN)) {
                 throw new LimsException(returnCode);
             }
