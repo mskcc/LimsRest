@@ -1,15 +1,21 @@
 package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.user.User;
+import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.sapioutils.client.standalone.VeloxStandaloneManagerContext;
 import com.velox.sapioutils.shared.managers.DataRecordUtilManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.util.Messages;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -19,34 +25,36 @@ import java.util.List;
  *
  * @author Aaron Gabow
  */
-public class DeleteBanked extends LimsTask {
-    private static Log log = LogFactory.getLog(DeleteBanked.class);
+public class DeleteBankedTask {
+    private static Log log = LogFactory.getLog(DeleteBankedTask.class);
     private String serviceId;
     private String userId;
+    private ConnectionLIMS conn;
 
-    public void init(String userId, String serviceId) {
+    public DeleteBankedTask(String userId, String serviceId, ConnectionLIMS conn) {
         this.userId = userId;
         this.serviceId = serviceId;
-    }
-
-    public void init(String serviceId) {
-        this.serviceId = serviceId;
+        this.conn = conn;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @Override
-    public Object execute(VeloxConnection conn) {
+    public String execute() throws ServerException, RemoteException {
+        VeloxConnection vConn = conn.getConnection();
+        User user = vConn.getUser();
+        DataRecordManager drm = vConn.getDataRecordManager();
+        VeloxStandaloneManagerContext managerContext = new VeloxStandaloneManagerContext(user, vConn.getDataMgmtServer());
+
         if (serviceId != null && userId != null) {
             try {
                 DataRecordUtilManager drum = new DataRecordUtilManager(managerContext);
-                List<DataRecord> bankedList = dataRecordManager.queryDataRecords("BankedSample", "UserSampleID = '" + userId + "' AND ServiceId = '" + serviceId + "'", user);
+                List<DataRecord> bankedList = drm.queryDataRecords("BankedSample", "UserSampleID = '" + userId + "' AND ServiceId = '" + serviceId + "'", user);
                 if (bankedList.size() == 0) {
                     throw new LimsException("No banked sample match that userId and serviceId");
                 } else if (bankedList.size() > 1) {
                     throw new LimsException("More than one banked sample matches that userId and serviceId. Fix within the LIMS");
                 } else {
                     drum.deleteRecords(bankedList, false);
-                    dataRecordManager.storeAndCommit("Deleted the banked sample " + userId, user);
+                    drm.storeAndCommit("Deleted the banked sample " + userId, user);
                 }
             } catch (Exception e) {
                 StringWriter sw = new StringWriter();
@@ -59,7 +67,7 @@ public class DeleteBanked extends LimsTask {
         } else if (serviceId != null) {
             try {
                 String requestId = "";
-                List<DataRecord> bankedList = dataRecordManager.queryDataRecords("BankedSample", "ServiceId = '" + serviceId + "'", user);
+                List<DataRecord> bankedList = drm.queryDataRecords("BankedSample", "ServiceId = '" + serviceId + "'", user);
                 if (bankedList.size() == 0) {
                     throw new LimsException("No banked sample match that userId and serviceId");
                 } else {
@@ -72,7 +80,7 @@ public class DeleteBanked extends LimsTask {
                 if (requestId.equals("")) {
                     drum.deleteRecords(bankedList, false);
                 } else {
-                    List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
+                    List<DataRecord> requestList = drm.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
 
                     if (requestList.size() == 0 && !requestId.equals("")) {
                         throw new LimsException("No request has that request id: " + requestId);
@@ -97,7 +105,7 @@ public class DeleteBanked extends LimsTask {
                     drum.deleteRecords(ancestorProjectList, false);
                     drum.deleteRecords(bankedList, false);
                 }
-                dataRecordManager.storeAndCommit("Deleted all related service", user);
+                drm.storeAndCommit("Deleted all related service", user);
             } catch (Exception e) {
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);
