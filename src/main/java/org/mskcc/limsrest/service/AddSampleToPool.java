@@ -1,7 +1,10 @@
 package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.io.PrintWriter;
@@ -14,28 +17,32 @@ import java.util.List;
  * 
  * @author Aaron Gabow
  */
-public class AddSampleToPool extends LimsTask {
+public class AddSampleToPool {
   String pool; 
   String sampleId;
   String removePool;
   String igoUser;
+  private ConnectionLIMS conn;
 
-  public void init(String pool, String sampleId, String removePool, String igoUser){
+  public AddSampleToPool(String pool, String sampleId, String removePool, String igoUser, ConnectionLIMS conn){
     this.pool = pool;
     this.sampleId = sampleId;
     this.removePool = removePool;
     this.igoUser = igoUser;
+    this.conn = conn;
   }
 @PreAuthorize("hasRole('ADMIN')")
-@Override
- public Object execute(VeloxConnection conn){
+ public String execute(){
+    VeloxConnection vConn = conn.getConnection();
+    User user = vConn.getUser();
+    DataRecordManager drm = vConn.getDataRecordManager();
   try { 
-    List<DataRecord> samples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sampleId + "'", user);
+    List<DataRecord> samples = drm.queryDataRecords("Sample", "SampleId = '" + sampleId + "'", user);
     String otherId = samples.get(0).getStringVal("OtherSampleId", user);
     String userId = samples.get(0).getStringVal("UserSampleID", user);
 
     if(!pool.equals("NULL")){
-        List<DataRecord> newPools = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + pool + "'", user);
+        List<DataRecord> newPools = drm.queryDataRecords("Sample", "SampleId = '" + pool + "'", user);
         String newPoolOtherId = newPools.get(0).getStringVal("OtherSampleId", user);
         String newPoolUserId = newPools.get(0).getStringVal("UserSampleID", user);    
     
@@ -51,7 +58,7 @@ public class AddSampleToPool extends LimsTask {
  
     }
     if(!removePool.equals("NULL")){
-        List<DataRecord> oldPools = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + removePool + "'", user);
+        List<DataRecord> oldPools = drm.queryDataRecords("Sample", "SampleId = '" + removePool + "'", user);
         String oldPoolOtherId = oldPools.get(0).getStringVal("OtherSampleId", user);
         String oldPoolUserId = oldPools.get(0).getStringVal("UserSampleID", user);
         oldPoolOtherId.replace(otherId + ",", "");
@@ -62,17 +69,17 @@ public class AddSampleToPool extends LimsTask {
         oldPools.get(0).setDataField("UserSampleID", oldPoolUserId, user);
         LinkedList<List<DataRecord>> listOfOldPools = new LinkedList<>();
         listOfOldPools.add(oldPools);
-        dataRecordManager.removeChildren(samples, listOfOldPools, user);
+        drm.removeChildren(samples, listOfOldPools, user);
    }
 
     if(!removePool.equals("NULL") && !pool.equals("NULL")){
-        List<DataRecord> nimblegens = dataRecordManager.queryDataRecords("NimbleGenHybProtocol", "SampleId = '" + sampleId + "' AND Protocol2Sample = '" + removePool + "'" , user);
+        List<DataRecord> nimblegens = drm.queryDataRecords("NimbleGenHybProtocol", "SampleId = '" + sampleId + "' AND Protocol2Sample = '" + removePool + "'" , user);
         for(DataRecord nimblegen : nimblegens){
             nimblegen.setDataField("Protocol2Sample", pool, user);
          }
     }
 
-    dataRecordManager.storeAndCommit("Fixing", user);
+      drm.storeAndCommit("Fixing", user);
   } catch (Throwable e) {
           StringWriter sw = new StringWriter();
           PrintWriter pw = new PrintWriter(sw);
