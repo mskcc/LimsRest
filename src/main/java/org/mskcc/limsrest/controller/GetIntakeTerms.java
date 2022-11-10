@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.LinkedList;
 import java.util.Arrays;
 
-import org.mskcc.limsrest.ConnectionPoolLIMS;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,9 +25,9 @@ import org.apache.commons.logging.LogFactory;
 @RequestMapping("/")
 public class GetIntakeTerms {
     private static Log log = LogFactory.getLog(GetIntakeTerms.class);
-    private final ConnectionPoolLIMS conn;
+    private final ConnectionLIMS conn;
 
-    public GetIntakeTerms(ConnectionPoolLIMS conn){
+    public GetIntakeTerms(ConnectionLIMS conn){
         this.conn = conn;
     }
 
@@ -49,14 +49,7 @@ public class GetIntakeTerms {
         log.info("/getIntakeTerms for " + type + " and " + recipe);
         // database has "Blocks/Slides" client calls endpoint with type="Blocks_PIPI_SLASH_Slides"
         type = type.replaceAll("_PIPI_SLASH_", "/");
-        GetIntakeFormDescription task = new GetIntakeFormDescription();
-        task.init(type, recipe);
-        Future<Object> result = conn.submitTask(task);
-        try {
-            values = (List<List<String>>) result.get();
-        } catch (Exception e) {
-            values.add(Arrays.asList("", "", e.getMessage()));
-        }
-        return values;
+        GetIntakeFormDescription task = new GetIntakeFormDescription(type, recipe, conn);
+        return task.execute();
     }
 }
