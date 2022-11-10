@@ -20,7 +20,6 @@ public class GetIntakeFormDescription {
     private static Log log = LogFactory.getLog(GetIntakeFormDescription.class);
     private String type;
     private String request;
-
     private ConnectionLIMS conn;
 
     public GetIntakeFormDescription(String type, String request, ConnectionLIMS conn) {

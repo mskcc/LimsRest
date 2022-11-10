@@ -1,9 +1,12 @@
 package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.io.PrintWriter;
@@ -20,23 +23,25 @@ import java.util.Map;
  * 
  * @author Aaron Gabow
  */
-public class SetRequestStatus extends LimsTask {
+public class SetRequestStatus {
     private static Log log = LogFactory.getLog(SetRequestStatus.class);
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @Override
-    public Object execute(VeloxConnection conn) {
-        LinkedList<String> results = new LinkedList<String>();
+    private ConnectionLIMS conn;
 
+    @PreAuthorize("hasRole('ADMIN')")
+    public LinkedList<String> execute() {
+        VeloxConnection vConn = conn.getConnection();
+        User user = vConn.getUser();
+        DataRecordManager drm = vConn.getDataRecordManager();
+
+        LinkedList<String> results = new LinkedList<String>();
         try {
-            List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "CompletedDate is null and FurthestSample not like '%Illumina Sequencing Analysis' and FurthestSample != 'Processing Completed'", user);
+            List<DataRecord> requestList = drm.queryDataRecords("Request", "CompletedDate is null and FurthestSample not like '%Illumina Sequencing Analysis' and FurthestSample != 'Processing Completed'", user);
 
             for (DataRecord r : requestList) {
                 String status = "";
                 String requestName = r.getStringVal("RequestId", user);
                 StringBuilder breakdown = new StringBuilder();
-
-
                 HashSet<DataRecord> visitedSamples = new HashSet<>();
                 LinkedList<DataRecord> fringe = new LinkedList<>();
                 //BFS to find that samples status.
@@ -54,7 +59,6 @@ public class SetRequestStatus extends LimsTask {
                         if (!status2Count.containsKey(status)) {
                             status2Count.put(status, 0);
                         }
-
                     } catch (Exception e) {
                         continue;
                     }
@@ -86,7 +90,6 @@ public class SetRequestStatus extends LimsTask {
                         } else {
                             fringe.addFirst(child);
                         }
-
                     } else {
                         //in the case of multiple aliquots from a single sample, we want to get the least furthest along that doesn't fail. This is a quick and dirty approximation
                         DataRecord leastProcessedChild = childrenSamples[0];
@@ -104,7 +107,6 @@ public class SetRequestStatus extends LimsTask {
                             if (childDesc.size() < min) {
                                 min = childDesc.size();
                                 leastProcessedChild = child;
-
                             }
                         }
                         String childReq = "";
@@ -127,11 +129,9 @@ public class SetRequestStatus extends LimsTask {
                             status2Count.put("Moved on to request " + childReq, status2Count.get("Moved on to request " + childReq) + 1);
                         } else {
                             fringe.addFirst(leastProcessedChild);
-
                         }
                     }
                     visitedSamples.add(current);
-
                 }
                 for (Map.Entry<String, Integer> entry : status2Count.entrySet()) {
                     if (entry.getValue() != 0) {
@@ -140,13 +140,12 @@ public class SetRequestStatus extends LimsTask {
                         breakdown.append(String.format("%.2f", entry.getValue() / total));
                         breakdown.append(", ");
                     }
-
                 }
                 if (breakdown.length() > 2) {
                     breakdown.setLength(breakdown.length() - 2);
                 }
                 r.setDataField("FurthestSample", breakdown.toString(), user);
-                dataRecordManager.storeAndCommit("Status updated by bicapi using SetRequestStatus", user);
+                drm.storeAndCommit("Status updated by bicapi using SetRequestStatus", user);
                 results.add(requestName + ":" + breakdown.toString());
             }
         } catch (Throwable e) {
@@ -159,5 +158,4 @@ public class SetRequestStatus extends LimsTask {
 
         return results;
     }
-
 }
