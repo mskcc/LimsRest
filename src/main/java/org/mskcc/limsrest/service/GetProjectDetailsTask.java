@@ -20,6 +20,7 @@ public class GetProjectDetailsTask {
 
     public GetProjectDetailsTask(String project, ConnectionLIMS conn) {
         this.project = project;
+        this.conn = conn;
     }
 
     public ProjectSummary execute() {
