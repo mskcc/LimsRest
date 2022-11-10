@@ -1,6 +1,7 @@
 package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
@@ -8,6 +9,7 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.RequestModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.rmi.RemoteException;
@@ -17,15 +19,18 @@ import java.util.List;
 import static org.mskcc.limsrest.util.StatusTrackerConfig.isIgoComplete;
 import static org.mskcc.limsrest.util.Utils.*;
 
-public class GetIgoRequestsTask extends LimsTask {
+public class GetIgoRequestsTask  {
     private static Log log = LogFactory.getLog(GetIgoRequestsTask.class);
 
     private Long days;
     private Boolean igoComplete;
 
-    public GetIgoRequestsTask(Long days, Boolean igoComplete) {
+    private ConnectionLIMS conn;
+
+    public GetIgoRequestsTask(Long days, Boolean igoComplete, ConnectionLIMS conn) {
         this.days = days;
         this.igoComplete = igoComplete;
+        this.conn = conn;
     }
 
     private long getSearchPoint() {
@@ -65,13 +70,14 @@ public class GetIgoRequestsTask extends LimsTask {
     }
 
     @PreAuthorize("hasRole('READ')")
-    @Override
-    public List<RequestSummary> execute(VeloxConnection conn) {
-        User user = conn.getUser();
+    public List<RequestSummary> execute() {
+        VeloxConnection vConn = conn.getConnection();
+        User user = vConn.getUser();
+        DataRecordManager dataRecordManager = vConn.getDataRecordManager();
         String query = getQuery();
         List<DataRecord> records = new ArrayList<>();
         try {
-            records = conn.getDataRecordManager().queryDataRecords(RequestModel.DATA_TYPE_NAME, query, user);
+            records = dataRecordManager.queryDataRecords(RequestModel.DATA_TYPE_NAME, query, user);
         } catch (IoError | RemoteException | NotFound e) {
             log.error(String.format("Failed to query DataRecords w/ query: %s", query));
             return new ArrayList<>();

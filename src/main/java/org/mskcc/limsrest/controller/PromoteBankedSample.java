@@ -3,7 +3,7 @@ package org.mskcc.limsrest.controller;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.ConnectionPoolLIMS;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.LimsException;
 import org.mskcc.limsrest.service.PromoteBanked;
 import org.mskcc.limsrest.util.Constants;
@@ -16,15 +16,14 @@ import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.concurrent.Future;
 
 @RestController
 @RequestMapping("/")
 public class PromoteBankedSample {
     private final static Log log = LogFactory.getLog(PromoteBankedSample.class);
-    private final ConnectionPoolLIMS conn;
+    private final ConnectionLIMS conn;
 
-    public PromoteBankedSample(ConnectionPoolLIMS conn) {
+    public PromoteBankedSample(ConnectionLIMS conn) {
         this.conn = conn;
     }
 
@@ -62,12 +61,10 @@ public class PromoteBankedSample {
         if (!Whitelists.serviceMatches(service))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("serviceId is not using a valid format. " + Whitelists.serviceFormatText());
 
-        PromoteBanked task = new PromoteBanked();
-        task.init(bankedId, project, request, service, igoUser, materials, dryrun);
+        PromoteBanked task = new PromoteBanked(bankedId, project, request, service, igoUser, materials, dryrun, conn);
         log.info("Starting promote");
-        Future<Object> result = conn.submitTask(task);
         try {
-            ResponseEntity<String> returnCode = (ResponseEntity<String>) result.get();
+            ResponseEntity<String> returnCode = task.execute();
 
             if (returnCode.getHeaders().containsKey(Constants.ERRORS)) {
                 String errors = StringUtils.join(returnCode.getHeaders().get(Constants.ERRORS), ",");

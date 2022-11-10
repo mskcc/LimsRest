@@ -48,7 +48,6 @@ public class PromoteBankedTest {
                 HEME_PACT_V_4.getValue(),
                 MSK_ACCESS_V1.getValue()
         );
-        promoteBanked = new PromoteBanked();
     }
 
     @Test

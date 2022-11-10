@@ -6,6 +6,7 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.RequestModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.rmi.RemoteException;
@@ -18,18 +19,24 @@ import static org.mskcc.limsrest.util.Utils.*;
  * or that are being redelivered within a window
  * @author David Streid (Aaron Gabow)
  */
-public class GetUndeliveredProjectsTask extends LimsTask {
+public class GetUndeliveredProjectsTask {
     private static Log log = LogFactory.getLog(GetUndeliveredProjectsTask.class);
+    private ConnectionLIMS conn;
+
+    public GetUndeliveredProjectsTask(ConnectionLIMS conn) {
+        this.conn = conn;
+    }
 
     @PreAuthorize("hasRole('READ')")
-    @Override
-    public List<RequestSummary> execute(VeloxConnection conn) {
-        User user = conn.getUser();
+    public List<RequestSummary> execute() {
+        VeloxConnection vConn = conn.getConnection();
+        User user = vConn.getUser();
+        DataRecordManager drm = vConn.getDataRecordManager();
 
         List<DataRecord> undeliveredRecords = new ArrayList<>();
         String query = String.format("%s IS NULL", RequestModel.RECENT_DELIVERY_DATE);
         try {
-            undeliveredRecords = conn.getDataRecordManager().queryDataRecords(RequestModel.DATA_TYPE_NAME, query, user);
+            undeliveredRecords = drm.queryDataRecords(RequestModel.DATA_TYPE_NAME, query, user);
         } catch (NotFound | RemoteException | IoError e){
             log.error("Failed to retrieve Projects from Database");
         }

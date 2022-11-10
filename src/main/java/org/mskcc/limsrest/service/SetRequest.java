@@ -1,10 +1,12 @@
 package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.util.Messages;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -17,20 +19,24 @@ import java.util.Map;
  * 
  * @author Aaron Gabow
  */
-public class SetRequest extends LimsTask {
+public class SetRequest {
     String igoUser;
     String requestId;
     HashMap<String, Object> possibleRequestFields;
 
-    public void init(String igoUser, String requestId, HashMap<String, Object> requestFields) {
+    private ConnectionLIMS conn;
+
+    public SetRequest(String igoUser, String requestId, HashMap<String, Object> requestFields) {
         this.igoUser = igoUser;
         this.requestId = requestId;
         this.possibleRequestFields = requestFields;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @Override
-    public Object execute(VeloxConnection conn) {
+    public Object execute() {
+        VeloxConnection vConn = conn.getConnection();
+        User user = vConn.getUser();
+        DataRecordManager dataRecordManager = vConn.getDataRecordManager();
         try {
             if (requestId == null || requestId.equals("")) {
                 throw new LimsException("Must have a request id to set the request");

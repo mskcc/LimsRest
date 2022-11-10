@@ -1,20 +1,19 @@
 package org.mskcc.limsrest.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.velox.api.datarecord.*;
+import com.velox.api.user.User;
 import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.sapioutils.client.standalone.VeloxStandaloneManagerContext;
 import com.velox.sloan.cmo.utilities.SloanCMOUtils;
 import com.velox.sloan.cmo.utilities.UuidGenerator;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.tomcat.jni.Time;
 import org.mskcc.domain.sample.*;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.promote.BankedSampleToSampleConverter;
 import org.mskcc.limsrest.util.Constants;
 import org.mskcc.limsrest.util.Messages;
@@ -31,7 +30,6 @@ import org.springframework.web.client.RestTemplate;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Session;
-import javax.mail.Transport;
 import javax.mail.internet.*;
 import java.io.*;
 import java.rmi.RemoteException;
@@ -51,11 +49,10 @@ import org.yaml.snakeyaml.Yaml;
  *
  * @author Aaron Gabow
  */
-public class PromoteBanked extends LimsTask {
+public class PromoteBanked {
     private static final Log log = LogFactory.getLog(PromoteBanked.class);
 
     private static final List<String> INDEX_MATERIALS = Arrays.asList("DNA Library", "Pooled Library", "cDNA Library");
-
     private final BankedSampleToSampleConverter bankedSampleToSampleConverter = new BankedSampleToSampleConverter();
 
     String[] bankedIds;
@@ -73,11 +70,9 @@ public class PromoteBanked extends LimsTask {
     private static final String ILABS_CONFIG = "/srv/www/sapio/lims/lims-scripts/ilabs/ilabs.yml";
     private static final String OUTBOX = "/pskis34/vialelab/LIMS/AutomatedEmails/teamworkCard/";
     private boolean iLabAbsent = false;
+    private ConnectionLIMS conn;
 
-    public PromoteBanked() {
-    }
-
-    public void init(String[] bankedIds, String projectId, String requestId, String serviceId, String igoUser, String materials, boolean dryrun) {
+    public PromoteBanked(String[] bankedIds, String projectId, String requestId, String serviceId, String igoUser, String materials, boolean dryrun, ConnectionLIMS conn) {
         this.bankedIds = bankedIds;
         this.projectId = projectId;
         this.requestId = requestId;
@@ -85,218 +80,222 @@ public class PromoteBanked extends LimsTask {
         this.igoUser = igoUser;
         this.materials = materials;
         this.dryrun = dryrun;
+        this.conn = conn;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @Override
-    public ResponseEntity<String> execute(VeloxConnection conn) {
+    public ResponseEntity<String> execute() {
         log.info("Executing...dryrun=" + dryrun);
-        if (dryrun) {
-            String nextRequest = "";
-            if (requestId.equals("NULL") && projectId.equals("NULL")) {
-                try {
-                    List<DataRecord> mappedReq = dataRecordManager.queryDataRecords("Request", "IlabRequest = '" +
-                            serviceId + "'", user);
-                    if (mappedReq.size() > 0) {
-                        DataRecord req = mappedReq.get(0);
-                        String requestId = req.getStringVal("RequestId", user);
-                        nextRequest = "Would promote to Request " + requestId + " because Service ID matches.";
-                    } else {
-                        nextRequest = "Would promote to a new Request.";
-                    }
-                } catch (Exception e) {
-                    nextRequest = "Would promote to a new Request.";
-                }
-            } else if (!requestId.equals("NULL")) {
-                nextRequest = "Would promote to existing Request " + requestId;
-            } else {
-                nextRequest = "Would promote to a new Request in Project " + projectId;
-            }
+        synchronized (PromoteBanked.class) {
+            VeloxConnection vConn = conn.getConnection();
+            User user = vConn.getUser();
+            DataRecordManager dataRecordManager = vConn.getDataRecordManager();
 
-            return ResponseEntity.ok(nextRequest);
-        } else {
-
-            try {
-                //GET ALL BANKED SAMPLES
-                StringBuffer sb = new StringBuffer();
-                for (int i = 0; i < bankedIds.length - 1; i++) {
-                    sb.append("'");
-                    sb.append(bankedIds[i]);
-                    sb.append("',");
-                }
-                sb.append("'");
-                sb.append(bankedIds[bankedIds.length - 1]);
-                sb.append("'");
-
-                List<DataRecord> bankedList = dataRecordManager.queryDataRecords("BankedSample", "RecordId in (" + sb.toString() + ") order by transactionId, rowIndex", user);
-                SloanCMOUtils util = new SloanCMOUtils(managerContext);
-
-                //GET INDEXES IF MATERIAL IS INDEX MATERIAL
-                boolean indexNeeded = false;
-                HashMap<String, String> barcodeId2Sequence = new HashMap<>();
-                for (String material : INDEX_MATERIALS) {
-                    if (materials.contains(material)) {
-                        indexNeeded = true;
-                        break;
-                    }
-                }
-                log.info((indexNeeded ? "" : "No ") + "Index needed.");
-                if (indexNeeded) {
-
-                    List<DataRecord> validBarcodeList = dataRecordManager.queryDataRecords("IndexAssignment", "IndexType != " +
-                            "'IDT_TRIM'", user);
-                    for (DataRecord knownBarcode : validBarcodeList) {
-                        barcodeId2Sequence.put(knownBarcode.getStringVal("IndexId", user), knownBarcode.getStringVal
-                                ("IndexTag", user));
-                    }
-                }
-
-                DataRecord req = null;
-                //TODO THREAD WARNING: Not thread safe. Depends on the queue being single consumer thread to handle concurrency
+            if (dryrun) {
+                String nextRequest = "";
                 if (requestId.equals("NULL") && projectId.equals("NULL")) {
-                    log.info("Creating new request.");
                     try {
                         List<DataRecord> mappedReq = dataRecordManager.queryDataRecords("Request", "IlabRequest = '" +
                                 serviceId + "'", user);
                         if (mappedReq.size() > 0) {
-                            req = mappedReq.get(0);
-                            requestId = req.getStringVal("RequestId", user);
+                            DataRecord req = mappedReq.get(0);
+                            String requestId = req.getStringVal("RequestId", user);
+                            nextRequest = "Would promote to Request " + requestId + " because Service ID matches.";
                         } else {
-                            requestId = util.getNextProjectId();
-                            DataRecord proj = null;
-                            List<DataRecord> projs = dataRecordManager.queryDataRecords("Directory", "DirectoryName = " +
-                                    "'Projects'", user);
-                            if (projs.size() > 0) {
-                                proj = projs.get(0).addChild("Project", user);
-                            } else {
-                                proj = dataRecordManager.addDataRecord("Project", user);
-                            }
-                            proj.setDataField("ProjectId", requestId, user);
-                            Map<String, Object> reqFields = new HashMap<>();
-                            reqFields.put("RequestId", requestId);
-                            reqFields.put("IlabRequest", serviceId);
-                            reqFields.put("ProjectId", requestId);
-                            req = proj.addChild("Request", reqFields, user);
+                            nextRequest = "Would promote to a new Request.";
                         }
                     } catch (Exception e) {
-                        throw new LimsException("Unable to create a new request for this project: " + e.getMessage());
+                        nextRequest = "Would promote to a new Request.";
                     }
                 } else if (!requestId.equals("NULL")) {
-                    List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
-                    if (requestList.size() == 0) {
-                        throw new LimsException("There is no request with id '" + requestId + "'");
-                    }
-                    req = requestList.get(0);
+                    nextRequest = "Would promote to existing Request " + requestId;
                 } else {
-                    log.info("Adding based off project id: " + projectId);
-                    List<DataRecord> projectList = dataRecordManager.queryDataRecords("Project", "ProjectId = '" +
-                            projectId + "'", user);
-                    if (projectList.size() == 0) {
-                        throw new LimsException("There is no project with id '" + projectId + "'");
+                    nextRequest = "Would promote to a new Request in Project " + projectId;
+                }
+
+                return ResponseEntity.ok(nextRequest);
+            } else {
+                try {
+                    //GET ALL BANKED SAMPLES
+                    StringBuffer sb = new StringBuffer();
+                    for (int i = 0; i < bankedIds.length - 1; i++) {
+                        sb.append("'");
+                        sb.append(bankedIds[i]);
+                        sb.append("',");
                     }
-                    DataRecord[] allChildRequests = projectList.get(0).getChildrenOfType("Request", user);
-                    for (DataRecord possibleRequest : allChildRequests) {
-                        String reqServiceId = "";
-                        try {
-                            reqServiceId = possibleRequest.getStringVal("IlabRequest", user);
-                        } catch (NullPointerException npe) {
-                        }
-                        if (serviceId.equals(reqServiceId)) {
-                            req = possibleRequest;
-                            requestId = req.getStringVal("RequestId", user);
+                    sb.append("'");
+                    sb.append(bankedIds[bankedIds.length - 1]);
+                    sb.append("'");
+
+                    List<DataRecord> bankedList = dataRecordManager.queryDataRecords("BankedSample", "RecordId in (" + sb.toString() + ") order by transactionId, rowIndex", user);
+                    VeloxStandaloneManagerContext managerContext = new VeloxStandaloneManagerContext(user, vConn.getDataMgmtServer());
+                    SloanCMOUtils util = new SloanCMOUtils(managerContext);
+
+                    //GET INDEXES IF MATERIAL IS INDEX MATERIAL
+                    boolean indexNeeded = false;
+                    HashMap<String, String> barcodeId2Sequence = new HashMap<>();
+                    for (String material : INDEX_MATERIALS) {
+                        if (materials.contains(material)) {
+                            indexNeeded = true;
+                            break;
                         }
                     }
-                    if (req == null) {
-                        log.info("Adding a new request for project: " + projectId);
+                    log.info((indexNeeded ? "" : "No ") + "Index needed.");
+                    if (indexNeeded) {
+
+                        List<DataRecord> validBarcodeList = dataRecordManager.queryDataRecords("IndexAssignment", "IndexType != " +
+                                "'IDT_TRIM'", user);
+                        for (DataRecord knownBarcode : validBarcodeList) {
+                            barcodeId2Sequence.put(knownBarcode.getStringVal("IndexId", user), knownBarcode.getStringVal
+                                    ("IndexTag", user));
+                        }
+                    }
+
+                    DataRecord req = null;
+                    if (requestId.equals("NULL") && projectId.equals("NULL")) {
+                        log.info("Creating new request.");
                         try {
-                            requestId = util.getNextRequestId(projectId);
-                            log.info("request id " + requestId);
-                            Map<String, Object> reqFields = new HashMap<>();
-                            reqFields.put("RequestId", requestId);
-                            reqFields.put("IlabRequest", serviceId);
-                            reqFields.put("ProjectId", projectId);
-                            req = projectList.get(0).addChild("Request", reqFields, user);
+                            List<DataRecord> mappedReq = dataRecordManager.queryDataRecords("Request", "IlabRequest = '" +
+                                    serviceId + "'", user);
+                            if (mappedReq.size() > 0) {
+                                req = mappedReq.get(0);
+                                requestId = req.getStringVal("RequestId", user);
+                            } else {
+                                requestId = util.getNextProjectId();
+                                DataRecord proj = null;
+                                List<DataRecord> projs = dataRecordManager.queryDataRecords("Directory", "DirectoryName = " +
+                                        "'Projects'", user);
+                                if (projs.size() > 0) {
+                                    proj = projs.get(0).addChild("Project", user);
+                                } else {
+                                    proj = dataRecordManager.addDataRecord("Project", user);
+                                }
+                                proj.setDataField("ProjectId", requestId, user);
+                                Map<String, Object> reqFields = new HashMap<>();
+                                reqFields.put("RequestId", requestId);
+                                reqFields.put("IlabRequest", serviceId);
+                                reqFields.put("ProjectId", requestId);
+                                req = proj.addChild("Request", reqFields, user);
+                            }
                         } catch (Exception e) {
                             throw new LimsException("Unable to create a new request for this project: " + e.getMessage());
                         }
-                    }
-                }
-                log.info("Using request: " + req.getStringVal(("RequestId"), user));
-
-                if (bankedList.size() == 0) {
-                    throw new LimsException("No banked sample with ids '" + sb.toString() + "'");
-                }
-                DataRecord[] existentSamples = req.getChildrenOfType("Sample", user);
-                HashSet<String> existentIds = new HashSet<>();
-                int maxId = 0;
-                for (DataRecord e : existentSamples) {
-                    try {
-                        String otherId = e.getStringVal("OtherSampleId", user);
-                        existentIds.add(otherId);
-                        String sampleId = e.getStringVal("SampleId", user);
-                        String[] igoElements = unaliquotName(sampleId).split("_");
-                        int currentId = Integer.parseInt(igoElements[igoElements.length - 1]);
-                        if (currentId > maxId) {
-                            maxId = currentId;
+                    } else if (!requestId.equals("NULL")) {
+                        List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
+                        if (requestList.size() == 0) {
+                            throw new LimsException("There is no request with id '" + requestId + "'");
                         }
-                    } catch (NullPointerException npe) {
+                        req = requestList.get(0);
+                    } else {
+                        log.info("Adding based off project id: " + projectId);
+                        List<DataRecord> projectList = dataRecordManager.queryDataRecords("Project", "ProjectId = '" +
+                                projectId + "'", user);
+                        if (projectList.size() == 0) {
+                            throw new LimsException("There is no project with id '" + projectId + "'");
+                        }
+                        DataRecord[] allChildRequests = projectList.get(0).getChildrenOfType("Request", user);
+                        for (DataRecord possibleRequest : allChildRequests) {
+                            String reqServiceId = "";
+                            try {
+                                reqServiceId = possibleRequest.getStringVal("IlabRequest", user);
+                            } catch (NullPointerException npe) {
+                            }
+                            if (serviceId.equals(reqServiceId)) {
+                                req = possibleRequest;
+                                requestId = req.getStringVal("RequestId", user);
+                            }
+                        }
+                        if (req == null) {
+                            log.info("Adding a new request for project: " + projectId);
+                            try {
+                                requestId = util.getNextRequestId(projectId);
+                                log.info("request id " + requestId);
+                                Map<String, Object> reqFields = new HashMap<>();
+                                reqFields.put("RequestId", requestId);
+                                reqFields.put("IlabRequest", serviceId);
+                                reqFields.put("ProjectId", projectId);
+                                req = projectList.get(0).addChild("Request", reqFields, user);
+                            } catch (Exception e) {
+                                throw new LimsException("Unable to create a new request for this project: " + e.getMessage());
+                            }
+                        }
                     }
+                    log.info("Using request: " + req.getStringVal(("RequestId"), user));
+
+                    if (bankedList.size() == 0) {
+                        throw new LimsException("No banked sample with ids '" + sb.toString() + "'");
+                    }
+                    DataRecord[] existentSamples = req.getChildrenOfType("Sample", user);
+                    HashSet<String> existentIds = new HashSet<>();
+                    int maxId = 0;
+                    for (DataRecord e : existentSamples) {
+                        try {
+                            String otherId = e.getStringVal("OtherSampleId", user);
+                            existentIds.add(otherId);
+                            String sampleId = e.getStringVal("SampleId", user);
+                            String[] igoElements = unaliquotName(sampleId).split("_");
+                            int currentId = Integer.parseInt(igoElements[igoElements.length - 1]);
+                            if (currentId > maxId) {
+                                maxId = currentId;
+                            }
+                        } catch (NullPointerException npe) {
+                        }
+                    }
+                    int offset = 1;
+                    HashMap<String, DataRecord> plateId2Plate = new HashMap<>();
+                    // get Coverage -> RequestedReads Reference table values from 'ApplicationReadCoverageRef' table in LIMS.
+                    for (DataRecord bankedSample : bankedList) {
+                        createRecords(bankedSample, req, requestId, barcodeId2Sequence, plateId2Plate, existentIds, maxId, offset, user, dataRecordManager, util);
+                        offset++;
+                        bankedSample.setDataField("Promoted", Boolean.TRUE, user);
+                        bankedSample.setDataField("RequestId", requestId, user);
+                    }
+                    log.info(igoUser + "  promoted the banked samples " + sb.toString());
+                    dataRecordManager.storeAndCommit(igoUser + "  promoted the banked samples " + sb.toString() + "into " + requestId, null, user);
+
+                    MultiValueMap<String, String> headers = new HttpHeaders();
+                    headers.add(Constants.WARNINGS, getErrors());
+                    headers.add(Constants.STATUS, Messages.SUCCESS);
+
+                    sendEmailToTeamwork();
+                    if (iLabAbsent) {
+                        return new ResponseEntity<>("No iLab request found. Successfully promoted sample(s) into " + requestId, headers, HttpStatus.OK);
+                    }
+                } catch (Exception e) {
+                    log.error(e);
+
+                    MultiValueMap<String, String> headers = new HttpHeaders();
+
+                    // Avoid HeadersTooLargeException
+                    String errMessage = e.getMessage();
+                    String headerErr = "";
+                    if (errMessage != null) {
+                        headerErr = errMessage.substring(0, Math.min(500, errMessage.length()));
+                    }
+
+                    headers.add(Constants.ERRORS, Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + headerErr);
+
+                    return new ResponseEntity<>(headers, HttpStatus.OK);
                 }
-                int offset = 1;
-                HashMap<String, DataRecord> plateId2Plate = new HashMap<>();
-                // get Coverage -> RequestedReads Reference table values from 'ApplicationReadCoverageRef' table in LIMS.
-                for (DataRecord bankedSample : bankedList) {
-                    createRecords(bankedSample, req, requestId, barcodeId2Sequence, plateId2Plate, existentIds, maxId, offset);
-                    offset++;
-                    bankedSample.setDataField("Promoted", Boolean.TRUE, user);
-                    bankedSample.setDataField("RequestId", requestId, user);
-                }
-                log.info(igoUser + "  promoted the banked samples " + sb.toString());
-                dataRecordManager.storeAndCommit(igoUser + "  promoted the banked samples " + sb.toString() + "into " + requestId, null, user);
-
-                MultiValueMap<String, String> headers = new HttpHeaders();
-                headers.add(Constants.WARNINGS, getErrors());
-                headers.add(Constants.STATUS, Messages.SUCCESS);
-
-                sendEmailToTeamwork();
-                if (iLabAbsent) {
-                    return new ResponseEntity<>("No iLab request found. Successfully promoted sample(s) into " + requestId, headers, HttpStatus.OK );
-                }
-            } catch (Exception e) {
-                log.error(e);
-
-                MultiValueMap<String, String> headers = new HttpHeaders();
-
-                // Avoid HeadersTooLargeException
-                String errMessage = e.getMessage();
-                String headerErr = "";
-                if(errMessage != null){
-                    headerErr = errMessage.substring(0,Math.min(500,errMessage.length()));
-                }
-
-                headers.add(Constants.ERRORS,
-                        Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + headerErr);
-
-                return new ResponseEntity<>(headers, HttpStatus.OK);
             }
-        }
 
-        MultiValueMap<String, String> headers = new HttpHeaders();
-        headers.add(Constants.WARNINGS, getErrors());
-        headers.add(Constants.STATUS, Messages.SUCCESS);
+            MultiValueMap<String, String> headers = new HttpHeaders();
+            headers.add(Constants.WARNINGS, getErrors());
+            headers.add(Constants.STATUS, Messages.SUCCESS);
 
-        if(samplesWithDifferentNewIgoIdAndRowIndex.size() > 0) {
-            String warningMessage = "";
-            warningMessage += "The igo id of the following promoted samples do NOT match their row index: \n";
-            for (int i = 0; i < samplesWithDifferentNewIgoIdAndRowIndex.size() - 1; i++) {
-                warningMessage += samplesWithDifferentNewIgoIdAndRowIndex.get(i).toString() + ", ";
+            if (samplesWithDifferentNewIgoIdAndRowIndex.size() > 0) {
+                String warningMessage = "";
+                warningMessage += "The igo id of the following promoted samples do NOT match their row index: \n";
+                for (int i = 0; i < samplesWithDifferentNewIgoIdAndRowIndex.size() - 1; i++) {
+                    warningMessage += samplesWithDifferentNewIgoIdAndRowIndex.get(i).toString() + ", ";
+                }
+                warningMessage += samplesWithDifferentNewIgoIdAndRowIndex.get(samplesWithDifferentNewIgoIdAndRowIndex.size() - 1).toString();
+                warningMessage += "\n Successfully promoted sample(s) into " + requestId;
+
+                return new ResponseEntity<>(warningMessage, headers, HttpStatus.OK);
             }
-            warningMessage += samplesWithDifferentNewIgoIdAndRowIndex.get(samplesWithDifferentNewIgoIdAndRowIndex.size() - 1).toString();
-            warningMessage += "\n Successfully promoted sample(s) into " + requestId;
-
-            return new ResponseEntity<>(warningMessage, headers, HttpStatus.OK );
+            return new ResponseEntity<>("Successfully promoted sample(s) into " + requestId, headers, HttpStatus.OK);
         }
-        return new ResponseEntity<>("Successfully promoted sample(s) into " + requestId, headers, HttpStatus.OK );
     }
 
     private String getErrors() {
@@ -311,7 +310,7 @@ public class PromoteBanked extends LimsTask {
         return message.toString();
     }
 
-    public void logBankedState(DataRecord bankedSample, AuditLog auditLog) throws RemoteException {
+    public void logBankedState(DataRecord bankedSample, AuditLog auditLog, User user) throws RemoteException {
         StringBuilder logBuilder = new StringBuilder();
         Map<String, Object> fields = bankedSample.getFields(user);
         for (Map.Entry<String, Object> entry : fields.entrySet()) {
@@ -325,11 +324,11 @@ public class PromoteBanked extends LimsTask {
 
     public void createRecords(DataRecord bankedSampleRecord, DataRecord req, String requestId,
                               HashMap<String, String> barcodeId2Sequence, HashMap<String, DataRecord> plateId2Plate,
-                              HashSet<String> existentIds, int maxExistentId, int offset)
+                              HashSet<String> existentIds, int maxExistentId, int offset, User user, DataRecordManager dataRecordManager, SloanCMOUtils util)
             throws LimsException, InvalidValue, AlreadyExists, NotFound, IoError, RemoteException, ServerException {
         try {
             AuditLog auditLog = user.getAuditLog();
-            logBankedState(bankedSampleRecord, auditLog);
+            logBankedState(bankedSampleRecord, auditLog, user);
         } catch (RemoteException rme) {
             log.info("ERROR: could not add the audit log information for promote");
         }
@@ -346,7 +345,6 @@ public class PromoteBanked extends LimsTask {
             throw new LimsException("There already is a sample in the project with the name: " + otherSampleId);
         }
 
-        SloanCMOUtils util = new SloanCMOUtils(managerContext);
         log.info("uuid generating");
         UuidGenerator uuidGen = new UuidGenerator();
         String uuid;

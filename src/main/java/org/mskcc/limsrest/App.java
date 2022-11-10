@@ -62,21 +62,6 @@ public class App extends SpringBootServletInitializer {
         SpringApplication.run(App.class, args);
     }
 
-    @Bean(destroyMethod = "cleanup")
-    public ConnectionPoolLIMS connectionQueue() {
-        String host = env.getProperty("lims.host");
-        Integer port = Integer.parseInt(env.getProperty("lims.port"));
-        String guid = env.getProperty("lims.guid");
-
-        String user1 = env.getProperty("lims.user1");
-        String pass1 = env.getProperty("lims.pword1");
-        String user2 = env.getProperty("lims.user2");
-        String pass2 = env.getProperty("lims.pword2");
-
-        log.info("Creating LIMS connection pool.");
-        return new ConnectionPoolLIMS(host, port, guid, user1, pass1, user2, pass2);
-    }
-
     @Bean(destroyMethod = "close")
     public ConnectionLIMS connection() {
         String host = env.getProperty("lims.host");

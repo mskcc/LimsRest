@@ -1,7 +1,10 @@
 package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.io.PrintWriter;
@@ -13,20 +16,23 @@ import java.util.List;
  * 
  * @author Aaron Gabow
  */
-public class SetSampleStatus extends LimsTask {
+public class SetSampleStatus {
     private String status;
     private String sampleId;
     private String igoUser;
+    private ConnectionLIMS conn;
 
-    public void init(String sampleId, String status, String igoUser) {
+    public SetSampleStatus(String sampleId, String status, String igoUser) {
         this.sampleId = sampleId;
         this.status = status;
         this.igoUser = igoUser;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @Override
-    public Object execute(VeloxConnection conn) {
+    public Object execute() {
+        VeloxConnection vConn = conn.getConnection();
+        User user = vConn.getUser();
+        DataRecordManager dataRecordManager = vConn.getDataRecordManager();
         String finalStatus = status;
         try {
             List<DataRecord> samples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sampleId + "'", user);

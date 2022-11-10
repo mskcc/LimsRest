@@ -871,11 +871,6 @@ public class PromoteBankedTest {
         return new SampleTypeCorrectedCmoSampleIdGenerator();
     }
 
-    private PromoteBanked getPromoteBanked() throws Exception {
-        BankedSampleToCorrectedCmoSampleIdConverter bankedSampleToCorrectedCmoSampleIdConverter = new
-                BankedSampleToCorrectedCmoSampleIdConverter();
-        return new PromoteBanked();
-    }
 
     private String getResourceFile(String connectionFile) {
         return PromoteBankedTest.class.getResource(connectionFile).getPath();

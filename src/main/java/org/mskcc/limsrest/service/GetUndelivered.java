@@ -3,9 +3,12 @@ package org.mskcc.limsrest.service;
 import com.velox.api.datarecord.AuditLog;
 import com.velox.api.datarecord.AuditLogEntry;
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.io.PrintWriter;
@@ -22,21 +25,28 @@ import java.util.Set;
  * or that are being redelivered within a window
  * @author Aaron Gabow
  */
-public class GetUndelivered extends LimsTask {
+public class GetUndelivered {
     private static Log log = LogFactory.getLog(GetUndelivered.class);
 
     private String passed = "Passed";
     private String failed = "Failed";
     private String daysToExamine = "30"; //we need this to not look at all requests
+    private ConnectionLIMS conn;
 
+    public GetUndelivered(ConnectionLIMS conn) {
+        this.conn = conn;
+    }
 
     @PreAuthorize("hasRole('READ')")
-    @Override
-    public Object execute(VeloxConnection conn) {
+    public Object execute() {
+        VeloxConnection vConn = conn.getConnection();
+        User user = vConn.getUser();
+        DataRecordManager drm = vConn.getDataRecordManager();
+
         Set<DataRecord> undeliveredSet = new HashSet<>();
         try {
             AuditLog auditlog = user.getAuditLog();
-            List<DataRecord> undelivered = dataRecordManager.queryDataRecords("Request", "DeliveryDate IS NULL OR DeliveryDate >  UNIX_TIMESTAMP(NOW() - INTERVAL " + daysToExamine + " DAY) * 1000", user);
+            List<DataRecord> undelivered = drm.queryDataRecords("Request", "DeliveryDate IS NULL OR DeliveryDate >  UNIX_TIMESTAMP(NOW() - INTERVAL " + daysToExamine + " DAY) * 1000", user);
             for (DataRecord undel : undelivered) {
                 boolean reviewComplete = true;
                 boolean hasQc = false;

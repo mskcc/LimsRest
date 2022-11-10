@@ -3,21 +3,12 @@ package org.mskcc.limsrest.service;
 import com.velox.api.datamgmtserver.DataMgmtServer;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
-import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
-import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sapioutils.client.standalone.VeloxExecutable;
-import com.velox.sapioutils.client.standalone.VeloxStandalone;
 import com.velox.sapioutils.client.standalone.VeloxStandaloneManagerContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.ConnectionPoolLIMS;
-import org.mskcc.limsrest.service.assignedprocess.QcStatus;
-import org.mskcc.limsrest.util.Messages;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -32,37 +23,12 @@ import static org.mskcc.limsrest.util.Utils.runAndCatchNpe;
 public abstract class LimsTask implements VeloxExecutable<Object>, Callable<Object> {
     private static Log log = LogFactory.getLog(LimsTask.class);
 
-    private ConnectionPoolLIMS p;
-
     protected User user;
     protected DataRecordManager dataRecordManager;
     protected DataMgmtServer dataMgmtServer;
     protected VeloxStandaloneManagerContext managerContext;
 
     public LimsTask() {
-    }
-
-    public void setConnectionPool(ConnectionPoolLIMS p) {
-        this.p = p;
-    }
-
-    @Override
-    public Object call() throws Exception {
-        VeloxConnection velox_conn = p.getConnection();
-        velox_conn.open();
-        try {
-            if (velox_conn.isConnected()) {
-                user = velox_conn.getUser();
-                dataRecordManager = velox_conn.getDataRecordManager();
-                dataMgmtServer = velox_conn.getDataMgmtServer();
-                managerContext = new VeloxStandaloneManagerContext(user, dataMgmtServer);
-            } else {
-                log.error("the lims task has a null connection");
-            }
-            return VeloxStandalone.run(velox_conn, this);
-        } finally {
-            velox_conn.close();
-        }
     }
 
     public static void annotateRequestDetailed(RequestDetailed requestDetailed, DataRecord request, User user) {

@@ -8,12 +8,12 @@ import static org.junit.Assert.*;
 // TODO: integration test for SetOrCreateBanked
 public class SetOrCreateBankedTest {
 
-    private SetOrCreateBanked setOrCreateBanked;
+    private SetOrCreateBankedTask setOrCreateBanked;
     private String sampleId = "111";
 
     @Before
     public void setupSetOrCreateBanked() {
-        setOrCreateBanked = new SetOrCreateBanked();
+        setOrCreateBanked = new SetOrCreateBankedTask();
     }
 
     @Test

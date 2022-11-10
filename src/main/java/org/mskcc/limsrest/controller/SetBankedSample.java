@@ -2,9 +2,9 @@ package org.mskcc.limsrest.controller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.ConnectionPoolLIMS;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.LimsException;
-import org.mskcc.limsrest.service.SetOrCreateBanked;
+import org.mskcc.limsrest.service.SetOrCreateBankedTask;
 import org.mskcc.limsrest.util.Messages;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,15 +12,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.concurrent.Future;
-
 @RestController
 @RequestMapping("/")
 public class SetBankedSample {
     private static Log log = LogFactory.getLog(SetBankedSample.class);
-    private final ConnectionPoolLIMS conn;
+    private final ConnectionLIMS conn;
 
-    public SetBankedSample(ConnectionPoolLIMS conn) {
+    public SetBankedSample(ConnectionLIMS conn) {
         this.conn = conn;
     }
 
@@ -98,8 +96,7 @@ public class SetBankedSample {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("userId is not using a valid format");
         }
 
-        SetOrCreateBanked task = new SetOrCreateBanked();
-        task.init(
+        SetOrCreateBankedTask task = new SetOrCreateBankedTask(
                 igoUser,
                 investigator,
                 userId,
@@ -144,13 +141,12 @@ public class SetBankedSample {
                 Double.parseDouble(concentration),
                 Integer.parseInt(rowIndex),
                 Long.parseLong(transactionId),
-                Integer.parseInt(numberOfAmplicons));
+                Integer.parseInt(numberOfAmplicons),
+                conn);
 
-        Future<Object> result = conn.submitTask(task);
         String returnCode;
-
         try {
-            returnCode = (String) result.get();
+            returnCode = task.execute();
             if (returnCode.startsWith(Messages.ERROR_IN)) {
                 throw new LimsException(returnCode);
             }

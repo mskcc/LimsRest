@@ -58,8 +58,8 @@ public class GetIgoRequests {
             return getResponseEntity(resp, HttpStatus.BAD_REQUEST);
         }
 
-        GetIgoRequestsTask task = new GetIgoRequestsTask(numDays, igoComplete);
-        List<RequestSummary> requests = task.execute(this.conn.getConnection());
+        GetIgoRequestsTask task = new GetIgoRequestsTask(numDays, igoComplete, conn);
+        List<RequestSummary> requests = task.execute();
         resp.put("status", "Success");
         resp.put("requests", requests);
         return getResponseEntity(resp, HttpStatus.OK);
