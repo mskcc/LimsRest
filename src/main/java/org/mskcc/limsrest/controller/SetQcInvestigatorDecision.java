@@ -5,28 +5,24 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.ConnectionPoolLIMS;
+import org.mskcc.limsrest.ConnectionLIMS;
 
 import org.mskcc.limsrest.service.SetQcInvestigatorDecisionTask;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.Future;
 
-// Endpoint to set QC investigator decisions.
 
 @RestController
 @RequestMapping("/")
 public class SetQcInvestigatorDecision {
     private static Log log = LogFactory.getLog(SetQcInvestigatorDecision.class);
-    private final ConnectionPoolLIMS conn;
-    private static ObjectMapper objectMapper;
+    private final ConnectionLIMS conn;
+    private ObjectMapper objectMapper;
 
-    public SetQcInvestigatorDecision(ConnectionPoolLIMS conn) {
+    public SetQcInvestigatorDecision(ConnectionLIMS conn) {
         this.conn = conn;
         objectMapper = new ObjectMapper();
 
@@ -49,7 +45,6 @@ public class SetQcInvestigatorDecision {
         List<Map<String, Object>> data = new ArrayList<>();
 
         String datatype = "";
-
         try {
             while (iterator.hasNext()) {
                 List<Map<String, Object>> allFields = new ArrayList<>();
@@ -76,22 +71,10 @@ public class SetQcInvestigatorDecision {
         } catch (Exception e) {
             log.error(e);
             ResponseEntity.badRequest();
-
         }
 
-        SetQcInvestigatorDecisionTask task = new SetQcInvestigatorDecisionTask();
-        task.init(data);
-
-        Future<Object> result = conn.submitTask(task);
-
-        String response = "";
-        try {
-            response = (String) result.get();
-        } catch (Exception e) {
-            log.error(e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-        }
-
+        SetQcInvestigatorDecisionTask task = new SetQcInvestigatorDecisionTask(data, conn);
+        String response = task.execute();
         return ResponseEntity.ok(response);
     }
 

@@ -1,12 +1,12 @@
 package org.mskcc.limsrest.service;
 
-
 import com.velox.api.datarecord.*;
 import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.staticstrings.datatypes.DT_Sample;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.assignedprocess.*;
 import org.mskcc.limsrest.util.Messages;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,34 +18,30 @@ import java.util.*;
  *
  * @author Lisa Wagner
  */
-
-public class SetQcInvestigatorDecisionTask extends LimsTask {
-
+public class SetQcInvestigatorDecisionTask {
     private static Log log = LogFactory.getLog(SetQcInvestigatorDecisionTask.class);
     List<Map<String, Object>> data;
     protected QcStatusAwareProcessAssigner qcStatusAwareProcessAssigner = new QcStatusAwareProcessAssigner();
+    private ConnectionLIMS conn;
 
-    public SetQcInvestigatorDecisionTask() {
-    }
-
-    public void init(final List<Map<String, Object>> data) {
-
+    public SetQcInvestigatorDecisionTask(List<Map<String, Object>> data, ConnectionLIMS conn) {
         this.data = data;
-
+        this.conn = conn;
     }
 
     @PreAuthorize("hasRole('READ')")
-    @Override
-    public Object execute(VeloxConnection conn) {
+    public String execute() {
         int count = 0;
+        VeloxConnection vConn = conn.getConnection();
+        User user = vConn.getUser();
+        DataRecordManager drm = vConn.getDataRecordManager();
         try {
-
             for (Map entry : data) {
                 String datatype = (String) entry.get("datatype");
 
                 List<Object> records = (List<Object>) entry.get("records");
                 List<Map<String, Object>> decisions = (List<Map<String, Object>>) entry.get("decisions");
-                List<DataRecord> matched = dataRecordManager.queryDataRecords(datatype, "RecordId", records, user);
+                List<DataRecord> matched = drm.queryDataRecords(datatype, "RecordId", records, user);
 
                 for (DataRecord match :
                         matched) { //match is of type QC RNA/DNA/Library Report
@@ -65,11 +61,11 @@ public class SetQcInvestigatorDecisionTask extends LimsTask {
                                     DataRecord sample = match.getParentsOfType("Sample", user).get(0);
                                     String igoId = sample.getDataField("SampleId", user).toString();
                                     log.info("Sample's IGO Id is: " + igoId);
-                                    List<DataRecord> qcRecordDna = dataRecordManager.queryDataRecords("QcReportDna",
+                                    List<DataRecord> qcRecordDna = drm.queryDataRecords("QcReportDna",
                                             "SampleId = '" + igoId + "'", user);
-                                    List<DataRecord> qcRecordRna = dataRecordManager.queryDataRecords("QcReportRna",
+                                    List<DataRecord> qcRecordRna = drm.queryDataRecords("QcReportRna",
                                             "SampleId = '" + igoId + "'", user);
-                                    List<DataRecord> qcRecordLibrary = dataRecordManager.queryDataRecords("QcReportLibrary",
+                                    List<DataRecord> qcRecordLibrary = drm.queryDataRecords("QcReportLibrary",
                                             "SampleId = '" + igoId + "'", user);
                                     DataRecord qcStat = null;
                                     if(qcRecordDna != null && qcRecordDna.size() > 0) {
@@ -85,7 +81,7 @@ public class SetQcInvestigatorDecisionTask extends LimsTask {
                                         log.info("seqQc is assigned with a rna qc report record!");
                                     }
                                     log.info("qcStat igo id is:" + qcStat.getDataField("SampleId", user));
-                                    qcStatusAwareProcessAssigner.assign(dataRecordManager, user, qcStat, QcStatus.fromString(newStatus));
+                                    qcStatusAwareProcessAssigner.assign(drm, user, qcStat, QcStatus.fromString(newStatus));
                                     log.info("After assign is completed!");
                                 }
                             } else if (field.get("InvestigatorDecision").toString().toLowerCase().contains("stop processing")) {
@@ -101,7 +97,7 @@ public class SetQcInvestigatorDecisionTask extends LimsTask {
                         }
                     }
                 }
-                dataRecordManager.storeAndCommit("Storing QC Decision", null, user);
+                drm.storeAndCommit("Storing QC Decision", null, user);
                 log.info(count + " Investigator Decisions set in " + datatype);
             }
 
