@@ -1,9 +1,12 @@
 package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.io.PrintWriter;
@@ -19,7 +22,7 @@ import java.util.Map;
  *
  * @author Aaron Gabow
  */
-public class RenameSample extends LimsTask {
+public class RenameSample {
     private static Log log = LogFactory.getLog(RenameSample.class);
     String oldSampleId;
     String igoId;
@@ -28,27 +31,31 @@ public class RenameSample extends LimsTask {
     String requestId;
     String igoUser;
     int changeCount;
+    private ConnectionLIMS conn;
 
-
-    public void init(String igoUser, String request, String igoId, String newSampleId, String newUserId) {
+    public RenameSample(String igoUser, String request, String igoId, String newSampleId, String newUserId, ConnectionLIMS conn) {
         this.igoUser = igoUser;
         this.igoId = igoId;
         this.newSampleId = newSampleId;
         this.newUserId = newUserId;
         this.requestId = request;
         this.changeCount = 0;
+        this.conn = conn;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @Override
-    public Object execute(VeloxConnection conn) {
+    public String execute() {
   //first make sure that there is a sample with the old name in the request
   //then make sure that there isn't a sample with the new name already in this request or any requests that children samples belong to
   try { 
     List<DataRecord> requestSamples = new LinkedList<>();
      DataRecord root = null;
+      VeloxConnection vConn = conn.getConnection();
+      User user = vConn.getUser();
+      DataRecordManager drm = vConn.getDataRecordManager();
+
     if(igoId != null){
-         List<DataRecord> sampleList = dataRecordManager.queryDataRecords("Sample",  "SampleId = '" + igoId + "'", user);
+         List<DataRecord> sampleList = drm.queryDataRecords("Sample",  "SampleId = '" + igoId + "'", user);
          root = sampleList.get(0);
          try{
            oldSampleId = root.getStringVal("OtherSampleId", user);
@@ -88,26 +95,6 @@ public class RenameSample extends LimsTask {
     if(root == null){
         return "ERROR: No sample in request " + requestId + " matches the sample name " + oldSampleId;
     }
-    List<DataRecord> parentSamples = root.getAncestorsOfType("Sample", user);
-  /*  if(parentSamples.size() > 0){
-        return "ERROR: The requested sample must not have any ancestor Samples";
-    }
-    */
-  /*  List<DataRecord> flowlanes = root.getDescendantsOfType("FlowCellLane", user);
-    if(flowlanes.size() > 0){
-        return "ERROR: The sample " + oldSampleId + " has already been sequenced. Please contact the sequence analyst about what to do now";
-    }
-*/
-    //ideally would look through child requests too
-    /*
-    for(DataRecord s: requestSamples){ 
-         try{
-             if(newSampleId.equals(s.getStringVal("OtherSampleId", user))){
-                 return "ERROR: A sample already has that name";
-             } 
-          } catch(NullPointerException npe){}
-     }
-     */
      //go through each descendant and change the other sample id, taking care to handle when pooling has concatonated the name with other samples
      HashSet<DataRecord> descendants = new HashSet<>();
      LinkedList<DataRecord> queue = new LinkedList<>();
@@ -149,7 +136,7 @@ public class RenameSample extends LimsTask {
      }
 
      //need to fix any records that reference that aren't descendants that reference the sample id. We probably don't want to change pairing.
-    dataRecordManager.storeAndCommit( "Change the previous sample name to " + newSampleId + " in request " + requestId + " by user " + igoUser, user);
+      drm.storeAndCommit( "Change the previous sample name to " + newSampleId + " in request " + requestId + " by user " + igoUser, user);
   } catch (Throwable e) {
           StringWriter sw = new StringWriter();
           PrintWriter pw = new PrintWriter(sw);

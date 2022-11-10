@@ -2,7 +2,7 @@ package org.mskcc.limsrest.controller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.limsrest.ConnectionPoolLIMS;
+import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.RenameSample;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,9 +18,8 @@ import java.util.concurrent.Future;
 @RequestMapping("/")
 public class SetSampleName {
     private final static Log log = LogFactory.getLog(SetSampleName.class);
-    private final ConnectionPoolLIMS conn;
-   
-    public SetSampleName(ConnectionPoolLIMS conn){
+    private final ConnectionLIMS conn;
+    public SetSampleName(ConnectionLIMS conn){
         this.conn = conn;
     }
 
@@ -43,19 +42,7 @@ public class SetSampleName {
        if (!Whitelists.requestMatches(request))
            return "FAILURE: request is not using a valid format. " + Whitelists.requestFormatText();
 
-        RenameSample task = new RenameSample();
-       task.init(igoUser, request,  igoId, newSampleId, newUserId); 
-                         
-       Future<Object> result = conn.submitTask(task);
-       String returnCode = "";
-       try{
-         returnCode = "Sample Id:" + result.get();
-       } catch(Exception e){
-          StringWriter sw = new StringWriter();
-          PrintWriter pw = new PrintWriter(sw);
-          e.printStackTrace(pw);
-          returnCode = "ERROR IN SETTING BANKED SAMPLE: " + e.getMessage() + " TRACE: " + sw.toString();
-       }
-       return returnCode;
+       RenameSample task = new RenameSample(igoUser, request,  igoId, newSampleId, newUserId, conn);
+       return task.execute();
     }
 }
