@@ -89,6 +89,8 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 String sampleName = String.valueOf(qcDataVals.get("OtherSampleId"));
                 String sampleId = String.valueOf(qcDataVals.get("SampleId")); // aka base IGO ID
 
+                DataRecord seqReq = getSequencingRequirements(sampleId);
+
                 // first find the library sample that is parent of Pool Sample that went on Sequencer.
                 DataRecord librarySample = getLibrarySample(relatedLibrarySamples, sampleId);
                 if (librarySample == null) {
@@ -132,12 +134,18 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 log.info(String.format("Found Library Sample with Sample ID : %s", igoId));
                 //add AltId to the values to be updated.
                 Object altId = "";
+                String maxNumOfRequestedReads = "";
+                String runLength = "";
                 try {
+                    maxNumOfRequestedReads = seqReq.getStringVal("RequestedReads", user);
+                    runLength = seqReq.getStringVal("SequencingRunType", user);
                     altId = getValueFromDataRecord(librarySample, "AltId", "String", user);
                 } catch (Exception e) {
                     log.error(String.format("Failed to retrieve AltId from Library Sample: %s", igoId));
                 }
                 qcDataVals.putIfAbsent("AltId", altId);
+                qcDataVals.put("RequestedReads", maxNumOfRequestedReads);
+                qcDataVals.put("SequencingRunType", runLength);
                 //check if there is an existing SeqAnalysisSampleQc record. If present update it.
                 String versionLessRunId = getVersionLessRunId(runId);
                 DataRecord existingQc = getExistingSequencingQcRecord(relatedLibrarySamples, sampleName, igoId, versionLessRunId);
@@ -153,6 +161,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                     // remove SeqQcStatus Key,Value from new values so that it does not overwrite existing value.
                     qcDataVals.remove("SeqQCStatus");
                     qcDataVals.put(SampleModel.SAMPLE_ID, igoId);
+
                     // TODO - else has same logic. Remove duplication and move after else?
                     try {
                         existingQc.setFields(qcDataVals, user);
@@ -403,6 +412,17 @@ public class UpdateLimsSampleLevelSequencingQcTask {
             return idVals.get(0).replaceFirst("_rescue$", "");
         } else {
             throw new IllegalArgumentException(String.format("Cannot extract IGO ID from given Sample Name value %s in QC data.", id));
+        }
+    }
+
+    private DataRecord getSequencingRequirements(String igoId) {
+        try {
+            DataRecord SeqReq = dataRecordManager.queryDataRecords("SeqRequirement", "SampleId = '" + igoId + "'", user).get(0);
+            return SeqReq;
+        }
+        catch (Exception e) {
+            log.error(String.format("Exception thrown while retrieving SeqRequirement records: %s", ExceptionUtils.getStackTrace(e)));
+            return null;
         }
     }
 
