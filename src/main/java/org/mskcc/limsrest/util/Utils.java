@@ -525,9 +525,14 @@ public class Utils {
         String mainTumorType = "";
         try {
             // In LIMS tumor types entry is not controlled. Sometimes tumor type as tumor name is entered and other times tumor type code is entered.
-            // First query oncotree using api for name search
-            URL url = new URL("http://oncotree.mskcc.org/api/tumorTypes/search/name/" + tumorType.split("/")[0].replace(" ", "%20") + "?exactMatch=false");
+            // First query oncotree using api for name search enforcing exact match
+            URL url = new URL("http://oncotree.mskcc.org/api/tumorTypes/search/name/" + tumorType.split("/")[0].replace(" ", "%20") + "?exactMatch=true");
             mainTumorType = getOncotreeTumorTypeUsingName(url);
+            // If name search with exact match enforced returns nothing, then query oncotree again with exact match turned off
+            if (StringUtils.isBlank(mainTumorType)) {
+                URL url = new URL("http://oncotree.mskcc.org/api/tumorTypes/search/name/" + tumorType.split("/")[0].replace(" ", "%20") + "?exactMatch=false");
+                mainTumorType = getOncotreeTumorTypeUsingName(url);
+            }
             // If name search returns nothing, then query oncotree using api for code search
             if (StringUtils.isBlank(mainTumorType)) {
                 URL url2 = new URL("http://oncotree.mskcc.org/api/tumorTypes/search/code/" + tumorType.split("/")[0].replace(" ", "%20") + "?exactMatch=true");
