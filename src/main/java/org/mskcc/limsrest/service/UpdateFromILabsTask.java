@@ -233,10 +233,24 @@ public class UpdateFromILabsTask {
                     requestFields.put("DataAccessEmails", Filter.toAscii(field2val.get("ALLEMAILS")));
                 }
 //              IF old field not in iLab but new ones are, append and copy new fields into old field
-                if (!field2val.get("DATA_ACCESS_EMAILS").equals("FIELD NOT IN ILABS") && !field2val.get("QC_ACCESS_EMAILS").equals("FIELD NOT IN ILABS") &&
-                        (field2val.get("ALLEMAILS").equals("FIELD NOT IN ILABS") || field2val.get("ALLEMAILS").equals(""))) {
-                    requestFields.put("MailTo", Filter.toAscii(field2val.get("DATA_ACCESS_EMAILS")) + "," + Filter.toAscii(field2val.get("QC_ACCESS_EMAILS")));
-                }
+                if (field2val.get("ALLEMAILS").equals("") || field2val.get("ALLEMAILS").equals("FIELD NOT IN ILABS")) {
+                    System.out.println("Fillin in MailTO field if empty");
+                    if (!field2val.get("DATA_ACCESS_EMAILS").equals("FIELD NOT IN ILABS") &&
+                            !field2val.get("DATA_ACCESS_EMAILS").equals("") &&
+                            !field2val.get("QC_ACCESS_EMAILS").equals("FIELD NOT IN ILABS") &&
+                            !field2val.get("QC_ACCESS_EMAILS").equals("")) {
+                        requestFields.put("MailTo", Filter.toAscii(field2val.get("DATA_ACCESS_EMAILS")) + "," + Filter.toAscii(field2val.get("QC_ACCESS_EMAILS")));
+                    }
+                    else if (!field2val.get("QC_ACCESS_EMAILS").equals("FIELD NOT IN ILABS") && !field2val.get("QC_ACCESS_EMAILS").equals(""))
+                        requestFields.put("MailTo", Filter.toAscii(field2val.get("QC_ACCESS_EMAILS")));
+                    else if (!field2val.get("DATA_ACCESS_EMAILS").equals("FIELD NOT IN ILABS") && !field2val.get("DATA_ACCESS_EMAILS").equals(""))
+                        requestFields.put("MailTo", Filter.toAscii(field2val.get("DATA_ACCESS_EMAILS")));
+                    else {
+                        System.out.println("Data and QC access emails are both blank.");
+                        System.out.println("PI email is: " + Filter.toAscii(field2val.get("PIEMAIL")));
+                        System.out.println("Invest email is: " + Filter.toAscii(field2val.get("INVESTEMAIL")));
+                        requestFields.put("MailTo", Filter.toAscii(field2val.get("PIEMAIL")) + "," + Filter.toAscii(field2val.get("INVESTEMAIL")));
+                    }
 
 //                IF new field analysis type present, set old fields according to that
                 if (!field2val.get("ANALYSIS_TYPE").equals("FIELD NOT IN ILABS")) {
