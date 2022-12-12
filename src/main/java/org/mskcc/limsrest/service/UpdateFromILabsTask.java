@@ -240,8 +240,7 @@ public class UpdateFromILabsTask {
                             !field2val.get("QC_ACCESS_EMAILS").equals("FIELD NOT IN ILABS") &&
                             !field2val.get("QC_ACCESS_EMAILS").equals("")) {
                         requestFields.put("MailTo", Filter.toAscii(field2val.get("DATA_ACCESS_EMAILS")) + "," + Filter.toAscii(field2val.get("QC_ACCESS_EMAILS")));
-                    }
-                    else if (!field2val.get("QC_ACCESS_EMAILS").equals("FIELD NOT IN ILABS") && !field2val.get("QC_ACCESS_EMAILS").equals(""))
+                    } else if (!field2val.get("QC_ACCESS_EMAILS").equals("FIELD NOT IN ILABS") && !field2val.get("QC_ACCESS_EMAILS").equals(""))
                         requestFields.put("MailTo", Filter.toAscii(field2val.get("QC_ACCESS_EMAILS")));
                     else if (!field2val.get("DATA_ACCESS_EMAILS").equals("FIELD NOT IN ILABS") && !field2val.get("DATA_ACCESS_EMAILS").equals(""))
                         requestFields.put("MailTo", Filter.toAscii(field2val.get("DATA_ACCESS_EMAILS")));
@@ -251,7 +250,7 @@ public class UpdateFromILabsTask {
                         System.out.println("Invest email is: " + Filter.toAscii(field2val.get("INVESTEMAIL")));
                         requestFields.put("MailTo", Filter.toAscii(field2val.get("PIEMAIL")) + "," + Filter.toAscii(field2val.get("INVESTEMAIL")));
                     }
-
+                }
 //                IF new field analysis type present, set old fields according to that
                 if (!field2val.get("ANALYSIS_TYPE").equals("FIELD NOT IN ILABS")) {
                     requestFields.put("FASTQ", Boolean.TRUE);
