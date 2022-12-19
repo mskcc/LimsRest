@@ -86,6 +86,9 @@ public class GetIgoRequestsTask extends LimsTask {
             rs.setIsCmoRequest(getRecordBooleanValue(request, "IsCmoRequest", user));
             rs.setInvestigator(getRecordStringValue(request, RequestModel.INVESTIGATOR, user));
             rs.setPi(getRecordStringValue(request, RequestModel.LABORATORY_HEAD, user));
+            rs.setPiEmail(getRecordStringValue(request, "PIemail", user));
+            System.out.println("PIemail is: " + getRecordStringValue(request, "PIemail", user));
+            rs.setInvestigatorEmail(getRecordStringValue(request, "Investigatoremail", user));
             rs.setRequestType(getRecordStringValue(request, RequestModel.REQUEST_NAME, user));
             rs.setReceivedDate(getRecordLongValue(request, RequestModel.RECEIVED_DATE, user));
             rs.setRecentDeliveryDate(getRecordLongValue(request, RequestModel.RECENT_DELIVERY_DATE, user));
