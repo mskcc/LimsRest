@@ -51,6 +51,7 @@ public class GetWESSampleDataTask {
 
     private Log log = LogFactory.getLog(GetWESSampleDataTask.class);
     private String timestamp;
+    private String timestamp2;
     private ConnectionLIMS conn;
     private User user;
     DataRecordManager dataRecordManager;
@@ -60,6 +61,7 @@ public class GetWESSampleDataTask {
 
     public GetWESSampleDataTask(String timestamp, ConnectionLIMS conn) {
         this.timestamp = timestamp;
+        this.timestamp2 = timestamp2;
         this.conn = conn;
     }
 
@@ -74,10 +76,13 @@ public class GetWESSampleDataTask {
             VALID_RECIPES = pickListManager.getPickListConfig("Whole-Exome Recipes for Sample Tracker").getEntryList();
             log.info(VALID_RECIPES);
             VALID_REQUEST_TYPES = pickListManager.getPickListConfig("Whole-Exome Request Types").getEntryList();
-            log.info(" Starting GetWesSample task using timestamp " + timestamp);
+            if(timestamp2.equals("NULL")){
+                timestamp2 = "" + System.currentTimeMillis();
+            }
+            log.info(" Starting GetWesSample task using timestamp " + timestamp + " and timestamp2 " + timestamp2);
             List<DataRecord> dmpTrackerRecords = new ArrayList<>();
             try {
-                dmpTrackerRecords = dataRecordManager.queryDataRecords("DMPSampleTracker", "i_SampleTypeTumororNormal='Tumor' AND DateCreated > " + Long.parseLong(timestamp) + " AND i_SampleDownstreamApplication LIKE '%Exome%' COLLATE utf8_general_ci", user);
+                dmpTrackerRecords = dataRecordManager.queryDataRecords("DMPSampleTracker", "i_SampleTypeTumororNormal='Tumor' AND DateCreated > " + Long.parseLong(timestamp) + "AND DateCreated < " + Long.parseLong(timestamp2) + " AND i_SampleDownstreamApplication LIKE '%Exome%' COLLATE utf8_general_ci", user);
 //                dmpTrackerRecords = dataRecordManager.queryDataRecords("DMPSampleTracker", "i_SampleTypeTumororNormal='Tumor' AND DateCreated > " + Long.parseLong(timestamp) + " AND i_SampleDownstreamApplication LIKE '%Exome%' AND i_StudySampleIdentifierInvesti LIKE 'P-0002976-T01-WES%' COLLATE utf8_general_ci", user);
                 //dmpTrackerRecords = dataRecordManager.queryDataRecords("DMPSampleTracker", "i_StudySampleIdentifierInvesti IN ('P-0013536-T02-WES','P-0025596-T01-WES','P-0028625-T01-WES') AND i_SampleTypeTumororNormal='Tumor'" + " AND i_SampleDownstreamApplication LIKE '%Exome%' COLLATE utf8_general_ci", user);
                 log.info("Num dmpTracker Records: " + dmpTrackerRecords.size());
@@ -187,27 +192,27 @@ public class GetWESSampleDataTask {
             log.info("Results found: " + resultList.size() + " Elapsed time (ms): " + (System.currentTimeMillis() - start));
             return resultList;
         } catch (RemoteException e) {
-            log.info(String.format("RemoteException while running GetWESSampleDataTask with timestamp %s:\n%s", timestamp, getStackTrace(e)));
+            log.info(String.format("RemoteException while running GetWESSampleDataTask with timestamp %s and timestamp2 %s:\n%s", timestamp, timestamp2, getStackTrace(e)));
         }
         catch (NoSuchAlgorithmException e) {
-            log.info(String.format("NoSuchAlgorithmException while running GetWESSampleDataTask with timestamp %s:\n%s", timestamp, getStackTrace(e)));
+            log.info(String.format("NoSuchAlgorithmException while running GetWESSampleDataTask with timestamp %s and timestamp2 %s:\n%s", timestamp, timestamp2, getStackTrace(e)));
         } catch (KeyManagementException e) {
-            log.info(String.format("KeyManagementException while running GetWESSampleDataTask with timestamp %s:\n%s", timestamp, getStackTrace(e)));
+            log.info(String.format("KeyManagementException while running GetWESSampleDataTask with timestamp %s and timestamp2 %s:\n%s", timestamp, timestamp2, getStackTrace(e)));
         }
         catch (MalformedURLException e) {
-            log.info(String.format("MalformedURLException while running GetWESSampleDataTask with timestamp %s:\n%s", timestamp, getStackTrace(e)));
+            log.info(String.format("MalformedURLException while running GetWESSampleDataTask with timestamp %s and timestamp2 %s:\n%s", timestamp, timestamp2, getStackTrace(e)));
         }
         catch (NotFound notFound) {
-            log.info(String.format("NotFound while running GetWESSampleDataTask with timestamp %s:\n%s", timestamp, getStackTrace(notFound)));;
+            log.info(String.format("NotFound while running GetWESSampleDataTask with timestamp %s and timestamp2 %s:\n%s", timestamp, timestamp2, getStackTrace(notFound)));;
         }
         catch (IOException e) {
-            log.info(String.format("IOException while running GetWESSampleDataTask with timestamp %s:\n%s", timestamp, getStackTrace(e)));
+            log.info(String.format("IOException while running GetWESSampleDataTask with timestamp %s and timestamp2 %s:\n%s", timestamp, timestamp2, getStackTrace(e)));
         }
         catch (IoError ioError) {
-            log.info(String.format("ioError while running GetWESSampleDataTask with timestamp %s:\n%s", timestamp, getStackTrace(ioError)));
+            log.info(String.format("ioError while running GetWESSampleDataTask with timestamp %s and timestamp2 %s:\n%s", timestamp, timestamp2, getStackTrace(ioError)));
         }
         catch (ServerException e) {
-            log.info(String.format("ServerException while running GetWESSampleDataTask with timestamp %s:\n%s", timestamp, getStackTrace(e)));
+            log.info(String.format("ServerException while running GetWESSampleDataTask with timestamp %s and timestamp2 %s:\n%s", timestamp, timestamp2, getStackTrace(e)));
         }
         return resultList;
     }

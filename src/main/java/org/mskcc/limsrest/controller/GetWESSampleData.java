@@ -22,9 +22,9 @@ public class GetWESSampleData {
     }
 
     @RequestMapping("/getWESSampleData")
-    public List<WESSampleData> getContent(@RequestParam(value="timestamp") String timestamp) {
-        log.info("Starting /getWESSampleData using timestamp " + timestamp);
-        GetWESSampleDataTask task = new GetWESSampleDataTask(timestamp, conn);
+    public List<WESSampleData> getContent(@RequestParam(value="timestamp") String timestamp, @RequestParam(value = "timestamp2", defaultValue = "NULL") String timestamp2) {
+        log.info("Starting /getWESSampleData using timestamp " + timestamp + " and timestamp2 " + timestamp2);
+        GetWESSampleDataTask task = new GetWESSampleDataTask(timestamp, timestamp2, conn);
         try {
             return task.execute();
         } catch (Exception e) {
