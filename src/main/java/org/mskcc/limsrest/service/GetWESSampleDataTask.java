@@ -79,6 +79,16 @@ public class GetWESSampleDataTask {
             if(timestamp2.equals("NULL")){
                 timestamp2 = "" + System.currentTimeMillis();
             }
+            try {
+                if (Long.parseLong(timestamp) > Long.parseLong(timestamp2)){
+                    String timestamp_cp = timestamp2;
+                    timestamp2 = timestamp;
+                    timestamp = timestamp_cp;
+                }
+            } catch (Throwable e) {
+                log.error(e.getMessage(), e);
+                return null;
+            }
             log.info(" Starting GetWesSample task using timestamp " + timestamp + " and timestamp2 " + timestamp2);
             List<DataRecord> dmpTrackerRecords = new ArrayList<>();
             try {
