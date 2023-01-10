@@ -59,7 +59,7 @@ public class GetWESSampleDataTask {
     private List<String> VALID_RECIPES;
     private List<String> VALID_REQUEST_TYPES;
 
-    public GetWESSampleDataTask(String timestamp, ConnectionLIMS conn) {
+    public GetWESSampleDataTask(String timestamp, String timestamp2, ConnectionLIMS conn) {
         this.timestamp = timestamp;
         this.timestamp2 = timestamp2;
         this.conn = conn;
