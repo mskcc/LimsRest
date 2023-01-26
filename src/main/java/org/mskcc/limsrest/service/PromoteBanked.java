@@ -71,7 +71,7 @@ public class PromoteBanked extends LimsTask {
     private RestTemplate restTemplateIGO;
     private static final String baseUrl = "https://api.ilabsolutions.com/v1/cores";
     private static final String ILABS_CONFIG = "/srv/www/sapio/lims/lims-scripts/ilabs/ilabs.yml";
-    private static final String OUTBOX = "/pskis34/vialelab/LIMS/AutomatedEmails/teamworkCard/";
+    private static final String OUTBOX = "/skimcs/mohibullahlab/LIMS/AutomatedEmails/teamworkCard/";
     private boolean iLabAbsent = false;
 
     public PromoteBanked() {
@@ -646,7 +646,7 @@ public class PromoteBanked extends LimsTask {
                 message.setText(iLabComment + " \n#end");
             message.setSubject(subject);
 
-            /* Writing subject and body of the email in a txt file to store it on "/pskis34/vialelab/LIMS/AutomatedEmails"
+            /* Writing subject and body of the email in a txt file to store it on "/skimcs/mohibullahlab/LIMS/AutomatedEmails"
              the sendEmail crontab script will send the email (for card creation)to Teamwork */
             try {
                 String filename = OUTBOX + "TeamworkCard-" + date + ".txt";
