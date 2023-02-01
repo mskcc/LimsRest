@@ -9,11 +9,9 @@ public class SampleQcSummary {
     private String run;
     private String qcStatus;
     private Long createDate;
-
     private String baitSet;
     private String qcUnits;
     private String quantUnits;
-    private double mskq;
     private double MEAN_COVERAGE;
     private double PCT_EXC_MAPQ;
     private double PCT_EXC_DUPE;
@@ -46,7 +44,7 @@ public class SampleQcSummary {
     private Long totalReads;
     private boolean reviewed;
     private String recipe;
-
+    private String statsVersion;
 
     public SampleQcSummary() {
         sampleName = "ERROR";
@@ -88,11 +86,6 @@ public class SampleQcSummary {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public double getMskq() {
-        return this.mskq;
-    }
-
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public double getMeanTargetCoverage() {
         return this.meanTargetCoverage;
     }
@@ -119,7 +112,6 @@ public class SampleQcSummary {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public double getPercentTarget30x() { return this.percentTarget30x; }
-//    public void setPercentTarget30x(double per30x) { this.percentTarget30x = per30x; }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public double getPercentTarget40x() { return this.percentTarget40x; }
@@ -235,5 +227,9 @@ public class SampleQcSummary {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getRecipe() {
         return this.recipe;
+    }
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getStatsVersion() {
+        return this.statsVersion;
     }
 }
