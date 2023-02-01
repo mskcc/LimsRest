@@ -50,6 +50,8 @@ public class QCSiteStats {
     public double ZERO_CVG_TARGETS_PCT;
     public double PCT_OFF_BAIT;
 
+    public String statsVersion;
+
 
     public QCSiteStats() {
     }
@@ -101,6 +103,7 @@ public class QCSiteStats {
         qc.setMeanTargetCoverage(MEAN_TARGET_COVERAGE);
         qc.setZeroCoveragePercent(ZERO_CVG_TARGETS_PCT);
         qc.setPercentOffBait(PCT_OFF_BAIT);
+        qc.setStatsVersion(statsVersion);
 
         qc.setQcStatus("Passed");
         qc.setReviewed(true);
