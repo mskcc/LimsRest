@@ -86,8 +86,8 @@ public class QcReportSampleList {
             public Double rqn;
             public Double dV200;
             public String sourceSampleId;
-            public String A260280;
-            public String A260230;
+            public Double A260280;
+            public Double A260230;
 
             public RnaReportSample(Map<String, Object> sampleFields) {
                 super(sampleFields);
@@ -95,8 +95,8 @@ public class QcReportSampleList {
                 this.rqn = (Double) sampleFields.get("RQN");
                 this.dV200 = (Double) sampleFields.get("DV200");
                 this.sourceSampleId = (String) sampleFields.get("SourceSampleId");
-                this.A260230 = (String) sampleFields.get("A260230");
-                this.A260280 = (String) sampleFields.get("A260280");
+                this.A260230 = (Double) sampleFields.get("A260230");
+                this.A260280 = (Double) sampleFields.get("A260280");
             }
         }
 
@@ -106,8 +106,8 @@ public class QcReportSampleList {
             public String specimenType;
             public Double din;
             public String sourceSampleId;
-            public String A260280;
-            public String A260230;
+            public Double A260280;
+            public Double A260230;
 
             public DnaReportSample(Map<String, Object> sampleFields) {
                 super(sampleFields);
@@ -116,8 +116,10 @@ public class QcReportSampleList {
                 this.specimenType = (String) sampleFields.get("SpecimenType");
                 this.din = (Double) sampleFields.get("DIN");
                 this.sourceSampleId = (String) sampleFields.get("SourceSampleId");
-                this.A260230 = (String) sampleFields.get("A260230");
-                this.A260280 = (String) sampleFields.get("A260280");
+                this.A260230 = (Double) sampleFields.get("A260230");
+                this.A260280 = (Double) sampleFields.get("A260280");
+                System.out.println("A260230 " + A260230);
+                System.out.println("A260280 " + A260280);
             }
 
         }
