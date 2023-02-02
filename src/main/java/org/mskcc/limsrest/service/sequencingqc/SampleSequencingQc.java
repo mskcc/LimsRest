@@ -39,7 +39,6 @@ public class SampleSequencingQc {
     double percentUtrBases;
     double percentDuplication;
     double zeroCoveragePercent;
-    double mskq;
     long genomeTerritory;
     double gRefOxoQ;
 
@@ -75,7 +74,6 @@ public class SampleSequencingQc {
         qcValues.put("PercentUtrBases", this.percentUtrBases);
         qcValues.put("PercentDuplication", this.percentDuplication);
         qcValues.put("ZeroCoveragePercent", this.zeroCoveragePercent);
-        qcValues.put("Mskq", this.mskq);
         qcValues.put("GenomeTerritory", this.genomeTerritory);
         qcValues.put("GRefOxoQ", this.gRefOxoQ);
         return qcValues;
