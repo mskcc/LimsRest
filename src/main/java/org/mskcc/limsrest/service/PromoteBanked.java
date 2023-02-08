@@ -72,7 +72,7 @@ public class PromoteBanked extends LimsTask {
     private RestTemplate restTemplateCMO;
     private static final String baseUrl = "https://api.ilabsolutions.com/v1/cores";
     private static final String ILABS_CONFIG = "/srv/www/sapio/lims/lims-scripts/ilabs/ilabs.yml";
-    private static final String OUTBOX = "/srv/www/sapio/lims/db_backup/CMO-AutomatedEmailTest/"; // "/pskis34/vialelab/LIMS/AutomatedEmails/teamworkCard/";
+    private static final String OUTBOX = "/skimcs/mohibullahlab/LIMS/AutomatedEmails/teamworkCard/";
     private boolean iLabAbsent = false;
 
     public PromoteBanked() {
@@ -666,18 +666,18 @@ public class PromoteBanked extends LimsTask {
                 message.setText(iLabComment + " \n#end");
             message.setSubject(subject);
 
-            /* Writing subject and body of the email in a txt file to store it on "/pskis34/vialelab/LIMS/AutomatedEmails"
+            /* Writing subject and body of the email in a txt file to store it on "/skimcs/mohibullahLab/LIMS/AutomatedEmails"
              the sendEmail crontab script will send the email (for card creation)to Teamwork */
-//            try {
-//                String filename = OUTBOX + "TeamworkCard-" + date + ".txt";
-//                BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
-//                writer.write(subject + "\n" + iLabComment + " \n#end");
-//                writer.close();
-//                System.out.println("Successfully wrote to the teamwork card file.");
-//            } catch (IOException e) {
-//                System.out.println("An error occurred while writing teamwork card file.");
-//                e.printStackTrace();
-//            }
+            try {
+                String filename = OUTBOX + "TeamworkCard-" + date + ".txt";
+                BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
+                writer.write(subject + "\n" + iLabComment + " \n#end");
+                writer.close();
+                System.out.println("Successfully wrote to the teamwork card file.");
+            } catch (IOException e) {
+                System.out.println("An error occurred while writing teamwork card file.");
+                e.printStackTrace();
+            }
 
             Transport.send(message);
             log.info("Mail successfully sent");
