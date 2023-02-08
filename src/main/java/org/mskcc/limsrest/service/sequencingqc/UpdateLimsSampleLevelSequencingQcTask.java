@@ -352,7 +352,6 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         double percentUtrBases = statsData.get("pct_UTR_BASES") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("pct_UTR_BASES"))) : 0.0;
         double percentDuplication = statsData.get("percent_DUPLICATION") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("percent_DUPLICATION"))) : 0.0;
         double zeroCoveragePercent = statsData.get("zero_CVG_TARGETS_PCT") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("zero_CVG_TARGETS_PCT"))) : 0.0;
-        double mskq = statsData.get("msk_Q") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("msk_Q"))) : 0.0;
         long genomeTerritory = statsData.get("genome_TERRITORY") != JSONObject.NULL ? Long.parseLong(String.valueOf(statsData.get("genome_TERRITORY"))) : 0;
         double gRefOxoQ = statsData.get("g_REF_OXO_Q") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("g_REF_OXO_Q"))) : 0.0;
         SampleSequencingQc qc = new SampleSequencingQc(sampleId, otherSampleId, request,
@@ -362,7 +361,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 percentAdapters, percentCodingBases, percentExcBaseQ, percentExcDupe,
                 percentExcMapQ, percentExcTotal, percentIntergenicBases, percentIntronicBases,
                 percentMrnaBases, percentOffBait, percentRibosomalBases, percentUtrBases,
-                percentDuplication, zeroCoveragePercent, mskq, genomeTerritory, gRefOxoQ);
+                percentDuplication, zeroCoveragePercent, genomeTerritory, gRefOxoQ);
         return qc.getSequencingQcValues();
     }
 
