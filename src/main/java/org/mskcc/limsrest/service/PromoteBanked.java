@@ -679,7 +679,7 @@ public class PromoteBanked extends LimsTask {
                 e.printStackTrace();
             }
 
-            Transport.send(message);
+            //Transport.send(message);
             log.info("Mail successfully sent");
         } catch (MessagingException mex) {
             log.error(String.format("Failed to send the email to Teamwork. %s:", mex.getStackTrace()));
