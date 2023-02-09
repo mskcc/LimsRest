@@ -118,8 +118,6 @@ public class QcReportSampleList {
                 this.sourceSampleId = (String) sampleFields.get("SourceSampleId");
                 this.A260230 = (Double) sampleFields.get("A260230");
                 this.A260280 = (Double) sampleFields.get("A260280");
-                System.out.println("A260230 " + A260230);
-                System.out.println("A260280 " + A260280);
             }
 
         }
@@ -201,7 +199,6 @@ public class QcReportSampleList {
             this.cqRP = (String) sampleFields.get("CqRP");
             this.hideFromSampleQC = (Boolean) sampleFields.get("HideFromSampleQC");
         }
-
 
     }
 
