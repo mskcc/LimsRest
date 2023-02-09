@@ -275,6 +275,7 @@ public class GetSampleQcTask {
             runAndCatchNpe(() -> qcSummary.setPercentIntergenicBases((Double) qcFields.get("PercentIntergenicBases")));
             runAndCatchNpe(() -> qcSummary.setPercentMrnaBases((Double) qcFields.get("PercentMrnaBases")));
             runAndCatchNpe(() -> qcSummary.setRecipe((String) qcFields.get("Recipe")));
+            runAndCatchNpe(() -> qcSummary.setStatsVersion((String) qcFields.get("StatsVersion")));
         } catch (Throwable e) {
             log.info(e.getMessage(), e);
             qcSummary.setSampleName(Messages.ERROR_IN + " Annotation:" + e.getMessage());

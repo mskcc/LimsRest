@@ -69,9 +69,10 @@ public class PromoteBanked extends LimsTask {
     private List<Object> samplesWithDifferentNewIgoIdAndRowIndex = new LinkedList<>();
 
     private RestTemplate restTemplateIGO;
+    private RestTemplate restTemplateCMO;
     private static final String baseUrl = "https://api.ilabsolutions.com/v1/cores";
     private static final String ILABS_CONFIG = "/srv/www/sapio/lims/lims-scripts/ilabs/ilabs.yml";
-    private static final String OUTBOX = "/pskis34/vialelab/LIMS/AutomatedEmails/teamworkCard/";
+    private static final String OUTBOX = "/skimcs/mohibullahlab/LIMS/AutomatedEmails/teamworkCard/";
     private boolean iLabAbsent = false;
 
     public PromoteBanked() {
@@ -536,8 +537,8 @@ public class PromoteBanked extends LimsTask {
     }
 
     public void sendEmailToTeamwork() {
-        String recipient = "348494_400757@tasks.teamwork.com"; // Updated with IGO VMB list | Data team board list address: "348494_786768@tasks.teamwork.com"
-        String sender = "duniganm@mskcc.org";// group mailing addresses like "skigodata@mskcc.org" do not work!
+        String recipient = "348494_786768@tasks.teamwork.com"; // Updated with IGO VMB list | Data team board list address: "348494_786768@tasks.teamwork.com"
+        String sender = "mirhajf@mskcc.org";// group mailing addresses like "skigodata@mskcc.org" do not work!
         String host = "localhost";
         Properties properties = System.getProperties();
         // Setting up mail server
@@ -557,28 +558,43 @@ public class PromoteBanked extends LimsTask {
             * Setting priority
             * */
             org.apache.commons.lang3.tuple.Pair<String, String> ilabsConfigIGO = getIlabConfig("IGO");
+            org.apache.commons.lang3.tuple.Pair<String, String> ilabsConfigCMO = getIlabConfig("CMO");
             String token_igo = ilabsConfigIGO.getValue();
             String core_id_igo = ilabsConfigIGO.getKey();
-            log.info("core id is: " + core_id_igo);
+
+            String token_cmo = ilabsConfigCMO.getValue();
+            String core_id_cmo = ilabsConfigCMO.getKey();
+
+            log.info("IGO core id is: " + core_id_igo);
+            log.info("CMO core id is: " + core_id_cmo);
             this.restTemplateIGO = restTemplate(token_igo);
+            this.restTemplateCMO = restTemplate(token_cmo);
             List<CustomForm> customForms = new ArrayList<>();
             boolean hasCustomForm = false;
 
             String url = String.format("%s/%s/service_requests.json?name=%s", baseUrl, core_id_igo, serviceId);
+            String url_cmo = String.format("%s/%s/service_requests.json?name=%s", baseUrl, core_id_cmo, serviceId);
             ObjectNode res = restTemplateIGO.getForObject(url, ObjectNode.class);
-            if (res == null || res.equals("")) {
+            ObjectNode res_cmo = restTemplateCMO.getForObject(url_cmo, ObjectNode.class);
+            if ((res == null || res.equals("")) && (res_cmo == null || res_cmo.equals(""))) {
                 iLabAbsent = true;
-                log.info("iLabAbsent1: " + iLabAbsent);
+                log.info("IGO/CMO iLabAbsent1: " + iLabAbsent);
                 return;
             }
+            log.info("res = " + res);
+            log.info("res_cmo = " + res_cmo);
+
             JsonNode arrayNode = res.get("ilab_response").get("service_requests");
             if (arrayNode == null || arrayNode.equals("")) {
                 iLabAbsent = true;
-                log.info("iLabAbsent2: " + iLabAbsent);
+                log.info("IGO/CMO iLabAbsent2: " + iLabAbsent);
                 return;
             }
+
             JsonNode serviceRequest = arrayNode.get(0);
             String serviceRequestId = serviceRequest.get("id").asText();
+            String coreInfo = serviceRequest.get("actions").get("show_request").get("url").asText();
+
             if (serviceRequestId == null || serviceRequestId.equals("")) {
                 iLabAbsent = true;
                 log.info("iLabAbsent3: " + iLabAbsent);
@@ -603,7 +619,11 @@ public class PromoteBanked extends LimsTask {
             log.info("requestId is: " + requestId);
             log.info("hasCustomForm value: " + hasCustomForm);
             if (hasCustomForm) {
-                customForms = parseCustomForms(String.format("%s/%s/service_requests/%s/custom_forms.json", baseUrl, core_id_igo, serviceRequestId), restTemplateIGO);
+                if (coreInfo.contains(core_id_igo)) {
+                    customForms = parseCustomForms(String.format("%s/%s/service_requests/%s/custom_forms.json", baseUrl, core_id_igo, serviceRequestId), restTemplateIGO);
+                } else if (coreInfo.contains(core_id_cmo)) {
+                    customForms = parseCustomForms(String.format("%s/%s/service_requests/%s/custom_forms.json", baseUrl, core_id_cmo, serviceRequestId), restTemplateCMO);
+                }
             }
             CustomForm customForm = customForms.get(0);
             log.info("customForm id is:" + customForm.getId());
@@ -646,7 +666,7 @@ public class PromoteBanked extends LimsTask {
                 message.setText(iLabComment + " \n#end");
             message.setSubject(subject);
 
-            /* Writing subject and body of the email in a txt file to store it on "/pskis34/vialelab/LIMS/AutomatedEmails"
+            /* Writing subject and body of the email in a txt file to store it on "/skimcs/mohibullahLab/LIMS/AutomatedEmails"
              the sendEmail crontab script will send the email (for card creation)to Teamwork */
             try {
                 String filename = OUTBOX + "TeamworkCard-" + date + ".txt";
