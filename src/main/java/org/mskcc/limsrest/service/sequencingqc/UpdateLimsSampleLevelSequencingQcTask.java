@@ -354,6 +354,8 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         double zeroCoveragePercent = statsData.get("zero_CVG_TARGETS_PCT") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("zero_CVG_TARGETS_PCT"))) : 0.0;
         long genomeTerritory = statsData.get("genome_TERRITORY") != JSONObject.NULL ? Long.parseLong(String.valueOf(statsData.get("genome_TERRITORY"))) : 0;
         double gRefOxoQ = statsData.get("g_REF_OXO_Q") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("g_REF_OXO_Q"))) : 0.0;
+        String statsVersion = String.valueOf(statsData.get("statsVersion"));
+
         SampleSequencingQc qc = new SampleSequencingQc(sampleId, otherSampleId, request,
                 baitSet, sequencerRunFolder, seqQCStatus, readsExamined,
                 totalReads, unmappedDupes, readPairDupes, unpairedReads, meanCoverage,
@@ -361,7 +363,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 percentAdapters, percentCodingBases, percentExcBaseQ, percentExcDupe,
                 percentExcMapQ, percentExcTotal, percentIntergenicBases, percentIntronicBases,
                 percentMrnaBases, percentOffBait, percentRibosomalBases, percentUtrBases,
-                percentDuplication, zeroCoveragePercent, genomeTerritory, gRefOxoQ);
+                percentDuplication, zeroCoveragePercent, genomeTerritory, gRefOxoQ, statsVersion);
         return qc.getSequencingQcValues();
     }
 
