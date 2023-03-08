@@ -692,7 +692,7 @@ public class GetSampleManifestTask {
             else
                 sample_IGO_igoid = sampleName + "_IGO_" + IGOTools.baseIgoSampleId(igoId);
 
-            String url = "http://delphi.mskcc.org:8080/ngs-stats/rundone/search/most/recent/fastqpath/" + run + "/" + sample_IGO_igoid;
+            String url = "http://igodb.mskcc.org:8080/ngs-stats/rundone/search/most/recent/fastqpath/" + run + "/" + sample_IGO_igoid;
             log.info("Finding fastqs in fastq DB for: " + url);
 
             try {
