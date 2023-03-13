@@ -632,7 +632,7 @@ public class GetSampleManifestTask {
     public static class FastQPathFinder {
 
         public static List<SampleManifest.Run> searchForFastqs(String igoId, Set<String> runFailedQC) {
-            String url = "http://delphi.mskcc.org:8080/ngs-stats/rundone/fastqsbyigoid/" + igoId;
+            String url = "http://igodb.mskcc.org:8080/ngs-stats/rundone/fastqsbyigoid/" + igoId;
             log.info("Finding fastqs for igoID: " + igoId);
             try {
                 RestTemplate restTemplate = new RestTemplate();
