@@ -196,7 +196,7 @@ public class GetRequestSamplesTask {
      */
     public static List<String> findPooledNormals(String request) {
         // TODO
-        String url = "http://delphi.mskcc.org:8080/ngs-stats/rundone/getpoolednormals/" + request;
+        String url = "http://igodb.mskcc.org:8080/ngs-stats/rundone/getpoolednormals/" + request;
         log.info("Finding pooled normal fastqs in fastq DB for: " + url);
 
         try {

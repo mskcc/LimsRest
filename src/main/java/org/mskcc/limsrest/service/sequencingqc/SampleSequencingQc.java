@@ -41,6 +41,7 @@ public class SampleSequencingQc {
     double zeroCoveragePercent;
     long genomeTerritory;
     double gRefOxoQ;
+    String statsVersion;
 
     public Map<String, Object> getSequencingQcValues(){
         Map<String, Object> qcValues = new HashMap<>();
@@ -76,6 +77,7 @@ public class SampleSequencingQc {
         qcValues.put("ZeroCoveragePercent", this.zeroCoveragePercent);
         qcValues.put("GenomeTerritory", this.genomeTerritory);
         qcValues.put("GRefOxoQ", this.gRefOxoQ);
+        qcValues.put("StatsVersion", this.statsVersion);
         return qcValues;
     }
 }

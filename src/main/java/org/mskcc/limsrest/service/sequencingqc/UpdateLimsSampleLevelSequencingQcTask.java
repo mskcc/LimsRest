@@ -84,18 +84,32 @@ public class UpdateLimsSampleLevelSequencingQcTask {
             log.info(String.format("Total Related Library Samples for run %s: %d", runId, relatedLibrarySamples.size()));
             //loop through stats data and add/update lims SeqAnalysisSampleQc records
             for (String key : data.keySet()) {
-                //get qcDataVals as HashMap
                 qcDataVals = getQcValues(data.getJSONObject(key));
                 String sampleName = String.valueOf(qcDataVals.get("OtherSampleId"));
                 String sampleId = String.valueOf(qcDataVals.get("SampleId")); // aka base IGO ID
-
-                // first find the library sample that is parent of Pool Sample that went on Sequencer.
-                DataRecord librarySample = getLibrarySample(relatedLibrarySamples, sampleId);
-                if (librarySample == null) {
-                    log.error("Could not find related Library Sample for Sample with Stats SampleId: " + sampleId);
-                    continue;
-                }
+                String requestId = String.valueOf(qcDataVals.get("Request"));
+                boolean isDLP = false;
+                DataRecord librarySample = null;
                 try {
+                    List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
+                    DataRecord requestDataRecord = requestList.get(0);
+                    String requestName = requestDataRecord.getStringVal("RequestName", user);
+                    // DLP is unique, there should be 3 qc records only, they can be attached to the sample
+                    // which is a child of the LIMS Request
+                    if ("DLP".equals(requestName)) {
+                        isDLP = true;
+                        librarySample = requestDataRecord.getChildrenOfType("Sample", user)[0];
+                        log.info("Adding DLP stats record for " + requestId);
+                    } else {
+                        // first find the library sample that is parent of Pool Sample that went on Sequencer.
+                        librarySample = getLibrarySample(relatedLibrarySamples, sampleId);
+                    }
+
+                    if (librarySample == null) {
+                        log.error("Could not find related Library Sample for Sample with Stats SampleId: " + sampleId);
+                        continue;
+                    }
+
                     String recipe = librarySample.getStringVal("Recipe", user);
                     // For TCRSeq samples split into alpha/beta aliquots attach we'll attach the QC record
                     // at the same level as the IGO TCR Seq Assigned Indices record in LIMS
@@ -145,7 +159,8 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                     log.info(String.format("Existing %s record not found for Sample with Id %s", SeqAnalysisSampleQCModel.DATA_TYPE_NAME, igoId));
                 }
                 if (existingQc != null) {
-                    updateRemainingReadsToSequence(existingQc);
+                    if (isDLP == false)
+                        updateRemainingReadsToSequence(existingQc);
                     log.info(String.format("Updating values on existing %s record with OtherSampleId %s, and Record Id %d, values are : %s",
                             SeqAnalysisSampleQCModel.DATA_TYPE_NAME, getRecordStringValue(existingQc, SampleModel.OTHER_SAMPLE_ID, user),
                             existingQc.getRecordId(), qcDataVals.toString()));
@@ -172,7 +187,8 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                             qcDataVals.toString()));
                     try {
                         DataRecord newSeqAnalysisDataRec = librarySample.addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, qcDataVals, user);
-                        updateRemainingReadsToSequence(newSeqAnalysisDataRec);
+                        if (isDLP == false)
+                            updateRemainingReadsToSequence(newSeqAnalysisDataRec);
                         stats.putIfAbsent(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), "");
                         stats.put(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), qcDataVals.toString());
                     } catch (ServerException | RemoteException e) {
@@ -184,7 +200,6 @@ public class UpdateLimsSampleLevelSequencingQcTask {
             }
         } else {
             try {
-
                 List<DataRecord> relatedLibrarySamples = dataRecordManager.queryDataRecords(SampleModel.DATA_TYPE_NAME,
                         SampleModel.EXEMPLAR_SAMPLE_STATUS +
                                 " = 'Completed - Illumina Sequencing' AND " + SampleModel.SAMPLE_ID + " LIKE 'Pool-%' AND " +
@@ -354,6 +369,8 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         double zeroCoveragePercent = statsData.get("zero_CVG_TARGETS_PCT") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("zero_CVG_TARGETS_PCT"))) : 0.0;
         long genomeTerritory = statsData.get("genome_TERRITORY") != JSONObject.NULL ? Long.parseLong(String.valueOf(statsData.get("genome_TERRITORY"))) : 0;
         double gRefOxoQ = statsData.get("g_REF_OXO_Q") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("g_REF_OXO_Q"))) : 0.0;
+        String statsVersion = String.valueOf(statsData.get("statsVersion"));
+
         SampleSequencingQc qc = new SampleSequencingQc(sampleId, otherSampleId, request,
                 baitSet, sequencerRunFolder, seqQCStatus, readsExamined,
                 totalReads, unmappedDupes, readPairDupes, unpairedReads, meanCoverage,
@@ -361,7 +378,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 percentAdapters, percentCodingBases, percentExcBaseQ, percentExcDupe,
                 percentExcMapQ, percentExcTotal, percentIntergenicBases, percentIntronicBases,
                 percentMrnaBases, percentOffBait, percentRibosomalBases, percentUtrBases,
-                percentDuplication, zeroCoveragePercent, genomeTerritory, gRefOxoQ);
+                percentDuplication, zeroCoveragePercent, genomeTerritory, gRefOxoQ, statsVersion);
         return qc.getSequencingQcValues();
     }
 
