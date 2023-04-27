@@ -17,6 +17,10 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * Pull ILabs request info and store it in the LIMS.
@@ -159,6 +163,7 @@ public class UpdateFromILabsTask {
                     problemFound = true;
                     continue;
                 }
+
                 // add header fields, these are expected on every form and always filled with at least "FIELD NOT IN ILABS"
                 Map<String, String> field2val = allIlabs.get(reqId);
                 requestFields.put("LaboratoryHead", Filter.toAscii(field2val.get("PI")));
@@ -202,6 +207,51 @@ public class UpdateFromILabsTask {
                         System.out.println("Skipping " + reqId + " because sample count NaN");
                     }
                 }
+
+                if (field2val.containsKey("BARCODED_ANTIBODIES")) {
+                    if (field2val.get("BARCODED_ANTIBODIES").equals("Yes")) {
+                        requestFields.put("BarcodedAntibodies", Boolean.TRUE);
+                    }
+                    else {
+                        requestFields.put("BarcodedAntibodies", Boolean.FALSE);
+                    }
+                }
+                if (field2val.containsKey("SEQC_ANTIBODIES")) {
+                    if (field2val.get("SEQC_ANTIBODIES").contains("confirm")) {
+                        requestFields.put("SeqCAntibodies", Boolean.TRUE);
+                    }
+                    else {
+                        requestFields.put("SeqCAntibodies", Boolean.FALSE);
+                    }
+                }
+                if (field2val.containsKey("TREATMENT")) {
+                    if (field2val.get("TREATMENT").contains("Hashing") && field2val.get("TREATMENT").contains("Barcoding")) {
+                        requestFields.put("Treatment", "Cell Hashing, Feature Barcoding");
+                    }
+                    else if (field2val.get("TREATMENT").contains("Barcoding")) {
+                        requestFields.put("Treatment", "Feature Barcoding");
+                    }
+                    else  {
+                        requestFields.put("Treatment", "Cell Hashing");
+                    }
+                }
+                if (field2val.containsKey("ADDITIONAL_VDJ")) {
+                    if (field2val.get("ADDITIONAL_VDJ").contains("Yes")) {
+                        requestFields.put("AdditionalVDJ", Boolean.TRUE);
+                    }
+                    else {
+                        requestFields.put("AdditionalVDJ", Boolean.FALSE);
+                    }
+                }
+                if (field2val.containsKey("CELL_TYPES")) {
+                    if (field2val.get("CELL_TYPES").contains("T Cells")) {
+                        requestFields.put("CellTypes", "T Cells");
+                    }
+                    else {
+                        requestFields.put("CellTypes", "B Cells");
+                    }
+                }
+
                 if (field2val.containsKey("FASTQ") && field2val.get("ANALYSIS_TYPE").equals("FIELD NOT IN ILABS")) {
                     if ("FIELD NOT IN ILABS".equals(field2val.get("FASTQ")) || field2val.get("FASTQ").contains("BAM") || field2val.get("FASTQ").contains("Analysis Pipeline") ||
                             field2val.get("FASTQ").contains("Pipeline Anaylsis") || field2val.get("FASTQ").contains("Pipeline Analysis") || field2val.get("FASTQ").contains("Aligned reads plus bioinformatic analysis") ||

@@ -151,11 +151,33 @@ public class GetGeneralInfo {
                 }
                 CustomForm customForm = customForms.get(0);
                 formValues.put("CUSTOM_FORM", customForm.getId() + "-" + customForm.getName());
+//                boolean tenXForm = false;
+//                if (customForm.getName().contains("Single Cell Library Prep + Sequencing (Human or Mouse)")) {
+//                    tenXForm = true;
+//                }
 
                 for (Map.Entry<String, String> entry : customForm.getFields().entrySet()) {
-
                     String lcFormName = entry.getKey().trim();
                     String lcFormValue = entry.getValue();
+
+                    //if (tenXForm) {
+                        if (lcFormName.trim().toLowerCase().contains("barcoded antibodies")) {
+                            formValues.put("BARCODED_ANTIBODIES", lcFormValue);
+                        }
+                        else if (lcFormName.trim().toLowerCase().contains("total seq c antibodies")) {
+                            formValues.put("SEQC_ANTIBODIES", lcFormValue);
+                        }
+                        else if (lcFormName.trim().toLowerCase().contains("treatment")) {
+                            formValues.put("TREATMENT", lcFormValue);
+                        }
+                        else if (lcFormName.trim().toLowerCase().contains("additional vdj")) {
+                            formValues.put("ADDITIONAL_VDJ", lcFormValue);
+                        }
+                        else if (lcFormName.trim().toLowerCase().contains("types of cells")) {
+                            formValues.put("CELL_TYPES", lcFormValue);
+                        }
+                    //}
+
                     if ("Lab Head:".equalsIgnoreCase(lcFormName) ||
                             "Name of Laboratory head:".equalsIgnoreCase(lcFormName)) {
                         System.out.println("lab_head:" + lcFormValue);
