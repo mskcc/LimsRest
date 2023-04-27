@@ -17,10 +17,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * Pull ILabs request info and store it in the LIMS.
@@ -163,7 +159,6 @@ public class UpdateFromILabsTask {
                     problemFound = true;
                     continue;
                 }
-
                 // add header fields, these are expected on every form and always filled with at least "FIELD NOT IN ILABS"
                 Map<String, String> field2val = allIlabs.get(reqId);
                 requestFields.put("LaboratoryHead", Filter.toAscii(field2val.get("PI")));
