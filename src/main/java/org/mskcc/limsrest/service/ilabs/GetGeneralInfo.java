@@ -128,7 +128,8 @@ public class GetGeneralInfo {
                         hasCustomForm = true;
                     } else if ("Milestone".equalsIgnoreCase(type)) {
                         hasMilestone = true;
-                    } else if ("Charge".equalsIgnoreCase(type)) {
+                    } else if ("Charge".equalsIgnoreCase(type))
+                    {
                         hasCharge = true;
                     } else {
                         throw new RuntimeException("Unrecognized service_row type, check to see if API changed: " + type);
