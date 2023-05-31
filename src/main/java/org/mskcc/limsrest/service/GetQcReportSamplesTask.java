@@ -119,6 +119,7 @@ public class GetQcReportSamplesTask {
                                         reportSamples += 1;
                                         break;
                                     case "QcReportLibrary":
+                                        log.info("pattern matched qc report library!");
                                         reportSample = new ReportSample.LibraryReportSample(sampleFields);
                                         rsl.libraryReportSamples.add(reportSample);
                                         reportSamples += 1;
