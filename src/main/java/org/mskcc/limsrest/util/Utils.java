@@ -209,12 +209,8 @@ public class Utils {
                     }
                 }
             } while (!sampleStack.isEmpty());
-        } catch (RemoteException e) {
-            LOGGER.error(String.format("RemoteException -> Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(e)));
-        } catch (IoError ioError) {
-            LOGGER.error(String.format("IoError -> Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(ioError)));
-        } catch (NotFound notFound) {
-            LOGGER.error(String.format("NotFound -> Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(notFound)));
+        } catch (Exception e) {
+            LOGGER.error(String.format("RemoteException -> Error occurred while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(e)));
         }
         return null;
     }
@@ -248,12 +244,8 @@ public class Utils {
                     }
                 }
             } while (!sampleStack.isEmpty());
-        } catch (RemoteException e) {
-            LOGGER.error(String.format("RemoteException -> Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(e)));
-        } catch (IoError ioError) {
-            LOGGER.error(String.format("IoError -> Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(ioError)));
-        } catch (NotFound notFound) {
-            LOGGER.error(String.format("NotFound -> Error occured while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(notFound)));
+        } catch (Exception e) {
+            LOGGER.error(String.format("RemoteException -> Error occurred while finding related SampleCMOInfoRecords for Sample with RecordId: %d\n%s", sample.getRecordId(), ExceptionUtils.getStackTrace(e)));
         }
         return records;
     }
@@ -384,7 +376,7 @@ public class Utils {
         try {
             DataRecord[] sampleChildren = record.getChildrenOfType(childDataType, user);
             return sampleChildren;
-        } catch (IoError | RemoteException e) {
+        } catch (Exception e) {
             LOGGER.error(String.format("Failed to retrieve %s children of %s record: %d", childDataType, record.getDataTypeName(), record.getRecordId()));
         }
         return new DataRecord[0];
@@ -401,7 +393,7 @@ public class Utils {
     public static List<DataRecord> getDescendantsOfType(DataRecord record, String dataType, User user) {
         try {
             return record.getDescendantsOfType(dataType, user);
-        } catch (RemoteException e){
+        } catch (Exception e){
             LOGGER.error(String.format("Failed to retrieve %s descendents of %s record: %d", dataType, record.getDataTypeName(), record.getRecordId()));
         }
         return new ArrayList<>();
@@ -744,7 +736,7 @@ public class Utils {
                 }
                 recordsStack.addAll(poppedRecord.getParentsOfType(parentDataType, user));
             }
-        } catch (IoError | RemoteException e) {
+        } catch (Exception e) {
             LOGGER.error(String.format("%s -> Error while getting %s records for %s record with Record Id %d,\n%s",
                     ExceptionUtils.getRootCause(e), targetDataType, record.getDataTypeName(), record.getRecordId(), ExceptionUtils.getStackTrace(e)));
         }
@@ -770,7 +762,7 @@ public class Utils {
                     }
                 }
             }
-        } catch (IoError | RemoteException e) {
+        } catch (Exception e) {
             LOGGER.error(String.format("%s Exception while retrieving flow cell lanes for sequencing run %s: %s", ExceptionUtils.getRootCause(e), runId, ExceptionUtils.getStackTrace(e)));
         }
         return relatedSamples;

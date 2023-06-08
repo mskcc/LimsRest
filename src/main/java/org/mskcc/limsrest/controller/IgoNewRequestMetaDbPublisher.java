@@ -109,7 +109,7 @@ public class IgoNewRequestMetaDbPublisher {
             ProcessBuilder processBuilder = new ProcessBuilder();
             processBuilder.command("bash", "-c", cmd);
             Process process = processBuilder.start();
-        } catch (IoError | NotFound | IOException ex) {
+        } catch (Exception ex) {
             log.error(ex);
             ex.printStackTrace();
         }

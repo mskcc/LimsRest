@@ -1,6 +1,7 @@
 package org.mskcc.limsrest.service.converter;
 
 import com.velox.api.datarecord.DataRecord;
+import com.velox.api.exception.recoverability.serverexception.UnrecoverableServerException;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.user.User;
 import org.apache.commons.logging.Log;
@@ -15,7 +16,7 @@ import java.util.Map;
 public class SampleRecordToSampleConverter {
     private final static Log LOGGER = LogFactory.getLog(SampleRecordToSampleConverter.class);
 
-    public Sample convert(DataRecord sampleRecord, User user) throws RemoteException, IoError {
+    public Sample convert(DataRecord sampleRecord, User user) throws RemoteException, IoError, UnrecoverableServerException {
         Map<String, Object> fields = sampleRecord.getFields(user);
         String sampleId = (String) fields.get(VeloxConstants.SAMPLE_ID);
 

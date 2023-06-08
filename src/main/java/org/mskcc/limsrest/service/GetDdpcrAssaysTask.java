@@ -6,6 +6,7 @@ import com.velox.api.datarecord.NotFound;
 import com.velox.api.servermanager.PickListConfig;
 import com.velox.api.servermanager.PickListManager;
 import com.velox.api.user.User;
+import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,7 +37,7 @@ public class GetDdpcrAssaysTask {
         List<DataRecord> records;
         try {
             records = vConn.getDataRecordManager().queryDataRecords(assayDataType, null, user);
-        } catch (IoError | RemoteException | NotFound e) {
+        } catch (IoError | RemoteException | NotFound | ServerException e) {
             e.printStackTrace();
             log.error(String.format("Failed to query DataRecords."));
             return new ArrayList<>();

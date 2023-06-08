@@ -2,6 +2,7 @@ package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.exception.recoverability.serverexception.UnrecoverableServerException;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.servermanager.PickListManager;
@@ -313,7 +314,7 @@ public class GetWESSampleDataTask {
      * @throws RemoteException
      * @throws IoError
      */
-    private List<DataRecord> getChildSamplesWithRequestAsParent(DataRecord sample) throws NotFound, RemoteException, IoError {
+    private List<DataRecord> getChildSamplesWithRequestAsParent(DataRecord sample) throws NotFound, RemoteException, IoError, ServerException {
         List<DataRecord> descendantSamples = sample.getDescendantsOfType("Sample", user);
         log.info("Total Descendant Samples: " + descendantSamples.size());
         List<DataRecord> sampleList = new ArrayList<>();
@@ -492,7 +493,7 @@ public class GetWESSampleDataTask {
      * @throws RemoteException
      * @throws NotFound
      */
-    private String getSequencerTypeUsed(DataRecord sample) throws RemoteException, NotFound {
+    private String getSequencerTypeUsed(DataRecord sample) throws RemoteException, NotFound, IoError, UnrecoverableServerException {
         List<DataRecord> sampleLevelSeqQcRecs = sample.getDescendantsOfType("SeqAnalysisSampleQC", user);
         Set<String> sequencerTypes = new HashSet<>();
         if (sampleLevelSeqQcRecs.size() > 0) {

@@ -111,7 +111,7 @@ public class WorkflowSample extends StatusTracker {
                  */
                 List<DataRecord> allDescendingQcSamples = this.record.getDescendantsOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, this.user);
                 addSeqAnalysisQcRecords(allDescendingQcSamples);
-            } catch (RemoteException e) {
+            } catch (Exception e) {
                 log.error(String.format("Unable to retrieve sampleQcRecords from %d", record.getRecordId()));
             }
         }

@@ -2,6 +2,7 @@ package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.*;
 import com.velox.api.user.User;
+import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.PoolingSampleLibProtocolModel;
 import org.apache.commons.logging.Log;
@@ -43,7 +44,7 @@ public class ToggleSampleQcStatusTask {
     private String airflow_pass;
 
     protected static void setSeqAnalysisSampleQcStatus(DataRecord seqQc, QcStatus qcStatus, String status, User user)
-            throws IoError, InvalidValue, NotFound, RemoteException {
+            throws IoError, InvalidValue, NotFound, RemoteException, ServerException {
         if (qcStatus == QcStatus.IGO_COMPLETE) {
             seqQc.setDataField("PassedQc", Boolean.TRUE, user);
             seqQc.setDataField("SeqQCStatus", QcStatus.PASSED.getText(), user);
@@ -271,7 +272,7 @@ public class ToggleSampleQcStatusTask {
     private DataRecord[] getChildrenOfType(DataRecord record, String table, User user) {
         try {
             return record.getChildrenOfType(table, user);
-        } catch (IoError | RemoteException e) {
+        } catch (Exception e) {
             log.error(String.format("Error getting children from %s dataType for record %s. Error: %s",
                     table,
                     record.getRecordId(),
@@ -292,7 +293,7 @@ public class ToggleSampleQcStatusTask {
             List<DataRecord> dataRecords = record.getParentsOfType(table, user);
             DataRecord[] dataRecordsArray = new DataRecord[dataRecords.size()];
             return dataRecords.toArray(dataRecordsArray);
-        } catch (IoError | RemoteException e) {
+        } catch (IoError | RemoteException | ServerException e) {
             log.error(String.format("Error getting parents from %s dataType for record %s. Error: %s",
                     table,
                     record.getRecordId(),
