@@ -1,7 +1,10 @@
 package org.mskcc.limsrest.service;
 
+import com.mysql.fabric.Server;
 import com.velox.api.datarecord.*;
+import com.velox.api.exception.recoverability.serverexception.UnrecoverableServerException;
 import com.velox.api.user.User;
+import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.SampleModel;
 import com.velox.sloan.cmo.recmodels.SeqRequirementModel;
@@ -12,7 +15,6 @@ import org.mskcc.limsrest.ConnectionLIMS;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.rmi.RemoteException;
-import java.rmi.ServerException;
 import java.util.*;
 
 import static org.mskcc.limsrest.util.Utils.getRecordsOfTypeFromParents;
@@ -93,7 +95,7 @@ public class GetReadyForIllumina {
      * @throws RemoteException
      * @throws NotFound
      */
-    private List<DataRecord> getNearestParentLibrarySamplesForPool(DataRecord pooledSample, User user) throws IoError, RemoteException, NotFound {
+    private List<DataRecord> getNearestParentLibrarySamplesForPool(DataRecord pooledSample, User user) throws IoError, RemoteException, NotFound , ServerException {
         List<DataRecord> parentLibrarySamplesForPool = new ArrayList<>();
         Stack<DataRecord> sampleTrackingStack = new Stack<>();
         sampleTrackingStack.add(pooledSample);
@@ -124,7 +126,7 @@ public class GetReadyForIllumina {
      * @throws IoError
      * @throws RemoteException
      */
-    private DataRecord getParentSampleWithDesiredChildTypeRecord(DataRecord sample, String childDataType, User user) throws IoError, RemoteException, NotFound {
+    private DataRecord getParentSampleWithDesiredChildTypeRecord(DataRecord sample, String childDataType, User user) throws IoError, RemoteException, NotFound, UnrecoverableServerException, ServerException {
         if (sample.getChildrenOfType(childDataType, user).length>0){
             return sample;
         }
@@ -153,7 +155,7 @@ public class GetReadyForIllumina {
      * @throws RemoteException
      * @throws IoError
      */
-    private String getSampleLibraryIndexIdAndBarcode(DataRecord sample, User user) throws NotFound, RemoteException, IoError {
+    private String getSampleLibraryIndexIdAndBarcode(DataRecord sample, User user) throws NotFound, RemoteException, IoError, UnrecoverableServerException, ServerException {
         DataRecord parentSample = getParentSampleWithDesiredChildTypeRecord(sample, "IndexBarcode", user);
         if (parentSample != null && parentSample.getChildrenOfType("IndexBarcode", user)[0].getValue("IndexId", user) != null) {
             DataRecord recordWithIndexBarcodeInfo = parentSample.getChildrenOfType("IndexBarcode", user)[0];
@@ -196,7 +198,7 @@ public class GetReadyForIllumina {
      * @throws RemoteException
      * @throws NotFound
      */
-    private String getSequencingRunTypeForSample(DataRecord sample, User user) throws IoError, RemoteException, NotFound {
+    private String getSequencingRunTypeForSample(DataRecord sample, User user) throws IoError, RemoteException, NotFound, UnrecoverableServerException, ServerException {
         DataRecord sampleWithSeqRequirementAsChild = getParentSampleWithDesiredChildTypeRecord(sample, "SeqRequirement", user);
         if (sampleWithSeqRequirementAsChild != null && sampleWithSeqRequirementAsChild.getChildrenOfType("SeqRequirement", user)[0].getValue("SequencingRunType", user) != null){
             DataRecord sequencingRunTypeRecord = sampleWithSeqRequirementAsChild.getChildrenOfType("SeqRequirement", user)[0]; //continue here
@@ -225,7 +227,7 @@ public class GetReadyForIllumina {
      * @throws InvalidValue
      */
     private RunSummary createRunSummaryForNonPooledSamples(DataRecord unpooledSample, String requestName, User user)
-            throws NotFound, RemoteException, IoError, InvalidValue {
+            throws NotFound, RemoteException, IoError, InvalidValue, ServerException {
         Map<String, Object> sampleFieldValues = unpooledSample.getFields(user);
         String sampleId = (String) sampleFieldValues.get("SampleId");
         log.info("Creating run summary for " + sampleId);
@@ -278,7 +280,7 @@ public class GetReadyForIllumina {
      * @throws IoError
      * @throws InvalidValue
      */
-    private RunSummary createRunSummaryForSampleInPool(DataRecord sampleInPool, RunSummary summary, User user) throws RemoteException, NotFound, IoError, InvalidValue {
+    private RunSummary createRunSummaryForSampleInPool(DataRecord sampleInPool, RunSummary summary, User user) throws RemoteException, NotFound, IoError, InvalidValue, ServerException, UnrecoverableServerException {
         Map<String, Object> sampleFieldValues = sampleInPool.getFields(user);
         summary.setSampleId((String) sampleFieldValues.get("SampleId"));
         summary.setOtherSampleId((String) sampleFieldValues.getOrDefault("OtherSampleId", ""));

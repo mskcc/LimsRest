@@ -1,10 +1,13 @@
 package org.mskcc.limsrest.service;
 
+import com.mysql.fabric.Server;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.exception.recoverability.serverexception.UnrecoverableServerException;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
+import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.BankedSampleModel;
 import com.velox.sloan.cmo.recmodels.RequestModel;
@@ -58,7 +61,7 @@ public class GetRequestTrackingTask {
         this.user = conn.getConnection().getUser();
     }
 
-    public Map<String, Object> execute() throws IoError, RemoteException, NotFound {
+    public Map<String, Object> execute() throws IoError, RemoteException, NotFound, ServerException {
         VeloxConnection vConn = conn.getConnection();
         User user = vConn.getUser();
         DataRecordManager drm = vConn.getDataRecordManager();
@@ -175,7 +178,7 @@ public class GetRequestTrackingTask {
      * @throws IoError
      * @throws RemoteException
      */
-    private List<ProjectSample> getProjectSamplesFromDataRecord(DataRecord requestRecord, User user) throws IoError, RemoteException {
+    private List<ProjectSample> getProjectSamplesFromDataRecord(DataRecord requestRecord, User user) throws IoError, RemoteException, UnrecoverableServerException {
         // Immediate samples of record represent physical samples. LIMS creates children of these in the workflow
         DataRecord[] samples = requestRecord.getChildrenOfType(SampleModel.DATA_TYPE_NAME, user);
 
@@ -234,7 +237,6 @@ public class GetRequestTrackingTask {
     private ProjectSampleTree createWorkflowTree(WorkflowSample root, ProjectSampleTree tree) {
         tree.addStageToTracked(root);   // Update tree Project Sample stages w/ the input Workflow sample's stage
 
-
         // Add any DNA updates
         String rStage = root.getStage();
         if(STAGE_LIBRARY_PREP.equals(rStage) || STAGE_LIBRARY_CAPTURE.equals(rStage)){
@@ -250,7 +252,7 @@ public class GetRequestTrackingTask {
         DataRecord[] children = new DataRecord[0];
         try {
             children = root.getRecord().getChildrenOfType(SampleModel.DATA_TYPE_NAME, tree.getUser());
-        } catch (IoError | RemoteException e) { /* Expected - No more children of the sample */ }
+        } catch (IoError | RemoteException | UnrecoverableServerException e) { /* Expected - No more children of the sample */ }
 
         if (children.length == 0) {
             tree.updateTreeOnLeafStatus(root);
@@ -355,7 +357,7 @@ public class GetRequestTrackingTask {
                 String qcStatus = getDataQcStatus(sampleQcRecords, this.user);
                 rootTree.setDataQcStatus(qcStatus);
             }
-        } catch (RemoteException e) {
+        } catch (RemoteException | IoError | UnrecoverableServerException e) {
             log.error(String.format("Unable to query descending SeqAnalysisSampleQC DataRecords from Sample DataRecord: %d",
                     record.getRecordId()));
         }
@@ -473,7 +475,7 @@ public class GetRequestTrackingTask {
         List<DataRecord> bankedList = new ArrayList<>();
         try {
             bankedList = drm.queryDataRecords(BankedSampleModel.DATA_TYPE_NAME, query, user);
-        } catch (NotFound | IoError | RemoteException e) {
+        } catch (NotFound | IoError | RemoteException | ServerException e) {
             log.info(String.format("Could not find BankedSample record for %s", serviceId));
             return null;
         }
@@ -518,7 +520,7 @@ public class GetRequestTrackingTask {
 
         try {
             bankedList = drm.queryDataRecords(BankedSampleModel.DATA_TYPE_NAME, query, user);
-        } catch (NotFound | IoError | RemoteException e) {
+        } catch (NotFound | IoError | RemoteException | ServerException e) {
             log.info(String.format("Could not find BankedSample records w/ RequestId: %s", requestId));
             return null;
         }

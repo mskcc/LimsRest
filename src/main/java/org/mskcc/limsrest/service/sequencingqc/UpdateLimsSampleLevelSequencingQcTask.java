@@ -1,6 +1,7 @@
 package org.mskcc.limsrest.service.sequencingqc;
 
 import com.velox.api.datarecord.*;
+import com.velox.api.exception.recoverability.serverexception.UnrecoverableServerException;
 import com.velox.api.user.User;
 import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
@@ -173,7 +174,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                         existingQc.setFields(qcDataVals, user);
                         stats.putIfAbsent(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), "");
                         stats.put(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), qcDataVals.toString());
-                    } catch (ServerException | RemoteException e) {
+                    } catch (Exception e) {
                         String error = String.format("Failed to modify %s DataRecord: %s. ERROR: %s%s", SampleModel.OTHER_SAMPLE_ID, igoId,
                                 ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
                         log.error(error);
@@ -254,7 +255,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                     }
                 }
 
-            } catch (NotFound | IoError | RemoteException e) {
+            } catch (NotFound | IoError | RemoteException | ServerException e) {
                 log.error(String.format("Error while querying sample for finding completed - illumina sequencing, pooled" +
                                 " samples with projectId: %s.\n%s:%s", SampleModel.REQUEST_ID, ExceptionUtils.getMessage(e),
                         ExceptionUtils.getStackTrace(e)));
@@ -496,7 +497,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                     sampleStack.addAll(stackSample.getParentsOfType(SampleModel.DATA_TYPE_NAME, user));
                 }
             } while (!sampleStack.isEmpty());
-        } catch (NotFound | RemoteException | IoError | NullPointerException notFound) {
+        } catch (NotFound | RemoteException | IoError | NullPointerException | ServerException notFound) {
             log.error(String.format("%s-> Error while getting related Library Samples for run %s:\n%s", ExceptionUtils.getRootCauseMessage(notFound), runId, ExceptionUtils.getStackTrace(notFound)));
         }
         log.info(String.format("Total Samples related to run %d , Sample Ids: %s", flowCellSamples.size(), Arrays.toString(addedSampleIds.toArray())));
@@ -621,7 +622,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                         SeqRequirementModel.DATA_TYPE_NAME, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, sampleLevelSequencingQc.getRecordId());
                 log.info(msg);
             }
-        } catch (IoError | RemoteException | NotFound | InvalidValue e) {
+        } catch (IoError | RemoteException | NotFound | InvalidValue | ServerException e) {
             log.error(String.format("%s => Error while updating Remaining Reads to Sequence on %s related to %s " +
                             "Record with Record Id: %d\n%s", ExceptionUtils.getRootCauseMessage(e), SeqRequirementModel.DATA_TYPE_NAME, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, sampleLevelSequencingQc.getRecordId(),
                     ExceptionUtils.getStackTrace(e)));
@@ -782,7 +783,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                     return readLength.toString();
                 }
             }
-        } catch (RemoteException | IoError | NotFound e) {
+        } catch (RemoteException | IoError | NotFound | ServerException e) {
             log.error(String.format("%s => Error while getting RunType for run: %s\n%s", ExceptionUtils.getRootCauseMessage(e),
                     runName, ExceptionUtils.getStackTrace(e)));
         }
