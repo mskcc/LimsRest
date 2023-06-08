@@ -162,18 +162,18 @@ public class GetGeneralInfo {
                     String lcFormValue = entry.getValue();
 
                     //if (tenXForm) {
-                        if (lcFormName.trim().toLowerCase().contains("barcoded antibodies")) {
-                            formValues.put("BARCODED_ANTIBODIES", lcFormValue);
-                        }
-                        else if (lcFormName.trim().toLowerCase().contains("total seq c antibodies")) {
-                            formValues.put("SEQC_ANTIBODIES", lcFormValue);
-                        }
-                        else if (lcFormName.trim().toLowerCase().contains("treatment")) {
+//                        if (lcFormName.trim().toLowerCase().contains("barcoded antibodies")) {
+//                            formValues.put("BARCODED_ANTIBODIES", lcFormValue);
+//                        }
+//                        if (lcFormName.trim().toLowerCase().contains("total seq c antibodies")) {
+//                            formValues.put("SEQC_ANTIBODIES", lcFormValue);
+//                        }
+                        if (lcFormName.trim().toLowerCase().contains("treatment")) {
                             formValues.put("TREATMENT", lcFormValue);
                         }
-                        else if (lcFormName.trim().toLowerCase().contains("additional vdj")) {
-                            formValues.put("ADDITIONAL_VDJ", lcFormValue);
-                        }
+//                        else if (lcFormName.trim().toLowerCase().contains("additional vdj")) {
+//                            formValues.put("ADDITIONAL_VDJ", lcFormValue);
+//                        }
                         else if (lcFormName.trim().toLowerCase().contains("types of cells")) {
                             formValues.put("CELL_TYPES", lcFormValue);
                         }
