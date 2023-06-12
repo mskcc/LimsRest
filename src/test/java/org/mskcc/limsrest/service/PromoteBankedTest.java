@@ -6,11 +6,12 @@ import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
+import com.velox.api.util.ServerException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mskcc.domain.sample.BankedSample;
 import org.mskcc.domain.sample.CmoSampleInfo;
 import org.mskcc.limsrest.ConnectionLIMS;
@@ -35,7 +36,7 @@ public class PromoteBankedTest {
         user = conn.getConnection().getUser();
         try {
             readCoverageRefs = dataRecordManager.queryDataRecords("ApplicationReadCoverageRef", "ReferenceOnly != 1", user);
-        } catch (NotFound | IoError | RemoteException e) {
+        } catch (NotFound | IoError | RemoteException | ServerException e) {
             System.out.println(String.format("%s -> Error while running PromoteBankedTests: %s", ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getStackTrace(e)));
         }
         List<String> humanRecipes = Arrays.asList(

@@ -3,9 +3,9 @@ package org.mskcc.limsrest.service.integrationtest;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.model.RequestSample;
 import org.mskcc.limsrest.model.RequestSampleList;
+import org.mskcc.limsrest.model.SampleManifest;
 import org.mskcc.limsrest.service.GetRequestSamplesTask;
 import org.mskcc.limsrest.service.GetSampleManifestTask;
-import org.mskcc.limsrest.model.SampleManifest;
 
 import java.io.FileReader;
 import java.util.ArrayList;
@@ -34,7 +34,7 @@ public class AllWholeExome {
 
     public static void main(String [] args) throws Exception {
         Properties properties = new Properties();
-        properties.load(new FileReader(QcStatusAwareProcessAssignerTest.class.getResource(connectionFile).getPath()));
+        properties.load(new FileReader(connectionFile));
         String host = (String) properties.get("lims.host");
         Integer port = Integer.parseInt((String) properties.get("lims.port"));
         String guid = (String) properties.get("lims.guid");

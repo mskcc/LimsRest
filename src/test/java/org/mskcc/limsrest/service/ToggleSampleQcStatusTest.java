@@ -1,7 +1,7 @@
 package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mskcc.limsrest.MockDataRecord;
 import org.mskcc.limsrest.service.assignedprocess.QcStatus;
 
@@ -11,7 +11,7 @@ public class ToggleSampleQcStatusTest {
 
     @Test
     public void setSeqAnalysisSampleQcStatusPassed() throws Exception {
-        DataRecord seqQc = new DataRecord(0, "QC", new MockDataRecord());
+        DataRecord seqQc = new DataRecord(0L, null,"QC", new MockDataRecord());
         QcStatus complete = QcStatus.PASSED;
 
         ToggleSampleQcStatusTask.setSeqAnalysisSampleQcStatus(seqQc, complete, complete.getText(), null);
@@ -22,7 +22,7 @@ public class ToggleSampleQcStatusTest {
 
     @Test
     public void setSeqAnalysisSampleQcStatusIGOComplete() throws Exception {
-        DataRecord seqQc = new DataRecord(0, "QC", new MockDataRecord());
+        DataRecord seqQc = new DataRecord(0L,  null,"QC", new MockDataRecord());
         QcStatus complete = QcStatus.IGO_COMPLETE;
 
         ToggleSampleQcStatusTask.setSeqAnalysisSampleQcStatus(seqQc, complete, complete.getText(), null);

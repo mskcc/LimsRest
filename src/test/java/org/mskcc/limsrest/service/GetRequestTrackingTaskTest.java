@@ -2,10 +2,11 @@ package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
+import com.velox.api.util.ServerException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mskcc.limsrest.ConnectionLIMS;
 
 import java.rmi.RemoteException;
@@ -304,7 +305,7 @@ public class GetRequestTrackingTaskTest {
             Map<String, Object> requestInfo = new HashMap<>();
             try {
                 requestInfo = t.execute();
-            } catch (IoError | RemoteException | NotFound e) {
+            } catch (IoError | RemoteException | ServerException | NotFound e) {
                 System.err.println(e.getMessage());
                 assertTrue("Exception in task execution", false);
             }
@@ -342,7 +343,7 @@ public class GetRequestTrackingTaskTest {
         Map<String, Object> requestInfo = new HashMap<>();
         try {
             requestInfo = t.execute();
-        } catch (IoError | RemoteException | NotFound e) {
+        } catch (IoError | RemoteException | ServerException | NotFound e) {
             assertTrue("Exception in task execution", false);
         }
 
@@ -363,7 +364,7 @@ public class GetRequestTrackingTaskTest {
         Map<String, Object> requestInfo = new HashMap<>();
         try {
             requestInfo = t.execute();
-        } catch (IoError | RemoteException | NotFound e) {
+        } catch (IoError | RemoteException | ServerException | NotFound e) {
             assertTrue("Exception in task execution", false);
         }
 
@@ -382,7 +383,7 @@ public class GetRequestTrackingTaskTest {
         Map<String, Object> requestInfo = new HashMap<>();
         try {
             requestInfo = t.execute();
-        } catch (IoError | RemoteException | NotFound e) {
+        } catch (IoError | RemoteException | ServerException | NotFound e) {
             assertTrue("Exception in task execution", false);
         }
 
@@ -406,7 +407,7 @@ public class GetRequestTrackingTaskTest {
                 Map<String, Object> requestInfo = new HashMap<>();
                 try {
                     requestInfo = t.execute();
-                } catch (IoError | RemoteException | NotFound e) {
+                } catch (IoError | RemoteException | ServerException | NotFound e) {
                     assertTrue("Exception in task execution", false);
                 }
 

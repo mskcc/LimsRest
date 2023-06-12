@@ -5,12 +5,13 @@ import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
+import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.RequestModel;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mskcc.limsrest.ConnectionLIMS;
 
 import java.rmi.RemoteException;
@@ -50,7 +51,7 @@ public class GetIgoRequestsTaskTest {
                 records = drm.queryDataRecords(RequestModel.DATA_TYPE_NAME, String.format("RequestId = '%s'", requestId), user);
             } catch (NotFound e) {
                 Assert.assertTrue(String.format("Data Record for request Id: %s doesn't exist. Update test", requestId), false);
-            } catch (IoError | RemoteException e) {
+            } catch (IoError | RemoteException | ServerException e) {
                 Assert.assertTrue(String.format("Error getting Data Record for request Id: %s", requestId), false);
             }
             if (records.size() != 1) {

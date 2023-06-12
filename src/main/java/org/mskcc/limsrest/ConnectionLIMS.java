@@ -8,7 +8,6 @@ public class ConnectionLIMS {
     private static Log log = LogFactory.getLog(ConnectionLIMS.class);
 
     private VeloxConnection conn1;
-    private VeloxConnection conn2;
     private VeloxConnection inUse;
 
     public ConnectionLIMS(String host, int port, String guid, String user1, String pass1) {
@@ -21,7 +20,7 @@ public class ConnectionLIMS {
             }
         } catch (Exception e) {
             log.error("Connection error:" + e);
-            throw new RuntimeException("Failed to open LIMS connection.");
+            throw new RuntimeException("Failed to open LIMS connection." + host + ":"+port + " User:"+ user1);
         }
 
         inUse = conn1;
