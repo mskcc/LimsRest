@@ -20,10 +20,8 @@ import springfox.documentation.service.ApiInfo;
 import springfox.documentation.service.Contact;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
-import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 @SpringBootApplication
-@EnableSwagger2
 @PropertySource({"classpath:/connect.txt", "classpath:/app.properties"})
 public class App extends SpringBootServletInitializer {
     private static Log log = LogFactory.getLog(App.class);
@@ -40,13 +38,13 @@ public class App extends SpringBootServletInitializer {
     @Value("#{'${human.recipes}'.split(',')}")
     List<String> humanRecipes;
     
-    @Autowired
+
     private Gateway messagingGateway;
 
     @Value("${nats.url}")
     private String natsUrl;
 
-    @Bean
+
     public Gateway messagingGateway() throws Exception {
         messagingGateway.connect(natsUrl);
         log.info("Attempting to connecto to CMO MetaDB NATS server...");
@@ -84,7 +82,6 @@ public class App extends SpringBootServletInitializer {
         String guid = env.getProperty("lims.guid");
         String user2 = env.getProperty("lims.user2");
         String pass2 = env.getProperty("lims.pword2");
-
         log.info("Creating LIMS connection");
         return new ConnectionLIMS(host, port, guid, user2, pass2);
     }
