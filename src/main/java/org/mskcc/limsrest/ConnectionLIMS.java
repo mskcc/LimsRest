@@ -12,16 +12,16 @@ public class ConnectionLIMS {
 
     public ConnectionLIMS(String host, int port, String guid, String user1, String pass1) {
         conn1 = new VeloxConnection(host, port, guid, user1, pass1);
-        try {
-            log.info("Opening LIMS connection to host: " + host + guid);
-            boolean status = conn1.open();
-            if (conn1.isConnected()) {
-                log.info("LIMS connection established with status: " + status);
-            }
-        } catch (Exception e) {
-            log.error("Connection error:" + e);
-            throw new RuntimeException("Failed to open LIMS connection." + host + ":"+port + " User:"+ user1);
-        }
+//        try {
+//            log.info("Opening LIMS connection to host: " + host + guid);
+//            boolean status = conn1.open();
+//            if (conn1.isConnected()) {
+//                log.info("LIMS connection established with status: " + status);
+//            }
+//        } catch (Exception e) {
+//            log.error("Connection error:" + e);
+//            throw new RuntimeException("Failed to open LIMS connection." + host + ":"+port + " User:"+ user1);
+//        }
 
         inUse = conn1;
     }

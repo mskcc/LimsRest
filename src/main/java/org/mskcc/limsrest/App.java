@@ -8,20 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
-import org.springframework.web.bind.annotation.RestController;
-import springfox.documentation.builders.ApiInfoBuilder;
-import springfox.documentation.builders.PathSelectors;
-import springfox.documentation.builders.RequestHandlerSelectors;
-import springfox.documentation.service.ApiInfo;
-import springfox.documentation.service.Contact;
-import springfox.documentation.spi.DocumentationType;
-import springfox.documentation.spring.web.plugins.Docket;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = {SecurityAutoConfiguration.class })
 @PropertySource({"classpath:/connect.txt", "classpath:/app.properties"})
 public class App extends SpringBootServletInitializer {
     private static Log log = LogFactory.getLog(App.class);
@@ -37,13 +30,10 @@ public class App extends SpringBootServletInitializer {
 
     @Value("#{'${human.recipes}'.split(',')}")
     List<String> humanRecipes;
-    
 
     private Gateway messagingGateway;
-
     @Value("${nats.url}")
     private String natsUrl;
-
 
     public Gateway messagingGateway() throws Exception {
         messagingGateway.connect(natsUrl);
@@ -84,24 +74,5 @@ public class App extends SpringBootServletInitializer {
         String pass2 = env.getProperty("lims.pword2");
         log.info("Creating LIMS connection");
         return new ConnectionLIMS(host, port, guid, user2, pass2);
-    }
-
-    @Bean
-    public Docket api() {
-        return new Docket(DocumentationType.SWAGGER_2)
-                .useDefaultResponseMessages(true)
-                .apiInfo(apiInfo())
-                .select()
-                .apis(RequestHandlerSelectors.withClassAnnotation(RestController.class))
-                .paths(PathSelectors.ant("/api/**"))
-                .build();
-    }
-
-    private ApiInfo apiInfo(){
-        return new ApiInfoBuilder()
-                .title("IGO LIMS REST API")
-                .description("IGO LIMS project, request and sample data & metadata.")
-                .contact(new Contact("The IGO Data Team", "https://igo.mskcc.org", "zzPDL_SKI_IGO_DATA@mskcc.org"))
-                .build();
     }
 }
