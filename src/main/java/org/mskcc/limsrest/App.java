@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.PropertySource;
@@ -20,9 +21,8 @@ import springfox.documentation.service.ApiInfo;
 import springfox.documentation.service.Contact;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
-import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = { SecurityAutoConfiguration.class })
 @PropertySource({"classpath:/connect.txt", "classpath:/app.properties"})
 public class App extends SpringBootServletInitializer {
     private static Log log = LogFactory.getLog(App.class);
@@ -72,7 +72,7 @@ public class App extends SpringBootServletInitializer {
         String user2 = env.getProperty("lims.user2");
         String pass2 = env.getProperty("lims.pword2");
 
-        log.info("Creating LIMS connection pool.");
+        log.info("Creating LIMS connection pool to host: " + host);
         return new ConnectionPoolLIMS(host, port, guid, user1, pass1, user2, pass2);
     }
 

@@ -1,13 +1,12 @@
 plugins {
     id 'java'
     id 'war'
-    id('org.springframework.boot') version "2.6.15"
-    id('io.spring.dependency-management') version "1.1.0"
-    id 'maven-publish'
+    id 'org.springframework.boot' version "2.6.7"
+    id 'io.spring.dependency-management' version "1.1.0"
 }
 
 group = 'org.mskcc.limsrest'
-version = '23_3'
+//version = '23_3'
 sourceCompatibility = '17'
 
 sourceSets {
@@ -31,7 +30,7 @@ if (target == 'dev'){
         from "src/dev/resources"
         into "src/main/resources"
     }
-    version += 'd'
+    //version += 'd'
 } else if(target == 'test'){
     copy {
         from "src/test-site-res/resources"
@@ -48,13 +47,6 @@ if (target == 'dev'){
         from "src/production/resources"
         into "src/main/resources"
     }
-}
-war {
-    manifest {
-        attributes("Implementation-Title": "Lims Plugin",
-                "Implementation-Version": "23.3")
-    }
-    archiveBaseName = 'LimsRest'
 }
 
 repositories {
@@ -92,23 +84,17 @@ dependencies {
     implementation group: 'org.yaml', name: 'snakeyaml', version: '1.23'
     implementation group: 'org.json', name: 'json', version: '20180130'
 
-    implementation "io.springfox:springfox-swagger-ui:3.0.0"
-    implementation "io.springfox:springfox-swagger2:3.0.0"
-    implementation "org.springframework.boot:spring-boot-starter-security:2.6.15"
-    implementation "org.springframework.boot:spring-boot-starter-tomcat:2.6.15"
-    implementation "org.springframework.boot:spring-boot-starter-web:2.6.15"
-
     testImplementation(group: 'org.springframework', name: 'spring-test', version: '5.1.6.RELEASE')
     testImplementation('org.springframework.boot:spring-boot-starter-test')
 
-//    implementation "io.springfox:springfox-swagger-ui:3.0.0"
-//    implementation "io.springfox:springfox-swagger2:3.0.0"
-//    implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-ui', version: '2.0.2'
-//    implementation "org.springframework.boot:spring-boot-starter-security:3.1.0"
-//    implementation "org.springframework.boot:spring-boot-starter-tomcat:3.1.0"
-//    implementation "org.springframework.boot:spring-boot-starter-web:3.1.0"
-//    testImplementation(group: 'org.springframework', name: 'spring-test', version: '5.1.6.RELEASE')
-//    testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: '3.1.0'
+    implementation "io.springfox:springfox-swagger-ui:2.9.2"
+    implementation "io.springfox:springfox-swagger2:2.9.2"
+
+    implementation "org.springframework.boot:spring-boot-starter-security:2.6.7"
+    implementation "org.springframework.boot:spring-boot-starter-tomcat:2.6.7"
+    implementation "org.springframework.boot:spring-boot-starter-web:2.6.7"
+    testImplementation(group: 'org.springframework', name: 'spring-test', version: '5.1.6.RELEASE')
+    testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: '2.6.7'
 
     implementation ('javax.servlet:jstl:1.2')
     implementation "com.google.guava:guava:16+"
