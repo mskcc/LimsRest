@@ -103,6 +103,7 @@ public class GetRequestSamplesTask {
             }
 
             rsl.setRecipe(recipe);
+            rsl.setRequestName(requestDataRecord.getStringVal("RequestName", user));
             rsl.setPiEmail(requestDataRecord.getStringVal("PIemail", user));
             rsl.setLabHeadName(requestDataRecord.getStringVal("LaboratoryHead", user));
             rsl.setLabHeadEmail(requestDataRecord.getStringVal("LabHeadEmail", user));

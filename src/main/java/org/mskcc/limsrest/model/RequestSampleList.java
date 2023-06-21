@@ -14,6 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 public class RequestSampleList implements Serializable {
     private String requestId;
+    private String requestName;
     private String recipe;
     private String projectManagerName;
     private String piEmail;
@@ -47,6 +48,9 @@ public class RequestSampleList implements Serializable {
     public String getRequestId() {
         return requestId;
     }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getRequestId() { return requestName; }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public List<RequestSample> getSamples() {

@@ -126,12 +126,14 @@ public class QcReportSampleList {
             public String tumorOrNormal;
             public Double avgSize;
             public String sourceSampleId;
+            public String numOfReads;
 
             public LibraryReportSample(Map<String, Object> sampleFields) {
                 super(sampleFields);
                 this.tumorOrNormal = (String) sampleFields.get("TumorOrNormal");
                 this.avgSize = (Double) sampleFields.get("AvgSize");
                 this.sourceSampleId = (String) sampleFields.get("SourceSampleId");
+                this.numOfReads = (String) sampleFields.get("NumOfReads");
             }
 
         }
@@ -139,11 +141,13 @@ public class QcReportSampleList {
         public static class PoolReportSample extends ReportSample {
             public String tumorOrNormal;
             public Double avgSize;
+            public String numOfReads;
 
             public PoolReportSample(Map<String, Object> sampleFields) {
                 super(sampleFields);
                 this.tumorOrNormal = (String) sampleFields.get("TumorOrNormal");
                 this.avgSize = (Double) sampleFields.get("AvgSize");
+                this.numOfReads = (String) sampleFields.get("NumOfReads");
             }
 
         }
