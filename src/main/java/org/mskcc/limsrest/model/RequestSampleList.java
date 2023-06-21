@@ -50,10 +50,10 @@ public class RequestSampleList implements Serializable {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public String getRequestId() { return requestName; }
-
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public List<RequestSample> getSamples() {
         return samples;
     }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getRequestName() { return requestName; }
 }
