@@ -103,6 +103,7 @@ public class PromoteBanked extends LimsTask {
                         nextRequest = "Would promote to a new Request.";
                     }
                 } catch (Exception e) {
+                    log.info("Exception: " + e.getMessage());
                     nextRequest = "Would promote to a new Request.";
                 }
             } else if (!requestId.equals("NULL")) {
@@ -140,7 +141,6 @@ public class PromoteBanked extends LimsTask {
                 }
                 log.info((indexNeeded ? "" : "No ") + "Index needed.");
                 if (indexNeeded) {
-
                     List<DataRecord> validBarcodeList = dataRecordManager.queryDataRecords("IndexAssignment", "IndexType != " +
                             "'IDT_TRIM'", user);
                     for (DataRecord knownBarcode : validBarcodeList) {
@@ -198,6 +198,8 @@ public class PromoteBanked extends LimsTask {
                         try {
                             reqServiceId = possibleRequest.getStringVal("IlabRequest", user);
                         } catch (NullPointerException npe) {
+                            log.error("Null Pointer Exception: " + npe.getMessage());
+                            log.error(npe);
                         }
                         if (serviceId.equals(reqServiceId)) {
                             req = possibleRequest;
@@ -238,6 +240,8 @@ public class PromoteBanked extends LimsTask {
                             maxId = currentId;
                         }
                     } catch (NullPointerException npe) {
+                        log.error("Null Pointer Exception: " + npe.getMessage());
+                        log.error(npe);
                     }
                 }
                 int offset = 1;
@@ -263,17 +267,14 @@ public class PromoteBanked extends LimsTask {
             } catch (Exception e) {
                 log.error(e);
 
-                MultiValueMap<String, String> headers = new HttpHeaders();
-
                 // Avoid HeadersTooLargeException
                 String errMessage = e.getMessage();
                 String headerErr = "";
-                if(errMessage != null){
-                    headerErr = errMessage.substring(0,Math.min(500,errMessage.length()));
+                if (errMessage != null) {
+                    headerErr = errMessage.substring(0, Math.min(500,errMessage.length()));
                 }
-
-                headers.add(Constants.ERRORS,
-                        Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + headerErr);
+                MultiValueMap<String, String> headers = new HttpHeaders();
+                headers.add(Constants.ERRORS, Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + headerErr);
 
                 return new ResponseEntity<>(headers, HttpStatus.OK);
             }
@@ -283,7 +284,7 @@ public class PromoteBanked extends LimsTask {
         headers.add(Constants.WARNINGS, getErrors());
         headers.add(Constants.STATUS, Messages.SUCCESS);
 
-        if(samplesWithDifferentNewIgoIdAndRowIndex.size() > 0) {
+        if (samplesWithDifferentNewIgoIdAndRowIndex.size() > 0) {
             String warningMessage = "";
             warningMessage += "The igo id of the following promoted samples do NOT match their row index: \n";
             for (int i = 0; i < samplesWithDifferentNewIgoIdAndRowIndex.size() - 1; i++) {
@@ -358,7 +359,7 @@ public class PromoteBanked extends LimsTask {
         String rowIndex = String.valueOf(bankedSampleRecord.getDataField("RowIndex", user));
         int lastIndx = maxExistentId + offset;
         String newIgoId = requestId + "_" + lastIndx;
-        if(Integer.parseInt(rowIndex) != lastIndx) {
+        if (Integer.parseInt(rowIndex) != lastIndx) {
             //Adding sample name to the list
             samplesWithDifferentNewIgoIdAndRowIndex.add(bankedSampleRecord.getDataField("OtherSampleId", user));
         }
@@ -428,7 +429,7 @@ public class PromoteBanked extends LimsTask {
 
             //Populating number of amplicons in MissionBioTapestri lib prep Protocol1 table
             //Runs if recipe is a MissionBio kind.
-            if(recipe.toLowerCase().contains("missionbio") && (bankedSample.getSampleType().toLowerCase().equals("cells") ||
+            if (recipe.toLowerCase().contains("missionbio") && (bankedSample.getSampleType().toLowerCase().equals("cells") ||
                     bankedSample.getSampleType().toLowerCase().equals("nuclei"))) {
                 Map<String, Object> missionbiofields = new HashMap<>();
                 missionbiofields.put("SampleId", newIgoId);
@@ -639,7 +640,7 @@ public class PromoteBanked extends LimsTask {
                 if (commentMatchFound) {
                     iLabComment = customForm.getFields().get(field);
                 }
-                if(numOfSamplesMatchFound) {
+                if (numOfSamplesMatchFound) {
                     numOfSamples = customForm.getFields().get(field);
                 }
             }
@@ -656,7 +657,7 @@ public class PromoteBanked extends LimsTask {
             log.info("Due date: " + dueDate);
 
             String subject = requestId + " (" + numOfSamples + ")";
-            if(iLabComment != null &&  iLabComment.trim().length() > 0) {
+            if (iLabComment != null &&  iLabComment.trim().length() > 0) {
                 subject += " #[IGO: iLab Comment]";
             }
             if (iLabComment != null)
