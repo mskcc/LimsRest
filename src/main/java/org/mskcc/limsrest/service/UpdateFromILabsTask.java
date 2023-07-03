@@ -203,47 +203,33 @@ public class UpdateFromILabsTask {
                     }
                 }
 
-//                if (field2val.containsKey("BARCODED_ANTIBODIES")) {
-//                    if (field2val.get("BARCODED_ANTIBODIES").equals("Yes")) {
-//                        requestFields.put("BarcodedAntibodies", Boolean.TRUE);
-//                    }
-//                    else {
-//                        requestFields.put("BarcodedAntibodies", Boolean.FALSE);
-//                    }
-//                }
-//                if (field2val.containsKey("SEQC_ANTIBODIES")) {
-//                    if (field2val.get("SEQC_ANTIBODIES").contains("confirm")) {
-//                        requestFields.put("SeqCAntibodies", Boolean.TRUE);
-//                    }
-//                    else {
-//                        requestFields.put("SeqCAntibodies", Boolean.FALSE);
-//                    }
-//                }
                 if (field2val.containsKey("TREATMENT")) {
-                    if (field2val.get("TREATMENT").contains("Hashing") && field2val.get("TREATMENT").contains("Barcoding")) {
+                    if (field2val.get("TREATMENT").toLowerCase().contains("hashing") && field2val.get("TREATMENT").toLowerCase().contains("barcoding")) {
                         requestFields.put("Treatment", "Cell Hashing, Feature Barcoding");
+                        System.out.println("Both CH & FB");
                     }
-                    else if (field2val.get("TREATMENT").contains("Barcoding")) {
+                    else if (field2val.get("TREATMENT").toLowerCase().contains("barcoding")) {
                         requestFields.put("Treatment", "Feature Barcoding");
+                        System.out.println("Just FB");
                     }
                     else  {
                         requestFields.put("Treatment", "Cell Hashing");
+                        System.out.println("Just CH");
                     }
                 }
-//                if (field2val.containsKey("ADDITIONAL_VDJ")) {
-//                    if (field2val.get("ADDITIONAL_VDJ").contains("Yes")) {
-//                        requestFields.put("AdditionalVDJ", Boolean.TRUE);
-//                    }
-//                    else {
-//                        requestFields.put("AdditionalVDJ", Boolean.FALSE);
-//                    }
-//                }
+
                 if (field2val.containsKey("CELL_TYPES")) {
-                    if (field2val.get("CELL_TYPES").contains("T Cells")) {
+                    if (field2val.get("CELL_TYPES").contains("TCR") && field2val.get("CELL_TYPES").contains("BCR")) {
+                        requestFields.put("CellTypes", "T Cells, B Cells");
+                        System.out.println("Both TCR & BCR");
+                    }
+                    else if (field2val.get("CELL_TYPES").contains("TCR")) {
                         requestFields.put("CellTypes", "T Cells");
+                        System.out.println("Just TCR");
                     }
                     else {
                         requestFields.put("CellTypes", "B Cells");
+                        System.out.println("Just BCR");
                     }
                 }
 
