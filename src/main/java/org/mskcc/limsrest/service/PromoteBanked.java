@@ -265,6 +265,7 @@ public class PromoteBanked extends LimsTask {
                     return new ResponseEntity<>("No iLab request found. Successfully promoted sample(s) into " + requestId, headers, HttpStatus.OK );
                 }
             } catch (Exception e) {
+                log.error("CAUGHT EXCEPTION: " + e);
                 log.error(e);
 
                 // Avoid HeadersTooLargeException
@@ -426,6 +427,8 @@ public class PromoteBanked extends LimsTask {
             Object species = bankedFields.getOrDefault("Species", null);
             Object requestedCoverage = bankedFields.getOrDefault("RequestedCoverage", null);
             String bankedSampleRequestedReads = bankedSample.getRequestedReads();
+            if (bankedSampleRequestedReads == null || bankedSampleRequestedReads.equals(""))
+                bankedSampleRequestedReads = "0";
 
             //Populating number of amplicons in MissionBioTapestri lib prep Protocol1 table
             //Runs if recipe is a MissionBio kind.
