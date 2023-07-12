@@ -6,7 +6,6 @@ plugins {
 }
 
 group = 'org.mskcc.limsrest'
-//version = '23_3'
 sourceCompatibility = '17'
 
 sourceSets {
@@ -64,20 +63,8 @@ configurations {
 }
 
 dependencies {
-
-//    implementation 'com.velox.internalproducts:veloxapi:10.6.1-b777'
-//    implementation 'com.velox.sloan.cmo:sloancmo:2.21.1-LIMS10.6.1_b777'
-//    implementation 'com.velox.internalproducts:sapiogeneric:15.1.0-LIMS10.6.1'
-//    implementation 'com.velox.internalproducts:sapioutils:15.1.0-LIMS10.6.1'
-//    implementation 'com.velox.internalproducts:sapio-commons:15.1.0-LIMS10.6.1'
-
     implementation fileTree (dir: 'libs', include: '*.jar')
-
-    // cmo metadb messaging library dependency added with jitpack
-    implementation('com.github.mskcc:smile-messaging-java:1.3.1.RELEASE')
-    implementation('com.github.mskcc:smile-commons:1.3.1.RELEASE')
-
-    implementation 'org.mskcc.common:common-domain:2.14'
+    implementation 'com.sun.activation:javax.activation:1.2.0'
 
     implementation 'com.google.code.gson:gson:2.8.6'
     implementation group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0'

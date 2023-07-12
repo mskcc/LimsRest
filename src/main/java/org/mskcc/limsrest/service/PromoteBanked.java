@@ -114,7 +114,6 @@ public class PromoteBanked extends LimsTask {
 
             return ResponseEntity.ok(nextRequest);
         } else {
-
             try {
                 //GET ALL BANKED SAMPLES
                 StringBuffer sb = new StringBuffer();
@@ -127,8 +126,9 @@ public class PromoteBanked extends LimsTask {
                 sb.append(bankedIds[bankedIds.length - 1]);
                 sb.append("'");
 
-                List<DataRecord> bankedList = dataRecordManager.queryDataRecords("BankedSample", "RecordId in (" + sb.toString() + ") order by transactionId, rowIndex", user);
-                SloanCMOUtils util = new SloanCMOUtils(managerContext);
+                String whereClause = "RecordId in (" + sb.toString() + ") order by transactionId, rowIndex";
+                log.info("Querying BankedSample: " + whereClause);
+                List<DataRecord> bankedList = dataRecordManager.queryDataRecords("BankedSample", whereClause, user);
 
                 //GET INDEXES IF MATERIAL IS INDEX MATERIAL
                 boolean indexNeeded = false;
@@ -150,6 +150,7 @@ public class PromoteBanked extends LimsTask {
                 }
 
                 DataRecord req = null;
+                SloanCMOUtils util = new SloanCMOUtils(managerContext);
                 //TODO THREAD WARNING: Not thread safe. Depends on the queue being single consumer thread to handle concurrency
                 if (requestId.equals("NULL") && projectId.equals("NULL")) {
                     log.info("Creating new request.");
@@ -179,6 +180,7 @@ public class PromoteBanked extends LimsTask {
                     } catch (Exception e) {
                         throw new LimsException("Unable to create a new request for this project: " + e.getMessage());
                     }
+                    log.info("Assigned request id : " + requestId);
                 } else if (!requestId.equals("NULL")) {
                     List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
                     if (requestList.size() == 0) {
@@ -427,8 +429,6 @@ public class PromoteBanked extends LimsTask {
             Object species = bankedFields.getOrDefault("Species", null);
             Object requestedCoverage = bankedFields.getOrDefault("RequestedCoverage", null);
             String bankedSampleRequestedReads = bankedSample.getRequestedReads();
-            if (bankedSampleRequestedReads == null || bankedSampleRequestedReads.equals(""))
-                bankedSampleRequestedReads = "0";
 
             //Populating number of amplicons in MissionBioTapestri lib prep Protocol1 table
             //Runs if recipe is a MissionBio kind.
@@ -461,6 +461,7 @@ public class PromoteBanked extends LimsTask {
             seqRequirementMap.put("SequencingRunType", bankedFields.getOrDefault("RunType", null));
             seqRequirementMap.put("CoverageTarget", requestedCoverage);
             promotedSampleRecord.addChild("SeqRequirement", seqRequirementMap, user);
+            log.info(String.format("Requested Coverage: %s ", requestedCoverage));
         } catch (NullPointerException npe) {
             log.error(npe.getStackTrace().toString());
         }
