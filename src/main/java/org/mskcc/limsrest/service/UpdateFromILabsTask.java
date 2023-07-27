@@ -113,7 +113,7 @@ public class UpdateFromILabsTask {
             }
         } catch (Throwable e) {
             String info = "Had trouble finding the files to update. " + e.toString();
-            saveEmailToOutbox(info
+            saveEmailToOutbox(info);
         }
         return ids;
     }
