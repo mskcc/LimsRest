@@ -46,24 +46,32 @@ public class GetTenXSampleInfoTask {
             log.info("Core requestId = " + requestId);
             List<DataRecord> requests = dataRecordManager.queryDataRecords("Request", "requestId like '" + requestId + "%' AND RequestName like '%10X%'", user);
             log.info("Related requests list size = " + requests.size());
-            List<Map<String, String>> samplesRecipes = new LinkedList<>();
+            List<Map<String, List<String>>> samplesRecipes = new LinkedList<>();
 
             for (DataRecord request : requests) {
                 DataRecord[] listOfSamples = request.getChildrenOfType("Sample", user);
-                Map<String, String> samplesToRecipes = new HashMap<>();
+                Map<String, List<String>> samplesToRecipes = new HashMap<>();
                 for (DataRecord sample : listOfSamples) {
+                    List<String> samplesInfo = new LinkedList<>(); // sample name and recipe
                     String recipe = sample.getStringVal("Recipe", user);
+                    String sampleName = sample.getStringVal("OtherSampleId", user);
                     log.info("recipe of sample " + sample.getStringVal("SampleId", user) + " is: " + recipe);
+                    samplesInfo.add(sampleName);
                     if (recipe.toLowerCase().contains("feature barcoding")) { // Feature Barcoding
                         String treatment = request.getStringVal("Treatment", user);
                         log.info("treatment = " + treatment);
-                        samplesToRecipes.put(sample.getStringVal("SampleId", user), recipe + ", " + treatment);
+                        recipe += ", " + treatment;
+                        samplesInfo.add(recipe);
+                        samplesToRecipes.put(sample.getStringVal("SampleId", user), samplesInfo);
                     } else if (recipe.toLowerCase().contains("vdj")) { // VDJ
                         String cellTypes = request.getStringVal("CellTypes", user);
                         log.info("cellTypes = " + cellTypes);
-                        samplesToRecipes.put(sample.getStringVal("SampleId", user), recipe + ", " + cellTypes);
+                        recipe += ", " + cellTypes;
+                        samplesInfo.add(recipe);
+                        samplesToRecipes.put(sample.getStringVal("SampleId", user), samplesInfo);
                     } else { // Gene Expression
-                        samplesToRecipes.put(sample.getStringVal("SampleId", user), recipe);
+                        samplesInfo.add(recipe);
+                        samplesToRecipes.put(sample.getStringVal("SampleId", user), samplesInfo);
                     }
                 }
                 samplesRecipes.add(samplesToRecipes);
