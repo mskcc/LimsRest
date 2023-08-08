@@ -18,24 +18,34 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 
+/**
+ * A queued task that gets a request id and find all related requests (10X requests) under one iLab and for each request
+ * returns a map of its related sample ids and samples recipes. For "Feature Barcoding", iLab's "Treatment" information
+ * and for "VDJ" iLab's "Cell Type" info is concatenated to the recipe for running the 10X multi pipeline.
+ *
+ * @author Fahimeh Mirhaj
+ */
+
 public class GetTenXSampleInfoTask {
     private static final Log log = LogFactory.getLog(GetTenXSampleInfoTask.class);
     private ConnectionLIMS conn;
     private String requestId;
 
     public GetTenXSampleInfoTask(String reqId, ConnectionLIMS conn) {
-        conn = conn;
-        requestId = reqId;
+        this.conn = conn;
+        this.requestId = reqId;
     }
 
     public Object execute() {
-        VeloxConnection vConn = conn.getConnection();
-        DataRecordManager dataRecordManager = vConn.getDataRecordManager();
-        User user = vConn.getUser();
-
         try {
+            VeloxConnection vConn = conn.getConnection();
+            DataRecordManager dataRecordManager = vConn.getDataRecordManager();
+            User user = vConn.getUser();
+
             requestId = requestId.split("_")[0];
-            List<DataRecord> requests = dataRecordManager.queryDataRecords("Request", "requestId like '" + requestId + "%'", user);
+            log.info("Core requestId = " + requestId);
+            List<DataRecord> requests = dataRecordManager.queryDataRecords("Request", "requestId like '" + requestId + "%' AND RequestName like '%10X%'", user);
+            log.info("Related requests list size = " + requests.size());
             List<Map<String, String>> samplesRecipes = new LinkedList<>();
 
             for (DataRecord request : requests) {
@@ -43,12 +53,14 @@ public class GetTenXSampleInfoTask {
                 Map<String, String> samplesToRecipes = new HashMap<>();
                 for (DataRecord sample : listOfSamples) {
                     String recipe = sample.getStringVal("Recipe", user);
-
+                    log.info("recipe of sample " + sample.getStringVal("SampleId", user) + " is: " + recipe);
                     if (recipe.toLowerCase().contains("feature barcoding")) { // Feature Barcoding
                         String treatment = request.getStringVal("Treatment", user);
+                        log.info("treatment = " + treatment);
                         samplesToRecipes.put(sample.getStringVal("SampleId", user), recipe + ", " + treatment);
                     } else if (recipe.toLowerCase().contains("vdj")) { // VDJ
                         String cellTypes = request.getStringVal("CellTypes", user);
+                        log.info("cellTypes = " + cellTypes);
                         samplesToRecipes.put(sample.getStringVal("SampleId", user), recipe + ", " + cellTypes);
                     } else { // Gene Expression
                         samplesToRecipes.put(sample.getStringVal("SampleId", user), recipe);
