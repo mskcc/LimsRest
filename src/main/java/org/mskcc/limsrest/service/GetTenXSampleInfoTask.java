@@ -44,11 +44,13 @@ public class GetTenXSampleInfoTask {
 
             requestId = requestId.split("_")[0];
             log.info("Core requestId = " + requestId);
+
             List<DataRecord> requests = dataRecordManager.queryDataRecords("Request", "requestId like '" + requestId + "%' AND RequestName like '%10X%'", user);
             log.info("Related requests list size = " + requests.size());
             List<Map<String, List<String>>> samplesRecipes = new LinkedList<>();
 
             for (DataRecord request : requests) {
+                String ilabRequest = request.getStringVal("IlabRequest", user);
                 DataRecord[] listOfSamples = request.getChildrenOfType("Sample", user);
                 Map<String, List<String>> samplesToRecipes = new HashMap<>();
                 for (DataRecord sample : listOfSamples) {
@@ -56,6 +58,7 @@ public class GetTenXSampleInfoTask {
                     String recipe = sample.getStringVal("Recipe", user);
                     String sampleName = sample.getStringVal("OtherSampleId", user);
                     log.info("recipe of sample " + sample.getStringVal("SampleId", user) + " is: " + recipe);
+                    samplesInfo.add(ilabRequest);
                     samplesInfo.add(sampleName);
                     if (recipe.toLowerCase().contains("feature barcoding")) { // Feature Barcoding
                         String treatment = request.getStringVal("Treatment", user);
