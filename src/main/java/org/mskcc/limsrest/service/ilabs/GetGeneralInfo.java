@@ -163,18 +163,9 @@ public class GetGeneralInfo {
 
                     if (tenXForm) {
                         System.out.println("TenX form!");
-//                        if (lcFormName.trim().toLowerCase().contains("barcoded antibodies")) {
-//                            formValues.put("BARCODED_ANTIBODIES", lcFormValue);
-//                        }
-//                        if (lcFormName.trim().toLowerCase().contains("total seq c antibodies")) {
-//                            formValues.put("SEQC_ANTIBODIES", lcFormValue);
-//                        }
                         if (lcFormName.trim().toLowerCase().contains("treatment")) {
                             formValues.put("TREATMENT", lcFormValue);
                         }
-//                        else if (lcFormName.trim().toLowerCase().contains("additional vdj")) {
-//                            formValues.put("ADDITIONAL_VDJ", lcFormValue);
-//                        }
                         else if (lcFormName.trim().toLowerCase().contains("vdj enrichment")) {
                             formValues.put("CELL_TYPES", lcFormValue);
                         }

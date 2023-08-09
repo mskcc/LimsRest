@@ -23,7 +23,7 @@ import java.util.*;
  */
 public class UpdateFromILabsTask {
     private static final Log log = LogFactory.getLog(UpdateFromILabsTask.class);
-    private static final String OUTBOX = "/skimcs/mohibullahlab/LIMS/AutomatedEmails/outbox/testEmail/";
+    private static final String OUTBOX = "/skimcs/mohibullahlab/LIMS/AutomatedEmails/outbox/";
     private static final String[] WHITELIST =
             new String[]{"04525_B", "04430", "05281_B", "05681_B_9", "04495", "05001", "05783_B", "05783_C", "05783_D", "05884_B", "03498", "CTRL-1095", "05737_B", "05022", "05500_AY", "06713", "06711",
                     "04773", "04919", "06811", "04998", "06000_BR", "06000_BZ", "06875", "06934", "05632_E", "06684_C", "06684_D", "06989", "07239", "07835", "07890", "07894_B", "07916", "07765_B",
@@ -206,15 +206,12 @@ public class UpdateFromILabsTask {
                 if (field2val.containsKey("TREATMENT")) {
                     if (field2val.get("TREATMENT").toLowerCase().contains("hashing") && field2val.get("TREATMENT").toLowerCase().contains("barcoding")) {
                         requestFields.put("Treatment", "Cell Hashing, Feature Barcoding");
-                        System.out.println("Both CH & FB");
                     }
                     else if (field2val.get("TREATMENT").toLowerCase().contains("barcoding")) {
                         requestFields.put("Treatment", "Feature Barcoding");
-                        System.out.println("Just FB");
                     }
                     else  {
                         requestFields.put("Treatment", "Cell Hashing");
-                        System.out.println("Just CH");
                     }
                 }
 
@@ -225,11 +222,9 @@ public class UpdateFromILabsTask {
                     }
                     else if (field2val.get("CELL_TYPES").contains("TCR")) {
                         requestFields.put("CellTypes", "T Cells");
-                        System.out.println("Just TCR");
                     }
                     else {
                         requestFields.put("CellTypes", "B Cells");
-                        System.out.println("Just BCR");
                     }
                 }
 
