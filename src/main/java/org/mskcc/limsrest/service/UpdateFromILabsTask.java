@@ -218,7 +218,6 @@ public class UpdateFromILabsTask {
                 if (field2val.containsKey("CELL_TYPES")) {
                     if (field2val.get("CELL_TYPES").contains("TCR") && field2val.get("CELL_TYPES").contains("BCR")) {
                         requestFields.put("CellTypes", "T Cells, B Cells");
-                        System.out.println("Both TCR & BCR");
                     }
                     else if (field2val.get("CELL_TYPES").contains("TCR")) {
                         requestFields.put("CellTypes", "T Cells");
