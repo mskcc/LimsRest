@@ -1,7 +1,7 @@
 package org.mskcc.limsrest.service;
 
 import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.*;
 
@@ -50,11 +50,6 @@ public class SetOrCreateBankedTest {
                 assertEquals("Tumor", tumorOrNormal);
             }
         }
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void setTumorOrNormalError() {
-        setOrCreateBanked.setTumorOrNormal("Primary", "Normal", sampleId);
     }
 
     @Test

@@ -3,11 +3,12 @@ package org.mskcc.limsrest;
 import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.cmo.messaging.Gateway;
+//import org.mskcc.cmo.messaging.Gateway;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.PropertySource;
@@ -20,10 +21,8 @@ import springfox.documentation.service.ApiInfo;
 import springfox.documentation.service.Contact;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
-import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
-@SpringBootApplication
-@EnableSwagger2
+@SpringBootApplication(exclude = { SecurityAutoConfiguration.class })
 @PropertySource({"classpath:/connect.txt", "classpath:/app.properties"})
 public class App extends SpringBootServletInitializer {
     private static Log log = LogFactory.getLog(App.class);
@@ -39,24 +38,24 @@ public class App extends SpringBootServletInitializer {
 
     @Value("#{'${human.recipes}'.split(',')}")
     List<String> humanRecipes;
-    
-    @Autowired
-    private Gateway messagingGateway;
+
+    //@Autowired
+    //private Gateway messagingGateway;
 
     @Value("${nats.url}")
     private String natsUrl;
 
-    @Bean
-    public Gateway messagingGateway() throws Exception {
-        messagingGateway.connect(natsUrl);
-        log.info("Attempting to connecto to CMO MetaDB NATS server...");
-        if (!messagingGateway.isConnected()) {
-            log.error("Failed to connect to CMO MetaDB NATS server - messages will not be published");
-        } else {
-            log.info("CMO MetaDB NATS connection successful");
-        }
-        return messagingGateway;
-    }
+    //@Bean
+//    public Gateway messagingGateway() throws Exception {
+//        messagingGateway.connect(natsUrl);
+//        log.info("Attempting to connecto to CMO MetaDB NATS server...");
+//        if (!messagingGateway.isConnected()) {
+//            log.error("Failed to connect to CMO MetaDB NATS server - messages will not be published");
+//        } else {
+//            log.info("CMO MetaDB NATS connection successful");
+//        }
+//        return messagingGateway;
+//    }
 
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
@@ -73,8 +72,8 @@ public class App extends SpringBootServletInitializer {
         String user2 = env.getProperty("lims.user2");
         String pass2 = env.getProperty("lims.pword2");
 
-        log.info("Creating LIMS connection pool.");
-        return new ConnectionPoolLIMS(host, port, guid, user1, pass1, user2, pass2);
+        log.info("Creating LIMS connection pool to host: " + host);
+        return new ConnectionPoolLIMS(host, port, guid, user1, pass1);
     }
 
     @Bean(destroyMethod = "close")

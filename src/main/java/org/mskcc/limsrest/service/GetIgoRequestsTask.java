@@ -4,6 +4,7 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
+import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.RequestModel;
 import org.apache.commons.logging.Log;
@@ -72,7 +73,7 @@ public class GetIgoRequestsTask extends LimsTask {
         List<DataRecord> records = new ArrayList<>();
         try {
             records = conn.getDataRecordManager().queryDataRecords(RequestModel.DATA_TYPE_NAME, query, user);
-        } catch (IoError | RemoteException | NotFound e) {
+        } catch (IoError | RemoteException | NotFound | ServerException e) {
             log.error(String.format("Failed to query DataRecords w/ query: %s", query));
             return new ArrayList<>();
         }

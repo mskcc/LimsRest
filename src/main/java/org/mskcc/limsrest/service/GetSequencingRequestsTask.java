@@ -27,10 +27,8 @@ import static org.mskcc.limsrest.util.Utils.*;
 
 public class GetSequencingRequestsTask {
     private static Log log = LogFactory.getLog(GetSequencingRequestsTask.class);
-
     private Long days;          // Number of days since sequencing
     private Boolean delivered;  // Whether to determine requests that have been marked IGO-COMPLETE
-
 
     public GetSequencingRequestsTask(Long days, Boolean delivered) {
         this.days = days;
@@ -61,7 +59,7 @@ public class GetSequencingRequestsTask {
         List<DataRecord> illuminaSeqExperiments = new ArrayList<>();
         try {
             illuminaSeqExperiments = drm.queryDataRecords(IlluminaSeqExperimentModel.DATA_TYPE_NAME, query, user);
-        } catch (IoError | RemoteException | NotFound e) {
+        } catch (IoError | RemoteException | NotFound | ServerException e) {
             log.error(String.format("Failed to query DataRecords w/ query: '%s' on %s", query,
                     IlluminaSeqExperimentModel.DATA_TYPE_NAME));
             return new ArrayList<>();
@@ -121,7 +119,7 @@ public class GetSequencingRequestsTask {
             }
             return requests;
 
-        } catch (RemoteException | NotFound | IoError e) {
+        } catch (RemoteException | NotFound | IoError | ServerException e) {
             log.error(e.getMessage());
         }
         return null;

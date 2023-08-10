@@ -2,6 +2,7 @@ package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.*;
 import com.velox.api.user.User;
+import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.RequestModel;
 import org.apache.commons.logging.Log;
@@ -30,7 +31,7 @@ public class GetUndeliveredProjectsTask extends LimsTask {
         String query = String.format("%s IS NULL", RequestModel.RECENT_DELIVERY_DATE);
         try {
             undeliveredRecords = conn.getDataRecordManager().queryDataRecords(RequestModel.DATA_TYPE_NAME, query, user);
-        } catch (NotFound | RemoteException | IoError e){
+        } catch (NotFound | RemoteException | IoError | ServerException e){
             log.error("Failed to retrieve Projects from Database");
         }
 

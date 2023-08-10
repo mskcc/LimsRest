@@ -2,6 +2,7 @@ package org.mskcc.limsrest.service.assignedprocess;
 
 import com.velox.api.datarecord.*;
 import com.velox.api.user.User;
+import com.velox.api.util.ServerException;
 import com.velox.sloan.cmo.staticstrings.datatypes.DT_AssignedProcess;
 import com.velox.sloan.cmo.staticstrings.datatypes.DT_Batch;
 import com.velox.sloan.cmo.staticstrings.datatypes.DT_Sample;
@@ -100,7 +101,7 @@ public class QcStatusAwareProcessAssigner {
     }
 
     private void addSampleAsChild(User user, DataRecord sample, DataRecord assignedProcess) throws AlreadyExists,
-            NotFound, IoError, RemoteException {
+            NotFound, IoError, RemoteException, ServerException {
         String igoId = sample.getStringVal(DT_Sample.SAMPLE_ID, user);
         log.info(String.format("Adding sample %s as a child to Assigned Process with record id: %d", igoId,
                 assignedProcess.getRecordId()));

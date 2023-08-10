@@ -4,7 +4,7 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.api.user.User;
 import com.velox.sloan.cmo.staticstrings.datatypes.DT_AssignedProcess;
 import com.velox.sloan.cmo.staticstrings.datatypes.DT_Sample;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 

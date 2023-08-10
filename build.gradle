@@ -1,32 +1,27 @@
-group 'org.mskcc.limsrest'
-version '1.17.3'
+plugins {
+    id 'java'
+    id 'war'
+    id 'org.springframework.boot' version "2.6.7"
+    id 'io.spring.dependency-management' version "1.1.0"
+}
 
+group = 'org.mskcc.limsrest'
+sourceCompatibility = '17'
 
-buildscript {
-    repositories {
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java']
+        }
+    }
+}
+
+repositories {
         mavenCentral()
         mavenLocal()
         maven { url 'https://jitpack.io' }
         maven { url "${nexusUrlReleases}"
             allowInsecureProtocol = true}
-    }
-    dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.1.6.RELEASE")
-    }
-}
-
-
-
-apply plugin: 'war'
-apply plugin: 'java'
-apply plugin: 'org.springframework.boot'
-apply plugin: 'io.spring.dependency-management'
-apply plugin: 'maven-publish'
-apply plugin: 'idea'
-apply plugin: 'jacoco'
-
-jacoco {
-    toolVersion = "0.8.2"
 }
 
 if (target == 'dev'){
@@ -34,7 +29,7 @@ if (target == 'dev'){
         from "src/dev/resources"
         into "src/main/resources"
     }
-    version += 'd'
+    //version += 'd'
 } else if(target == 'test'){
     copy {
         from "src/test-site-res/resources"
@@ -53,68 +48,52 @@ if (target == 'dev'){
     }
 }
 
-war {
-    archivesBaseName = 'LimsRest##'
-}
-
 repositories {
     mavenCentral()
     mavenLocal()
     maven { url "${nexusUrlReleases}"
         allowInsecureProtocol = true}
     maven { url 'https://jitpack.io' }
-    jcenter()
 }
-
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
 
 configurations {
     providedRuntime
     integrationTestCompile.extendsFrom testCompile
     integrationTestRuntime.extendsFrom testRuntime
-    
 }
 
 dependencies {
-    // cmo metadb messaging library dependency added with jitpack
-    implementation('com.github.mskcc:smile-messaging-java:1.3.1.RELEASE')
-    implementation('com.github.mskcc:smile-commons:1.3.1.RELEASE')
+    implementation fileTree (dir: 'libs', include: '*.jar')
+    implementation 'com.sun.activation:javax.activation:1.2.0'
+
     implementation 'com.google.code.gson:gson:2.8.6'
-
-    implementation 'org.mskcc.common:common-domain:2.14'
-
+    implementation group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0'
     implementation group: 'org.yaml', name: 'snakeyaml', version: '1.23'
-    implementation "io.springfox:springfox-swagger-ui:2.9.2"
-    implementation "io.springfox:springfox-swagger2:2.9.2"
     implementation group: 'org.json', name: 'json', version: '20180130'
-    implementation "org.springframework.boot:spring-boot-starter-security:2.6.7"
-    implementation "org.springframework.boot:spring-boot-starter-tomcat:2.6.7"
-    implementation "org.springframework.boot:spring-boot-starter-web:2.6.7"
 
     testImplementation(group: 'org.springframework', name: 'spring-test', version: '5.1.6.RELEASE')
     testImplementation('org.springframework.boot:spring-boot-starter-test')
 
+    implementation "io.springfox:springfox-swagger-ui:2.9.2"
+    implementation "io.springfox:springfox-swagger2:2.9.2"
+
+    implementation "org.springframework.boot:spring-boot-starter-security:2.6.7"
+    implementation "org.springframework.boot:spring-boot-starter-tomcat:2.6.7"
+    implementation "org.springframework.boot:spring-boot-starter-web:2.6.7"
+    testImplementation(group: 'org.springframework', name: 'spring-test', version: '5.1.6.RELEASE')
+    testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: '2.6.7'
+
     implementation ('javax.servlet:jstl:1.2')
+    implementation "com.google.guava:guava:16+"
 
     implementation group: 'commons-logging', name: 'commons-logging', version: '1.2'
     implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.13'
-    //implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.12.0'
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'
-    //compile ('javax.activation:activation:1.1')
-    //providedCompile group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0'
 
-    implementation 'com.velox.internalproducts:veloxapi:10.6.1-b777'
-    implementation 'com.velox.sloan.cmo:sloancmo:2.21.1-LIMS10.6.1_b777'
-    implementation 'com.velox.internalproducts:sapiogeneric:15.1.0-LIMS10.6.1'
-    implementation 'com.velox.internalproducts:sapioutils:15.1.0-LIMS10.6.1'
-    implementation 'com.velox.internalproducts:sapio-commons:15.1.0-LIMS10.6.1'
-
-    implementation fileTree (dir: 'libs', include: '*.jar')
-
+    implementation 'junit:junit:4.13.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
     testImplementation ('io.rest-assured:rest-assured:3.0.1')
-    testImplementation ("junit:junit")
-    testImplementation ("org.mockito:mockito-core:1.10.19")
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: '2.16.0'
     implementation('org.junit.jupiter:junit-jupiter:5.4.0')
     implementation 'org.assertj:assertj-core:3.9.0'
 
@@ -125,44 +104,13 @@ dependencies {
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.20'
 }
 
-tasks.named('wrapper') {
-    gradleVersion = '7.0.2'
-}
+tasks.named('test', Test) {
+    useJUnitPlatform()
 
-bootRun {
-    if (System.getProperty('DEBUG', 'false') == 'true')
-        jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5006'
-    systemProperty 'server.port', '5007'
-}
-
-tasks.withType(Test) {
-    if (System.getProperty('DEBUG', 'false') == 'true')
-        jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5006'
+    maxHeapSize = '1G'
 
     testLogging {
-        events "passed", "skipped", "failed", "standardOut", "standardError"
-
-        showExceptions true
-        exceptionFormat "full"
-        showCauses true
-        showStackTraces true
-
-        // set options for log level DEBUG and INFO
-        debug {
-            events "started", "passed", "skipped", "failed", "standardOut", "standardError"
-            exceptionFormat "full"
-        }
-        info.events = debug.events
-        info.exceptionFormat = debug.exceptionFormat
-
-        afterSuite { desc, result ->
-            if (!desc.parent) { // will match the outermost suite
-                def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
-                def startItem = '|  ', endItem = '  |'
-                def repeatLength = startItem.length() + output.length() + endItem.length()
-                println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
-            }
-        }
+        events "passed"
     }
 }
 
@@ -186,23 +134,7 @@ task integrationTest(type: Test) {
 
 repositories {
     mavenCentral()
-    jcenter()
     mavenLocal()
     maven { url "${nexusUrlReleases}"
         allowInsecureProtocol = true}
 }
-
-test {
-    finalizedBy jacocoTestReport
-}
-
-jacocoTestReport {
-    reports {
-        xml.enabled = false
-        csv.enabled = false
-        //html.setDestination("${buildDir}/reports/jacoco")
-
-    }
-}
-
-

@@ -2,9 +2,11 @@ package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.exception.recoverability.serverexception.UnrecoverableServerException;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
+import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.KAPALibPlateSetupProtocol1Model;
 import com.velox.sloan.cmo.recmodels.SampleModel;
@@ -367,7 +369,7 @@ public class GetSampleManifestTask {
      * @throws IoError
      * @throws RemoteException
      */
-    private Double setACCESS2dBarcode(User user, DataRecordManager dataRecordManager, DataRecord sample, SampleManifest sampleManifest) throws NotFound, IoError, RemoteException {
+    private Double setACCESS2dBarcode(User user, DataRecordManager dataRecordManager, DataRecord sample, SampleManifest sampleManifest) throws NotFound, IoError, RemoteException, ServerException, UnrecoverableServerException {
         Double dnaInputNg = findDNAInputForLibraryForMSKACCESS(sample, user);
         log.info("Searching for ACCESS 2D barcode with base IGO sample ID=" + sampleManifest.getCmoInfoIgoId());
         List<DataRecord> baseSamples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sampleManifest.getCmoInfoIgoId() + "'", user);
@@ -391,7 +393,7 @@ public class GetSampleManifestTask {
         return dnaInputNg;
     }
 
-    private String getTubeId(DataRecord sample, User user) throws IoError, RemoteException, NotFound {
+    private String getTubeId(DataRecord sample, User user) throws IoError, RemoteException, NotFound, ServerException {
         log.info("Looking up tube ID of the original sample received.");
         List<DataRecord> parentSample = sample.getParentsOfType("Sample", user);
         while (parentSample.size() > 0) { // keep checking if there is a parent of type sample until there is not
@@ -403,7 +405,7 @@ public class GetSampleManifestTask {
         return tubeId;
     }
 
-    private SampleManifest getFastqsAndCheckTheirQCStatus(String igoId, User user, DataRecord sample, SampleManifest sampleManifest) throws RemoteException, NotFound {
+    private SampleManifest getFastqsAndCheckTheirQCStatus(String igoId, User user, DataRecord sample, SampleManifest sampleManifest) throws RemoteException, NotFound, IoError, UnrecoverableServerException {
         log.info("Returning baitset & fastqs only for IGO ID: " + igoId);
         // query Picard QC records for bait set & "Failed" fastqs.
         // (exclude failed, less stringent than include only passed)
@@ -467,7 +469,7 @@ public class GetSampleManifestTask {
                 SampleManifest.QcReport r = new SampleManifest.QcReport(SampleManifest.QcReportType.LIBRARY, igoQcRecommendation, comments, id);
                 sampleManifest.addQcReport(r);
             }
-        } catch (RemoteException | NotFound e) {
+        } catch (RemoteException | NotFound | IoError | UnrecoverableServerException e) {
             log.error("Failed to complete QC record searches.");
             e.printStackTrace();
         }
@@ -516,7 +518,7 @@ public class GetSampleManifestTask {
         return sampleManifest;
     }
 
-    private SampleManifest.Library getLibraryFields(User user, String libraryIgoId, DataRecord aliquot, Double dnaInputNg) throws IoError, RemoteException, NotFound {
+    private SampleManifest.Library getLibraryFields(User user, String libraryIgoId, DataRecord aliquot, Double dnaInputNg) throws IoError, RemoteException, NotFound, UnrecoverableServerException {
         DataRecord[] libPrepProtocols = aliquot.getChildrenOfType("DNALibraryPrepProtocol3", user);
         Double libraryVolume = null;
         if (libPrepProtocols != null && libPrepProtocols.length == 1)

@@ -1,7 +1,7 @@
 package org.mskcc.limsrest.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.velox.api.datarecord.*;
@@ -9,12 +9,12 @@ import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.utilities.SloanCMOUtils;
 import com.velox.sloan.cmo.utilities.UuidGenerator;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.tomcat.jni.Time;
-import org.mskcc.domain.sample.*;
+import org.mskcc.domain.sample.BankedSample;
+import org.mskcc.domain.sample.CmoSampleInfo;
+import org.mskcc.domain.sample.Sample;
 import org.mskcc.limsrest.service.promote.BankedSampleToSampleConverter;
 import org.mskcc.limsrest.util.Constants;
 import org.mskcc.limsrest.util.Messages;
@@ -27,22 +27,19 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.client.RestTemplate;
+import org.yaml.snakeyaml.Yaml;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.*;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import java.io.*;
 import java.rmi.RemoteException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.yaml.snakeyaml.Yaml;
 
 /**
  * A queued task that takes banked ids, a service id and optionally a request  and project.
@@ -106,6 +103,7 @@ public class PromoteBanked extends LimsTask {
                         nextRequest = "Would promote to a new Request.";
                     }
                 } catch (Exception e) {
+                    log.info("Exception: " + e.getMessage());
                     nextRequest = "Would promote to a new Request.";
                 }
             } else if (!requestId.equals("NULL")) {
@@ -116,7 +114,6 @@ public class PromoteBanked extends LimsTask {
 
             return ResponseEntity.ok(nextRequest);
         } else {
-
             try {
                 //GET ALL BANKED SAMPLES
                 StringBuffer sb = new StringBuffer();
@@ -129,8 +126,9 @@ public class PromoteBanked extends LimsTask {
                 sb.append(bankedIds[bankedIds.length - 1]);
                 sb.append("'");
 
-                List<DataRecord> bankedList = dataRecordManager.queryDataRecords("BankedSample", "RecordId in (" + sb.toString() + ") order by transactionId, rowIndex", user);
-                SloanCMOUtils util = new SloanCMOUtils(managerContext);
+                String whereClause = "RecordId in (" + sb.toString() + ") order by transactionId, rowIndex";
+                log.info("Querying BankedSample: " + whereClause);
+                List<DataRecord> bankedList = dataRecordManager.queryDataRecords("BankedSample", whereClause, user);
 
                 //GET INDEXES IF MATERIAL IS INDEX MATERIAL
                 boolean indexNeeded = false;
@@ -143,7 +141,6 @@ public class PromoteBanked extends LimsTask {
                 }
                 log.info((indexNeeded ? "" : "No ") + "Index needed.");
                 if (indexNeeded) {
-
                     List<DataRecord> validBarcodeList = dataRecordManager.queryDataRecords("IndexAssignment", "IndexType != " +
                             "'IDT_TRIM'", user);
                     for (DataRecord knownBarcode : validBarcodeList) {
@@ -153,6 +150,7 @@ public class PromoteBanked extends LimsTask {
                 }
 
                 DataRecord req = null;
+                SloanCMOUtils util = new SloanCMOUtils(managerContext);
                 //TODO THREAD WARNING: Not thread safe. Depends on the queue being single consumer thread to handle concurrency
                 if (requestId.equals("NULL") && projectId.equals("NULL")) {
                     log.info("Creating new request.");
@@ -182,6 +180,7 @@ public class PromoteBanked extends LimsTask {
                     } catch (Exception e) {
                         throw new LimsException("Unable to create a new request for this project: " + e.getMessage());
                     }
+                    log.info("Assigned request id : " + requestId);
                 } else if (!requestId.equals("NULL")) {
                     List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
                     if (requestList.size() == 0) {
@@ -201,6 +200,8 @@ public class PromoteBanked extends LimsTask {
                         try {
                             reqServiceId = possibleRequest.getStringVal("IlabRequest", user);
                         } catch (NullPointerException npe) {
+                            log.error("Null Pointer Exception: " + npe.getMessage());
+                            log.error(npe);
                         }
                         if (serviceId.equals(reqServiceId)) {
                             req = possibleRequest;
@@ -241,6 +242,8 @@ public class PromoteBanked extends LimsTask {
                             maxId = currentId;
                         }
                     } catch (NullPointerException npe) {
+                        log.error("Null Pointer Exception: " + npe.getMessage());
+                        log.error(npe);
                     }
                 }
                 int offset = 1;
@@ -264,19 +267,17 @@ public class PromoteBanked extends LimsTask {
                     return new ResponseEntity<>("No iLab request found. Successfully promoted sample(s) into " + requestId, headers, HttpStatus.OK );
                 }
             } catch (Exception e) {
+                log.error("CAUGHT EXCEPTION: " + e);
                 log.error(e);
-
-                MultiValueMap<String, String> headers = new HttpHeaders();
 
                 // Avoid HeadersTooLargeException
                 String errMessage = e.getMessage();
                 String headerErr = "";
-                if(errMessage != null){
-                    headerErr = errMessage.substring(0,Math.min(500,errMessage.length()));
+                if (errMessage != null) {
+                    headerErr = errMessage.substring(0, Math.min(500,errMessage.length()));
                 }
-
-                headers.add(Constants.ERRORS,
-                        Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + headerErr);
+                MultiValueMap<String, String> headers = new HttpHeaders();
+                headers.add(Constants.ERRORS, Messages.ERROR_IN + " PROMOTING BANKED SAMPLE: " + headerErr);
 
                 return new ResponseEntity<>(headers, HttpStatus.OK);
             }
@@ -286,7 +287,7 @@ public class PromoteBanked extends LimsTask {
         headers.add(Constants.WARNINGS, getErrors());
         headers.add(Constants.STATUS, Messages.SUCCESS);
 
-        if(samplesWithDifferentNewIgoIdAndRowIndex.size() > 0) {
+        if (samplesWithDifferentNewIgoIdAndRowIndex.size() > 0) {
             String warningMessage = "";
             warningMessage += "The igo id of the following promoted samples do NOT match their row index: \n";
             for (int i = 0; i < samplesWithDifferentNewIgoIdAndRowIndex.size() - 1; i++) {
@@ -361,7 +362,7 @@ public class PromoteBanked extends LimsTask {
         String rowIndex = String.valueOf(bankedSampleRecord.getDataField("RowIndex", user));
         int lastIndx = maxExistentId + offset;
         String newIgoId = requestId + "_" + lastIndx;
-        if(Integer.parseInt(rowIndex) != lastIndx) {
+        if (Integer.parseInt(rowIndex) != lastIndx) {
             //Adding sample name to the list
             samplesWithDifferentNewIgoIdAndRowIndex.add(bankedSampleRecord.getDataField("OtherSampleId", user));
         }
@@ -431,7 +432,7 @@ public class PromoteBanked extends LimsTask {
 
             //Populating number of amplicons in MissionBioTapestri lib prep Protocol1 table
             //Runs if recipe is a MissionBio kind.
-            if(recipe.toLowerCase().contains("missionbio") && (bankedSample.getSampleType().toLowerCase().equals("cells") ||
+            if (recipe.toLowerCase().contains("missionbio") && (bankedSample.getSampleType().toLowerCase().equals("cells") ||
                     bankedSample.getSampleType().toLowerCase().equals("nuclei"))) {
                 Map<String, Object> missionbiofields = new HashMap<>();
                 missionbiofields.put("SampleId", newIgoId);
@@ -460,6 +461,7 @@ public class PromoteBanked extends LimsTask {
             seqRequirementMap.put("SequencingRunType", bankedFields.getOrDefault("RunType", null));
             seqRequirementMap.put("CoverageTarget", requestedCoverage);
             promotedSampleRecord.addChild("SeqRequirement", seqRequirementMap, user);
+            log.info(String.format("Requested Coverage: %s ", requestedCoverage));
         } catch (NullPointerException npe) {
             log.error(npe.getStackTrace().toString());
         }
@@ -642,7 +644,7 @@ public class PromoteBanked extends LimsTask {
                 if (commentMatchFound) {
                     iLabComment = customForm.getFields().get(field);
                 }
-                if(numOfSamplesMatchFound) {
+                if (numOfSamplesMatchFound) {
                     numOfSamples = customForm.getFields().get(field);
                 }
             }
@@ -659,7 +661,7 @@ public class PromoteBanked extends LimsTask {
             log.info("Due date: " + dueDate);
 
             String subject = requestId + " (" + numOfSamples + ")";
-            if(iLabComment != null &&  iLabComment.trim().length() > 0) {
+            if (iLabComment != null &&  iLabComment.trim().length() > 0) {
                 subject += " #[IGO: iLab Comment]";
             }
             if (iLabComment != null)

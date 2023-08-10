@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
@@ -21,20 +20,10 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
-        .antMatchers("/get*","/set*", "/add*", "/create*", "/delete*", "/promote*", "/swap*", "/fix*", "/api/*")
-        .authenticated()
-        .and().httpBasic();
+                .antMatchers("/get*","/set*", "/add*", "/create*", "/delete*", "/promote*", "/swap*", "/fix*", "/api/*")
+                .authenticated()
+                .and().httpBasic();
         http.csrf().disable();
-    }
-
-    @Override // from https://springfox.github.io/springfox/docs/snapshot/
-    public void configure(WebSecurity web) throws Exception {
-        web.ignoring()
-                .antMatchers(
-                        "/v2/api-docs",
-                        "/swagger-resources/**",
-                        "/swagger-ui.html**",
-                        "/webjars/**");
     }
 
     @Bean

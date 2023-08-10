@@ -5,6 +5,7 @@ import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
+import com.velox.api.util.ServerException;
 import org.mskcc.domain.sample.BankedSample;
 
 import java.rmi.RemoteException;
@@ -15,7 +16,7 @@ import java.util.Map;
 public class BankedSampleRetriever implements LimsDataRetriever {
     @Override
     public List<BankedSample> getBankedSamples(String query, DataRecordManager dataRecordManager, User user) throws
-            NotFound, IoError, RemoteException {
+            NotFound, IoError, RemoteException, ServerException {
         List<DataRecord> dataRecords = dataRecordManager.queryDataRecords(BankedSample.DATA_TYPE_NAME, query, user);
 
         List<BankedSample> bankedSamples = new ArrayList<>();
