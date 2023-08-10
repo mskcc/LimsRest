@@ -202,6 +202,31 @@ public class UpdateFromILabsTask {
                         System.out.println("Skipping " + reqId + " because sample count NaN");
                     }
                 }
+
+                if (field2val.containsKey("TREATMENT")) {
+                    if (field2val.get("TREATMENT").toLowerCase().contains("hashing") && field2val.get("TREATMENT").toLowerCase().contains("barcoding")) {
+                        requestFields.put("Treatment", "Cell Hashing, Feature Barcoding");
+                    }
+                    else if (field2val.get("TREATMENT").toLowerCase().contains("barcoding")) {
+                        requestFields.put("Treatment", "Feature Barcoding");
+                    }
+                    else  {
+                        requestFields.put("Treatment", "Cell Hashing");
+                    }
+                }
+
+                if (field2val.containsKey("CELL_TYPES")) {
+                    if (field2val.get("CELL_TYPES").contains("TCR") && field2val.get("CELL_TYPES").contains("BCR")) {
+                        requestFields.put("CellTypes", "T Cells, B Cells");
+                    }
+                    else if (field2val.get("CELL_TYPES").contains("TCR")) {
+                        requestFields.put("CellTypes", "T Cells");
+                    }
+                    else {
+                        requestFields.put("CellTypes", "B Cells");
+                    }
+                }
+
                 if (field2val.containsKey("FASTQ") && field2val.get("ANALYSIS_TYPE").equals("FIELD NOT IN ILABS")) {
                     if ("FIELD NOT IN ILABS".equals(field2val.get("FASTQ")) || field2val.get("FASTQ").contains("BAM") || field2val.get("FASTQ").contains("Analysis Pipeline") ||
                             field2val.get("FASTQ").contains("Pipeline Anaylsis") || field2val.get("FASTQ").contains("Pipeline Analysis") || field2val.get("FASTQ").contains("Aligned reads plus bioinformatic analysis") ||

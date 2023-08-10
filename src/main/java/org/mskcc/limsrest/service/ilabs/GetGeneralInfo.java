@@ -128,7 +128,8 @@ public class GetGeneralInfo {
                         hasCustomForm = true;
                     } else if ("Milestone".equalsIgnoreCase(type)) {
                         hasMilestone = true;
-                    } else if ("Charge".equalsIgnoreCase(type)) {
+                    } else if ("Charge".equalsIgnoreCase(type))
+                    {
                         hasCharge = true;
                     } else {
                         throw new RuntimeException("Unrecognized service_row type, check to see if API changed: " + type);
@@ -151,11 +152,25 @@ public class GetGeneralInfo {
                 }
                 CustomForm customForm = customForms.get(0);
                 formValues.put("CUSTOM_FORM", customForm.getId() + "-" + customForm.getName());
+                boolean tenXForm = false;
+                if (customForm.getName().contains("Single Cell Library Prep + Sequencing (Human or Mouse)")) {
+                    tenXForm = true;
+                }
 
                 for (Map.Entry<String, String> entry : customForm.getFields().entrySet()) {
-
                     String lcFormName = entry.getKey().trim();
                     String lcFormValue = entry.getValue();
+
+                    if (tenXForm) {
+                        System.out.println("TenX form!");
+                        if (lcFormName.trim().toLowerCase().contains("treatment")) {
+                            formValues.put("TREATMENT", lcFormValue);
+                        }
+                        else if (lcFormName.trim().toLowerCase().contains("vdj enrichment")) {
+                            formValues.put("CELL_TYPES", lcFormValue);
+                        }
+                    }
+
                     if ("Lab Head:".equalsIgnoreCase(lcFormName) ||
                             "Name of Laboratory head:".equalsIgnoreCase(lcFormName)) {
                         System.out.println("lab_head:" + lcFormValue);
