@@ -10,6 +10,7 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.springframework.security.access.prepost.PreAuthorize;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 
@@ -29,22 +30,30 @@ public class GetAttachmentFileTask {
         User user = vConn.getUser();
         DataRecordManager dataRecordManager = vConn.getDataRecordManager();
         HashMap<String, Object> file = new HashMap<>();
-
         try {
-            List<DataRecord> matched = dataRecordManager.queryDataRecords("Attachment", "RecordId =" + recordId, user);
-            String fileName = (String) matched.get(0).getDataField("FilePath", user);
-            byte[] data = matched.get(0).getAttachmentData(user);
-            file.put("fileName", fileName);
-            file.put("data", data);
+            log.info("Searching for RecordId ='" + recordId + "'");
+            // search ExemplarSDMSFile table first where QC files are after August 12, 2023
+            List<DataRecord> matched = dataRecordManager.queryDataRecords("ExemplarSDMSFile", "RecordId =" + recordId, user);
+            if (matched.size() > 0) {
+                log.info("Files found: " + matched.size());
+                String fileName = (String) matched.get(0).getDataField("FilePath", user);
+                InputStream is = matched.get(0).openAttachmentDataInputStream(user);
+                byte [] data = is.readAllBytes();
+                log.info("Bytes read:" + data.length);
+                file.put("fileName", fileName);
+                file.put("data", data);
+                is.close();
+            } else if (matched.size() == 0) {
+                matched = dataRecordManager.queryDataRecords("Attachment", "RecordId =" + recordId, user);
+                String fileName = (String) matched.get(0).getDataField("FilePath", user);
+                byte[] data = matched.get(0).getAttachmentData(user);
+                file.put("fileName", fileName);
+                file.put("data", data);
+            }
             return file;
-
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
             return null;
         }
-
-
     }
-
-
 }

@@ -212,7 +212,10 @@ public class GetQcReportSamplesTask {
     protected List<HashMap<String, Object>> getAttachments(String requestId, DataRecordManager drm, User user) {
         List<HashMap<String, Object>> attachments = new ArrayList<>();
         try {
-            List<DataRecord> attachmentRequestRecords = drm.queryDataRecords("Attachment", "FilePath LIKE '%" + requestId + "%'", user);
+            List<DataRecord> attachmentRequestRecords = drm.queryDataRecords("exemplarsdmsfile", "FilePath LIKE '%" + requestId + "%'", user);
+            if (attachmentRequestRecords.size() == 0) {
+                attachmentRequestRecords = drm.queryDataRecords("Attachment", "FilePath LIKE '%" + requestId + "%'", user);
+            }
             if (attachmentRequestRecords.size() > 0) {
                 String attachmentPattern = requestId + "_(DNA_QC|RNA_QC|Library_QC|Pool_QC|cDNA_QC)_*\\d*\\.pdf";
                 Pattern pattern = Pattern.compile(attachmentPattern, Pattern.CASE_INSENSITIVE);
@@ -222,7 +225,7 @@ public class GetQcReportSamplesTask {
                         HashMap<String, Object> attachmentInfo = new HashMap<>();
                         attachmentInfo.put("recordId", record.getDataField("RecordId", user));
                         attachmentInfo.put("fileName", record.getDataField("FilePath", user));
-                        attachmentInfo.put("hideFromSampleQC", record.getDataField("HideFromSampleQC", user));
+                        //attachmentInfo.put("hideFromSampleQC", record.getDataField("HideFromSampleQC", user));
                         attachments.add(attachmentInfo);
                     }
                 }
