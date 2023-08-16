@@ -19,7 +19,7 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-//import org.mskcc.cmo.messaging.Gateway;
+import org.mskcc.cmo.messaging.Gateway;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.model.RequestSample;
 import org.mskcc.limsrest.model.RequestSampleList;
@@ -51,8 +51,8 @@ public class IgoNewRequestMetaDbPublisher {
     @Value("${nats.igo_request_validator_topic}")
     private String IGO_REQUEST_VALIDATOR_TOPIC;
 
-    //@Autowired
-    //private Gateway messagingGateway;
+    @Autowired
+    private Gateway messagingGateway;
 
     @Value("${airflow_pass}")
     private String airflow_pass;
@@ -217,7 +217,7 @@ public class IgoNewRequestMetaDbPublisher {
         // publish request json to IGO_REQUEST_VALIDATOR_TOPIC
         try {
             log.info("Publishing to 'IGO_REQUEST_VALIDATOR_TOPIC' " + IGO_REQUEST_VALIDATOR_TOPIC + ": " + requestDetails.getRequestId());
-            //messagingGateway.publish(IGO_REQUEST_VALIDATOR_TOPIC, igoRequestJson);
+            messagingGateway.publish(IGO_REQUEST_VALIDATOR_TOPIC, igoRequestJson);
         } catch (Exception e) {
             String metadbErrorMsg = "Error during attempt to publish request to topic: " + IGO_REQUEST_VALIDATOR_TOPIC;
             log.error(metadbErrorMsg, e);
