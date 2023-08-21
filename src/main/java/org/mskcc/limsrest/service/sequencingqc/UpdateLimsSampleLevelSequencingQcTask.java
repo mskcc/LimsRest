@@ -596,31 +596,33 @@ public class UpdateLimsSampleLevelSequencingQcTask {
             runName = sampleLevelSequencingQc.getValue(SeqAnalysisSampleQCModel.SEQUENCER_RUN_FOLDER, user);
             if (parentSample.size() == 1){
                 seqQcRecords = getSequencingQcRecords(parentSample.get(0), user);
-                List<DataRecord> seqRequirements = getRecordsOfTypeFromParents(seqQcRecords.get(0),
-                        SampleModel.DATA_TYPE_NAME, SeqRequirementModel.DATA_TYPE_NAME, user);
-                if (seqRequirements.size()==0){
-                    throw new NotFound(String.format("Cannot find %s DataRecord for Sample with Record Id %d", SeqRequirementModel.DATA_TYPE_NAME, parentSample.get(0).getRecordId()));
+                if (seqQcRecords.size() > 0 ) {
+                    List<DataRecord> seqRequirements = getRecordsOfTypeFromParents(seqQcRecords.get(0),
+                            SampleModel.DATA_TYPE_NAME, SeqRequirementModel.DATA_TYPE_NAME, user);
+                    if (seqRequirements.size() == 0) {
+                        throw new NotFound(String.format("Cannot find %s DataRecord for Sample with Record Id %d", SeqRequirementModel.DATA_TYPE_NAME, parentSample.get(0).getRecordId()));
+                    }
+                    DataRecord seqRequirementRecord = seqRequirements.get(0);
+                    log.info("Sequencing requirement record id: " + seqRequirementRecord.getRecordId());
+                    Object readsRequested = seqRequirementRecord.getValue(SeqRequirementModel.REQUESTED_READS, user);
+                    if (readsRequested == null) {
+                        log.info("Cannot update remaining reads since reads requested is null.");
+                        return;
+                    }
+                    log.info("Requested Reads : " + readsRequested);
+                    long totalReadsExamined = getSumSequencingReadsExamined(seqQcRecords, sampleLevelSequencingQc, runName);
+                    log.info("Total reads examined : " + totalReadsExamined);
+                    assert readsRequested != null;
+                    Long remainingReads = 0L;
+                    if ((Math.floor((double) readsRequested) * 1000000L) > totalReadsExamined) {
+                        remainingReads = ((long) Math.floor((double) readsRequested) * 1000000L) - totalReadsExamined;
+                    }
+                    seqRequirementRecord.setDataField("RemainingReads", remainingReads, user);
+                    seqRequirementRecord.setDataField(SeqRequirementModel.READ_TOTAL, totalReadsExamined, user);
+                    String msg = String.format("Updated 'RemainingReads' and 'ReadTotal'on %s related to %s record with Record Id: %d",
+                            SeqRequirementModel.DATA_TYPE_NAME, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, sampleLevelSequencingQc.getRecordId());
+                    log.info(msg);
                 }
-                DataRecord seqRequirementRecord = seqRequirements.get(0);
-                log.info("Sequencing requirement record id: " + seqRequirementRecord.getRecordId());
-                Object readsRequested = seqRequirementRecord.getValue(SeqRequirementModel.REQUESTED_READS, user);
-                if (readsRequested == null) {
-                    log.info("Cannot update remaining reads since reads requested is null.");
-                    return;
-                }
-                log.info("Requested Reads : " + readsRequested);
-                long totalReadsExamined = getSumSequencingReadsExamined(seqQcRecords, sampleLevelSequencingQc, runName);
-                log.info("Total reads examined : " + totalReadsExamined);
-                assert readsRequested != null;
-                Long remainingReads = 0L;
-                if((Math.floor((double)readsRequested) * 1000000L) > totalReadsExamined){
-                    remainingReads = ((long)Math.floor((double)readsRequested) * 1000000L) - totalReadsExamined;
-                }
-                seqRequirementRecord.setDataField("RemainingReads", remainingReads, user);
-                seqRequirementRecord.setDataField(SeqRequirementModel.READ_TOTAL, totalReadsExamined, user);
-                String msg = String.format("Updated 'RemainingReads' and 'ReadTotal'on %s related to %s record with Record Id: %d",
-                        SeqRequirementModel.DATA_TYPE_NAME, SeqAnalysisSampleQCModel.DATA_TYPE_NAME, sampleLevelSequencingQc.getRecordId());
-                log.info(msg);
             }
         } catch (IoError | RemoteException | NotFound | InvalidValue | ServerException e) {
             log.error(String.format("%s => Error while updating Remaining Reads to Sequence on %s related to %s " +
@@ -637,25 +639,29 @@ public class UpdateLimsSampleLevelSequencingQcTask {
      */
     public List<DataRecord> getSequencingQcRecords(DataRecord sample, User user){
         List<DataRecord> sequencingQcRecords = new ArrayList<>();
-        try{
+        try {
             DataRecord sampleUnderRequest = getParentSampleUnderRequest(sample, user);
             Object requestId = sample.getValue(SampleModel.REQUEST_ID, user);
             Stack<DataRecord> sampleStack = new Stack<>();
             sampleStack.add(sampleUnderRequest);
             do {
                 DataRecord stackSample = sampleStack.pop();
-                DataRecord [] childSeqQc = stackSample.getChildrenOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
-                if(childSeqQc.length > 0){
-                    Collections.addAll(sequencingQcRecords, childSeqQc);
-                }
-                DataRecord[] stackSampleChildSamples = stackSample.getChildrenOfType(SampleModel.DATA_TYPE_NAME, user);
-                for (DataRecord sa : stackSampleChildSamples) {
-                    Object saReqId = sa.getValue(SampleModel.REQUEST_ID, user);
-                    if (requestId!= null && saReqId != null && requestId.toString().equalsIgnoreCase(saReqId.toString())){
-                        sampleStack.push(sa);
+                if (stackSample != null) {
+                    DataRecord[] childSeqQc = stackSample.getChildrenOfType(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, user);
+                    if (childSeqQc.length > 0) {
+                        Collections.addAll(sequencingQcRecords, childSeqQc);
                     }
+                    DataRecord[] stackSampleChildSamples = stackSample.getChildrenOfType(SampleModel.DATA_TYPE_NAME, user);
+                    for (DataRecord sa : stackSampleChildSamples) {
+                        Object saReqId = sa.getValue(SampleModel.REQUEST_ID, user);
+                        if (requestId != null && saReqId != null && requestId.toString().equalsIgnoreCase(saReqId.toString())) {
+                            sampleStack.push(sa);
+                        }
+                    }
+                } else {
+                    log.info("SampleStack is null for sample");
                 }
-            }while (!sampleStack.isEmpty());
+            } while (!sampleStack.isEmpty());
         } catch (ServerException | RemoteException | NotFound | IoError e) {
             log.error(String.format("%s -> Error while getting %s records for Sample with Record Id %d,\n%s",
                     ExceptionUtils.getRootCause(e), SeqAnalysisSampleQCModel.DATA_TYPE_NAME, sample.getRecordId(), ExceptionUtils.getStackTrace(e)));
