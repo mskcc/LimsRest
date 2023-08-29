@@ -58,7 +58,7 @@ public class GetTenXSampleInfoTask {
                     log.info("recipe of sample " + sample.getStringVal("SampleId", user) + " is: " + recipe);
                     samplesInfo.add(ilabRequest);
                     samplesInfo.add(sampleName);
-                    if (recipe.toLowerCase().contains("feature barcoding")) { // Feature Barcoding
+                    if (recipe.toLowerCase().contains("featurebarcoding")) { // Feature Barcoding
                         String treatment = request.getStringVal("Treatment", user);
                         log.info("treatment = " + treatment);
                         recipe += ", " + treatment;
