@@ -58,22 +58,13 @@ public class GetTenXSampleInfoTask {
                     log.info("recipe of sample " + sample.getStringVal("SampleId", user) + " is: " + recipe);
                     samplesInfo.add(ilabRequest);
                     samplesInfo.add(sampleName);
-                    if (recipe.toLowerCase().contains("featurebarcoding")) { // Feature Barcoding
-                        String treatment = request.getStringVal("Treatment", user);
-                        log.info("treatment = " + treatment);
-                        recipe += ", " + treatment;
-                        samplesInfo.add(recipe);
-                        samplesToRecipes.put(sample.getStringVal("SampleId", user), samplesInfo);
-                    } else if (recipe.toLowerCase().contains("vdj")) { // VDJ
-                        String cellTypes = request.getStringVal("CellTypes", user);
-                        log.info("cellTypes = " + cellTypes);
-                        recipe += ", " + cellTypes;
-                        samplesInfo.add(recipe);
-                        samplesToRecipes.put(sample.getStringVal("SampleId", user), samplesInfo);
-                    } else { // Gene Expression
-                        samplesInfo.add(recipe);
-                        samplesToRecipes.put(sample.getStringVal("SampleId", user), samplesInfo);
-                    }
+                    String treatment = request.getStringVal("Treatment", user);
+                    log.info("treatment = " + treatment);
+                    String cellTypes = request.getStringVal("CellTypes", user);
+                    log.info("cellTypes = " + cellTypes);
+                    recipe += ", " + treatment + ", " + cellTypes;
+                    samplesInfo.add(recipe);
+                    samplesToRecipes.put(sample.getStringVal("SampleId", user), samplesInfo);
                 }
                 samplesRecipes.add(samplesToRecipes);
             }
