@@ -107,21 +107,23 @@ public class CheckOrMarkCmoRequestsTask {
                 }
                 return  String.format("%s is not cmo request", requestId);
             }
-            // if projectid is not passed to the endpoint, run for all requests in LIMS.
-            List<DataRecord> requests = dataRecordManager.queryDataRecords("Request", "IsCmoRequest = 0", user);
+
+
+            // if projectid is not passed to the endpoint, run for all requests in LIMS created after Sept. 2023
+            List<DataRecord> requests = dataRecordManager.queryDataRecords("Request", "IsCmoRequest = 0 AND ReceivedDate > 1692367976923", user);
             log.info("Total Requests: " +  requests.size());
             for (DataRecord request : requests) {
                 DataRecord[] samples = request.getChildrenOfType(SampleModel.DATA_TYPE_NAME, user);
-                if (samples.length == 0) {
+                if (samples == null || samples.length == 0) {
                     continue;
                 }
                 //get parent project's projectid for request.
-                String requestId = (String)getValueFromDataRecord(request, RequestModel.REQUEST_ID, "String", user);
-                String projectId = requestId.split("_")[0];
                 boolean bicAnalysis = false;
-                if(request.getValue(RequestModel.BICANALYSIS, user) != null){
+                if (request.getValue(RequestModel.BICANALYSIS, user) != null){
                     bicAnalysis = request.getBooleanVal(RequestModel.BICANALYSIS, user);
                 }
+                String requestId = (String)getValueFromDataRecord(request, RequestModel.REQUEST_ID, "String", user);
+                String projectId = requestId.split("_")[0];
                 String contactEmail = (String)getValueFromDataRecord(request, RequestModel.MAIL_TO, "String", user);
                 DataRecord sample = samples[0];
                 String sampleName = (String)getValueFromDataRecord(sample, SampleModel.OTHER_SAMPLE_ID, "String", user);
