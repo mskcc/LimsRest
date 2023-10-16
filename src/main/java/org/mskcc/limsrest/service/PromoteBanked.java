@@ -668,7 +668,7 @@ public class PromoteBanked extends LimsTask {
                 message.setText(iLabComment + " \n#end");
             message.setSubject(subject);
 
-            /* Writing subject and body of the email in a txt file to store it on "/skimcs/mohibullahLab/LIMS/AutomatedEmails"
+            /* Writing subject and body of the email in a txt file to store it on "/rtssdc/mohibullahLab/LIMS/AutomatedEmails"
              the sendEmail crontab script will send the email (for card creation)to Teamwork */
             try {
                 String filename = OUTBOX + "TeamworkCard-" + date + ".txt";

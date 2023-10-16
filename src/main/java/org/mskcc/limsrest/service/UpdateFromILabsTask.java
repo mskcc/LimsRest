@@ -56,7 +56,6 @@ public class UpdateFromILabsTask {
         for (String status : updateLims(vConn, dataRecordManager, user, ilabsConfigIGO, ilabsConfigCMO, requests)) {
             System.out.println(status);
         }
-
         return "Success";
     }
 
