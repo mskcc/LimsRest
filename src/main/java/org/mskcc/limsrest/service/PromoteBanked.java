@@ -69,7 +69,7 @@ public class PromoteBanked extends LimsTask {
     private RestTemplate restTemplateCMO;
     private static final String baseUrl = "https://api.ilabsolutions.com/v1/cores";
     private static final String ILABS_CONFIG = "/srv/www/sapio/lims/lims-scripts/ilabs/ilabs.yml";
-    private static final String OUTBOX = "/skimcs/mohibullahlab/LIMS/AutomatedEmails/teamworkCard/";
+    private static final String OUTBOX = "/rtssdc/mohibullahlab/LIMS/AutomatedEmails/teamworkCard/";
     private boolean iLabAbsent = false;
 
     public PromoteBanked() {
