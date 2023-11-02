@@ -36,12 +36,16 @@ public class AddInteropData {
 
         JsonNode jsonNode = null;
         try {
+            log.info("Request body: " + body);
             jsonNode = objectMapper.readTree(body);
         } catch (IOException e) {
             log.error(e.getMessage());
         }
-        if (jsonNode == null || !jsonNode.isArray()) {
-            return ResponseEntity.badRequest().body("Request body is empty or not json array!");
+        if (jsonNode == null) {
+            return ResponseEntity.badRequest().body("Request body is empty");
+        }
+        if (!jsonNode.isArray()) {
+            return ResponseEntity.badRequest().body("Request is not a json array - " + body);
         }
 
         Iterator<JsonNode> iterator = jsonNode.elements();
