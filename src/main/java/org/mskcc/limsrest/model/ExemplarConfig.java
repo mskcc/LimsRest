@@ -13,7 +13,7 @@ public class ExemplarConfig {
     private String chipPosition;
     private String chipID;
     private String preservation;
-    private Boolean cyteAssit;
+    private Boolean cyteAssist;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getChipPosition() {
@@ -29,7 +29,7 @@ public class ExemplarConfig {
         return preservation;
     }
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public Boolean getCyteAssit() {
-        return cyteAssit;
+    public Boolean getCyteAssist() {
+        return cyteAssist;
     }
 }
