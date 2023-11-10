@@ -36,7 +36,7 @@ public class BankedSampleToSampleConverter {
         sample.setNAtoExtract(bankedSample.getNAtoExtract());
 
         sample.setOtherSampleId(bankedSample.getOtherSampleId());
-        sample.setOrganism(bankedSample.getOrganism());
+        sample.setSpecies(bankedSample.getSpecies());
 
         sample.setPatientId(bankedSample.getPatientId());
         sample.setPlatform(bankedSample.getPlatform());

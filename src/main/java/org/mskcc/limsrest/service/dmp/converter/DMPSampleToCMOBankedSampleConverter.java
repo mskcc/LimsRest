@@ -67,7 +67,7 @@ public class DMPSampleToCMOBankedSampleConverter implements ExternalToBankedSamp
         bankedSample.setNAtoExtract(getNucleidAcid(dmpSample.getNucleidAcidType()));
         bankedSample.setNonLimsLibraryInput(dmpSample.getDnaInputIntoLibrary());
         bankedSample.setNonLimsLibraryOutput(dmpSample.getReceivedDnaMass());
-        bankedSample.setOrganism(RequestSpecies.HUMAN.getValue());
+        bankedSample.setSpecies(RequestSpecies.HUMAN.getValue());
         bankedSample.setOtherSampleId(getValue(dmpSample.getInvestigatorSampleId()));
 
         bankedSample.setPatientId(getValue(getPatientId(dmpSample.getDmpId())));
