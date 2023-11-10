@@ -32,7 +32,7 @@ public class SetOrCreateBanked extends LimsTask {
     String geneticAlterations;
     String naToExtract;
     String numTubes;
-    String organism;
+    String species;
     String platform;
     String preservation;
     String sampleId;
@@ -77,7 +77,7 @@ public class SetOrCreateBanked extends LimsTask {
             String concentrationUnits,
             String gender,
             String geneticAlterations,
-            String organism,
+            String species,
             String platform,
             String preservation,
             String specimenType,
@@ -129,7 +129,7 @@ public class SetOrCreateBanked extends LimsTask {
         this.geneticAlterations = geneticAlterations;
         this.naToExtract = naToExtract;
         this.numTubes = numTubes;
-        this.organism = organism;
+        this.species = species;
         this.patientId = patientId;
         this.normalizedPatientId = normalizedPatientId;
         this.cmoPatientId = cmoPatientId;
@@ -193,9 +193,9 @@ public class SetOrCreateBanked extends LimsTask {
 
             //default species values for recipes
             if (recipe.startsWith("IMPACT") || recipe.startsWith("HemePACT")) {
-                organism = "Human";
+                species = "Human";
             } else if (recipe.startsWith("M-IMPACT")) {
-                organism = "Mouse";
+                species = "Mouse";
             }
             if (assay != null && assay.length > 0 && !"".equals(assay[0])) {
                 StringBuffer sb = new StringBuffer();
@@ -245,8 +245,8 @@ public class SetOrCreateBanked extends LimsTask {
             if (!"NULL".equals(sampleClass)) {
                 bankedFields.put("SampleClass", sampleClass);
             }
-            if (!"NULL".equals(organism)) {
-                bankedFields.put("Species", organism);
+            if (!"NULL".equals(species)) {
+                bankedFields.put("Species", species);
             }
             if (!"NULL".equals(spikeInGenes)) {
                 bankedFields.put("SpikeInGenes", spikeInGenes);

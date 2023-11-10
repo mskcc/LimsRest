@@ -30,7 +30,6 @@ public class SampleSummary {
     private String naToExtract;
     private String normalizedPatientId;
     private String numTubes;
-    private String organism;
     private String patientId;
     private String plateId;
     private String platform;
@@ -48,6 +47,7 @@ public class SampleSummary {
     private String sampleType;
     private String serviceId;
     private String specimenType;
+    private String species;
     private String spikeInGenes;
     private String tissueType; // TissueSite
     private String tubeId;  // TubeBarcode
@@ -71,7 +71,6 @@ public class SampleSummary {
         userId = "";
         project = "";
         recipe = "";
-        organism = "";
         yield = 0;
         serviceId = "";
     }
@@ -344,13 +343,7 @@ public class SampleSummary {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getSpecies() {
-        return organism;
-    }
-
-    //duplicate
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public String getOrganism() {
-        return organism;
+        return species;
     }
 
     public long getDropOffDate() {
