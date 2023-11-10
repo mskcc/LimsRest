@@ -210,7 +210,7 @@ public class GetSampleQcTask {
                 ss.addConcentrationUnits("ng/uL");
                 ss.addBaseId("0");
                 ss.addVolume(1.0);
-                ss.setOrganism(s.getReferenceGenome());
+                ss.setSpecies(s.getReferenceGenome());
                 ss.setCoverage(0);
                 ss.setReadNumber(Long.valueOf("0"));
                 ss.addCmoId("PooledNormal");
@@ -328,7 +328,7 @@ public class GetSampleQcTask {
     public static void annotateSampleSummary(SampleSummary ss, Map<String, Object> sampleFields) {
         try {
             ss.setRecordId((Long) sampleFields.get("RecordId"));
-            ss.setOrganism((String) sampleFields.get("Species"));
+            ss.setSpecies((String) sampleFields.get("Species"));
             runAndCatchNpe(() -> ss.setRecipe((String) sampleFields.get("Recipe")));
             runAndCatchNpe(() -> ss.setTumorOrNormal((String) sampleFields.get("TumorOrNormal")));
             runAndCatchNpe(() -> ss.setTumorType((String) sampleFields.get("TumorType")));
