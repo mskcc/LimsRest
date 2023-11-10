@@ -45,7 +45,7 @@ public class SetBankedSample {
             @RequestParam(value = "knownGeneticAlteration", defaultValue = "NULL") String geneticAlterations,
             @RequestParam(value = "rowIndex") String rowIndex,
             @RequestParam(value = "transactionId") String transactionId,
-            @RequestParam(value = "organism", defaultValue = "NULL") String organism,
+            @RequestParam(value = "species", defaultValue = "NULL") String species,
             @RequestParam(value = "platform", defaultValue = "NULL") String platform,
             @RequestParam(value = "preservation", defaultValue = "NULL") String preservation,
             @RequestParam(value = "specimenType", defaultValue = "NULL") String specimenType,
@@ -85,7 +85,7 @@ public class SetBankedSample {
         Double ep = null;
         if (estimatedPurity != null) {
             try {
-                ep = new Double(estimatedPurity);
+                ep = Double.parseDouble(estimatedPurity);
             } catch (NumberFormatException nfe) {
                 ep = 0.0d;
             }
@@ -109,7 +109,7 @@ public class SetBankedSample {
                 concentrationUnits,
                 gender,
                 geneticAlterations,
-                organism,
+                species,
                 platform,
                 preservation,
                 specimenType,

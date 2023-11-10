@@ -181,10 +181,8 @@ public class GetBanked {
                 if (volume != null)
                     ss.addVolume(volume);
 
-                if (sampleFields.containsKey("Organism") && sampleFields.get("Organism") != null && !sampleFields.get("Organism").equals("")) {
-                    ss.setOrganism((String) sampleFields.get("Organism"));
-                } else if (sampleFields.containsKey("Species")) {
-                    ss.setOrganism((String) sampleFields.get("Species"));
+                if (sampleFields.containsKey("Species")) {
+                    ss.setSpecies((String) sampleFields.get("Species"));
                 }
                 ss.setRowIndex((Integer) sampleFields.get("RowIndex"));
                 ss.setTransactionId((Long) sampleFields.get("TransactionId"));
