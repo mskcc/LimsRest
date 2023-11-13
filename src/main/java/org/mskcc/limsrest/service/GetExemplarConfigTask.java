@@ -37,13 +37,13 @@ public class GetExemplarConfigTask {
             DataRecord visiumInfo = visiumSamples.get(0);
             String chipPosition = visiumInfo.getStringVal("ChipPosition", user);
             String chipID = visiumInfo.getStringVal("ChipId", user);
-            Boolean cyteAssist = visiumInfo.getBooleanVal("CyteAssist", user);
+            Boolean cytAssist = visiumInfo.getBooleanVal("CytAssist", user);
             log.info("Found chip ID: " + chipID + " chip position:" + chipPosition);
 
             // run 2nd LIMS query to determine if preservation is FFPE
             DataRecord sample = drm.queryDataRecords("Sample", "SampleId = '" + igoId + "'", user).get(0);
             String preservation = sample.getStringVal("Preservation", user);
-            ExemplarConfig result = new ExemplarConfig(chipPosition, chipID, preservation, cyteAssist);
+            ExemplarConfig result = new ExemplarConfig(chipPosition, chipID, preservation, cytAssist);
             return result;
         } catch (Exception e) {
             e.printStackTrace();
