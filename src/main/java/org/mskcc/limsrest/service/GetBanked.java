@@ -142,7 +142,6 @@ public class GetBanked {
                 ss.addCmoId((String) sampleFields.get("OtherSampleId"));
                 ss.setPatientId((String) sampleFields.get("PatientId"));
                 ss.setPlateId(sample.getStringVal("PlateId", user));
-                ss.setPlatform((String) sampleFields.get("Platform"));
                 ss.setPreservation((String) sampleFields.get("Preservation"));
                 ss.setRecipe(sample.getStringVal("Recipe", user));
                 ss.setRecordId((Long) sampleFields.get("RecordId"));

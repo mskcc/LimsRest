@@ -33,7 +33,6 @@ public class SetOrCreateBanked extends LimsTask {
     String naToExtract;
     String numTubes;
     String species;
-    String platform;
     String preservation;
     String sampleId;
     String userId;
@@ -78,7 +77,6 @@ public class SetOrCreateBanked extends LimsTask {
             String gender,
             String geneticAlterations,
             String species,
-            String platform,
             String preservation,
             String specimenType,
             String sampleType,
@@ -133,7 +131,6 @@ public class SetOrCreateBanked extends LimsTask {
         this.patientId = patientId;
         this.normalizedPatientId = normalizedPatientId;
         this.cmoPatientId = cmoPatientId;
-        this.platform = platform;
         this.preservation = preservation;
         this.specimenType = specimenType;
         this.spikeInGenes = spikeInGenes;
@@ -229,9 +226,6 @@ public class SetOrCreateBanked extends LimsTask {
             }
             if (!"NULL".equals(geneticAlterations)) {
                 bankedFields.put("GeneticAlterations", geneticAlterations);
-            }
-            if (!"NULL".equals(platform)) {
-                bankedFields.put("Platform", platform);
             }
             if (!"NULL".equals(preservation)) {
                 bankedFields.put("Preservation", preservation);

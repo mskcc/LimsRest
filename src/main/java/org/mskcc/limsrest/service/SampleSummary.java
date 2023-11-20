@@ -32,7 +32,6 @@ public class SampleSummary {
     private String numTubes;
     private String patientId;
     private String plateId;
-    private String platform;
     private String preservation;
     private String project;  // request
     private String recipe;
@@ -157,11 +156,6 @@ public class SampleSummary {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getPatientId() {
         return patientId;
-    }
-
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public String getPlatform() {
-        return platform;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

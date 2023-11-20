@@ -110,7 +110,6 @@ public class SetBankedSample {
                 gender,
                 geneticAlterations,
                 species,
-                platform,
                 preservation,
                 specimenType,
                 sampleType,

@@ -92,7 +92,6 @@ public class AddChildSample {
             child.setDataField("Volume", parentFields.get("Volume"), user);
             child.setDataField("Species", parentFields.get("Species"), user);
             child.setDataField("Preservation", parentFields.get("Preservation"), user);
-            child.setDataField("Platform", parentFields.get("Platform"), user);
             child.setDataField("Recipe", parentFields.get("Recipe"), user);
             child.setDataField("IsControl", parentFields.get("IsControl"), user);
             child.setDataField("TumorOrNormal", parentFields.get("TumorOrNormal"), user);

@@ -39,7 +39,6 @@ public class BankedSampleToSampleConverter {
         sample.setSpecies(bankedSample.getSpecies());
 
         sample.setPatientId(bankedSample.getPatientId());
-        sample.setPlatform(bankedSample.getPlatform());
         sample.setPreservation(bankedSample.getPreservation());
 
         if (bankedSample.getFields().containsKey("Volume")) {

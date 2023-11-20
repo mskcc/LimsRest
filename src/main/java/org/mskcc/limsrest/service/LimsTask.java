@@ -68,8 +68,6 @@ public abstract class LimsTask implements VeloxExecutable<Object>, Callable<Obje
     public static void annotateRequestDetailed(RequestDetailed requestDetailed, DataRecord request, User user) {
         try {
             Map<String, Object> requestFields = request.getFields(user);
-
-            runAndCatchNpe(() -> requestDetailed.setApplications((String) requestFields.get("PlatformApplication")));
             runAndCatchNpe(() -> requestDetailed.setClinicalCorrelative((String) requestFields.get
                     ("ClinicalCorrelativeType")));
             runAndCatchNpe(() -> requestDetailed.setCostCenter((String) requestFields.get("CostCenter")));
