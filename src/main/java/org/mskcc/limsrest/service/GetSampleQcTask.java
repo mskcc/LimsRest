@@ -342,7 +342,6 @@ public class GetSampleQcTask {
             runAndCatchNpe(() -> ss.addConcentration((Double) sampleFields.get("Concentration")));
             runAndCatchNpe(() -> ss.addConcentrationUnits((String) sampleFields.get("ConcentrationUnits")));
             runAndCatchNpe(() -> ss.addVolume((Double) sampleFields.get("Volume")));
-            runAndCatchNpe(() -> ss.setPlatform((String) sampleFields.get("Platform")));
             ss.setDropOffDate((Long) sampleFields.get("DateCreated"));
         } catch (Throwable e) {
             ss.addCmoId("Annotation failed:" + e.getMessage());
