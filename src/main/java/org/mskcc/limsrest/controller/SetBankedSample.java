@@ -45,8 +45,8 @@ public class SetBankedSample {
             @RequestParam(value = "knownGeneticAlteration", defaultValue = "NULL") String geneticAlterations,
             @RequestParam(value = "rowIndex") String rowIndex,
             @RequestParam(value = "transactionId") String transactionId,
+            @RequestParam(value = "organism", defaultValue = "NULL") String organism,
             @RequestParam(value = "species", defaultValue = "NULL") String species,
-            @RequestParam(value = "platform", defaultValue = "NULL") String platform,
             @RequestParam(value = "preservation", defaultValue = "NULL") String preservation,
             @RequestParam(value = "specimenType", defaultValue = "NULL") String specimenType,
             @RequestParam(value = "sampleType", defaultValue = "NULL") String sampleType,
@@ -76,11 +76,14 @@ public class SetBankedSample {
             @RequestParam(value = "cmoPatientId", defaultValue = "NULL") String cmoPatientId,
             @RequestParam(value = "numberOfAmplicons", defaultValue = "0", required = false) String numberOfAmplicons) {
 
-        log.info("Starting to set banked sample " + userId + " by user " + user);
+        log.info("Starting to set banked sample " + userId + " by user " + user + "organism:"+ organism + ", species:" + species);
         if (assay == null) {
             assay = new String[1];
             assay[0] = "NULL";
         }
+
+        if (species == null || "NULL".equals(species))
+            species = organism;
 
         Double ep = null;
         if (estimatedPurity != null) {
