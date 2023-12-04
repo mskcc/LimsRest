@@ -71,11 +71,12 @@ public class GetGeneralInfo {
         formValues.put("CC", "FIELD NOT ACCESSIBLE");
         formValues.put("FUND", "FIELD NOT ACCESSIBLE");
 
-        String url = String.format("%s/%s/service_requests.json?name=%s", baseUrl, core_id_igo, srName);
-
+        String url = String.format("%s/%s/service_requests.json?name=%s&from_date=20200101", baseUrl, core_id_igo, srName);
+        System.out.println("URL:" + url);
         ObjectNode res = restTemplateIGO.getForObject(url, ObjectNode.class);
         try {
             JsonNode arrayNode = res.get("ilab_response").get("service_requests");
+            System.out.println(arrayNode);
             if (arrayNode == null || arrayNode.size() != 1) {
                 System.out.println("total_service_requests=" + (arrayNode == null ? 0 : arrayNode.size()) + " for " + srName);
                 Map<String, String> map = new HashMap<>();
