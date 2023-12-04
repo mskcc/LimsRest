@@ -575,7 +575,7 @@ public class PromoteBanked extends LimsTask {
             boolean hasCustomForm = false;
 
             // request 12437 is older than 2 years, the ilabs API defaults to only search back 2 years so add from_date
-            String url = String.format("%s/%s/service_requests.json?name=%s&from_date=20200101", baseUrl, core_id_igo, serviceId);
+            String url = String.format("%s/%s/service_requests.json?name=%s", baseUrl, core_id_igo, serviceId);
             String url_cmo = String.format("%s/%s/service_requests.json?name=%s", baseUrl, core_id_cmo, serviceId);
             ObjectNode res = restTemplateIGO.getForObject(url, ObjectNode.class);
             ObjectNode res_cmo = restTemplateCMO.getForObject(url_cmo, ObjectNode.class);
