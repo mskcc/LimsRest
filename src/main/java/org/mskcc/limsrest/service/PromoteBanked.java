@@ -568,24 +568,23 @@ public class PromoteBanked extends LimsTask {
             String core_id_cmo = ilabsConfigCMO.getKey();
 
             log.info("IGO core id is: " + core_id_igo);
-            log.info("CMO core id is: " + core_id_cmo);
+            //log.info("CMO core id is: " + core_id_cmo);
             this.restTemplateIGO = restTemplate(token_igo);
-            this.restTemplateCMO = restTemplate(token_cmo);
+            //this.restTemplateCMO = restTemplate(token_cmo);
             List<CustomForm> customForms = new ArrayList<>();
             boolean hasCustomForm = false;
 
             // request 12437 is older than 2 years, the ilabs API defaults to only search back 2 years so add from_date
             String url = String.format("%s/%s/service_requests.json?name=%s", baseUrl, core_id_igo, serviceId);
-            String url_cmo = String.format("%s/%s/service_requests.json?name=%s", baseUrl, core_id_cmo, serviceId);
+            //String url_cmo = String.format("%s/%s/service_requests.json?name=%s", baseUrl, core_id_cmo, serviceId);
             ObjectNode res = restTemplateIGO.getForObject(url, ObjectNode.class);
-            ObjectNode res_cmo = restTemplateCMO.getForObject(url_cmo, ObjectNode.class);
-            if ((res == null || res.equals("")) && (res_cmo == null || res_cmo.equals(""))) {
+            //ObjectNode res_cmo = restTemplateCMO.getForObject(url_cmo, ObjectNode.class);
+            if ((res == null || res.equals(""))) {
                 iLabAbsent = true;
                 log.info("IGO/CMO iLabAbsent1: " + iLabAbsent);
                 return;
             }
             log.info("res = " + res);
-            log.info("res_cmo = " + res_cmo);
 
             JsonNode arrayNode = res.get("ilab_response").get("service_requests");
             if (arrayNode == null || arrayNode.equals("")) {
