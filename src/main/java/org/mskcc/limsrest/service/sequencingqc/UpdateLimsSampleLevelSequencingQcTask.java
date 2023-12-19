@@ -89,7 +89,6 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 String sampleName = String.valueOf(qcDataVals.get("OtherSampleId"));
                 String sampleId = String.valueOf(qcDataVals.get("SampleId")); // aka base IGO ID
                 String requestId = String.valueOf(qcDataVals.get("Request"));
-                //String medianCoverage = String.valueOf(qcDataVals.get("MedianCoverage"));
                 double medianCoverage = qcDataVals.get("median_COVERAGE") != JSONObject.NULL ? Double.parseDouble(String.valueOf(qcDataVals.get("median_COVERAGE"))) : 0.0;
                 boolean isDLP = false;
                 DataRecord librarySample = null;
