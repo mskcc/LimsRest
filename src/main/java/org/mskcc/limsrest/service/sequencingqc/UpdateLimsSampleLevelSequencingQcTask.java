@@ -1,7 +1,6 @@
 package org.mskcc.limsrest.service.sequencingqc;
 
 import com.velox.api.datarecord.*;
-import com.velox.api.exception.recoverability.serverexception.UnrecoverableServerException;
 import com.velox.api.user.User;
 import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
@@ -89,7 +88,6 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                 String sampleName = String.valueOf(qcDataVals.get("OtherSampleId"));
                 String sampleId = String.valueOf(qcDataVals.get("SampleId")); // aka base IGO ID
                 String requestId = String.valueOf(qcDataVals.get("Request"));
-                double medianCoverage = qcDataVals.get("median_COVERAGE") != JSONObject.NULL ? Double.parseDouble(String.valueOf(qcDataVals.get("median_COVERAGE"))) : 0.0;
                 boolean isDLP = false;
                 DataRecord librarySample = null;
                 try {
@@ -351,6 +349,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         long readPairDupes = statsData.get("read_PAIRS_DUPLICATES") != JSONObject.NULL ? Long.parseLong(String.valueOf(statsData.get("read_PAIRS_DUPLICATES"))) : 0;
         long unpairedReads = statsData.get("unpairedReads") != JSONObject.NULL ? Long.parseLong(String.valueOf(statsData.get("unpairedReads"))) : 0;
         double meanCoverage = statsData.get("mean_COVERAGE") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("mean_COVERAGE"))) : 0.0;
+        double medianCoverage = statsData.get("median_COVERAGE") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("median_COVERAGE"))) : 0.0;
         double meanTargetCoverage = statsData.get("mean_TARGET_COVERAGE") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("mean_TARGET_COVERAGE"))) : 0.0;
         double percentTarget100X = statsData.get("pct_TARGET_BASES_100X") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("pct_TARGET_BASES_100X"))) : 0.0;
         double percentTarget30X = statsData.get("pct_TARGET_BASES_30X") != JSONObject.NULL ? Double.parseDouble(String.valueOf(statsData.get("pct_TARGET_BASES_30X"))) : 0.0;
@@ -376,7 +375,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         SampleSequencingQc qc = new SampleSequencingQc(sampleId, otherSampleId, request,
                 baitSet, sequencerRunFolder, seqQCStatus, readsExamined,
                 totalReads, unmappedDupes, readPairDupes, unpairedReads, meanCoverage,
-                meanTargetCoverage, percentTarget100X, percentTarget30X, percentTarget10X,
+                meanTargetCoverage, medianCoverage, percentTarget100X, percentTarget30X, percentTarget10X,
                 percentAdapters, percentCodingBases, percentExcBaseQ, percentExcDupe,
                 percentExcMapQ, percentExcTotal, percentIntergenicBases, percentIntronicBases,
                 percentMrnaBases, percentOffBait, percentRibosomalBases, percentUtrBases,

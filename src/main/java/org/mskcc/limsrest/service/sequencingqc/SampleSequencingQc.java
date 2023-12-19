@@ -22,6 +22,7 @@ public class SampleSequencingQc {
     long unpairedReads;
     double meanCoverage;
     double meanTargetCoverage;
+    double medianCoverage;
     double percentTarget100X;
     double percentTarget30X;
     double percentTarget10X;
@@ -58,6 +59,7 @@ public class SampleSequencingQc {
         qcValues.put("UnpairedReads", this.unpairedReads);
         qcValues.put("MeanCoverage", this.meanCoverage);
         qcValues.put("MeanTargetCoverage", this.meanTargetCoverage);
+        qcValues.put("MedianCoverage", this.medianCoverage);
         qcValues.put("PercentTarget100X", this.percentTarget100X);
         qcValues.put("PercentTarget30X", this.percentTarget30X);
         qcValues.put("PercentTarget10X", this.percentTarget10X);
