@@ -13,6 +13,7 @@ public class SampleQcSummary {
     private String qcUnits;
     private String quantUnits;
     private double MEAN_COVERAGE;
+    private double median_COVERAGE;
     private double PCT_EXC_MAPQ;
     private double PCT_EXC_DUPE;
     private double PCT_EXC_BASEQ;
@@ -89,6 +90,8 @@ public class SampleQcSummary {
     public double getMeanTargetCoverage() {
         return this.meanTargetCoverage;
     }
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public double getMedian_COVERAGE() { return this.median_COVERAGE; }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public double getPercentAdapters() {

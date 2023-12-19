@@ -248,6 +248,7 @@ public class GetSampleQcTask {
             runAndCatchNpe(() -> qcSummary.setBaitSet((String) qcFields.get("BaitSet")));
             runAndCatchNpe(() -> qcSummary.setMeanTargetCoverage((Double) qcFields.get("MeanTargetCoverage")));
             runAndCatchNpe(() -> qcSummary.setMEAN_COVERAGE((Double) qcFields.get("MeanCoverage")));
+            runAndCatchNpe(() -> qcSummary.setMedian_COVERAGE((Double) qcFields.get("MedianCoverage")));
             runAndCatchNpe(() -> qcSummary.setPercentAdapters((Double) qcFields.get("PercentAdapters")));
             runAndCatchNpe(() -> qcSummary.setPercentDuplication((Double) qcFields.get("PercentDuplication")));
             runAndCatchNpe(() -> qcSummary.setPercentOffBait((Double) qcFields.get("PercentOffBait")));
