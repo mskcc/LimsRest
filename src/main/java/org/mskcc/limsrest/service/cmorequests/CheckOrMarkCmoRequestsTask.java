@@ -107,8 +107,9 @@ public class CheckOrMarkCmoRequestsTask {
                 }
                 return  String.format("%s is not cmo request", requestId);
             }
+
             // if projectid is not passed to the endpoint, run for all requests in LIMS created after Sept. 2023
-            List<DataRecord> requests = dataRecordManager.queryDataRecords("Request", "IsCmoRequest = 0 AND ReceivedDate > 1690715557000", user);
+            List<DataRecord> requests = dataRecordManager.queryDataRecords("Request", "IsCmoRequest = 0 AND REQUESTDATE > 1690715557000", user);
 
             log.info("Total Requests: " +  requests.size());
             for (DataRecord request : requests) {
