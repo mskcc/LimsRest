@@ -5,17 +5,16 @@ import com.velox.api.datarecord.AuditLogEntry;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.user.User;
+import com.velox.api.util.SortedImmutableList;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.RequestModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
+import org.mskcc.limsrest.util.Utils;
 import org.springframework.security.access.prepost.PreAuthorize;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.mskcc.limsrest.util.Utils.*;
 
@@ -113,8 +112,9 @@ public class GetDeliveredTask {
             } else {
                 recentDeliveries = dataRecordManager.queryDataRecords("Request", "RecentDeliveryDate > " + searchPoint + " AND (Investigatoremail = '" + investigator + "' OR LabHeadEmail = '" + investigator + "')", user);
             }
-            List<List<DataRecord>> childSamples = dataRecordManager.getChildrenOfType(recentDeliveries, "Sample", user);
-            List<List<DataRecord>> childPlates = dataRecordManager.getChildrenOfType(recentDeliveries, "Plate", user);
+            SortedImmutableList<DataRecord> immutableList = new SortedImmutableList<>(recentDeliveries);
+            List<List<DataRecord>> childSamples = dataRecordManager.getChildrenOfType(immutableList, "Sample", user);
+            List<List<DataRecord>> childPlates = dataRecordManager.getChildrenOfType(immutableList, "Plate", user);
             for (int i = 0; i < recentDeliveries.size(); i++) {
                 DataRecord request = recentDeliveries.get(i);
                 Map<String, Object> requestFields = request.getFields(user);
@@ -127,12 +127,12 @@ public class GetDeliveredTask {
                 rs.setAnalysisType(getRecordStringValue(request, "AnalysisType", user));
                 rs.setRequestType(getRecordStringValue(request, RequestModel.REQUEST_NAME, user));
                 rs.setProjectManager(getRecordStringValue(request, RequestModel.PROJECT_MANAGER, user));
-                rs.setSampleNumber(getRecordShortValue(request, RequestModel.SAMPLE_NUMBER, user));
-                rs.setReceivedDate(getRecordLongValue(request, RequestModel.RECEIVED_DATE, user));
+                //rs.setSampleNumber(getRecordShortValue(request, RequestModel.SAMPLE_NUMBER, user));
+                //rs.setReceivedDate(getRecordLongValue(request, RequestModel.RECEIVED_DATE, user));
 
                 List<DataRecord> childrenOfRequest = childSamples.get(i);
                 List<DataRecord> childrenPlatesOfRequest = childPlates.get(i);
-                List<List<DataRecord>> childPlateSamples = dataRecordManager.getChildrenOfType(childrenPlatesOfRequest, "Sample", user);
+                List<List<DataRecord>> childPlateSamples = dataRecordManager.getChildrenOfType(new SortedImmutableList<>(childrenPlatesOfRequest), "Sample", user);
                 for (List<DataRecord> plateSamples : childPlateSamples) {
                     for (DataRecord plateSamp : plateSamples) {
                         try {
@@ -144,8 +144,8 @@ public class GetDeliveredTask {
                     }
                 }
 
-                List<List<DataRecord>> sampleQcs = dataRecordManager.getDescendantsOfType(childrenOfRequest, "SeqAnalysisSampleQC", user);
-                List<List<Map<String, Object>>> allCorrectedFields = dataRecordManager.getFieldsForChildrenOfType(childrenOfRequest, "SampleCMOInfoRecords", user);
+                List<List<DataRecord>> sampleQcs = dataRecordManager.getDescendantsOfType(new SortedImmutableList<>(childrenOfRequest), "SeqAnalysisSampleQC", user);
+                List<List<Map<String, Object>>> allCorrectedFields = dataRecordManager.getFieldsForChildrenOfType(new SortedImmutableList<>(childrenOfRequest), "SampleCMOInfoRecords", user);
                 List<AuditLogEntry> reqHistory = auditlog.getAuditLogHistory(request, false, user);
                 for (AuditLogEntry logline : reqHistory) {
                     if (logline.dataFieldName.equals("RecentDeliveryDate")) {
@@ -170,8 +170,8 @@ public class GetDeliveredTask {
                         ss.addRequest(sampleRequestId);
                     } catch (NullPointerException npe) {
                     }
-                    //log.debug(sampleFields.get("SampleId")); // this will takeover the log for projects w/many samples
-                    ss.addBaseId((String) sampleFields.get("SampleId"));
+                    log.debug(Utils.getBaseSampleId((String) sampleFields.get("SampleId"))); // this will takeover the log for projects w/many samples
+                    ss.addBaseId(Utils.getBaseSampleId((String) sampleFields.get("SampleId")));
                     ss.addCmoId((String) sampleFields.get("OtherSampleId"));
                     try {
                         ss.setSpecies((String) sampleFields.get("Species"));
