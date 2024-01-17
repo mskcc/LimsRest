@@ -18,31 +18,33 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.util.HashMap;
 
-//Get Attachment File by its record id.
 @RestController
 @RequestMapping("/")
-public class GetAttachmentFile {
-    private static Log log = LogFactory.getLog(GetAttachmentFile.class);
+public class GetDLPFieldMapFile {
+    private static Log log = LogFactory.getLog(GetDLPFieldMapFile.class);
     private final ConnectionLIMS conn;
 
-    public GetAttachmentFile(ConnectionLIMS conn) {
+    public GetDLPFieldMapFile(ConnectionLIMS conn) {
         this.conn = conn;
     }
 
-    @ApiOperation(httpMethod = "GET", value = "Get Attachment File by its record id.", response = Byte.class, tags = "/getAttachmentFile")
-    @GetMapping("/getAttachmentFile")
-    public ResponseEntity<byte[]> getAttachmentFile(@RequestParam(value = "recordId", required = true) String recordId) throws IOException {
-        log.info("Starting /getAttachmentFile");
+    @ApiOperation(httpMethod = "GET", value = "Get Attachment File by DLP chip number.", response = Byte.class, tags = "/getDLPFieldMapFile")
+    @GetMapping("/getDLPFieldMapFile")
+    public ResponseEntity<byte[]> getDLPFieldMapFile(@RequestParam(value = "chipNumber", required = true) String chipNumber) throws IOException {
+        log.info("Starting /getDLPFieldMapFile");
 
-        GetAttachmentFileTask task = new GetAttachmentFileTask(recordId, null, conn);
+        if (chipNumber.equals("") || chipNumber.length() != 7)
+            throw new IOException("Invalid DLP chip number, expected string length must be 7");
+
+        GetAttachmentFileTask task = new GetAttachmentFileTask(null, chipNumber, conn);
         HashMap<String, Object> file = task.execute();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
         headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.get("fileName"));
 
-        log.info("Returning Attachment " + file.get("fileName"));
-        headers.setContentType(MediaType.APPLICATION_PDF);
+        log.info("Returning DLP Field Map (.fld) file " + file.get("fileName"));
+        headers.setContentType(MediaType.TEXT_PLAIN);
 
         ResponseEntity<byte[]> response = new ResponseEntity<>((byte[]) file.get("data"), headers, HttpStatus.OK);
         return response;

@@ -17,10 +17,12 @@ import java.util.List;
 public class GetAttachmentFileTask {
     private static Log log = LogFactory.getLog(GetAttachmentFileTask.class);
     protected String recordId;
+    protected String fileNameContains;
     private ConnectionLIMS conn;
 
-    public GetAttachmentFileTask(String recordId, ConnectionLIMS conn) {
+    public GetAttachmentFileTask(String recordId, String fileNameContains, ConnectionLIMS conn) {
         this.recordId = recordId;
+        this.fileNameContains = fileNameContains;
         this.conn = conn;
     }
 
@@ -31,7 +33,7 @@ public class GetAttachmentFileTask {
         DataRecordManager dataRecordManager = vConn.getDataRecordManager();
         HashMap<String, Object> file = new HashMap<>();
         try {
-            log.info("Searching for RecordId ='" + recordId + "'");
+            log.info("Searching for RecordId ='" + recordId + "'" + " file name contains: " + fileNameContains);
             // search ExemplarSDMSFile table first where QC files are after August 12, 2023
             List<DataRecord> matched = dataRecordManager.queryDataRecords("ExemplarSDMSFile", "RecordId =" + recordId, user);
             if (matched.size() > 0) {
@@ -44,7 +46,11 @@ public class GetAttachmentFileTask {
                 file.put("data", data);
                 is.close();
             } else if (matched.size() == 0) {
-                matched = dataRecordManager.queryDataRecords("Attachment", "RecordId =" + recordId, user);
+                if (recordId != null)
+                    matched = dataRecordManager.queryDataRecords("Attachment", "RecordId =" + recordId, user);
+                else
+                    matched = dataRecordManager.queryDataRecords("Attachment", "FILEPATH LIKE '%" + fileNameContains + "%'", user);
+
                 String fileName = (String) matched.get(0).getDataField("FilePath", user);
                 byte[] data = matched.get(0).getAttachmentData(user);
                 file.put("fileName", fileName);
