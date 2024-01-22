@@ -671,13 +671,14 @@ public class PromoteBanked extends LimsTask {
             /* Writing subject and body of the email in a txt file to store it on "/skimcs/mohibullahLab/LIMS/AutomatedEmails"
              the sendEmail crontab script will send the email (for card creation)to Teamwork */
             try {
-                String filename = OUTBOX + "TeamworkCard-" + date + ".txt";
+                String filename = OUTBOX + "TeamworkCard-" + date + "_" + requestId + ".txt";
+                log.info("Writing TeamworkCard " + filename);
                 BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
                 writer.write(subject + "\n" + iLabComment + " \n#end");
                 writer.close();
-                System.out.println("Successfully wrote to the teamwork card file.");
+                log.info("Successfully wrote to the teamwork card file: " + filename);
             } catch (IOException e) {
-                System.out.println("An error occurred while writing teamwork card file.");
+                log.info("An error occurred while writing teamwork card file.");
                 e.printStackTrace();
             }
 
