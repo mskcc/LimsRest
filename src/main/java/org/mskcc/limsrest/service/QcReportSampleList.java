@@ -108,6 +108,7 @@ public class QcReportSampleList {
             public String sourceSampleId;
             public Double A260280;
             public Double A260230;
+            public Double sizeBp;
 
             public DnaReportSample(Map<String, Object> sampleFields) {
                 super(sampleFields);
@@ -118,6 +119,7 @@ public class QcReportSampleList {
                 this.sourceSampleId = (String) sampleFields.get("SourceSampleId");
                 this.A260230 = (Double) sampleFields.get("A260230");
                 this.A260280 = (Double) sampleFields.get("A260280");
+                this.sizeBp = (Double) sampleFields.get("sizeBp");
             }
 
         }
