@@ -31,7 +31,8 @@ public class GetInvestigatorDecisionBlankTask {
             DataRecordManager drm = vConn.getDataRecordManager();
             HashMap<String,String> emptyDecision = new HashMap<>();
 
-            String query = "INVESTIGATORDECISION IS NULL OR INVESTIGATORDECISION = ''";
+            Long oneYearAgo = System.currentTimeMillis() - 31556952000L; // only include samples created in the last year
+            String query = "INVESTIGATORDECISION IS NULL OR INVESTIGATORDECISION = '' AND DATECREATED > " + oneYearAgo.toString();
             log.info("Querying LIMS:  " + query);
 
             List<DataRecord> requestList1 = drm.queryDataRecords("QcReportDna", query, user);
