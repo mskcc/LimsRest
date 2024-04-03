@@ -11,6 +11,7 @@ public class CheckOrMarkCmoRequestsTaskTests {
     public void isCmoRequest_test(){
         assertTrue(CheckOrMarkCmoRequestsTask.isCmoRequest("skicmopm@mskcc.org", "IMPACT468", true));
         assertTrue(CheckOrMarkCmoRequestsTask.isCmoRequest("johndoe@mskcc.org", "IMPACT468", true));
+        assertTrue(CheckOrMarkCmoRequestsTask.isCmoRequest("johndoe@mskcc.org", "HC_IMPACT", true));
         assertFalse(CheckOrMarkCmoRequestsTask.isCmoRequest("johndoe@mskcc.org", "ChipSeq", true));
         assertFalse(CheckOrMarkCmoRequestsTask.isCmoRequest("johndoe@mskcc.org", "ChipSeq", false));
     }
@@ -33,6 +34,7 @@ public class CheckOrMarkCmoRequestsTaskTests {
         assertTrue(CheckOrMarkCmoRequestsTask.isCmoRecipe("MSK-ACCESS_v1", false));
         assertTrue(CheckOrMarkCmoRequestsTask.isCmoRecipe("MSK-ACCESS_v1", true));
         assertTrue(CheckOrMarkCmoRequestsTask.isCmoRecipe("WholeExomeSequencing", true));
+        assertTrue(CheckOrMarkCmoRequestsTask.isCmoRecipe("WES_Human", true));
         assertFalse(CheckOrMarkCmoRequestsTask.isCmoRecipe("WholeExomeSequencing", false));
         assertFalse(CheckOrMarkCmoRequestsTask.isCmoRecipe("RNASeq_RiboDeplete", true));
         assertFalse(CheckOrMarkCmoRequestsTask.isCmoRecipe("RNASeq_RiboDeplete", false));
