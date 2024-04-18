@@ -40,7 +40,7 @@ public class GetDeliveredTask {
     public void init(int time, String units) {
         this.time = time;
         this.units = units;
-        this. investigator = "NULL";
+        this.investigator = "NULL";
     }
 
     public void init(String investigator) {
@@ -115,10 +115,11 @@ public class GetDeliveredTask {
             SortedImmutableList<DataRecord> immutableList = new SortedImmutableList<>(recentDeliveries);
             List<List<DataRecord>> childSamples = dataRecordManager.getChildrenOfType(immutableList, "Sample", user);
             List<List<DataRecord>> childPlates = dataRecordManager.getChildrenOfType(immutableList, "Plate", user);
-            for (int i = 0; i < recentDeliveries.size(); i++) {
-                DataRecord request = recentDeliveries.get(i);
+            for (int i = 0; i < immutableList.size(); i++) {
+                DataRecord request = immutableList.get(i);
                 Map<String, Object> requestFields = request.getFields(user);
                 String requestId = (String) requestFields.get("RequestId");
+                log.info("Processing RequestId:" + requestId);
                 RequestSummary rs = new RequestSummary(requestId);
 
                 rs.setInvestigator(getRecordStringValue(request, RequestModel.INVESTIGATOR, user));
