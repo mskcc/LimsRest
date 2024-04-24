@@ -84,7 +84,7 @@ public class ProjectSampleTree {
         /**
          * The stages we care about are library prep (where DNA/RNA is input) & library capture (where library is input)
          */
-        if (STAGE_LIBRARY_PREP.equals(stage) || STAGE_LIBRARY_CAPTURE.equals(stage)) {
+        //if (STAGE_LIBRARY_PREP.equals(stage) || STAGE_LIBRARY_CAPTURE.equals(stage)) {
             String stageKey = stageToMaterialMap.get(stage);
             if(!this.sampleData.containsKey(stageKey)){
                 // Add concentration volume
@@ -98,7 +98,7 @@ public class ProjectSampleTree {
                     this.sampleData.put(stageKey, createQtyMap(remainingVolume, mass, concentration, concentrationUnits));
                 }
             }
-        }
+        //}
     }
 
     public boolean isQcIgoComplete() {
