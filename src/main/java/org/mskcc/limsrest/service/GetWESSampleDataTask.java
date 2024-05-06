@@ -357,7 +357,7 @@ public class GetWESSampleDataTask {
                 }
             } while (!sampleStack.isEmpty());
         } catch (Exception e) {
-            log.error(String.format("Error occured while finding parent Request for Sample %s\n%s", sample.getStringVal("SampleId", user), Arrays.toString(e.getStackTrace())));
+            log.error(String.format("Error occurred while finding parent Request for Sample %s\n%s", sample.getStringVal("SampleId", user), Arrays.toString(e.getStackTrace())));
         }
         return null;
     }
@@ -408,9 +408,9 @@ public class GetWESSampleDataTask {
             }
         }
         catch (RemoteException e) {
-            log.error(String.format("Error occured while validating Request Type for request with Record ID %d\n%s", request.getRecordId(), Arrays.toString(e.getStackTrace())));
+            log.error(String.format("Error occurred while validating Request Type for request with Record ID %d\n%s", request.getRecordId(), Arrays.toString(e.getStackTrace())));
         } catch (NotFound notFound) {
-            log.error(String.format("Error occured while validating Request Type for request with Record ID %d\n%s", request.getRecordId(), Arrays.toString(notFound.getStackTrace())));
+            log.error(String.format("Error occurred while validating Request Type for request with Record ID %d\n%s", request.getRecordId(), Arrays.toString(notFound.getStackTrace())));
         }
         return false;
     }

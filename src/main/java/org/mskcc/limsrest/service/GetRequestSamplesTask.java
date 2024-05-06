@@ -87,18 +87,18 @@ public class GetRequestSamplesTask {
                 rsl.setPooledNormals(findPooledNormals(requestId));
             }
             String requestName = requestDataRecord.getStringVal(RequestModel.REQUEST_NAME, user);
-            if (requestName != null && requestName.toUpperCase().contains("RNASEQ")) {
-                setRNASeqLibraryTypeAndStrandedness(rsl, requestName);
+            if (requestName != null && requestName.toUpperCase().contains("RNALIBRARY")) {
+                setRNASeqLibraryTypeAndStrandedness(rsl, requestName, recipe);
             }
 
             // Recipe in LIMS is setup differently for the CMO-CH panel which is submitted as a CustomCapture with "CMO-CH" panel
-            if ("CustomCapture".equals(recipe))  {
+            if ("HC_Custom".equals(recipe))  {
                 // copy RUN-QC logic to get recipe from the last aliquot prior to pooling which is CMO-CH, for example project 12405_C
                 List<DataRecord> qcRecords = drm.queryDataRecords("SeqAnalysisSampleQC", "Request = '" + this.requestId + "'", user);
                 if (qcRecords.size() > 0) {  // SeqAnalysisSampleQC will only have records after the samples are sequenced
                     DataRecord parentSample = qcRecords.get(0).getParentsOfType("Sample", user).get(0);
                     recipe = parentSample.getStringVal(SampleModel.RECIPE, user);
-                    log.info("Updated recipe from CustomCapture to " + recipe);
+                    log.info("Updated recipe from HC_Custom to " + recipe);
                 }
             }
 
@@ -144,7 +144,7 @@ public class GetRequestSamplesTask {
         }
     }
 
-    protected void setRNASeqLibraryTypeAndStrandedness(RequestSampleList rsl, String requestName) {
+    protected void setRNASeqLibraryTypeAndStrandedness(RequestSampleList rsl, String requestName, String recipe) {
         // this classification by requestname will not be correct for all historical requests
         // customer has stated they already have all historical values and only need Nov. 2019-on to work
 
@@ -152,7 +152,7 @@ public class GetRequestSamplesTask {
         // RNASeq-TruSeqPolyA & RNASeq-TruSeqRiboDeplete is stranded-reverse
         // ignore RNAExtraction & RNA-QC request names
         String requestNameUpper = requestName.toUpperCase();
-        if (requestNameUpper.contains("SMARTER"))
+        if (requestNameUpper.contains("RNALIBRARY") && (recipe.equalsIgnoreCase("RNA_SMARTer-Cells") || recipe.equalsIgnoreCase("RNA_SMARTer-RNA")))
             rsl.setStrand("non-stranded");
         else // as of 2019 IGO has no "stranded-forward" kits.
             rsl.setStrand("stranded-reverse");
@@ -171,7 +171,7 @@ public class GetRequestSamplesTask {
     protected static boolean isIMPACTOrHEMEPACT(String recipe) {
         if (recipe.isEmpty())
             return false;
-        if ("IMPACT341,IMPACT410,IMPACT410+,IMPACT468,IMPACT505,HemePACT_v3,HemePACT_v4".contains(recipe))
+        if ("HC_IMPACT,HC_IMPACT-Heme".contains(recipe)) // IMPACT341,IMPACT410,IMPACT410+,IMPACT468,IMPACT505,HemePACT_v3,HemePACT_v4
             return true;
         return false;
     }

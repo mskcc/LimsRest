@@ -94,9 +94,10 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                     List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
                     DataRecord requestDataRecord = requestList.get(0);
                     String requestName = requestDataRecord.getStringVal("RequestName", user);
+                    String recipe = librarySample.getStringVal("Recipe", user);
                     // DLP is unique, there should be 3 qc records only, they can be attached to the sample
                     // which is a child of the LIMS Request
-                    if ("DLP".equals(requestName)) {
+                    if ("SingleCell".equals(requestName) && recipe.equals("SC_DLP")) {
                         isDLP = true;
                         librarySample = requestDataRecord.getChildrenOfType("Sample", user)[0];
                         log.info("Adding DLP stats record for " + requestId);
@@ -109,12 +110,10 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                         log.error("Could not find related Library Sample for Sample with Stats SampleId: " + sampleId);
                         continue;
                     }
-
-                    String recipe = librarySample.getStringVal("Recipe", user);
                     // For TCRSeq samples split into alpha/beta aliquots attach we'll attach the QC record
                     // at the same level as the IGO TCR Seq Assigned Indices record in LIMS
-                    if (recipe.toLowerCase().contains("tcrseq")) {
-                        log.info("Recipe contains tcrseq, searching for parent IGO ID: " + sampleId);
+                    if (recipe.toLowerCase().contains("tcr")) {
+                        log.info("Recipe contains tcr, searching for parent IGO ID: " + sampleId);
                         List<DataRecord> baseSamples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sampleId + "'", user);
                         DataRecord baseSample = baseSamples.get(0);
                         // should return two items, one for alpha and one for beta
@@ -122,7 +121,6 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                         log.info("Found descendants of base sample " + tcrSeqIndices.size());
                         List<DataRecord> dnaLibSamples = new LinkedList<>();
                         for (int startIndex = 0; startIndex < tcrSeqIndices.size(); startIndex++) {
-                            log.info("inside for loop!");
                             DataRecord dnaLibrarySample = tcrSeqIndices.get(startIndex).getParentsOfType("Sample", user)
                                     .get(0).getChildrenOfType("Sample", user)[0];
                             if (dnaLibrarySample.getStringVal("ExemplarSampleStatus", user).equals("Completed - Pooling of Sample Libraries for Sequencing")) {

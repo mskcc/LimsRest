@@ -51,9 +51,7 @@ public class CheckOrMarkCmoRequestsTask {
     private ConnectionLIMS conn;
     private DataRecordManager dataRecordManager;
     private User user;
-    private static List<String> cmoRecipes = Arrays.asList("hemebrainpact_v1","hemepact_v4", "impact410", "impact468",
-            "impact505", "msk-access_v1", "wholeexomesequencing", "WES_Human", "WES_Mouse", "HC_ACCESS", "HC_IMPACT",
-            "HC_IMPACT-Heme");
+    private static List<String> cmoRecipes = Arrays.asList("impact505", "HC_ACCESS", "WES_Human", "WES_Mouse", "HC_IMPACT", "HC_IMPACT-Heme");
     private List<String> response = new ArrayList<>();
     private static List<String> cmoAnalysts = Arrays.asList("bergerm1@mskcc.org", "donoghum@mskcc.org", "wonh@mskcc.org"
             , "chavans@mskcc.org", "bandlamc@mskcc.org", "richara4@mskcc.org"); //default emails for unit tests. This will get updated with full list from LIMS when run.
