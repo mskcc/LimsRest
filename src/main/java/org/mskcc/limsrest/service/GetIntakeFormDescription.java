@@ -4,6 +4,8 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.LinkedList;
 import java.util.Arrays;
@@ -37,8 +39,9 @@ public class GetIntakeFormDescription {
         LinkedList<List<String>> fieldNames = new LinkedList<>();
         try {
             List<DataRecord> intakeList = new LinkedList<>();
-            if (!type.equals("NULL") && !request.equals("NULL")) {
-                intakeList = drm.queryDataRecords("SampleIntakeForm", "SampleType = '" + type + "' and SequencingRequest = '" + request + "'", user);
+            String encodedRequest = URLEncoder.encode(request, "UTF-8");
+            if (!type.equals("NULL") && !encodedRequest.equals("NULL")) {
+                intakeList = drm.queryDataRecords("SampleIntakeForm", "SampleType = '" + type + "' and SequencingRequest = '" + encodedRequest + "'", user);
                 for (DataRecord r : intakeList) {
                     String[] req = r.getStringVal("RequiredHeaders", user).split(",");
                     for (int i = 0; i < req.length; i++) {
@@ -57,8 +60,8 @@ public class GetIntakeFormDescription {
                     applicable.add(r.getStringVal("SequencingRequest", user));
                 }
                 fieldNames.add(applicable);
-            } else if (!request.equals("NULL")) {
-                intakeList = drm.queryDataRecords("SampleIntakeForm", "SequencingRequest = '" + request + "'", user);
+            } else if (!encodedRequest.equals("NULL")) {
+                intakeList = drm.queryDataRecords("SampleIntakeForm", "SequencingRequest = '" + encodedRequest + "'", user);
                 LinkedList<String> applicable = new LinkedList<>();
                 for (DataRecord r : intakeList) {
                     applicable.add(r.getStringVal("SampleType", user));
