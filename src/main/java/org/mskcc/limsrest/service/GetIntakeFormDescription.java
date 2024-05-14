@@ -38,6 +38,9 @@ public class GetIntakeFormDescription {
         try {
             List<DataRecord> intakeList = new LinkedList<>();
             if (!type.equals("NULL") && !request.equals("NULL")) {
+                if (request.contains("&")) {
+                    request.replace("&", Character.toString(38));
+                }
                 intakeList = drm.queryDataRecords("SampleIntakeForm", "SampleType = '" + type + "' and SequencingRequest = '" + request + "'", user);
                 for (DataRecord r : intakeList) {
                     String[] req = r.getStringVal("RequiredHeaders", user).split(",");
