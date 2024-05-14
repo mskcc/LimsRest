@@ -38,8 +38,9 @@ public class GetIntakeFormDescription {
         try {
             List<DataRecord> intakeList = new LinkedList<>();
             if (!type.equals("NULL") && !request.equals("NULL")) {
+                // Escaping ampersand in sql query
                 if (request.contains("&")) {
-                    request.replace("&", Character.toString(38));
+                    request.replace("&", "\\&");
                 }
                 intakeList = drm.queryDataRecords("SampleIntakeForm", "SampleType = '" + type + "' and SequencingRequest = '" + request + "'", user);
                 for (DataRecord r : intakeList) {
