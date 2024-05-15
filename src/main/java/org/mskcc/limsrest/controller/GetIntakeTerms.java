@@ -36,28 +36,21 @@ public class GetIntakeTerms {
     public List<List<String>> getContent(@RequestParam(value = "type", defaultValue = "NULL") String type,
                                          @RequestParam(value = "recipe", defaultValue = "NULL") String recipe) {
         List<List<String>> values = new LinkedList<>();
-        String decodedRecipe = "";
-        try {
-            decodedRecipe = URLDecoder.decode(recipe, "UTF-8");
-        }
-        catch (UnsupportedEncodingException e) {
-
-        }
         if (!Whitelists.textMatches(type)) {
             log.info("FAILURE: type is not using a valid format");
             values.add(Arrays.asList("", "", "FAILURE: type is not using a valid format"));
             return values;
         }
-        if (!Whitelists.specialMatches(decodedRecipe)) {
+        if (!Whitelists.specialMatches(recipe)) {
             log.info("FAILURE: recipe is not using a valid format");
             values.add(Arrays.asList("", "", "FAILURE: recipe is not using a valid format"));
             return values;
         }
 
-        log.info("/getIntakeTerms for " + type + " and " + decodedRecipe);
+        log.info("/getIntakeTerms for " + type + " and " + recipe);
         // database has "Blocks/Slides" client calls endpoint with type="Blocks_PIPI_SLASH_Slides"
         type = type.replaceAll("_PIPI_SLASH_", "/");
-        GetIntakeFormDescription task = new GetIntakeFormDescription(type, decodedRecipe, conn);
+        GetIntakeFormDescription task = new GetIntakeFormDescription(type, recipe, conn);
         return task.execute();
     }
 }
