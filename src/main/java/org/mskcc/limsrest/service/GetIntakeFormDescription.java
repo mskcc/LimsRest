@@ -39,7 +39,7 @@ public class GetIntakeFormDescription {
         try {
             List<DataRecord> intakeList = new LinkedList<>();
 
-            if (!type.equals("NULL") && !encodedRequest.equals("NULL")) {
+            if (!type.equals("NULL") && !request.equals("NULL")) {
                 intakeList = drm.queryDataRecords("SampleIntakeForm", "SampleType = '" + type + "' and SequencingRequest = '" + request + "'", user);
                 for (DataRecord r : intakeList) {
                     String[] req = r.getStringVal("RequiredHeaders", user).split(",");
@@ -59,7 +59,7 @@ public class GetIntakeFormDescription {
                     applicable.add(r.getStringVal("SequencingRequest", user));
                 }
                 fieldNames.add(applicable);
-            } else if (!encodedRequest.equals("NULL")) {
+            } else if (!request.equals("NULL")) {
                 intakeList = drm.queryDataRecords("SampleIntakeForm", "SequencingRequest = '" + request + "'", user);
                 LinkedList<String> applicable = new LinkedList<>();
                 for (DataRecord r : intakeList) {
