@@ -40,19 +40,18 @@ import static org.mskcc.limsrest.util.Utils.getValueFromDataRecord;
 public class CheckOrMarkCmoRequestsTask {
 
     private static final String CMO_PM_EMAIL = "skicmopm@mskcc.org";
-    private static final String IMPACT_RECIPE_VAL = "impact";
-    private static final String MOUSE_IMPACT_RECIPE_VAL = "m-impact";
-    private static final String HEMEMPACT_RECIPE_VAL = "hemepact";
-    private static final String ACCESS_RECIPE_VAL = "msk-access";
-    private static final String WHOLE_EXOME_RECIPE = "WholeExomeSequencing";
+    private static final String IMPACT_RECIPE_VAL = "IMPACT";
+    private static final String MOUSE_IMPACT_RECIPE_VAL = "IMPACT-Mouse";
+    private static final String HEMEMPACT_RECIPE_VAL = "Heme";
+    private static final String ACCESS_RECIPE_VAL = "HC_ACCESS";
+    private static final String WHOLE_EXOME_RECIPE = "WES_";
 //    private static final List<String> CMO_ANALYST_EMAILS = Arrays.asList("sharmaa1@mskcc.org", "bolipatc@mskcc.org");
     private Log log = LogFactory.getLog(CheckOrMarkCmoRequestsTask.class);
     private String projectId;
     private ConnectionLIMS conn;
     private DataRecordManager dataRecordManager;
     private User user;
-    private static List<String> cmoRecipes = Arrays.asList("hemebrainpact_v1","hemepact_v4", "impact410", "impact468",
-            "impact505", "msk-access_v1", "wholeexomesequencing");
+    private static List<String> cmoRecipes = Arrays.asList("impact505", "HC_ACCESS", "WES_Human", "WES_Mouse", "HC_IMPACT", "HC_IMPACT-Heme");
     private List<String> response = new ArrayList<>();
     private static List<String> cmoAnalysts = Arrays.asList("bergerm1@mskcc.org", "donoghum@mskcc.org", "wonh@mskcc.org"
             , "chavans@mskcc.org", "bandlamc@mskcc.org", "richara4@mskcc.org"); //default emails for unit tests. This will get updated with full list from LIMS when run.

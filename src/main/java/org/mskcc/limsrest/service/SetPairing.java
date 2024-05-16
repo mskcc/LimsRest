@@ -48,7 +48,7 @@ public class SetPairing extends LimsTask {
     String tumorIgoId = "";
     String normalIgoId = "";
     for(DataRecord sample : children){
-        if(normalId != null && tumorId != null){ 
+        if(normalId != null && tumorId != null){
             String cmoInfoId = "";
             DataRecord[] cmoInfos = sample.getChildrenOfType("SampleCMOInfoRecords", user);
             if(cmoInfos.length > 0){

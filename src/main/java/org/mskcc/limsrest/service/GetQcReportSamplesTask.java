@@ -129,7 +129,7 @@ public class GetQcReportSamplesTask {
                             }
                         }
 //                    if report sample id does not contain any of the request's sample's ids, it might be a DLP Pool
-                    } else if (sampleFields.get("Recipe").toString().equals("DLP") && igoId.toLowerCase().contains("pool")) {
+                    } else if (sampleFields.get("Recipe").toString().equals("SC_DLP") && igoId.toLowerCase().contains("pool")) {
 //                check if reportSample's otherSampleId contains at least one chipId from this DLP request
                         if (chipIds.parallelStream().anyMatch(otherSampleId::contains)) {
                             reportSample = new ReportSample.PoolReportSample(sampleFields);

@@ -4,6 +4,7 @@ import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.user.User;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+
 import java.util.List;
 import java.util.LinkedList;
 import java.util.Arrays;
@@ -37,6 +38,7 @@ public class GetIntakeFormDescription {
         LinkedList<List<String>> fieldNames = new LinkedList<>();
         try {
             List<DataRecord> intakeList = new LinkedList<>();
+
             if (!type.equals("NULL") && !request.equals("NULL")) {
                 intakeList = drm.queryDataRecords("SampleIntakeForm", "SampleType = '" + type + "' and SequencingRequest = '" + request + "'", user);
                 for (DataRecord r : intakeList) {

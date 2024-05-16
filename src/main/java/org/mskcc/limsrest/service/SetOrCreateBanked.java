@@ -189,10 +189,10 @@ public class SetOrCreateBanked extends LimsTask {
             }
 
             //default species values for recipes
-            if (recipe.startsWith("IMPACT") || recipe.startsWith("HemePACT")) {
-                species = "Human";
-            } else if (recipe.startsWith("M-IMPACT")) {
+            if (recipe.contains("Mouse")) { // HC_IMPACT-Mouse
                 species = "Mouse";
+            } else if (recipe.startsWith("HC_")) { // HC_IMPACT, HC_ACCESS
+                species = "Human";
             }
             if (assay != null && assay.length > 0 && !"".equals(assay[0])) {
                 StringBuffer sb = new StringBuffer();
