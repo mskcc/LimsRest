@@ -7,14 +7,6 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
-import org.mskcc.limsrest.service.assignedprocess.QcStatus;
-import org.mskcc.limsrest.util.Messages;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 
@@ -44,7 +36,7 @@ public class GetTenXSampleInfoTask {
 
             requestId = requestId.split("_")[0];
 
-            List<DataRecord> requests = dataRecordManager.queryDataRecords("Request", "requestId like '" + requestId + "%' AND RequestName like '%10X%'", user);
+            List<DataRecord> requests = dataRecordManager.queryDataRecords("Request", "requestId like '" + requestId + "%' AND RequestName like '%SingleCell%'", user);
             List<Map<String, List<String>>> samplesRecipes = new LinkedList<>();
 
             for (DataRecord request : requests) {
