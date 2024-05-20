@@ -94,13 +94,17 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                     List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
                     DataRecord requestDataRecord = requestList.get(0);
                     String requestName = requestDataRecord.getStringVal("RequestName", user);
-                    String recipe = librarySample.getStringVal("Recipe", user);
+
                     // DLP is unique, there should be 3 qc records only, they can be attached to the sample
                     // which is a child of the LIMS Request
-                    if ("SingleCell".equals(requestName) && recipe.equals("SC_DLP")) {
-                        isDLP = true;
+                    if ("SingleCell".equals(requestName)) {
                         librarySample = requestDataRecord.getChildrenOfType("Sample", user)[0];
-                        log.info("Adding DLP stats record for " + requestId);
+                        String recipe = librarySample.getStringVal("Recipe", user);
+                        if (recipe.equals("SC_DLP")) {
+                            isDLP = true;
+                            log.info("Adding DLP stats record for " + requestId);
+                        } else
+                            librarySample = getLibrarySample(relatedLibrarySamples, sampleId);
                     } else {
                         // first find the library sample that is parent of Pool Sample that went on Sequencer.
                         librarySample = getLibrarySample(relatedLibrarySamples, sampleId);
@@ -110,6 +114,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                         log.error("Could not find related Library Sample for Sample with Stats SampleId: " + sampleId);
                         continue;
                     }
+                    String recipe = librarySample.getStringVal("Recipe", user);
                     // For TCRSeq samples split into alpha/beta aliquots attach we'll attach the QC record
                     // at the same level as the IGO TCR Seq Assigned Indices record in LIMS
                     if (recipe.toLowerCase().contains("tcr")) {
@@ -137,7 +142,8 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                         }
                     }
                 } catch (Exception e) {
-                    log.error(String.format("TCR Seq specific error for : %s", sampleId));
+                    log.error(String.format("Error for : %s", sampleId));
+                    e.printStackTrace();
                 }
 
                 String igoId = getRecordStringValue(librarySample, SampleModel.SAMPLE_ID, user);
