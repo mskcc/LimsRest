@@ -287,6 +287,11 @@ public class UpdateFromILabsTask {
                     }
                     if (analysisType.toUpperCase().contains("CCS")) {
                         limsAnalysisTypes.add("CCS");
+                        if (requestFields.get("ProjectName").toString().toLowerCase().contains("wholeexome")) {
+                            String currentQCEmails = requestFields.get("QcAccessEmails").toString();
+                            currentQCEmails += "skicmopm@mskcc.org";
+                            requestFields.put("QcAccessEmails", currentQCEmails);
+                        }
                     }
                     if (analysisType.toUpperCase().contains("CAS")) {
                         limsAnalysisTypes.add("CAS");

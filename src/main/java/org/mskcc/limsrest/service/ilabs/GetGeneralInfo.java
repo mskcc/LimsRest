@@ -154,7 +154,7 @@ public class GetGeneralInfo {
                 CustomForm customForm = customForms.get(0);
                 formValues.put("CUSTOM_FORM", customForm.getId() + "-" + customForm.getName());
                 boolean tenXForm = false;
-                if (customForm.getName().contains("Single Cell Library Prep + Sequencing (Human or Mouse)")) {
+                if (customForm.getName().contains("Single Cell Library Prep")) {
                     tenXForm = true;
                 }
 
