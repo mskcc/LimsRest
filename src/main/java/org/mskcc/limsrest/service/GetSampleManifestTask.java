@@ -482,9 +482,9 @@ public class GetSampleManifestTask {
     protected Double findDNAInputForLibraryForMSKACCESS(DataRecord sample, User user) {
         try {
             log.info("Searching for DNA Library Input Mass (ng).");
-            DataRecord[] records = sample.getChildrenOfType(KAPALibPlateSetupProtocol1Model.DATA_TYPE_NAME, user);
-            DataRecord record = records[records.length - 1];
-            return record.getDoubleVal(KAPALibPlateSetupProtocol1Model.TARGET_MASS_ALIQ_1, user);
+            List<DataRecord> records = sample.getChildListOfType(KAPALibPlateSetupProtocol1Model.DATA_TYPE_NAME, user);
+            log.info("Found child records:" + records.size());
+            return records.get(records.size() - 1).getDoubleVal(KAPALibPlateSetupProtocol1Model.TARGET_MASS_ALIQ_1, user);
         } catch (Exception e) {
             log.error(e);
             return null;
