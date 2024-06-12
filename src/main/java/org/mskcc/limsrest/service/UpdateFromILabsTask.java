@@ -276,6 +276,13 @@ public class UpdateFromILabsTask {
                         requestFields.put("MailTo", Filter.toAscii(field2val.get("PIEMAIL")) + "," + Filter.toAscii(field2val.get("INVESTEMAIL")));
                     }
                 }
+                if (requestFields.get("ProjectName").toString().toLowerCase().contains("hybridcapture")) {
+                    String currentQCEmails = requestFields.get("QcAccessEmails").toString();
+                    if (!currentQCEmails.toLowerCase().contains("skicmopm")) {
+                        currentQCEmails += "skicmopm@mskcc.org";
+                        requestFields.put("QcAccessEmails", currentQCEmails);
+                    }
+                }
 //                IF new field analysis type present, set old fields according to that
                 if (!field2val.get("ANALYSIS_TYPE").equals("FIELD NOT IN ILABS")) {
                     requestFields.put("FASTQ", Boolean.TRUE);
@@ -287,6 +294,13 @@ public class UpdateFromILabsTask {
                     }
                     if (analysisType.toUpperCase().contains("CCS")) {
                         limsAnalysisTypes.add("CCS");
+                        if (requestFields.get("ProjectName").toString().toLowerCase().contains("wholeexome")) {
+                            String currentQCEmails = requestFields.get("QcAccessEmails").toString();
+                            if (!currentQCEmails.toLowerCase().contains("skicmopm")) {
+                                currentQCEmails += "skicmopm@mskcc.org";
+                                requestFields.put("QcAccessEmails", currentQCEmails);
+                            }
+                        }
                     }
                     if (analysisType.toUpperCase().contains("CAS")) {
                         limsAnalysisTypes.add("CAS");
