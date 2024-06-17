@@ -43,7 +43,7 @@ public class GetPickListTask {
         }
 
         if (values.equals("Exemplar Sample Type")) {
-            String[] blacklist = {"cDNA", "cDNA Library", "Plasma"};
+            String[] blacklist = {"cDNA", "DNA/cDNA Library", "Plasma"};
             values.removeAll(Arrays.asList(blacklist));
         }
         return values;
