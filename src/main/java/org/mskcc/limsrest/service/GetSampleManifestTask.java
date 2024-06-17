@@ -581,7 +581,7 @@ public class GetSampleManifestTask {
         for (DataRecord aliquot : aliquots) {
             String sampleType = aliquot.getStringVal("ExemplarSampleType", user);
             // VERY IMPORTANT, if no DNA LIBRARY NO RESULT generated
-            if ("DNA Library".equals(sampleType)) {
+            if ("DNA/cDNA Library".equals(sampleType)) {
                 String libraryIgoId = aliquot.getStringVal("SampleId", user);
                 if (libraryIgoId.startsWith("Pool"))
                     continue;
@@ -598,11 +598,11 @@ public class GetSampleManifestTask {
                     continue;
 
                 if (sameRequest(baseIGOId, libraryIgoId)) {
-                    log.info("Found DNA library: " + libraryIgoId);
+                    log.info("Found DNA/cDNA library: " + libraryIgoId);
                     dnaLibraries.put(libraryIgoId, aliquot);
                 } else {
                     // 06345_B_26 has 06345_C_26, 06345_D_26 libraries for IMPACT & Custom Capture
-                    log.info("Ignoring DNA library on different request: " + libraryIgoId);
+                    log.info("Ignoring DNA/cDNA library on different request: " + libraryIgoId);
                 }
             }
         }

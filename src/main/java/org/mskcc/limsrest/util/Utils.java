@@ -32,7 +32,7 @@ public class Utils {
     private final static Log LOGGER = LogFactory.getLog(Utils.class);
     private final static List<String> TISSUE_SAMPLE_TYPES = Arrays.asList("cells", "plasma", "blood", "tissue", "buffy coat", "blocks/slides", "ffpe sample", "other", "tissue sample");
     private final static List<String> NUCLEIC_ACID_TYPES = Arrays.asList("dna", "rna", "cdna", "cfdna", "dna,cfdna", "amplicon", "pre-qc rna");
-    private final static List<String> LIBRARY_SAMPLE_TYPES = Arrays.asList("dna library", "cdna library", "gdna library");
+    private final static List<String> LIBRARY_SAMPLE_TYPES = Arrays.asList("dna/cdna library","dna library", "cdna library", "gdna library");
     private final static List<String> CAPTURE_SAMPLE_TYPES = Collections.singletonList("capture library");
     private final static List<String> POOLED_SAMPLE_TYPES = Collections.singletonList("pooled library");
     private final static String FAILED_STATUS_TEXT = "failed";

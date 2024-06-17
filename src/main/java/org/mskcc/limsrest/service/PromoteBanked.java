@@ -51,7 +51,7 @@ import java.util.regex.Pattern;
 public class PromoteBanked extends LimsTask {
     private static final Log log = LogFactory.getLog(PromoteBanked.class);
 
-    private static final List<String> INDEX_MATERIALS = Arrays.asList("DNA Library", "Pooled Library", "cDNA Library");
+    private static final List<String> INDEX_MATERIALS = Arrays.asList("DNA/cDNA Library", "DNA Library", "Pooled Library", "cDNA Library");
 
     private final BankedSampleToSampleConverter bankedSampleToSampleConverter = new BankedSampleToSampleConverter();
 

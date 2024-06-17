@@ -12,7 +12,7 @@ public class Whitelists {
     private static final Pattern GENERIC_PARAM_PATTERN = Pattern.compile("^[ A-Za-z0-9_'.+-]+$");
     private static final Pattern FILE_PATH_PATTERN = Pattern.compile("^[A-Za-z0-9_/.-]*$");
     private static final Pattern SERVICE_PATTERN = Pattern.compile("^(IGO|igo|iGO|iGo)[-_][0-9]{4,8}$");
-    private static final Pattern SPECIAL_PARAM_PATTERN = Pattern.compile("^[ A-Za-z0-9_'()&.+-]+$");
+    private static final Pattern SPECIAL_PARAM_PATTERN = Pattern.compile("^[ A-Za-z0-9_'()&/.,+-]+$");
 
     public static String serviceFormatText() {
         return "The service id must be igo  followed by a dash or hyphen followed by numbers";
