@@ -1,6 +1,8 @@
 package org.mskcc.limsrest;
 
 import java.util.List;
+
+import org.apache.catalina.connector.Connector;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.cmo.messaging.Gateway;
@@ -9,6 +11,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.boot.web.embedded.tomcat.TomcatConnectorCustomizer;
+import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
+import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.PropertySource;
@@ -44,6 +49,18 @@ public class App extends SpringBootServletInitializer {
 
     @Value("${nats.url}")
     private String natsUrl;
+
+    @Bean
+    public ConfigurableServletWebServerFactory webServerFactory() {
+        TomcatServletWebServerFactory factory = new TomcatServletWebServerFactory();
+        factory.addConnectorCustomizers(new TomcatConnectorCustomizer() {
+            @Override
+            public void customize(Connector connector) {
+                connector.setProperty("relaxedQueryChars", "|{}[]");
+            }
+        });
+        return factory;
+    }
 
     @Bean
     public Gateway messagingGateway() throws Exception {
