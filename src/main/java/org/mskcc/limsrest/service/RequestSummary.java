@@ -16,6 +16,7 @@ public class RequestSummary {
     private String cmoProjectId;
     private String requestId;
     private String requestType;
+    private String recipe; // This is a sample level field, try to show at the request level
     private String investigator;
     private String pi;
     private String investigatorEmail;
@@ -181,6 +182,11 @@ public class RequestSummary {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getRequestType() {
         return requestType;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getRecipe() {
+        return recipe;
     }
 
     @JsonInclude(JsonInclude.Include.ALWAYS)

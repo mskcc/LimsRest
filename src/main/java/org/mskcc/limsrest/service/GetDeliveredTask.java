@@ -128,8 +128,6 @@ public class GetDeliveredTask {
                 rs.setAnalysisType(getRecordStringValue(request, "AnalysisType", user));
                 rs.setRequestType(getRecordStringValue(request, RequestModel.REQUEST_NAME, user));
                 rs.setProjectManager(getRecordStringValue(request, RequestModel.PROJECT_MANAGER, user));
-                //rs.setSampleNumber(getRecordShortValue(request, RequestModel.SAMPLE_NUMBER, user));
-                //rs.setReceivedDate(getRecordLongValue(request, RequestModel.RECEIVED_DATE, user));
 
                 List<DataRecord> childrenOfRequest = childSamples.get(i);
                 List<DataRecord> childrenPlatesOfRequest = childPlates.get(i);
@@ -183,7 +181,9 @@ public class GetDeliveredTask {
                     } catch (NullPointerException npe) {
                     }
                     try {
-                        ss.setRecipe((String) sampleFields.get("Recipe"));
+                        String recipe = (String) sampleFields.get("Recipe");
+                        rs.setRecipe(recipe); // There is only one request, recipe will be set for the last sample set
+                        ss.setRecipe(recipe);
                     } catch (NullPointerException npe) {
                     }
                     ss.setCorrectedCmoId((String) correctedFields.get("CorrectedCMOID"));

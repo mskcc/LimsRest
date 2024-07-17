@@ -110,7 +110,6 @@ public class GetSequencingRequestsTask {
                 String requestId = getRecordStringValue(request, RequestModel.REQUEST_ID, user);
 
                 RequestSummary rs = new RequestSummary(requestId);
-                //rs.setRunFolders(seqFolders); // TODO get recent run folder from qc query above
                 rs.setInvestigator(getRecordStringValue(request, RequestModel.INVESTIGATOR, user));
                 rs.setPi(getRecordStringValue(request, RequestModel.LABORATORY_HEAD, user));
                 rs.setRequestType(getRecordStringValue(request, RequestModel.REQUEST_NAME, user));
