@@ -25,7 +25,5 @@ public class GetPoolSamplesAndBarcodes {
         log.info("Starting /getPoolsBarcodes using pool ID " + poolId);
         GetPoolsSamplesAndBarcodesTask task = new GetPoolsSamplesAndBarcodesTask(conn, poolId);
         return task.execute();
-
-
     }
 }

@@ -9,10 +9,8 @@ import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.domain.Pool;
 import org.mskcc.limsrest.ConnectionLIMS;
 
-import javax.xml.crypto.Data;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -39,11 +37,15 @@ public class GetPoolsSamplesAndBarcodesTask {
 
             for (DataRecord eachLibSample : parentLibrarySamplesForPool) {
                 BarcodeSummary barcodes = null;
-                List<DataRecord> indexList = dataRecordManager.queryDataRecords("IndexBarcode", "SampleId = " + eachLibSample.getStringVal("SampleId", user) + " ORDER BY IndexType, IndexId", user);
+                log.info("Each lib igo id:" + eachLibSample.getStringVal("SampleId", user));
+                List<DataRecord> indexList = dataRecordManager.queryDataRecords("IndexBarcode", "SampleId LIKE '%" + eachLibSample.getStringVal("SampleId", user) + "%' ORDER BY IndexId", user);
+                log.info("indexList size = " + indexList.size());
                 for (DataRecord i : indexList) {
                     try {
-                        barcodes = new BarcodeSummary(i.getStringVal("IndexType", user), i.getStringVal("IndexId", user), i.getStringVal("IndexTag", user));
+                        log.info("indexId: " + i.getStringVal("IndexId", user));
+                        barcodes = new BarcodeSummary(i.getStringVal("IndexId", user), i.getStringVal("IndexTag", user));
                     } catch (NullPointerException npe) {
+                        log.error("Null pointer exception at instantiating Barcode Summary!");
                     }
                 }
                 result.add(new PoolInfo(parentLibrarySamplesForPool, barcodes));

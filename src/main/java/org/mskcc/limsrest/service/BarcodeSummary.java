@@ -9,6 +9,10 @@ public class BarcodeSummary {
     private String barcodId; // Typo
     private String barcodeTag;
 
+    public BarcodeSummary(String barcodId, String barcodeTag) {
+        this.barcodId = barcodId;
+        this.barcodeTag = barcodeTag;
+    }
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getName() {
         return name;
