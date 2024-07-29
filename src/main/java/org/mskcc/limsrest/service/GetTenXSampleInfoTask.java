@@ -54,7 +54,7 @@ public class GetTenXSampleInfoTask {
                     log.info("treatment = " + treatment);
                     String cellTypes = request.getStringVal("CellTypes", user);
                     log.info("cellTypes = " + cellTypes);
-                    if (!treatment.isBlank() && !treatment.isEmpty() && treatment.length() > 0 && !cellTypes.isBlank() && !cellTypes.isEmpty() && cellTypes.length() > 0) {
+                    if ((!treatment.isBlank() && !treatment.isEmpty() && treatment.length() > 0) || (!cellTypes.isBlank() && !cellTypes.isEmpty() && cellTypes.length() > 0)) {
                         recipe += ", " + treatment + ", " + cellTypes;
                     }
                     samplesInfo.add(recipe);
