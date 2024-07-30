@@ -276,7 +276,7 @@ public class UpdateFromILabsTask {
                         requestFields.put("MailTo", Filter.toAscii(field2val.get("PIEMAIL")) + "," + Filter.toAscii(field2val.get("INVESTEMAIL")));
                     }
                 }
-                if (requestFields.get("ProjectName").toString().toLowerCase().contains("hybridcapture")) {
+                if (requestFields.get("RequestName").toString().toLowerCase().contains("hybridcapture")) {
                     String currentQCEmails = requestFields.get("QcAccessEmails").toString();
                     if (!currentQCEmails.toLowerCase().contains("skicmopm")) {
                         currentQCEmails += "skicmopm@mskcc.org";
@@ -294,7 +294,7 @@ public class UpdateFromILabsTask {
                     }
                     if (analysisType.toUpperCase().contains("CCS")) {
                         limsAnalysisTypes.add("CCS");
-                        if (requestFields.get("ProjectName").toString().toLowerCase().contains("wholeexome")) {
+                        if (requestFields.get("RequestName").toString().toLowerCase().contains("wholeexome")) {
                             String currentQCEmails = requestFields.get("QcAccessEmails").toString();
                             if (!currentQCEmails.toLowerCase().contains("skicmopm")) {
                                 currentQCEmails += "skicmopm@mskcc.org";
