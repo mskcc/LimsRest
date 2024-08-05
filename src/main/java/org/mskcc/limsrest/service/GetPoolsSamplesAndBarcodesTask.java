@@ -33,12 +33,12 @@ public class GetPoolsSamplesAndBarcodesTask {
             User user = vConn.getUser();
             DataRecordManager dataRecordManager = vConn.getDataRecordManager();
             DataRecord pool = dataRecordManager.queryDataRecords("Sample", "SampleId like '%" + poolId + "%'", user).get(0);
-            List<DataRecord> parentLibrarySamplesForPool = getNearestParentLibrarySamplesForPool(pool, user);
+            List<String> parentLibrarySamplesForPool = getNearestParentLibrarySamplesForPool(pool, user);
 
-            for (DataRecord eachLibSample : parentLibrarySamplesForPool) {
+            for (String eachLibSample : parentLibrarySamplesForPool) {
                 BarcodeSummary barcodes = null;
-                log.info("Each lib igo id:" + eachLibSample.getStringVal("SampleId", user));
-                List<DataRecord> indexList = dataRecordManager.queryDataRecords("IndexBarcode", "SampleId LIKE '%" + eachLibSample.getStringVal("SampleId", user) + "%' ORDER BY IndexId", user);
+                log.info("Each lib igo id:" + eachLibSample);
+                List<DataRecord> indexList = dataRecordManager.queryDataRecords("IndexBarcode", "SampleId LIKE '%" + eachLibSample + "%' ORDER BY IndexId", user);
                 log.info("indexList size = " + indexList.size());
                 for (DataRecord i : indexList) {
                     try {
@@ -66,8 +66,8 @@ public class GetPoolsSamplesAndBarcodesTask {
      * @throws RemoteException
      * @throws NotFound
      */
-    private List<DataRecord> getNearestParentLibrarySamplesForPool(DataRecord pooledSample, User user) throws IoError, RemoteException, NotFound , ServerException {
-        List<DataRecord> parentLibrarySamplesForPool = new ArrayList<>();
+    private List<String> getNearestParentLibrarySamplesForPool(DataRecord pooledSample, User user) throws IoError, RemoteException, NotFound , ServerException {
+        List<String> parentLibrarySamplesForPool = new ArrayList<>();
         Stack<DataRecord> sampleTrackingStack = new Stack<>();
         sampleTrackingStack.add(pooledSample);
         while (!sampleTrackingStack.isEmpty()) {
@@ -80,7 +80,7 @@ public class GetPoolsSamplesAndBarcodesTask {
                         sampleTrackingStack.push(sample);
                     }
                     else {
-                        parentLibrarySamplesForPool.add(sample);
+                        parentLibrarySamplesForPool.add(sample.getStringVal("SampleId", user));
                     }
                 }
             }
