@@ -16,6 +16,12 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
+/**
+ * A queued task that takes a pool ID and returns the parent library sample IGO ID and the assigned barcode information.
+ * Like index ID, index tag
+ *
+ * @author Fahimeh Mirhaj
+ */
 
 public class GetPoolsSamplesAndBarcodesTask {
 
