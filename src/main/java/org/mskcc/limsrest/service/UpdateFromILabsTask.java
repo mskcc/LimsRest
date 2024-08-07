@@ -8,7 +8,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.ilabs.Filter;
 import org.mskcc.limsrest.service.ilabs.GetGeneralInfo;
-import org.yaml.snakeyaml.Yaml;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
