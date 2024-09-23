@@ -9,8 +9,6 @@ public class GetRequestSamplesTaskTest {
     @Test
     public void isIMPACTOrHEMEPACT() {
         assertFalse(GetRequestSamplesTask.isIMPACTOrHEMEPACT(""));
-        assertTrue(GetRequestSamplesTask.isIMPACTOrHEMEPACT("IMPACT505"));
-        assertTrue(GetRequestSamplesTask.isIMPACTOrHEMEPACT("IMPACT468"));
-        assertTrue(GetRequestSamplesTask.isIMPACTOrHEMEPACT("IMPACT410"));
+        assertTrue(GetRequestSamplesTask.isIMPACTOrHEMEPACT("HC_IMPACT"));
     }
 }
