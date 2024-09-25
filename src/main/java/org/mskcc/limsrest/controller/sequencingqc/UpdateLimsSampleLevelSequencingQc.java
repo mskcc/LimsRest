@@ -5,6 +5,8 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
+import org.mskcc.limsrest.service.sequencingqc.SampleSequencingQcONT;
+import org.mskcc.limsrest.service.sequencingqc.SetStatsONTTask;
 import org.mskcc.limsrest.service.sequencingqc.UpdateLimsSampleLevelSequencingQcTask;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -49,6 +51,30 @@ public class UpdateLimsSampleLevelSequencingQc {
             resp.put("error", err);
             log.info(err);
             return resp;
+        }
+    }
+    @GetMapping("/updateLimsSampleLevelSequencingQcONT")
+    public String saveLIMS(@RequestParam(value = "igoId") String igoId,
+                           @RequestParam(value = "flowcell") String flowcell,
+                           @RequestParam(value = "reads") Long reads,
+                           @RequestParam(value = "bases") Double bases,
+                           @RequestParam(value = "N50") Long N50,
+                           @RequestParam(value = "medianReadLength") Integer medianReadLength,
+                           @RequestParam(value = "estimatedCoverage") Double estimatedCoverage,
+                           @RequestParam(value = "bamCoverage") Double bamCoverage,
+                           @RequestParam(value = "sequencerName") String sequencerName,
+                           @RequestParam(value = "sequencerPosition") String sequencerPosition) {
+        log.info(String.format("Starting to Add/Update ONT stats in LIMS for IGO ID: %s", igoId));
+
+        SampleSequencingQcONT statsONT = new SampleSequencingQcONT(igoId, flowcell, reads, bases, N50,
+                medianReadLength, estimatedCoverage, bamCoverage, sequencerName, sequencerPosition);
+        SetStatsONTTask task = new SetStatsONTTask(statsONT, conn);
+        try {
+            return task.execute();
+        } catch (Exception e) {
+            String err = String.format("%s -> Error while updating ONT Stats: %s", ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getStackTrace(e));
+            log.info(err);
+            return err;
         }
     }
 }
