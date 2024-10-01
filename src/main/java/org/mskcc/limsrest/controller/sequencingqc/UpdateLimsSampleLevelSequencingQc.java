@@ -59,7 +59,7 @@ public class UpdateLimsSampleLevelSequencingQc {
                            @RequestParam(value = "reads") Long reads,
                            @RequestParam(value = "bases") Double bases,
                            @RequestParam(value = "N50") Long N50,
-                           @RequestParam(value = "medianReadLength") Integer medianReadLength,
+                           @RequestParam(value = "medianReadLength") Double medianReadLength,
                            @RequestParam(value = "estimatedCoverage", defaultValue = "0.0", required = false) Double estimatedCoverage,
                            @RequestParam(value = "bamCoverage", defaultValue = "0.0", required = false) Double bamCoverage,
                            @RequestParam(value = "sequencerName", defaultValue = "", required = false) String sequencerName,

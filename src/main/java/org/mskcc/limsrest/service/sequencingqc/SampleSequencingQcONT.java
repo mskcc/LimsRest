@@ -11,7 +11,7 @@ public class SampleSequencingQcONT {
     private long reads; // ReadsNumber
     private double bases; // Bases display name GigaBases
     private long N50;
-    private int medianReadLength; // MedianReadLength
+    private double medianReadLength; // MedianReadLength
     private double estimatedCoverage; // EstimatedCoverage
     private double bamCoverage; // BAMCoverage
     private String sequencerName; // SequencerName
