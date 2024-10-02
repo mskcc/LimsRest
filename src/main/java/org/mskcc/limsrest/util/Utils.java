@@ -703,7 +703,7 @@ public class Utils {
             String[] sampleIdValues =  sampleId.split("_");
             return String.join("_", Arrays.copyOfRange(sampleIdValues,0,3));
         }
-        if(withoutAlphabetPattern.matcher(sampleId).matches()){
+        if (withoutAlphabetPattern.matcher(sampleId).matches()){
             String[] sampleIdValues =  sampleId.split("_");
             return String.join("_", Arrays.copyOfRange(sampleIdValues,0,2));
         }

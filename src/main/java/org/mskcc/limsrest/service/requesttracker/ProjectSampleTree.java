@@ -5,6 +5,7 @@ import com.velox.api.user.User;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.service.assignedprocess.QcStatus;
@@ -24,7 +25,7 @@ import static org.mskcc.limsrest.util.Utils.*;
  *
  * @author David Streid
  */
-@Getter @Setter
+@Getter @Setter @ToString
 public class ProjectSampleTree {
     private static Log log = LogFactory.getLog(ProjectSampleTree.class);
 
@@ -32,9 +33,9 @@ public class ProjectSampleTree {
     private String dataQcStatus;                        // SeqAnalysisSampleQC status determinining sequencing status
     private Map<Long, WorkflowSample> sampleMap;        // Map Record IDs to their enriched sample information
     private Map<String, StageTracker> stageMap;         // Map to all stages by their stage name
-    @Setter(AccessLevel.NONE) private Map<String, Object> sampleData;
+    @Setter(AccessLevel.NONE) private Map<String, Object> sampleData; // contains map with volume & mass
     @Setter(AccessLevel.NONE) private User user;                                  // TODO - should this be elsewhere?
-    private boolean isIgoComplete;                      // Is Sample complete or not
+    private boolean isIgoComplete;
     private String correctedInvestigatorSampleId;
     private String sampleName;
     private String investigatorSampleId;
@@ -86,7 +87,7 @@ public class ProjectSampleTree {
          */
         if (STAGE_LIBRARY_PREP.equals(stage) || STAGE_LIBRARY_CAPTURE.equals(stage)) {
             String stageKey = stageToMaterialMap.get(stage);
-            if(!this.sampleData.containsKey(stageKey)){
+            if (!this.sampleData.containsKey(stageKey)){
                 // Add concentration volume
                 Double remainingVolume = getRecordDoubleValue(record, "Volume", this.user);
                 Double concentration = getRecordDoubleValue(record, "Concentration", this.user);

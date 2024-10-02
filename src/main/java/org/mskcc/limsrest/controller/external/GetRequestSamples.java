@@ -1,9 +1,10 @@
-package org.mskcc.limsrest.controller;
+package org.mskcc.limsrest.controller.external;
 
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
+import org.mskcc.limsrest.controller.Whitelists;
 import org.mskcc.limsrest.model.RequestSampleList;
 import org.mskcc.limsrest.service.GetRequestSamplesTask;
 import org.springframework.http.HttpStatus;

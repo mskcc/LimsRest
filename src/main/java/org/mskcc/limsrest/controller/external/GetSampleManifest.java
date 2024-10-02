@@ -1,4 +1,4 @@
-package org.mskcc.limsrest.controller;
+package org.mskcc.limsrest.controller.external;
 
 import java.util.Arrays;
 import java.util.List;

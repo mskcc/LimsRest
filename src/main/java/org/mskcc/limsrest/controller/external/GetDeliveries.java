@@ -1,4 +1,4 @@
-package org.mskcc.limsrest.controller;
+package org.mskcc.limsrest.controller.external;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
