@@ -1,6 +1,5 @@
 package org.mskcc.limsrest.service;
 
-import com.mysql.fabric.Server;
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
 import com.velox.api.exception.recoverability.serverexception.UnrecoverableServerException;
