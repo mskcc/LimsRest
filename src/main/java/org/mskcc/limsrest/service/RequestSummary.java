@@ -9,8 +9,8 @@ import java.util.LinkedList;
 import java.util.List;
 @Setter
 public class RequestSummary {
-    private ArrayList<SampleSummary> samples;
-    private LinkedList<Long> deliveryDates;
+    private List<SampleSummary> samples;
+    private List<Long> deliveryDates;
     private Long recentDeliveryDate;
     private Long completedDate;
     private String cmoProjectId;
@@ -95,7 +95,7 @@ public class RequestSummary {
         return this.isIgoComplete;
     }
 
-    public ArrayList<SampleSummary> getSamples() {
+    public List<SampleSummary> getSamples() {
         return samples;
     }
 

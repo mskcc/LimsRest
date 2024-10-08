@@ -69,13 +69,24 @@ public class GetSampleQcTask {
                 List<DataRecord> qcRecords;
                 qcRecords = dataRecordManager.queryDataRecords("SeqAnalysisSampleQC", "Request = '" + project + "'", user);
                 if (qcRecords.size() == 0){
-                    qcRecords = r.getDescendantsOfType("SeqAnalysisSampleQC", user);
+                    // check if this is an Oxford Nanopore project
+                    if ("Nanopore".equals(r.getValue("RequestName", user))) {
+                        log.info("These are ONT samples, their QC records are different.");
+                        qcRecords = dataRecordManager.queryDataRecords("SequencingAnalysisONT", "IGOID LIKE '" + project + "_%'", user);
+                        // TODO nothing will appear on the RunQC site for these records
+                        continue;
+                    } else {
+                        qcRecords = r.getDescendantsOfType("SeqAnalysisSampleQC", user);
+                    }
                 }
                 for (DataRecord qc : qcRecords) {
                     log.info("Getting QC Site records for sample.");
-                    SampleSummary ss = new SampleSummary();
-                    DataRecord parentSample = qc.getParentsOfType("Sample", user).get(0);
                     SampleQcSummary qcSummary = annotateQcSummary(qc, user);
+                    SampleSummary ss = new SampleSummary();
+                    List<DataRecord> parentSamples = qc.getParentsOfType("Sample", user);
+                    DataRecord parentSample = null;
+                    if (parentSamples != null && parentSamples.size() > 0)
+                        parentSample = parentSamples.get(0);
                     if (parentSample != null) {
                         annotateSampleSummary(ss, parentSample, user);
                         try {
@@ -165,13 +176,6 @@ public class GetSampleQcTask {
                     runSet.add(qcSummary.getRun());
                     ss.setQc(qcSummary);
                     rs.addSample(ss);
-                }
-
-                try {
-                    // skip no longer relevant // TODO fully remove dead code
-                    // addPooledNormals(rs, runSet);
-                } catch (Exception e) {
-                    log.error("Failed to add QC stats for pooled normals." + e.getMessage(), e);
                 }
 
                 rss.add(rs);
