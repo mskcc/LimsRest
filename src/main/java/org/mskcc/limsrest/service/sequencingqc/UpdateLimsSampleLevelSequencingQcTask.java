@@ -76,8 +76,12 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         if (projectId == null || projectId.isEmpty()) {
             //get stats from ngs-stats db.
             JSONObject data = getStatsFromDb();
+            JSONObject tenXData = getTenXStatsFromDb();
             if (data.keySet().size() == 0) {
                 log.error(String.format("Found no NGS-STATS for run with run id %s using url %s", runId, getStatsUrl()));
+            }
+            if (tenXData.keySet().size() == 0) {
+                log.error(String.format("Found no 10X NGS-STATS for run with run id %s using url %s", runId, getStatsUrl()));
             }
             //get all the Library samples that are present on the run
             List<DataRecord> relatedLibrarySamples = getRelatedLibrarySamples(runId);
@@ -279,7 +283,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
     }
 
     /**
-     * Method to get url to get stats from run-stats db.
+     * Method to get url to get stats from run-stats DB.
      *
      * @return
      */
@@ -297,6 +301,21 @@ public class UpdateLimsSampleLevelSequencingQcTask {
     }
 
     /**
+     * Method to get 10X stats url from ngs-stats DB.
+     * */
+    private String getTenXStatsUrl() {
+        Properties properties = new Properties();
+        String delphiRestUrl;
+        try {
+            properties.load(new FileReader(getResourceFile(appPropertyFile).replaceAll("%23", "#")));
+            delphiRestUrl = properties.getProperty("delphiRestUrl");
+        } catch (IOException e) {
+            log.error(String.format("Error while parsing properties file:\n%s,%s", ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getStackTrace(e)));
+            return null;
+        }
+        return StringUtils.join(delphiRestUrl, "ngs-stats//run/", this.runId);
+    }
+    /**
      * Method to get path to property file.
      *
      * @param propertyFile
@@ -307,13 +326,37 @@ public class UpdateLimsSampleLevelSequencingQcTask {
     }
 
     /**
-     * get run Stats from ngs-stats database.
+     * get run Stats from ngs-stats DB.
      *
      * @return
      */
     private JSONObject getStatsFromDb() {
         HttpURLConnection con;
         String url = getStatsUrl();
+        StringBuilder response = new StringBuilder();
+        try {
+            assert url != null;
+            con = (HttpURLConnection) new URL(url).openConnection();
+            con.setRequestMethod("GET");
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+            con.disconnect();
+            return new JSONObject(response.toString());
+        } catch (Exception e) {
+            log.info(String.format("Error while querying ngs-stats endpoint using url %s.\n%s:%s", url, ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e)));
+            return new JSONObject();
+        }
+    }
+    /**
+     * Get 10X run stats from ngs-stats DB.
+     **/
+    private JSONObject getTenXStatsFromDb() {
+        HttpURLConnection con;
+        String url = getTenXStatsUrl();
         StringBuilder response = new StringBuilder();
         try {
             assert url != null;
