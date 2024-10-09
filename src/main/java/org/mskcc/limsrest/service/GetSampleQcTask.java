@@ -8,6 +8,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.assignedprocess.QcStatus;
+import org.mskcc.limsrest.service.sequencingqc.SampleSequencingQcONT;
 import org.mskcc.limsrest.util.Messages;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -66,14 +67,29 @@ public class GetSampleQcTask {
                 if (r.getValue("SampleNumber", user) != null)
                     rs.setSampleNumber(r.getShortVal("SampleNumber", user));
 
-                List<DataRecord> qcRecords;
-                qcRecords = dataRecordManager.queryDataRecords("SeqAnalysisSampleQC", "Request = '" + project + "'", user);
+                List<DataRecord> qcRecords = dataRecordManager.queryDataRecords("SeqAnalysisSampleQC", "Request = '" + project + "'", user);
                 if (qcRecords.size() == 0){
                     // check if this is an Oxford Nanopore project
                     if ("Nanopore".equals(r.getValue("RequestName", user))) {
                         log.info("These are ONT samples, their QC records are different.");
+                        List<SampleSequencingQcONT> samplesONT = new ArrayList<>();
                         qcRecords = dataRecordManager.queryDataRecords("SequencingAnalysisONT", "IGOID LIKE '" + project + "_%'", user);
-                        // TODO nothing will appear on the RunQC site for these records
+                        log.info("Found ONT stats: " + qcRecords.size());
+                        for (DataRecord record: qcRecords) {
+                            String igoId = record.getStringVal("IGOID", user);
+                            String flowcell = record.getStringVal("Flowcell", user);
+                            Integer reads = record.getIntegerVal("ReadsNumber", user);
+                            Double bases = record.getDoubleVal("Bases", user);
+                            Integer n50 = record.getIntegerVal("N50", user);
+                            Double readLength = record.getDoubleVal("MedianReadLength", user);
+                            Double estimatedCoverage = record.getDoubleVal("EstimatedCoverage", user);
+                            String sequencerPosition = record.getStringVal("SequencerPosition", user);
+
+                            SampleSequencingQcONT qcONT = new SampleSequencingQcONT(igoId, flowcell, reads, bases, n50, readLength, estimatedCoverage, 0.0, "", sequencerPosition);
+                            log.info(qcONT);
+                            samplesONT.add(qcONT);
+                        }
+                        rs.setSamplesONT(samplesONT);
                         continue;
                     } else {
                         qcRecords = r.getDescendantsOfType("SeqAnalysisSampleQC", user);

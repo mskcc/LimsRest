@@ -2,6 +2,7 @@ package org.mskcc.limsrest.service;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Setter;
+import org.mskcc.limsrest.service.sequencingqc.SampleSequencingQcONT;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,6 +11,8 @@ import java.util.List;
 @Setter
 public class RequestSummary {
     private List<SampleSummary> samples;
+    // ONT samples have separate QC values
+    private List<SampleSequencingQcONT> samplesONT;
     private List<Long> deliveryDates;
     private Long recentDeliveryDate;
     private Long completedDate;
@@ -59,7 +62,13 @@ public class RequestSummary {
             this.isCmoRequest = cmoRequest;
         }
     }
-
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public List<SampleSequencingQcONT> getSamplesONT() {
+        return samplesONT;
+    }
+    public void setSamplesONT(List<SampleSequencingQcONT> samplesONT) {
+        this.samplesONT = samplesONT;
+    }
     @JsonInclude(JsonInclude.Include.NON_ABSENT)
     public List<String> getRunFolders() {
         return runFolders;
