@@ -203,10 +203,10 @@ public class UpdateFromILabsTask {
                 }
 
                 if (field2val.containsKey("TREATMENT")) {
-                    if ((field2val.get("TREATMENT").toLowerCase().contains("cell") || (field2val.get("TREATMENT").toLowerCase().contains("hashing")) && field2val.get("TREATMENT").toLowerCase().contains("barcoding"))) {
+                    if ((field2val.get("TREATMENT").toLowerCase().contains("cell") || (field2val.get("TREATMENT").toLowerCase().contains("hashing")) && field2val.get("TREATMENT").toLowerCase().contains("barcode"))) {
                         requestFields.put("Treatment", "Cell Hashing, Feature Barcoding");
                     }
-                    else if (field2val.get("TREATMENT").toLowerCase().contains("barcoding")) {
+                    else if (field2val.get("TREATMENT").toLowerCase().contains("barcode")) {
                         requestFields.put("Treatment", "Feature Barcoding");
                     }
                     else  {
