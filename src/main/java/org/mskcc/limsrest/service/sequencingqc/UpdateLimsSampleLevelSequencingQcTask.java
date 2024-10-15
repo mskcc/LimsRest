@@ -279,7 +279,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
     }
 
     /**
-     * Method to get url to get stats from run-stats db.
+     * Method to get url to get stats from run-stats DB.
      *
      * @return
      */
@@ -295,7 +295,6 @@ public class UpdateLimsSampleLevelSequencingQcTask {
         }
         return StringUtils.join(delphiRestUrl, "ngs-stats/picardstats/run/", this.runId);
     }
-
     /**
      * Method to get path to property file.
      *
@@ -307,7 +306,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
     }
 
     /**
-     * get run Stats from ngs-stats database.
+     * get run Stats from ngs-stats DB.
      *
      * @return
      */
@@ -332,6 +331,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
             return new JSONObject();
         }
     }
+
 
     /**
      * get SampleQcValues to store in LIMS from QC Stats JSONObject.
