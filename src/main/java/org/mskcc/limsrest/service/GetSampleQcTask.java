@@ -50,8 +50,8 @@ public class GetSampleQcTask {
             log.info("Project " + projects);
             List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId in (" + projects + ")", user);
             HashMap<String, String>  alt2base = new HashMap<>(); // AltId->SampleId
-            for (DataRecord r : requestList) {
-                DataRecord[] baseSamples = r.getChildrenOfType("Sample", user);
+            for (DataRecord drRequest : requestList) {
+                DataRecord[] baseSamples = drRequest.getChildrenOfType("Sample", user);
                 for (DataRecord bs : baseSamples){
                     try {
                         alt2base.put(bs.getStringVal("AltId", user), bs.getStringVal("SampleId", user));
@@ -60,17 +60,17 @@ public class GetSampleQcTask {
                     }
                 }
 
-                String project = r.getStringVal("RequestId", user);
+                String project = drRequest.getStringVal("RequestId", user);
                 RequestSummary rs = new RequestSummary(project);
                 HashSet<String> runSet = new HashSet<>();
-                annotateRequestSummary(rs, r, user); // fill in all data at request level except sample number
-                if (r.getValue("SampleNumber", user) != null)
-                    rs.setSampleNumber(r.getShortVal("SampleNumber", user));
+                annotateRequestSummary(rs, drRequest, user); // fill in all data at request level except sample number
+                if (drRequest.getValue("SampleNumber", user) != null)
+                    rs.setSampleNumber(drRequest.getShortVal("SampleNumber", user));
 
                 List<DataRecord> qcRecords = dataRecordManager.queryDataRecords("SeqAnalysisSampleQC", "Request = '" + project + "'", user);
                 if (qcRecords.size() == 0){
                     // check if this is an Oxford Nanopore project
-                    if ("Nanopore".equals(r.getValue("RequestName", user))) {
+                    if ("Nanopore".equals(drRequest.getValue("RequestName", user))) {
                         log.info("These are ONT samples, their QC records are different.");
                         List<SampleSequencingQcONT> samplesONT = new ArrayList<>();
                         qcRecords = dataRecordManager.queryDataRecords("SequencingAnalysisONT", "IGOID LIKE '" + project + "_%'", user);
@@ -90,9 +90,9 @@ public class GetSampleQcTask {
                             samplesONT.add(qcONT);
                         }
                         rs.setSamplesONT(samplesONT);
-                        continue;
+                        qcRecords = new ArrayList<>();
                     } else {
-                        qcRecords = r.getDescendantsOfType("SeqAnalysisSampleQC", user);
+                        qcRecords = drRequest.getDescendantsOfType("SeqAnalysisSampleQC", user);
                     }
                 }
                 for (DataRecord qc : qcRecords) {
@@ -193,7 +193,7 @@ public class GetSampleQcTask {
                     ss.setQc(qcSummary);
                     rs.addSample(ss);
                 }
-
+                
                 rss.add(rs);
             }
         } catch (Throwable e) {

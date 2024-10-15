@@ -2,13 +2,14 @@ package org.mskcc.limsrest.service;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Setter;
+import lombok.ToString;
 import org.mskcc.limsrest.service.sequencingqc.SampleSequencingQcONT;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-@Setter
+@Setter @ToString
 public class RequestSummary {
     private List<SampleSummary> samples;
     // ONT samples have separate QC values
