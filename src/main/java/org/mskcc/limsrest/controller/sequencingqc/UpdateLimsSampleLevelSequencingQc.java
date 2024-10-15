@@ -8,6 +8,7 @@ import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.sequencingqc.SampleSequencingQcONT;
 import org.mskcc.limsrest.service.sequencingqc.SetStatsONTTask;
 import org.mskcc.limsrest.service.sequencingqc.UpdateLimsSampleLevelSequencingQcTask;
+import org.mskcc.limsrest.service.sequencingqc.UpdateTenXSampleLevelStatsTask;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -75,6 +76,27 @@ public class UpdateLimsSampleLevelSequencingQc {
             String err = String.format("%s -> Error while updating ONT Stats: %s", ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getStackTrace(e));
             log.info(err);
             return err;
+        }
+    }
+
+    @GetMapping("/updateTenXSampleLevelStats")
+    public Map<String, String> tenXStatsToSave(@RequestParam(value = "runId") String runId, @RequestParam(value = "projectId" , required = false) String projectId) {
+        Map<String, String> resp = new HashMap<>();
+        if (StringUtils.isBlank(runId)) {
+            final String error = String.format("Invalid RUN ID: '%s'", runId);
+            resp.put("error", error);
+            log.info(error);
+            return resp;
+        }
+        UpdateTenXSampleLevelStatsTask task = new UpdateTenXSampleLevelStatsTask(runId, projectId, this.conn);
+        log.info(String.format("Starting to Add/updateTenXSampleLevelStats in LIMS for run: %s", runId));
+        try {
+            return task.execute();
+        } catch (Exception e) {
+            String err = String.format("%s -> Error while updating Run Stats: %s", ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getStackTrace(e));
+            resp.put("error", err);
+            log.info(err);
+            return resp;
         }
     }
 }
