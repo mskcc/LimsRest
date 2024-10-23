@@ -2,14 +2,22 @@ package org.mskcc.limsrest.service.sequencingqc;
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
+import com.velox.api.datarecord.IoError;
+import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
+import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
+import com.velox.sloan.cmo.recmodels.IlluminaSeqExperimentModel;
+import com.velox.sloan.cmo.recmodels.IndexBarcodeModel;
+import com.velox.sloan.cmo.recmodels.SampleModel;
+import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
 import org.mskcc.limsrest.ConnectionLIMS;
+import org.mskcc.limsrest.controller.sequencingqc.SequencingStats;
 
 import java.awt.dnd.DropTarget;
 import java.io.BufferedReader;
@@ -18,16 +26,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.rmi.RemoteException;
 import java.util.*;
 
-public class UpdateTenXSampleLevelStatsTask {
+import static org.mskcc.limsrest.util.Utils.*;
+
+public class UpdateTenXSampleLevelStatsTask extends SequencingStats {
 
     private Log log = LogFactory.getLog(UpdateLimsSampleLevelSequencingQcTask.class);
-
-    private final static List<String> POOLED_SAMPLE_TYPES = Collections.singletonList("pooled library");
-    private final String POOLEDNORMAL_IDENTIFIER = "POOLEDNORMAL";
-    private final String CONTROL_IDENTIFIER = "CTRL";
-    private final String FAILED = "Failed";
 
     DataRecordManager dataRecordManager;
     String appPropertyFile = "/app.properties";
@@ -63,20 +69,31 @@ public class UpdateTenXSampleLevelStatsTask {
         }
         for (String key : tenXData.keySet()) {
             tenXQCDataVals = getTenXQcValues(tenXData);
-            String sampleName = String.valueOf(tenXQCDataVals.get("OtherSampleId"));
             String sampleId = String.valueOf(tenXQCDataVals.get("SampleId")); // aka base IGO ID
             String requestId = String.valueOf(tenXQCDataVals.get("Request"));
             List<DataRecord> relatedLibrarySamples = getRelatedLibrarySamples(runId);
             log.info(String.format("10X Stats: Total Related Library Samples for run %s: %d", runId, relatedLibrarySamples.size()));
+            DataRecord librarySample = getLibrarySample(relatedLibrarySamples, sampleId);
+            String igoId = getRecordStringValue(librarySample, SampleModel.SAMPLE_ID, user);
+            tenXQCDataVals.put(SampleModel.SAMPLE_ID, igoId);
+            log.info(String.format("Adding new %s child record to %s with SampleId %s, values are : %s",
+                    SeqAnalysisSampleQCModel.DATA_TYPE_NAME,
+                    SampleModel.DATA_TYPE_NAME,
+                    getRecordStringValue(librarySample, SampleModel.SAMPLE_ID, user),
+                    tenXQCDataVals.toString()));
+            try {
+                List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
+                DataRecord requestDataRecord = requestList.get(0);
+                DataRecord newSeqAnalysisDataRec = librarySample.addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, tenXQCDataVals, user);
+                stats.putIfAbsent(tenXQCDataVals.get(SampleModel.SAMPLE_ID).toString(), "");
+                stats.put(tenXQCDataVals.get(SampleModel.SAMPLE_ID).toString(), tenXQCDataVals.toString());
+            } catch (Exception e) {
+                String error = String.format("Failed to add new %s DataRecord Child for %s. ERROR: %s%s", SampleModel.OTHER_SAMPLE_ID, sampleId,
+                        ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
+                log.error(error);
+            }
         }
-
         return;
-    }
-    public List<DataRecord> getRelatedLibrarySamples(String runId) {
-        List<DataRecord> libSamples = new LinkedList<>();
-        DataRecordManager drm;
-        List<DataRecord> illuminaSeqExp = drm.queryDataRecords();
-
     }
 
     /**
@@ -177,55 +194,5 @@ public class UpdateTenXSampleLevelStatsTask {
                 totalReads, chTotalReads, atacTotalReads);
 
         return tenXQc.getTenXSequencingQcValues();
-    }
-
-    /**
-     * Method to extract SampleId (IGO_ID) sampleId value in qc data. Qc data sample name is concatenation of
-     * OtherSampleId , _IGO_, SampleID.
-     *
-     * @param id
-     * @return
-     */
-    private String getIgoId(String id) {
-        log.info("Stats IGO ID: " + id);
-        List<String> idVals = Arrays.asList(id.split("_IGO_"));
-        if (idVals.size() == 2) {
-            String igoId = idVals.get(1);
-            if (igoId.contains(POOLEDNORMAL_IDENTIFIER) || igoId.contains(CONTROL_IDENTIFIER)) {
-                String pooledNormalName = idVals.get(0);
-                String[] barcodeVals = idVals.get(1).split("_");
-                String barcode = barcodeVals[barcodeVals.length - 1];
-                return pooledNormalName + "_" + barcode;
-            }
-            return igoId;
-        } else {
-            throw new IllegalArgumentException(String.format("Cannot extract IGO ID from given Sample Name value %s in QC data.", id));
-        }
-    }
-
-    /**
-     * Method to get Run Name without Version Number
-     *
-     * @param runName
-     * @return
-     */
-    private String getVersionLessRunId(String runName) {
-        return runName.replaceFirst("_[A-Z][0-9]+$", "");
-    }
-
-    /**
-     * Method to extract SampleId (IGO_ID) sampleId value in qc data. Qc data sample name is concatenation of
-     * OtherSampleId , _IGO_, SampleID. And for POOLEDNORMALS it is 'POOLEDNORMAL', _IGO_, RECIPE, i7 barcode.
-     *
-     * @param id
-     * @return
-     */
-    private String getIgoSampleName(String id) {
-        List<String> idVals = Arrays.asList(id.split("_IGO_"));
-        if (idVals.size() == 2) {
-            return idVals.get(0).replaceFirst("_rescue$", "");
-        } else {
-            throw new IllegalArgumentException(String.format("Cannot extract IGO ID from given Sample Name value %s in QC data.", id));
-        }
     }
 }
