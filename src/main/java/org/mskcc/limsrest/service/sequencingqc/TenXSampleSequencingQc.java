@@ -13,7 +13,6 @@ import java.util.Map;
 public class TenXSampleSequencingQc {
     String sampleId;
     String otherSampleId;
-    String request;
     String sequencerRunFolder;
     String seqQCStatus;
     Long antibodyReadsPerCell;
@@ -47,7 +46,6 @@ public class TenXSampleSequencingQc {
         Map<String, Object> tenXQcValues = new HashMap<>();
         tenXQcValues.put("SampleId", this.sampleId);
         tenXQcValues.put("OtherSampleId", this.otherSampleId);
-        tenXQcValues.put("Request", this.request);
         tenXQcValues.put("SequencerRunFolder", this.sequencerRunFolder);
         tenXQcValues.put("SeqQCStatus", this.seqQCStatus);
         tenXQcValues.put("AntibodyReadsPerCell", this.antibodyReadsPerCell);

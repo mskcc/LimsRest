@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.controller.sequencingqc.SequencingStats;
@@ -44,10 +45,9 @@ public class UpdateTenXSampleLevelStatsTask extends SequencingStats {
     private String runId;
     private String projectId;
 
-    public UpdateTenXSampleLevelStatsTask(String runId, String projectId, ConnectionLIMS conn) {
+    public UpdateTenXSampleLevelStatsTask(String runId, ConnectionLIMS conn) {
         this.runId = runId;
         this.conn = conn;
-        this.projectId = projectId;
     }
 
     public Map<String, String> execute() {
@@ -109,7 +109,7 @@ public class UpdateTenXSampleLevelStatsTask extends SequencingStats {
             log.error(String.format("Error while parsing properties file:\n%s,%s", ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getStackTrace(e)));
             return null;
         }
-        return StringUtils.join(delphiRestUrl, "ngs-stats//run/", this.runId);
+        return StringUtils.join(delphiRestUrl, "ngs-stats/get10xStats?run=", this.runId);
     }
 
     /**
@@ -133,14 +133,17 @@ public class UpdateTenXSampleLevelStatsTask extends SequencingStats {
             assert url != null;
             con = (HttpURLConnection) new URL(url).openConnection();
             con.setRequestMethod("GET");
-            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-            String inputLine;
-            while ((inputLine = in.readLine()) != null) {
-                response.append(inputLine);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
             }
-            in.close();
+            reader.close();
             con.disconnect();
-            return new JSONObject(response.toString());
+            JSONArray jsonArray = new JSONArray(response.toString());
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("10X stats", jsonArray);
+            return jsonObject;
         } catch (Exception e) {
             log.info(String.format("Error while querying ngs-stats endpoint using url %s.\n%s:%s", url, ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e)));
             return new JSONObject();
@@ -151,11 +154,10 @@ public class UpdateTenXSampleLevelStatsTask extends SequencingStats {
      * Get and pars JSON 10X stats object into LIMS tenXstats table.
      * */
     private Map<String, Object> getTenXQcValues(JSONObject tenXStatsData) {
-        String sampleId = getIgoId(String.valueOf(tenXStatsData.get("sample")));
+        String sampleId = getIgoId(String.valueOf(tenXStatsData.get("sampleId")));
         log.info("10X QC Vals Sample ID: " + sampleId);
-        String otherSampleId = getIgoSampleName(String.valueOf(tenXStatsData.get("sample")));
-        String request = String.valueOf(tenXStatsData.get("request"));
-        String sequencerRunFolder = getVersionLessRunId(String.valueOf(tenXStatsData.get("run")));
+        String otherSampleId = getIgoSampleName(String.valueOf(tenXStatsData.get("otherSampleId")));
+        String sequencerRunFolder = getVersionLessRunId(String.valueOf(tenXStatsData.get("sequencerRunFolder")));
         String seqQCStatus = inital_qc_status;
 
         Long antibodyReadsPerCell = tenXStatsData.get("ANTIBODY_READS_PER_CELL") != JSONObject.NULL ? (Long) tenXStatsData.get("ANTIBODY_READS_PER_CELL") : 0;
@@ -185,7 +187,7 @@ public class UpdateTenXSampleLevelStatsTask extends SequencingStats {
         int chTotalReads = tenXStatsData.get("CH_TOTAL_READS") != JSONObject.NULL ? (Integer) tenXStatsData.get("CH_TOTAL_READS") : 0;
         int atacTotalReads = tenXStatsData.get("ATAC_TOTAL_READS") != JSONObject.NULL ? (Integer) tenXStatsData.get("ATAC_TOTAL_READS") : 0;
 
-        TenXSampleSequencingQc tenXQc = new TenXSampleSequencingQc(sampleId, otherSampleId, request, sequencerRunFolder,
+        TenXSampleSequencingQc tenXQc = new TenXSampleSequencingQc(sampleId, otherSampleId, sequencerRunFolder,
                 seqQCStatus, antibodyReadsPerCell, cellNumber, chCellNumber, cellsAssignedToSample, fractionUnrecognized,
                 meanReadsPerCell, chMeanReadsPerCell, atacMeanRawReadsPerCell, meanReadsPerSpot, medianUMIsPerCellBarcode,
                 medianGenesOrFragmentsPerCell, atacMedianHighQulityFragPerCell, medianIGLUmisPerCell, medianTraIghUmisPerCell,
