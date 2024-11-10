@@ -44,13 +44,11 @@ public class UpdateLimsSampleLevelSequencingQcTask extends SequencingStats {
     String inital_qc_status = "Under-Review";
     private ConnectionLIMS conn;
     User user;
-
-    private String runId;
     private String projectId;
 
     public UpdateLimsSampleLevelSequencingQcTask(String runId, String projectId, ConnectionLIMS conn) {
+        super(conn);
         this.runId = runId;
-        this.conn = conn;
         this.projectId = projectId;
     }
 
@@ -427,7 +425,7 @@ public class UpdateLimsSampleLevelSequencingQcTask extends SequencingStats {
         return null;
     }
 
-    /**
+        /**
      * Method to update remaining reads on SeqRequirements record.
      * Method to update remaining reads on SeqRequirements record.
      * @param sampleLevelSequencingQc

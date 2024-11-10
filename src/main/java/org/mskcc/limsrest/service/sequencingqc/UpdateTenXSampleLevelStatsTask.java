@@ -39,54 +39,52 @@ public class UpdateTenXSampleLevelStatsTask extends SequencingStats {
     DataRecordManager dataRecordManager;
     String appPropertyFile = "/app.properties";
     String inital_qc_status = "Under-Review";
-    private ConnectionLIMS conn;
-    User user;
-
+    public ConnectionLIMS conn;
     private String runId;
-    private String projectId;
 
     public UpdateTenXSampleLevelStatsTask(String runId, ConnectionLIMS conn) {
+        super(conn);
         this.runId = runId;
-        this.conn = conn;
     }
 
-    public Map<String, String> execute() {
+    public List<Map<String, String>> execute() {
         VeloxConnection vConn = conn.getConnection();
         user = vConn.getUser();
         dataRecordManager = vConn.getDataRecordManager();
         user = conn.getConnection().getUser();
 
-        Map<String, String> statsAdded = new HashMap<>();
-        generateStats(runId, projectId, statsAdded);
+        List<Map<String, String>> statsAdded = new LinkedList<>();
+        generateStats(runId, statsAdded);
         return statsAdded;
     }
 
-    public void generateStats(String runId, String projectId, Map<String, String> stats) {
-        Map<String, Object> tenXQCDataVals = new HashMap<>();
+    public void generateStats(String runId, List<Map<String, String>> stats) {
+        List<Map<String, Object>> tenXQCDataVals = new LinkedList<>();
         JSONObject tenXData = getTenXStatsFromDb();
+        tenXQCDataVals = getTenXQcValues(tenXData);
         if (tenXData.keySet().size() == 0) {
             log.error(String.format("Found no 10X NGS-STATS for run with run id %s using url %s", runId, getTenXStatsUrl()));
         }
-        for (String key : tenXData.keySet()) {
-            tenXQCDataVals = getTenXQcValues(tenXData);
-            String sampleId = String.valueOf(tenXQCDataVals.get("SampleId")); // aka base IGO ID
-            String requestId = String.valueOf(tenXQCDataVals.get("Request"));
+        for (int i = 0 ; i < tenXQCDataVals.size(); i++) {
+            Map<String, Object> eachSampleQcVals = new HashMap<>();
+            String sampleId = String.valueOf(eachSampleQcVals.get("SampleId")); // aka base IGO ID
+            String requestId = String.valueOf(eachSampleQcVals.get("Request"));
             List<DataRecord> relatedLibrarySamples = getRelatedLibrarySamples(runId);
             log.info(String.format("10X Stats: Total Related Library Samples for run %s: %d", runId, relatedLibrarySamples.size()));
             DataRecord librarySample = getLibrarySample(relatedLibrarySamples, sampleId);
             String igoId = getRecordStringValue(librarySample, SampleModel.SAMPLE_ID, user);
-            tenXQCDataVals.put(SampleModel.SAMPLE_ID, igoId);
+            eachSampleQcVals.put(SampleModel.SAMPLE_ID, igoId);
             log.info(String.format("Adding new %s child record to %s with SampleId %s, values are : %s",
                     SeqAnalysisSampleQCModel.DATA_TYPE_NAME,
                     SampleModel.DATA_TYPE_NAME,
                     getRecordStringValue(librarySample, SampleModel.SAMPLE_ID, user),
-                    tenXQCDataVals.toString()));
+                    eachSampleQcVals.toString()));
             try {
                 List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
                 DataRecord requestDataRecord = requestList.get(0);
-                DataRecord newSeqAnalysisDataRec = librarySample.addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, tenXQCDataVals, user);
-                stats.putIfAbsent(tenXQCDataVals.get(SampleModel.SAMPLE_ID).toString(), "");
-                stats.put(tenXQCDataVals.get(SampleModel.SAMPLE_ID).toString(), tenXQCDataVals.toString());
+                DataRecord newSeqAnalysisDataRec = librarySample.addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, eachSampleQcVals, user);
+                stats.get(i).putIfAbsent(eachSampleQcVals.get(SampleModel.SAMPLE_ID).toString(), "");
+                stats.get(i).put(eachSampleQcVals.get(SampleModel.SAMPLE_ID).toString(), eachSampleQcVals.toString());
             } catch (Exception e) {
                 String error = String.format("Failed to add new %s DataRecord Child for %s. ERROR: %s%s", SampleModel.OTHER_SAMPLE_ID, sampleId,
                         ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
@@ -143,6 +141,7 @@ public class UpdateTenXSampleLevelStatsTask extends SequencingStats {
             JSONArray jsonArray = new JSONArray(response.toString());
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("10X stats", jsonArray);
+            System.out.println(jsonObject.toString(4));
             return jsonObject;
         } catch (Exception e) {
             log.info(String.format("Error while querying ngs-stats endpoint using url %s.\n%s:%s", url, ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e)));
@@ -153,48 +152,54 @@ public class UpdateTenXSampleLevelStatsTask extends SequencingStats {
     /**
      * Get and pars JSON 10X stats object into LIMS tenXstats table.
      * */
-    private Map<String, Object> getTenXQcValues(JSONObject tenXStatsData) {
-        String sampleId = getIgoId(String.valueOf(tenXStatsData.get("sampleId")));
-        log.info("10X QC Vals Sample ID: " + sampleId);
-        String otherSampleId = getIgoSampleName(String.valueOf(tenXStatsData.get("otherSampleId")));
-        String sequencerRunFolder = getVersionLessRunId(String.valueOf(tenXStatsData.get("sequencerRunFolder")));
-        String seqQCStatus = inital_qc_status;
+    private List<Map<String, Object>> getTenXQcValues(JSONObject tenXStatsData) {
+        List<Map<String, Object>> tenxQcVals = new LinkedList<>();
+        JSONArray arrayOfJsons = tenXStatsData.getJSONArray("10X stats");
+        for (int i = 0; i < arrayOfJsons.length(); i++) {
+            JSONObject eachSample = arrayOfJsons.getJSONObject(i);
+            String sampleId = getIgoId(String.valueOf(eachSample.get("igo_SAMPLE_ID")));
+            log.info("10X QC Vals Sample ID: " + sampleId);
+            String otherSampleId = getIgoSampleName(String.valueOf(eachSample.get("igo_SAMPLE_ID")));
+            String sequencerRunFolder = getVersionLessRunId(String.valueOf(eachSample.get("run_ID")));
+            String seqQCStatus = inital_qc_status;
 
-        Long antibodyReadsPerCell = tenXStatsData.get("ANTIBODY_READS_PER_CELL") != JSONObject.NULL ? (Long) tenXStatsData.get("ANTIBODY_READS_PER_CELL") : 0;
-        int cellNumber = tenXStatsData.get("CELL_NUMBER") != JSONObject.NULL ? (Integer) tenXStatsData.get("CELL_NUMBER") : 0;
-        int chCellNumber = tenXStatsData.get("CH_CELL_NUMBER") != JSONObject.NULL ? (Integer) tenXStatsData.get("CH_CELL_NUMBER") : 0;
-        String cellsAssignedToSample = tenXStatsData.get("CELLS_ASSIGNED_TO_SAMPLE") != JSONObject.NULL ? (String) tenXStatsData.get("CELLS_ASSIGNED_TO_SAMPLE") : "";
-        int fractionUnrecognized = tenXStatsData.get("ABC_CH_FRACTION_UNRECOGNIZED") != JSONObject.NULL ? (Integer) tenXStatsData.get("ABC_CH_FRACTION_UNRECOGNIZED") : 0;
-        int meanReadsPerCell = tenXStatsData.get("MEAN_READS_PER_CELL") != JSONObject.NULL ? (Integer) tenXStatsData.get("MEAN_READS_PER_CELL") : 0;
-        int chMeanReadsPerCell = tenXStatsData.get("CH_MEAN_READS_PER_CELL") != JSONObject.NULL ? (Integer) tenXStatsData.get("CH_MEAN_READS_PER_CELL") : 0;
-        int atacMeanRawReadsPerCell = tenXStatsData.get("ATAC_MEAN_RAW_READS_PER_CELL") != JSONObject.NULL ? (Integer) tenXStatsData.get("ATAC_MEAN_RAW_READS_PER_CELL") : 0;
-        int meanReadsPerSpot = tenXStatsData.get("MEAN_READS_PER_SPOT") != JSONObject.NULL ? (Integer) tenXStatsData.get("MEAN_READS_PER_SPOT") : 0;
-        int medianUMIsPerCellBarcode = tenXStatsData.get("MEDIAN_CH_UMIs_PER_CELL_BARCODE") != JSONObject.NULL ? (Integer) tenXStatsData.get("MEDIAN_CH_UMIs_PER_CELL_BARCODE") : 0;
-        int medianGenesOrFragmentsPerCell = tenXStatsData.get("MEDIAN_GENES_OR_FRAGMENTS_PER_CELL") != JSONObject.NULL ? (Integer) tenXStatsData.get("MEDIAN_GENES_OR_FRAGMENTS_PER_CELL") : 0;
-        int atacMedianHighQulityFragPerCell = tenXStatsData.get("ATAC_MEDIAN_HIGH_QUALITY_FRAGMENTS_PER_CELL") != JSONObject.NULL ? (Integer) tenXStatsData.get("ATAC_MEDIAN_HIGH_QUALITY_FRAGMENTS_PER_CELL") : 0;
-        int medianIGLUmisPerCell = tenXStatsData.get("MEDIAN_IGL_UMIs_PER_CELL") != JSONObject.NULL ? (Integer) tenXStatsData.get("MEDIAN_IGL_UMIs_PER_CELL") : 0;
-        int medianTraIghUmisPerCell = tenXStatsData.get("MEDIAN_TRA_IGH_UMIs_PER_CELL") != JSONObject.NULL ? (Integer) tenXStatsData.get("MEDIAN_TRA_IGH_UMIs_PER_CELL") : 0;
-        int medianTrbIgkUmisPerCell = tenXStatsData.get("MEDIAN_TRB_IGK_UMIs_PER_CELL") != JSONObject.NULL ? (Integer) tenXStatsData.get("MEDIAN_TRB_IGK_UMIs_PER_CELL") : 0;
-        int readsMappedConfidentlyToGenome = tenXStatsData.get("READS_MAPPED_CONFIDENTLY_TO_GENOME") != JSONObject.NULL ? (Integer) tenXStatsData.get("READS_MAPPED_CONFIDENTLY_TO_GENOME") : 0;
-        int atacConfidentlyMappedReadsPair = tenXStatsData.get("ATAC_CONFIDENTLY_MAPPED_READ_PAIRS") != JSONObject.NULL ? (Integer) tenXStatsData.get("ATAC_CONFIDENTLY_MAPPED_READ_PAIRS") : 0;
-        int readsMappedToTranscriptome = tenXStatsData.get("READS_MAPPED_TO_TRANSCRIPTOME") != JSONObject.NULL ? (Integer) tenXStatsData.get("READS_MAPPED_TO_TRANSCRIPTOME") : 0;
-        int vdjReadsMapped = tenXStatsData.get("VDJ_READS_MAPPED") != JSONObject.NULL ? (Integer) tenXStatsData.get("VDJ_READS_MAPPED") : 0;
-        int readMappedConfidentlyToProbSet = tenXStatsData.get("READS_MAPPED_CONFIDENTLY_TO_PROBE_SET") != JSONObject.NULL ? (Integer) tenXStatsData.get("READS_MAPPED_CONFIDENTLY_TO_PROBE_SET") : 0;
-        int samplesAssignedAtLeastOneCell = tenXStatsData.get("SAMPLES_ASSIGNED_AT_LEAST_ONE_CELL") != JSONObject.NULL ? (Integer) tenXStatsData.get("SAMPLES_ASSIGNED_AT_LEAST_ONE_CELL") : 0;
-        int seqSaturation = tenXStatsData.get("SEQUENCING_SATURATION") != JSONObject.NULL ? (Integer) tenXStatsData.get("SEQUENCING_SATURATION") : 0;
-        int chSeqSaturation = tenXStatsData.get("CH_SEQUENCING_SATURATION") != JSONObject.NULL ? (Integer) tenXStatsData.get("CH_SEQUENCING_SATURATION") : 0;
-        int totalReads = tenXStatsData.get("TOTAL_READS") != JSONObject.NULL ? (Integer) tenXStatsData.get("TOTAL_READS") : 0;
-        int chTotalReads = tenXStatsData.get("CH_TOTAL_READS") != JSONObject.NULL ? (Integer) tenXStatsData.get("CH_TOTAL_READS") : 0;
-        int atacTotalReads = tenXStatsData.get("ATAC_TOTAL_READS") != JSONObject.NULL ? (Integer) tenXStatsData.get("ATAC_TOTAL_READS") : 0;
+            Long antibodyReadsPerCell = eachSample.get("antibody_READS_PER_CELL") != JSONObject.NULL ? (Long) eachSample.get("antibody_READS_PER_CELL") : 0;
+            double cellNumber = eachSample.get("cell_NUMBER") != JSONObject.NULL ? (Double) eachSample.get("cell_NUMBER") : 0;
+            double chCellNumber = eachSample.get("ch_CELL_NUMBER") != JSONObject.NULL ? (Double) eachSample.get("ch_CELL_NUMBER") : 0;
+            String cellsAssignedToSample = eachSample.get("cells_ASSIGNED_TO_SAMPLE") != JSONObject.NULL ? (String) eachSample.get("cells_ASSIGNED_TO_SAMPLE") : "";
+            int fractionUnrecognized = eachSample.get("abc_CH_FRACTION_UNRECOGNIZED") != JSONObject.NULL ? (Integer) eachSample.get("abc_CH_FRACTION_UNRECOGNIZED") : 0;
+            double meanReadsPerCell = eachSample.get("mean_READS_PER_CELL") != JSONObject.NULL ? (Double) eachSample.get("mean_READS_PER_CELL") : 0;
+            int chMeanReadsPerCell = eachSample.get("ch_MEAN_READS_PER_CELL") != JSONObject.NULL ? (Integer) eachSample.get("ch_MEAN_READS_PER_CELL") : 0;
+            double atacMeanRawReadsPerCell = eachSample.get("atac_MEAN_RAW_READS_PER_CELL") != JSONObject.NULL ? (Double) eachSample.get("atac_MEAN_RAW_READS_PER_CELL") : 0;
+            double meanReadsPerSpot = eachSample.get("mean_READS_PER_SPOT") != JSONObject.NULL ? (Double) eachSample.get("mean_READS_PER_SPOT") : 0;
+            int medianUMIsPerCellBarcode = eachSample.get("median_CH_UMIs_PER_CELL_BARCODE") != JSONObject.NULL ? (Integer) eachSample.get("median_CH_UMIs_PER_CELL_BARCODE") : 0;
+            double medianGenesOrFragmentsPerCell = eachSample.get("median_GENES_OR_FRAGMENTS_PER_CELL") != JSONObject.NULL ? (Double) eachSample.get("median_GENES_OR_FRAGMENTS_PER_CELL") : 0;
+            double atacMedianHighQulityFragPerCell = eachSample.get("atac_MEDIAN_HIGH_QUALITY_FRAGMENTS_PER_CELL") != JSONObject.NULL ? (Double) eachSample.get("atac_MEDIAN_HIGH_QUALITY_FRAGMENTS_PER_CELL") : 0;
+            double medianIGLUmisPerCell = eachSample.get("median_IGL_UMIs_PER_CELL") != JSONObject.NULL ? (Double) eachSample.get("median_IGL_UMIs_PER_CELL") : 0;
+            double medianTraIghUmisPerCell = eachSample.get("median_TRA_IGH_UMIs_PER_CELL") != JSONObject.NULL ? (Double) eachSample.get("median_TRA_IGH_UMIs_PER_CELL") : 0;
+            double medianTrbIgkUmisPerCell = eachSample.get("median_TRB_IGK_UMIs_PER_CELL") != JSONObject.NULL ? (Double) eachSample.get("median_TRB_IGK_UMIs_PER_CELL") : 0;
+            double readsMappedConfidentlyToGenome = eachSample.get("reads_MAPPED_CONFIDENTLY_TO_GENOME") != JSONObject.NULL ? (Double) eachSample.get("reads_MAPPED_CONFIDENTLY_TO_GENOME") : 0;
+            double atacConfidentlyMappedReadsPair = eachSample.get("atac_CONFIDENTLY_MAPPED_READ_PAIRS") != JSONObject.NULL ? (Double) eachSample.get("atac_CONFIDENTLY_MAPPED_READ_PAIRS") : 0;
+            double readsMappedToTranscriptome = eachSample.get("reads_MAPPED_TO_TRANSCRIPTOME") != JSONObject.NULL ? (Double) eachSample.get("reads_MAPPED_TO_TRANSCRIPTOME") : 0;
+            double vdjReadsMapped = eachSample.get("vdj_READS_MAPPED") != JSONObject.NULL ? (Double) eachSample.get("vdj_READS_MAPPED") : 0;
+            double readMappedConfidentlyToProbSet = eachSample.get("reads_MAPPED_CONFIDENTLY_TO_PROBE_SET") != JSONObject.NULL ? (Double) eachSample.get("reads_MAPPED_CONFIDENTLY_TO_PROBE_SET") : 0;
+            int samplesAssignedAtLeastOneCell = eachSample.get("samples_ASSIGNED_AT_LEAST_ONE_CELL") != JSONObject.NULL ? (Integer) eachSample.get("samples_ASSIGNED_AT_LEAST_ONE_CELL") : 0;
+            double seqSaturation = eachSample.get("sequencing_SATURATION") != JSONObject.NULL ? (Double) eachSample.get("sequencing_SATURATION") : 0;
+            double chSeqSaturation = eachSample.get("ch_SEQUENCING_SATURATION") != JSONObject.NULL ? (Double) eachSample.get("ch_SEQUENCING_SATURATION") : 0;
+            int totalReads = eachSample.get("total_READS") != JSONObject.NULL ? (Integer) eachSample.get("total_READS") : 0;
+            int chTotalReads = eachSample.get("ch_TOTAL_READS") != JSONObject.NULL ? (Integer) eachSample.get("ch_TOTAL_READS") : 0;
+            int atacTotalReads = eachSample.get("atac_TOTAL_READS") != JSONObject.NULL ? (Integer) eachSample.get("atac_TOTAL_READS") : 0;
 
-        TenXSampleSequencingQc tenXQc = new TenXSampleSequencingQc(sampleId, otherSampleId, sequencerRunFolder,
-                seqQCStatus, antibodyReadsPerCell, cellNumber, chCellNumber, cellsAssignedToSample, fractionUnrecognized,
-                meanReadsPerCell, chMeanReadsPerCell, atacMeanRawReadsPerCell, meanReadsPerSpot, medianUMIsPerCellBarcode,
-                medianGenesOrFragmentsPerCell, atacMedianHighQulityFragPerCell, medianIGLUmisPerCell, medianTraIghUmisPerCell,
-                medianTrbIgkUmisPerCell, readsMappedConfidentlyToGenome, atacConfidentlyMappedReadsPair, readsMappedToTranscriptome,
-                vdjReadsMapped, readMappedConfidentlyToProbSet, samplesAssignedAtLeastOneCell, seqSaturation, chSeqSaturation,
-                totalReads, chTotalReads, atacTotalReads);
+            TenXSampleSequencingQc tenXQc = new TenXSampleSequencingQc(sampleId, otherSampleId, sequencerRunFolder,
+                    seqQCStatus, antibodyReadsPerCell, cellNumber, chCellNumber, cellsAssignedToSample, fractionUnrecognized,
+                    meanReadsPerCell, chMeanReadsPerCell, atacMeanRawReadsPerCell, meanReadsPerSpot, medianUMIsPerCellBarcode,
+                    medianGenesOrFragmentsPerCell, atacMedianHighQulityFragPerCell, medianIGLUmisPerCell, medianTraIghUmisPerCell,
+                    medianTrbIgkUmisPerCell, readsMappedConfidentlyToGenome, atacConfidentlyMappedReadsPair, readsMappedToTranscriptome,
+                    vdjReadsMapped, readMappedConfidentlyToProbSet, samplesAssignedAtLeastOneCell, seqSaturation, chSeqSaturation,
+                    totalReads, chTotalReads, atacTotalReads);
 
-        return tenXQc.getTenXSequencingQcValues();
+            tenxQcVals.add(tenXQc.getTenXSequencingQcValues());
+        }
+        return tenxQcVals;
     }
 }

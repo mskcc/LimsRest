@@ -14,9 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Endpoint to Add/Update Sequencing QC Stats to LIMS SeqAnalysisSampleQC DataType. The endpoint is planned to run as
@@ -80,21 +78,25 @@ public class UpdateLimsSampleLevelSequencingQc {
     }
 
     @GetMapping("/updateTenXSampleLevelStats")
-    public Map<String, String> tenXStatsToSave(@RequestParam(value = "runId") String runId) {
-        Map<String, String> resp = new HashMap<>();
+    public List<Map<String, String>> tenXStatsToSave(@RequestParam(value = "runId") String runId) {
+        List<Map<String, String>> resp = new LinkedList<>();
+        Map<String, String> respMap = new HashMap<>();
+
         if (StringUtils.isBlank(runId)) {
             final String error = String.format("Invalid RUN ID: '%s'", runId);
-            resp.put("error", error);
+            respMap.put("error", error);
+            resp.add(respMap);
             log.info(error);
             return resp;
         }
-        UpdateTenXSampleLevelStatsTask task = new UpdateTenXSampleLevelStatsTask(runId, this.conn);
+        UpdateTenXSampleLevelStatsTask task = new UpdateTenXSampleLevelStatsTask(runId, conn);
         log.info(String.format("Starting to Add /updateTenXSampleLevelStats in LIMS for run: %s", runId));
         try {
             return task.execute();
         } catch (Exception e) {
             String err = String.format("%s -> Error while updating Run Stats: %s", ExceptionUtils.getRootCauseMessage(e), ExceptionUtils.getStackTrace(e));
-            resp.put("error", err);
+            respMap.put("error", err);
+            resp.add(respMap);
             log.info(err);
             return resp;
         }

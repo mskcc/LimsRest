@@ -6,6 +6,7 @@ import com.velox.api.datarecord.IoError;
 import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
 import com.velox.api.util.ServerException;
+import com.velox.sapioutils.client.standalone.VeloxConnection;
 import com.velox.sloan.cmo.recmodels.IlluminaSeqExperimentModel;
 import com.velox.sloan.cmo.recmodels.IndexBarcodeModel;
 import com.velox.sloan.cmo.recmodels.SampleModel;
@@ -27,14 +28,19 @@ public class SequencingStats {
     private final String POOLEDNORMAL_IDENTIFIER = "POOLEDNORMAL";
     private final String CONTROL_IDENTIFIER = "CTRL";
     private final String FAILED = "Failed";
-    DataRecordManager dataRecordManager;
+    public ConnectionLIMS conn;
+    public User user;
+    VeloxConnection vConn;
+    DataRecordManager dataRecordManager = vConn.getDataRecordManager();
     String appPropertyFile = "/app.properties";
     String inital_qc_status = "Under-Review";
-    private ConnectionLIMS conn;
-    User user;
 
-    private String runId;
-    private String projectId;
+    public String runId;
+
+    public SequencingStats(ConnectionLIMS conn) {
+        this.conn = conn;
+        this.vConn = conn.getConnection();
+    }
     /**
      * Method to get all the Library Samples related to Sequencing Run.
      *
