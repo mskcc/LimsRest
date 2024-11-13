@@ -1,13 +1,17 @@
 package org.mskcc.limsrest.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.velox.sapio.commons.exemplar.recordmodel.annotation.ExemplarDataTypeModel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
+@ExemplarDataTypeModel(
+        dataTypeName = "TenXStats"
+)
 @Getter @Setter
 @NoArgsConstructor
 public class TenXStats {
+    public static final String DATA_TYPE_NAME = "TenXStats";
     String sampleId;
     String otherSampleId;
     String request;

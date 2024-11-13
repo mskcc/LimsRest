@@ -2,15 +2,8 @@ package org.mskcc.limsrest.service.sequencingqc;
 
 import com.velox.api.datarecord.DataRecord;
 import com.velox.api.datarecord.DataRecordManager;
-import com.velox.api.datarecord.IoError;
-import com.velox.api.datarecord.NotFound;
 import com.velox.api.user.User;
-import com.velox.api.util.ServerException;
 import com.velox.sapioutils.client.standalone.VeloxConnection;
-import com.velox.sloan.cmo.recmodels.IlluminaSeqExperimentModel;
-import com.velox.sloan.cmo.recmodels.IndexBarcodeModel;
-import com.velox.sloan.cmo.recmodels.SampleModel;
-import com.velox.sloan.cmo.recmodels.SeqAnalysisSampleQCModel;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
@@ -20,17 +13,14 @@ import org.json.JSONObject;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.controller.sequencingqc.SequencingStats;
 
-import java.awt.dnd.DropTarget;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.rmi.RemoteException;
 import java.util.*;
 
-import static org.mskcc.limsrest.util.Utils.*;
 
 public class UpdateTenXSampleLevelStatsTask extends SequencingStats {
 
@@ -39,7 +29,8 @@ public class UpdateTenXSampleLevelStatsTask extends SequencingStats {
     DataRecordManager dataRecordManager;
     String appPropertyFile = "/app.properties";
     String inital_qc_status = "Under-Review";
-    public ConnectionLIMS conn;
+    //public ConnectionLIMS conn;
+    User user;
     private String runId;
 
     public UpdateTenXSampleLevelStatsTask(String runId, ConnectionLIMS conn) {
@@ -47,51 +38,35 @@ public class UpdateTenXSampleLevelStatsTask extends SequencingStats {
         this.runId = runId;
     }
 
-    public List<Map<String, String>> execute() {
+    public List<Map<String, Object>> execute() {
         VeloxConnection vConn = conn.getConnection();
         user = vConn.getUser();
         dataRecordManager = vConn.getDataRecordManager();
         user = conn.getConnection().getUser();
 
-        List<Map<String, String>> statsAdded = new LinkedList<>();
+        List<Map<String, Object>> statsAdded = new LinkedList<>();
         generateStats(runId, statsAdded);
         return statsAdded;
     }
 
-    public void generateStats(String runId, List<Map<String, String>> stats) {
-        List<Map<String, Object>> tenXQCDataVals = new LinkedList<>();
+    public void generateStats(String runId, List<Map<String, Object>> stats) {
+        //List<Map<String, Object>> tenXQCDataVals = new LinkedList<>();
         JSONObject tenXData = getTenXStatsFromDb();
-        tenXQCDataVals = getTenXQcValues(tenXData);
+        stats = getTenXQcValues(tenXData);
         if (tenXData.keySet().size() == 0) {
             log.error(String.format("Found no 10X NGS-STATS for run with run id %s using url %s", runId, getTenXStatsUrl()));
         }
-        for (int i = 0 ; i < tenXQCDataVals.size(); i++) {
-            Map<String, Object> eachSampleQcVals = new HashMap<>();
-            String sampleId = String.valueOf(eachSampleQcVals.get("SampleId")); // aka base IGO ID
-            String requestId = String.valueOf(eachSampleQcVals.get("Request"));
-            List<DataRecord> relatedLibrarySamples = getRelatedLibrarySamples(runId);
-            log.info(String.format("10X Stats: Total Related Library Samples for run %s: %d", runId, relatedLibrarySamples.size()));
-            DataRecord librarySample = getLibrarySample(relatedLibrarySamples, sampleId);
-            String igoId = getRecordStringValue(librarySample, SampleModel.SAMPLE_ID, user);
-            eachSampleQcVals.put(SampleModel.SAMPLE_ID, igoId);
-            log.info(String.format("Adding new %s child record to %s with SampleId %s, values are : %s",
-                    SeqAnalysisSampleQCModel.DATA_TYPE_NAME,
-                    SampleModel.DATA_TYPE_NAME,
-                    getRecordStringValue(librarySample, SampleModel.SAMPLE_ID, user),
-                    eachSampleQcVals.toString()));
-            try {
-                List<DataRecord> requestList = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
-                DataRecord requestDataRecord = requestList.get(0);
-                DataRecord newSeqAnalysisDataRec = librarySample.addChild(SeqAnalysisSampleQCModel.DATA_TYPE_NAME, eachSampleQcVals, user);
-                stats.get(i).putIfAbsent(eachSampleQcVals.get(SampleModel.SAMPLE_ID).toString(), "");
-                stats.get(i).put(eachSampleQcVals.get(SampleModel.SAMPLE_ID).toString(), eachSampleQcVals.toString());
-            } catch (Exception e) {
-                String error = String.format("Failed to add new %s DataRecord Child for %s. ERROR: %s%s", SampleModel.OTHER_SAMPLE_ID, sampleId,
-                        ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
-                log.error(error);
+        try {
+            for (int i = 0 ; i < stats.size(); i++) {
+                DataRecord tenxRecord = dataRecordManager.addDataRecord("TenXStats", user);
+                Map<String, Object> eachTenXStats = stats.get(i);
+                tenxRecord.setFields(eachTenXStats, user);
             }
+        } catch (Exception e) {
+                String error = String.format("Failed to add new 10X record. ERROR: %s%s", ExceptionUtils.getMessage(e),
+                        ExceptionUtils.getStackTrace(e));
+                log.error(error);
         }
-        return;
     }
 
     /**

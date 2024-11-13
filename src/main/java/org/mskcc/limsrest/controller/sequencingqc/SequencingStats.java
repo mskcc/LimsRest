@@ -31,7 +31,7 @@ public class SequencingStats {
     public ConnectionLIMS conn;
     public User user;
     VeloxConnection vConn;
-    DataRecordManager dataRecordManager = vConn.getDataRecordManager();
+    DataRecordManager dataRecordManager;
     String appPropertyFile = "/app.properties";
     String inital_qc_status = "Under-Review";
 
@@ -40,6 +40,7 @@ public class SequencingStats {
     public SequencingStats(ConnectionLIMS conn) {
         this.conn = conn;
         this.vConn = conn.getConnection();
+        this.dataRecordManager = vConn.getDataRecordManager();
     }
     /**
      * Method to get all the Library Samples related to Sequencing Run.

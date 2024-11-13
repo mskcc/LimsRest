@@ -78,9 +78,9 @@ public class UpdateLimsSampleLevelSequencingQc {
     }
 
     @GetMapping("/updateTenXSampleLevelStats")
-    public List<Map<String, String>> tenXStatsToSave(@RequestParam(value = "runId") String runId) {
-        List<Map<String, String>> resp = new LinkedList<>();
-        Map<String, String> respMap = new HashMap<>();
+    public List<Map<String, Object>> tenXStatsToSave(@RequestParam(value = "runId") String runId) {
+        List<Map<String, Object>> resp = new LinkedList<>();
+        Map<String, Object> respMap = new HashMap<>();
 
         if (StringUtils.isBlank(runId)) {
             final String error = String.format("Invalid RUN ID: '%s'", runId);

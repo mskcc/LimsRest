@@ -34,7 +34,7 @@ import static org.mskcc.limsrest.util.Utils.getRecordsOfTypeFromParents;
 public class UpdateLimsSampleLevelSequencingQcTask extends SequencingStats {
     private Log log = LogFactory.getLog(UpdateLimsSampleLevelSequencingQcTask.class);
 
-    private final static List<String> POOLED_SAMPLE_TYPES = Collections.singletonList("pooled library");
+    //private final static List<String> POOLED_SAMPLE_TYPES = Collections.singletonList("pooled library");
     private final String POOLEDNORMAL_IDENTIFIER = "POOLEDNORMAL";
     private final String CONTROL_IDENTIFIER = "CTRL";
     private final String FAILED = "Failed";
@@ -42,7 +42,7 @@ public class UpdateLimsSampleLevelSequencingQcTask extends SequencingStats {
     DataRecordManager dataRecordManager;
     String appPropertyFile = "/app.properties";
     String inital_qc_status = "Under-Review";
-    private ConnectionLIMS conn;
+    //private ConnectionLIMS conn;
     User user;
     private String projectId;
 
