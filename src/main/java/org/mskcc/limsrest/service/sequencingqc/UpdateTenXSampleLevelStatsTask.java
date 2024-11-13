@@ -59,8 +59,11 @@ public class UpdateTenXSampleLevelStatsTask extends SequencingStats {
         try {
             for (int i = 0 ; i < stats.size(); i++) {
                 DataRecord tenxRecord = dataRecordManager.addDataRecord("TenXStats", user);
+                log.info("A new 10X record generated!");
                 Map<String, Object> eachTenXStats = stats.get(i);
+                log.info("ReadsMappedToTranscriptome value = " + eachTenXStats.get("ReadsMappedToTranscriptome"));
                 tenxRecord.setFields(eachTenXStats, user);
+                dataRecordManager.storeAndCommit(user + " added information to tenX stats " + eachTenXStats.get("SampleId"), user);
             }
         } catch (Exception e) {
                 String error = String.format("Failed to add new 10X record. ERROR: %s%s", ExceptionUtils.getMessage(e),
