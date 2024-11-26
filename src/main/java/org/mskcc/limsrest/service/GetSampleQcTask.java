@@ -84,8 +84,9 @@ public class GetSampleQcTask {
                             Double readLength = record.getDoubleVal("MedianReadLength", user);
                             Double estimatedCoverage = record.getDoubleVal("EstimatedCoverage", user);
                             String sequencerPosition = record.getStringVal("SequencerPosition", user);
+                            String qcStatus = record.getStringVal("qcStatus", user);
 
-                            SampleSequencingQcONT qcONT = new SampleSequencingQcONT(igoId, flowcell, reads, bases, n50, readLength, estimatedCoverage, 0.0, "", sequencerPosition);
+                            SampleSequencingQcONT qcONT = new SampleSequencingQcONT(igoId, flowcell, reads, bases, n50, readLength, estimatedCoverage, 0.0, "", sequencerPosition, qcStatus);
                             log.info(qcONT);
                             samplesONT.add(qcONT);
                         }
@@ -193,7 +194,7 @@ public class GetSampleQcTask {
                     ss.setQc(qcSummary);
                     rs.addSample(ss);
                 }
-                
+
                 rss.add(rs);
             }
         } catch (Throwable e) {

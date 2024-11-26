@@ -66,7 +66,7 @@ public class UpdateLimsSampleLevelSequencingQc {
         log.info(String.format("Starting to Add/Update ONT stats in LIMS for IGO ID: %s", igoId));
 
         SampleSequencingQcONT statsONT = new SampleSequencingQcONT(igoId, flowcell, reads, bases, N50,
-                medianReadLength, estimatedCoverage, bamCoverage, sequencerName, sequencerPosition);
+                medianReadLength, estimatedCoverage, bamCoverage, sequencerName, sequencerPosition, "");
         SetStatsONTTask task = new SetStatsONTTask(statsONT, conn);
         try {
             return task.execute();

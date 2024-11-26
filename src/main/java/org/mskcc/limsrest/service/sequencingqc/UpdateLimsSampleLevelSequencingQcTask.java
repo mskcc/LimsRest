@@ -95,14 +95,17 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                     DataRecord requestDataRecord = requestList.get(0);
                     String requestName = requestDataRecord.getStringVal("RequestName", user);
 
-                    // DLP is unique, there should be 3 qc records only, they can be attached to the sample
-                    // which is a child of the LIMS Request
+                    // SmartSeq & DLP are unique
+                    // For DLP there should be 3 qc records only, they can be attached to the sample which is a child of the LIMS Request
                     if ("SingleCell".equals(requestName)) {
                         librarySample = requestDataRecord.getChildrenOfType("Sample", user)[0];
                         String recipe = librarySample.getStringVal("Recipe", user);
                         if (recipe.equals("SC_DLP")) {
                             isDLP = true;
                             log.info("Adding DLP stats record for " + requestId);
+                        } else if (recipe.equals("SC_SmartSeq")) {
+                            log.info("Adding SC_SmartSeq stats for " + requestId);
+                            librarySample = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sampleId + "'", user).get(0);
                         } else
                             librarySample = getLibrarySample(relatedLibrarySamples, sampleId);
                     } else {

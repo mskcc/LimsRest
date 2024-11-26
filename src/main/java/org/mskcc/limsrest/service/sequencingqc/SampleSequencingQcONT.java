@@ -16,4 +16,6 @@ public class SampleSequencingQcONT {
     private double bamCoverage; // BAMCoverage
     private String sequencerName; // SequencerName
     private String sequencerPosition; // SequencerPosition
+
+    private String qcStatus;
 }
