@@ -535,6 +535,7 @@ public class GetSampleManifestTask {
     protected SampleManifest setSampleLevelFields(String igoId, String cmoInfoIgoId, DataRecord cmoInfo, User user) throws NotFound, RemoteException {
         SampleManifest s = new SampleManifest();
         s.setIgoId(igoId);
+        s.setAltid(cmoInfo.getStringVal("AltId", user));
         s.setCmoInfoIgoId(cmoInfoIgoId);
         s.setCmoPatientId(cmoInfo.getStringVal("CmoPatientId", user));
         // aka "Sample Name" in SampleCMOInfoRecords

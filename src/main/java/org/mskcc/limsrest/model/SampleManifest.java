@@ -17,6 +17,7 @@ import java.util.*;
 @ToString @NoArgsConstructor
 public class SampleManifest implements Serializable {
     private String igoId;
+    private String altid; // added in Dec. 2024 by request of the CMO
     private String cmoInfoIgoId;
     private String cmoSampleName;
     private String sampleName;
