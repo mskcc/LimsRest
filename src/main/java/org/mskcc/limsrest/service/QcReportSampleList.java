@@ -88,6 +88,9 @@ public class QcReportSampleList {
             public String sourceSampleId;
             public Double A260280;
             public Double A260230;
+            public Integer cellCount;
+            public Double viability;
+            public Double tissueSize;
 
             public RnaReportSample(Map<String, Object> sampleFields) {
                 super(sampleFields);
@@ -97,6 +100,9 @@ public class QcReportSampleList {
                 this.sourceSampleId = (String) sampleFields.get("SourceSampleId");
                 this.A260230 = (Double) sampleFields.get("A260230");
                 this.A260280 = (Double) sampleFields.get("A260280");
+                this.cellCount = (Integer) sampleFields.get("cellCount");
+                this.viability = (Double) sampleFields.get("cellViability");
+                this.tissueSize = (Double) sampleFields.get("tissueSize");
             }
         }
 
@@ -108,6 +114,9 @@ public class QcReportSampleList {
             public String sourceSampleId;
             public Double A260280;
             public Double A260230;
+            public Integer cellCount;
+            public Double viability;
+            public Double tissueSize;
 
             public DnaReportSample(Map<String, Object> sampleFields) {
                 super(sampleFields);
@@ -118,6 +127,9 @@ public class QcReportSampleList {
                 this.sourceSampleId = (String) sampleFields.get("SourceSampleId");
                 this.A260230 = (Double) sampleFields.get("A260230");
                 this.A260280 = (Double) sampleFields.get("A260280");
+                this.cellCount = (Integer) sampleFields.get("cellCount");
+                this.viability = (Double) sampleFields.get("cellViability");
+                this.tissueSize = (Double) sampleFields.get("tissueSize");
             }
 
         }
