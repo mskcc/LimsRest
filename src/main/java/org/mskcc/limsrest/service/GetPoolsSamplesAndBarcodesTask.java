@@ -38,13 +38,13 @@ public class GetPoolsSamplesAndBarcodesTask {
             VeloxConnection vConn = conn.getConnection();
             User user = vConn.getUser();
             DataRecordManager dataRecordManager = vConn.getDataRecordManager();
-            DataRecord pool = dataRecordManager.queryDataRecords("Sample", "SampleId like '%" + poolId + "%'", user).get(0);
+            DataRecord pool = dataRecordManager.queryDataRecords("Sample", "SampleId ='" + poolId + "'", user).get(0);
             List<String> parentLibrarySamplesForPool = getNearestParentLibrarySamplesForPool(pool, user);
 
             for (String eachLibSample : parentLibrarySamplesForPool) {
                 BarcodeSummary barcodes = null;
                 log.info("Each lib igo id:" + eachLibSample);
-                List<DataRecord> indexList = dataRecordManager.queryDataRecords("IndexBarcode", "SampleId LIKE '%" + eachLibSample + "%' ORDER BY IndexId", user);
+                List<DataRecord> indexList = dataRecordManager.queryDataRecords("IndexBarcode", "SampleId = '" + eachLibSample + "' ORDER BY IndexId", user);
                 log.info("indexList size = " + indexList.size());
                 for (DataRecord i : indexList) {
                     try {
@@ -54,7 +54,7 @@ public class GetPoolsSamplesAndBarcodesTask {
                         log.error("Null pointer exception at instantiating Barcode Summary!");
                     }
                 }
-                result.add(new PoolInfo(parentLibrarySamplesForPool, barcodes));
+                result.add(new PoolInfo(eachLibSample, barcodes));
             }
 
         } catch (Exception e) {
