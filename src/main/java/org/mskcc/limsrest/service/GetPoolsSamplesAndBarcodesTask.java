@@ -12,10 +12,8 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
 
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
+
 /**
  * A queued task that takes a pool ID and returns the parent library sample IGO ID and the assigned barcode information.
  * Like index ID, index tag
@@ -43,9 +41,34 @@ public class GetPoolsSamplesAndBarcodesTask {
 
             for (String eachLibSample : parentLibrarySamplesForPool) {
                 BarcodeSummary barcodes = null;
-                log.info("Each lib igo id:" + eachLibSample);
-                List<DataRecord> indexList = dataRecordManager.queryDataRecords("IndexBarcode", "SampleId = '" + eachLibSample + "' ORDER BY IndexId", user);
-                log.info("indexList size = " + indexList.size());
+                List<DataRecord> indexList = new LinkedList<>();
+                Set<String> hierarchyOfSamples = new HashSet<>();
+                hierarchyOfSamples.add(poolId);
+                String[] sampleIdParts = eachLibSample.split("_");
+                for (int i = 0; i < sampleIdParts.length; i++) {
+                    eachLibSample = "";
+                    for (int j = 0; j < sampleIdParts.length - i; j++) {
+                        if (j > 0) {
+                            eachLibSample += "_";
+                        }
+                        eachLibSample += sampleIdParts[j];
+                        log.info("Lib sample aliquot: " + eachLibSample);
+                        hierarchyOfSamples.add(eachLibSample);
+                    }
+                }
+                String sampleWithBarcodeAssigned = "";
+                for (String eachSample : hierarchyOfSamples) {
+                    if (indexList.size() > 0) {
+                        break;
+                    }
+                    log.info("Looking for barcode assigned to " + eachSample);
+                    indexList = dataRecordManager.queryDataRecords("IndexBarcode", "SampleId = '" + eachSample + "' ORDER BY IndexId", user);
+                    if (!indexList.isEmpty()) {
+                        sampleWithBarcodeAssigned = eachSample;
+                    }
+                }
+
+                log.info("sample igo id with barcode assigned:" + sampleWithBarcodeAssigned);
                 for (DataRecord i : indexList) {
                     try {
                         log.info("indexId: " + i.getStringVal("IndexId", user));
@@ -54,7 +77,7 @@ public class GetPoolsSamplesAndBarcodesTask {
                         log.error("Null pointer exception at instantiating Barcode Summary!");
                     }
                 }
-                result.add(new PoolInfo(eachLibSample, barcodes));
+                result.add(new PoolInfo(sampleWithBarcodeAssigned, barcodes));
             }
 
         } catch (Exception e) {
