@@ -12,11 +12,11 @@ import java.util.List;
 @NoArgsConstructor @AllArgsConstructor
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class PoolInfo {
-    private List<String> librarySample;
+    private String librarySample;
     private BarcodeSummary sampleBarcode;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public List<String> getLibrarySample() {
+    public String getLibrarySample() {
         return librarySample;
     }
 
