@@ -11,6 +11,7 @@ import com.velox.sloan.cmo.recmodels.RequestModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
+import org.mskcc.limsrest.util.IGOTools;
 import org.mskcc.limsrest.util.Utils;
 import org.springframework.security.access.prepost.PreAuthorize;
 
@@ -86,11 +87,12 @@ public class GetDeliveredTask {
         try {
             AuditLog auditlog = user.getAuditLog();
             List<DataRecord> recentDeliveries;
+            String queried_qc = "";
             if (time == -1) {
-                searchPoint = now + offset;
-                List<DataRecord> unreviewed = dataRecordManager.queryDataRecords("SeqAnalysisSampleQC", "DateCreated >  1484508629000 AND SeqQCStatus != 'Passed' AND SeqQCStatus not like 'Failed%'", user);
-                List<List<DataRecord>> parentSamples = dataRecordManager.getParentsOfType(unreviewed, "Sample", user);
-                List<String> reqIds = new LinkedList<>();
+                String whereClause = "DateCreated >  1484508629000 AND SeqQCStatus != 'Passed' AND SeqQCStatus not like 'Failed%'";
+                List<DataRecord> unreviewedIllumina = dataRecordManager.queryDataRecords("SeqAnalysisSampleQC", whereClause, user);
+                List<List<DataRecord>> parentSamples = dataRecordManager.getParentsOfType(unreviewedIllumina, "Sample", user);
+                Set<String> reqIds = new HashSet<>();
                 for (List<DataRecord> samples : parentSamples) {
                     for (DataRecord sample : samples) {
                         try {
@@ -103,10 +105,17 @@ public class GetDeliveredTask {
                         }
                     }
                 }
-                recentDeliveries = new LinkedList<>();
-                for (String rid : reqIds) {
-                    recentDeliveries.addAll(dataRecordManager.queryDataRecords("Request", "RequestId = '" + rid + "'", user));
+                List<DataRecord> unreviewedONT = dataRecordManager.queryDataRecords("SequencingAnalysisONT", whereClause, user);
+                for (DataRecord dr: unreviewedONT) {
+                    String igoID = dr.getStringVal("IGOID", user);
+                    String requestID = IGOTools.requestFromIgoId(igoID);
+                    if (requestID != null)
+                        reqIds.add(requestID);
                 }
+
+                String sqlList = IGOTools.convertSetToSqlList(reqIds);
+                recentDeliveries = dataRecordManager.queryDataRecords("Request", "RequestId IN " + sqlList, user);
+                queried_qc = " Queried QC Tables";
             } else if (investigator.equals("NULL")) {
                 recentDeliveries = dataRecordManager.queryDataRecords("Request", "RecentDeliveryDate > " + searchPoint, user);
             } else {
@@ -119,15 +128,15 @@ public class GetDeliveredTask {
                 DataRecord request = immutableList.get(i);
                 Map<String, Object> requestFields = request.getFields(user);
                 String requestId = (String) requestFields.get("RequestId");
-                log.info("Processing RequestId:" + requestId);
-                RequestSummary rs = new RequestSummary(requestId);
+                log.info("Processing RequestId:" + requestId + " with " + queried_qc);
+                RequestSummary requestSummary = new RequestSummary(requestId);
 
-                rs.setInvestigator(getRecordStringValue(request, RequestModel.INVESTIGATOR, user));
-                rs.setPi(getRecordStringValue(request, RequestModel.LABORATORY_HEAD, user));
-                rs.setAnalysisRequested(getRecordBooleanValue(request, RequestModel.BICANALYSIS, user));
-                rs.setAnalysisType(getRecordStringValue(request, "AnalysisType", user));
-                rs.setRequestType(getRecordStringValue(request, RequestModel.REQUEST_NAME, user));
-                rs.setProjectManager(getRecordStringValue(request, RequestModel.PROJECT_MANAGER, user));
+                requestSummary.setInvestigator(getRecordStringValue(request, RequestModel.INVESTIGATOR, user));
+                requestSummary.setPi(getRecordStringValue(request, RequestModel.LABORATORY_HEAD, user));
+                requestSummary.setAnalysisRequested(getRecordBooleanValue(request, RequestModel.BICANALYSIS, user));
+                requestSummary.setAnalysisType(getRecordStringValue(request, "AnalysisType", user));
+                requestSummary.setRequestType(getRecordStringValue(request, RequestModel.REQUEST_NAME, user));
+                requestSummary.setProjectManager(getRecordStringValue(request, RequestModel.PROJECT_MANAGER, user));
 
                 List<DataRecord> childrenOfRequest = childSamples.get(i);
                 List<DataRecord> childrenPlatesOfRequest = childPlates.get(i);
@@ -144,11 +153,12 @@ public class GetDeliveredTask {
                 }
 
                 List<List<DataRecord>> sampleQcs = dataRecordManager.getDescendantsOfType(new SortedImmutableList<>(childrenOfRequest), "SeqAnalysisSampleQC", user);
+
                 List<List<Map<String, Object>>> allCorrectedFields = dataRecordManager.getFieldsForChildrenOfType(new SortedImmutableList<>(childrenOfRequest), "SampleCMOInfoRecords", user);
                 List<AuditLogEntry> reqHistory = auditlog.getAuditLogHistory(request, false, user);
                 for (AuditLogEntry logline : reqHistory) {
                     if (logline.dataFieldName.equals("RecentDeliveryDate")) {
-                        rs.addDeliveryDate(logline.timestamp);
+                        requestSummary.addDeliveryDate(logline.timestamp);
                     }
                 }
 
@@ -162,31 +172,31 @@ public class GetDeliveredTask {
                         correctedFields = new HashMap<>();
                         correctedFields.put("CorrectdCMOID", "");
                     }
-                    SampleSummary ss = new SampleSummary();
+                    SampleSummary sampleSummary = new SampleSummary();
                     String sampleRequestId = "";
                     try {
                         sampleRequestId = (String) sampleFields.get("RequestId");
-                        ss.addRequest(sampleRequestId);
+                        sampleSummary.addRequest(sampleRequestId);
                     } catch (NullPointerException npe) {
                     }
                     log.debug(Utils.getBaseSampleId((String) sampleFields.get("SampleId"))); // this will takeover the log for projects w/many samples
-                    ss.addBaseId(Utils.getBaseSampleId((String) sampleFields.get("SampleId")));
-                    ss.addCmoId((String) sampleFields.get("OtherSampleId"));
+                    sampleSummary.addBaseId(Utils.getBaseSampleId((String) sampleFields.get("SampleId")));
+                    sampleSummary.addCmoId((String) sampleFields.get("OtherSampleId"));
                     try {
-                        ss.setSpecies((String) sampleFields.get("Species"));
+                        sampleSummary.setSpecies((String) sampleFields.get("Species"));
                     } catch (NullPointerException npe) {
                     }
                     try {
-                        ss.addExpName((String) sampleFields.get("UserSampleID"));
+                        sampleSummary.addExpName((String) sampleFields.get("UserSampleID"));
                     } catch (NullPointerException npe) {
                     }
                     try {
                         String recipe = (String) sampleFields.get("Recipe");
-                        rs.setRecipe(recipe); // There is only one request, recipe will be set for the last sample set
-                        ss.setRecipe(recipe);
+                        requestSummary.setRecipe(recipe); // There is only one request, recipe will be set for the last sample set
+                        sampleSummary.setRecipe(recipe);
                     } catch (NullPointerException npe) {
                     }
-                    ss.setCorrectedCmoId((String) correctedFields.get("CorrectedCMOID"));
+                    sampleSummary.setCorrectedCmoId((String) correctedFields.get("CorrectedCMOID"));
 
                     //because a child of the sample can enter a new request, we want to assure that this is the correct request
                     //if there are errors err on overreporting
@@ -229,15 +239,16 @@ public class GetDeliveredTask {
                                     }
                                 }
                             }
-                            ss.addBasicQc(qcSummary);
+                            sampleSummary.addBasicQc(qcSummary);
                         } else {
                             log.info("Ignoring QC record for: " + qcRequestId);
                         }
                     }
-                    rs.addSample(ss);
+                    requestSummary.addSample(sampleSummary);
                 }
-                if (!delivered.contains(rs)) {
-                    delivered.add(rs);
+
+                if (!delivered.contains(requestSummary)) {
+                    delivered.add(requestSummary);
                 }
             }
         } catch (Throwable e) {

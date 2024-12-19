@@ -18,7 +18,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -99,8 +98,8 @@ public class GetSequencingRequestsTask {
                 String request = qcRecord.getStringVal("Request", user);
                 requestIDs.remove(request);
             }
-
             log.info("Found requests that need to be topped up: " + requestIDs.toString());
+
             String s = "\"" + String.join("\", \"", requestIDs) + "\"";
             query = "REQUESTID IN (" + s + ")";
             log.info("Sending requests query: " + query);

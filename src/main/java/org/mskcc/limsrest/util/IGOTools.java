@@ -1,6 +1,14 @@
 package org.mskcc.limsrest.util;
 
+import java.util.Set;
+
 public class IGOTools {
+
+    public static String convertSetToSqlList(Set<String> reqIDs) {
+        return "('" + String.join("','", reqIDs.stream()
+                .map(String::valueOf)
+                .toArray(String[]::new)) + "')";
+    }
 
     /**
      * Extract the request id from an IGO id like: 06049_AA_1_2_1
