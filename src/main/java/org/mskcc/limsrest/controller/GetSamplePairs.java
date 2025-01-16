@@ -25,19 +25,14 @@ public class GetSamplePairs {
         this.conn = conn;
     }
 
-    @GetMapping("/api/getSamplePairs")
+    @GetMapping("/getSamplePairs")
     public SamplePair getContent(@RequestParam(value="igoSampleId") String igoId, HttpServletRequest request) {
-        log.info("/api/getSamplePairs:" + igoId + " IP:" + request.getRemoteAddr());
+        log.info("/getSamplePairs:" + igoId + " IP:" + request.getRemoteAddr());
 
         if (!IGOTools.isValidIGOSampleId(igoId))
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid IGO Sample ID: " + igoId);
 
         GetSamplePairsTask samplePairs = new GetSamplePairsTask(igoId, conn);
-        SamplePair result = samplePairs.execute();
-        if (result == null) {
-            log.error("Sample Pairs generation failed for: " + igoId);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        return result;
+        return samplePairs.execute();
     }
 }

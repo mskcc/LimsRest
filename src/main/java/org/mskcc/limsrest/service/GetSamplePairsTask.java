@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- *
+ * Given an IGO id, return all matching GLP_WES samples relating to the patient ID for the given IGO ID.
  */
 public class GetSamplePairsTask {
     private static Log log = LogFactory.getLog(GetSamplePairsTask.class);
@@ -48,7 +48,7 @@ public class GetSamplePairsTask {
 
     protected SamplePair getSamplePairs(String igoId, User user, DataRecordManager dataRecordManager)
             throws Exception {
-        log.info("Searching Sample table for SampleId ='" + igoId + "'");
+        log.info("Searching for sample table for recipe GLP_WES and SampleId ='" + igoId + "'");
         // get all GLP_WES 16606 initial samples and no extra aliquots
         List<DataRecord> samples = dataRecordManager.queryDataRecords("Sample", "SampleId LIKE '16606%_%_%' and SampleId NOT LIKE '%\\_%\\_%\\_%' AND recipe = 'GLP_WES'", user);
         String patientId = "";
@@ -58,6 +58,7 @@ public class GetSamplePairsTask {
             String cmopatientId = sample.getStringVal("CmoPatientId", user);
             String sampleId = sample.getStringVal("SampleId", user);
             String recipe = sample.getStringVal("Recipe", user);
+            String otherSampleId = sample.getStringVal("OtherSampleId", user);
 
             if (igoId.equals(sampleId)) {
                 patientId = cmopatientId;
@@ -67,7 +68,7 @@ public class GetSamplePairsTask {
                 sp = new SamplePair(cmopatientId, recipe, new ArrayList<String>(), new ArrayList<String>());
                 pairsByPatientId.put(cmopatientId, sp);
             }
-            sp.addSample(tumorOrNormal, sampleId);
+            sp.addSample(tumorOrNormal, otherSampleId + "_IGO_" + sampleId);
             System.out.println("Added sample Pair: " + sp);
         }
 
