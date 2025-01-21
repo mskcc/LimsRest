@@ -143,6 +143,9 @@ public class QcReportSampleList {
             public Double avgSize;
             public String sourceSampleId;
             public String numOfReads;
+            public Integer cellCount;
+            public Double viability;
+            public Double tissueSize;
 
             public LibraryReportSample(Map<String, Object> sampleFields) {
                 super(sampleFields);
@@ -150,6 +153,9 @@ public class QcReportSampleList {
                 this.avgSize = (Double) sampleFields.get("AvgSize");
                 this.sourceSampleId = (String) sampleFields.get("SourceSampleId");
                 this.numOfReads = (String) sampleFields.get("NumOfReads");
+                this.cellCount = (Integer) sampleFields.get("cellCount");
+                this.viability = (Double) sampleFields.get("cellViability");
+                this.tissueSize = (Double) sampleFields.get("tissueSize");
             }
 
         }
