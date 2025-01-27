@@ -545,6 +545,7 @@ public class GetSampleManifestTask {
             //sampleName = cmoInfo.getStringVal("UserSampleID", user);
         }
         s.setSampleName(sampleName);
+        s.setEstimatedPurity(cmoInfo.getStringVal("EstimatedPurity", user));
         s.setCmoSampleClass(cmoInfo.getStringVal("CMOSampleClass", user));
         s.setInvestigatorSampleId(cmoInfo.getStringVal("UserSampleID", user));
         String tumorOrNormal = cmoInfo.getStringVal("TumorOrNormal", user);

@@ -36,6 +36,7 @@ public class SampleManifest implements Serializable {
     private String tubeId;
     private String cfDNA2dBarcode;
     private String baitSet;
+    private String estimatedPurity;
 
     protected List<QcReport> qcReports = new ArrayList<>();
     protected Set<Library> libraries = new HashSet<>();
