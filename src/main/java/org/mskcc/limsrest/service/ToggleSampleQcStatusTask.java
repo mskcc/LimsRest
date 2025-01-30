@@ -41,7 +41,8 @@ public class ToggleSampleQcStatusTask {
     private String analyst;
     private String note;
     private String fastqPath;
-    private String qcType;
+    private boolean isSeq = true;
+    private boolean isOnt = false;
     private String airflow_pass;
 
     protected static void setSeqAnalysisSampleQcStatus(DataRecord seqQc, QcStatus qcStatus, String status, User user)
@@ -80,8 +81,12 @@ public class ToggleSampleQcStatusTask {
         this.analyst = analyst;
         this.note = note;
         this.fastqPath = fastqPath;
-        if ("Post".equals(qcType)) {
-            isSeqAnalysisSampleqc = false;
+//        if ("Post".equals(qcType)) {
+//            isSeqAnalysisSampleqc = false;
+//        }
+        if (qcType.equals("Ont")) {
+            isOnt = true;
+            isSeq = false;
         }
         this.conn = conn;
         this.airflow_pass = airflow_pass;
@@ -93,8 +98,9 @@ public class ToggleSampleQcStatusTask {
             VeloxConnection vConn = conn.getConnection();
             User user = vConn.getUser();
             DataRecordManager dataRecordManager = vConn.getDataRecordManager();
-            if (qcType.equals("Seq") || qcType.equals("Ont")) {
-                if (qcType.equals("Seq")) {
+            if (isSeq || isOnt) {
+                log.info("QC type is Seq or Ont");
+                if (isSeq) {
                     log.info("SeqAnalysisSampleQC updating to " + status + " for record:" + recordId);
                     DataRecord seqQc = dataRecordManager.querySystemForRecord(recordId, "SeqAnalysisSampleQC", user);
 
@@ -135,7 +141,7 @@ public class ToggleSampleQcStatusTask {
                         }
                     }
                 }
-                else if (qcType.equals("Ont")) {
+                else if (isOnt) {
                     log.info("SequencingAnalysisONT updating to " + status + " for record:" + recordId);
                     DataRecord ontQc = dataRecordManager.querySystemForRecord(recordId, "SequencingAnalysisONT", user);
 
