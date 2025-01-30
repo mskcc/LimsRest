@@ -157,24 +157,6 @@ public class ToggleSampleQcStatusTask {
                     dataRecordManager.storeAndCommit("SequencingAnalysisONT updated to " + status, null, user);
 
                     log.info("SequencingAnalysisONT updated to:" + status + " from:" + currentStatusLIMS);
-
-                    // Call Airflow to move the fastq.gz files if failed
-                    if (qcStatus == QcStatus.FAILED) {
-                        if (airflow_pass == null || airflow_pass == "")
-                            log.error("Airflow password not initialized, can't move failed fastq.gz files.");
-                        else {
-                            String igoIdFromLims = (String) ontQc.getDataField("IGOID", user); // IGO ID
-                            //String runFromLims = (String) ontQc.getDataField("SequencerRunFolder", user);
-
-                            Date execDate = new Date(System.currentTimeMillis() + 10000);
-                            String body = formatMoveFailedFastqJSON(igoIdFromLims, "", execDate);
-                            String cmd = "/bin/curl -X POST -d '" + body + "' \"http://igo-ln01:8080/api/v1/dags/move_failed_fastqs/dagRuns\" -H 'content-type: application/json' --user \"airflow-api:" + airflow_pass + "\"";
-                            log.info("Calling airflow pipeline to move failed fastq.gz files: " + cmd);
-                            ProcessBuilder processBuilder = new ProcessBuilder();
-                            processBuilder.command("bash", "-c", cmd);
-                            Process process = processBuilder.start();
-                        }
-                    }
                 }
             }
             else { //qcType.equals("Post")
