@@ -534,34 +534,41 @@ public class GetSampleManifestTask {
 
     protected SampleManifest setSampleLevelFields(String igoId, String cmoInfoIgoId, DataRecord cmoInfo, User user) throws NotFound, RemoteException {
         SampleManifest s = new SampleManifest();
-        s.setIgoId(igoId);
-        s.setAltid(cmoInfo.getStringVal("AltId", user));
-        s.setCmoInfoIgoId(cmoInfoIgoId);
-        s.setCmoPatientId(cmoInfo.getStringVal("CmoPatientId", user));
-        // aka "Sample Name" in SampleCMOInfoRecords
+        log.info("setSampleLevelFields");
+        try {
+            s.setIgoId(igoId);
+            s.setAltid(cmoInfo.getStringVal("AltId", user));
+            s.setCmoInfoIgoId(cmoInfoIgoId);
+            s.setCmoPatientId(cmoInfo.getStringVal("CmoPatientId", user));
+            // aka "Sample Name" in SampleCMOInfoRecords
 
-        String sampleName = cmoInfo.getStringVal("OtherSampleId", user);
-        if (sampleName == null || "".equals(sampleName.trim())) { // for example 05304_O_4 Agilent 51MB or update DB so this is not necessary?
-            //sampleName = cmoInfo.getStringVal("UserSampleID", user);
+            String sampleName = cmoInfo.getStringVal("OtherSampleId", user);
+            if (sampleName == null || "".equals(sampleName.trim())) { // for example 05304_O_4 Agilent 51MB or update DB so this is not necessary?
+                //sampleName = cmoInfo.getStringVal("UserSampleID", user);
+            }
+            s.setSampleName(sampleName);
+            s.setEstimatedPurity(cmoInfo.getStringVal("EstimatedPurity", user));
+            s.setCmoSampleClass(cmoInfo.getStringVal("CMOSampleClass", user));
+            s.setInvestigatorSampleId(cmoInfo.getStringVal("UserSampleID", user));
+            String tumorOrNormal = cmoInfo.getStringVal("TumorOrNormal", user);
+            s.setTumorOrNormal(tumorOrNormal);
+            if ("Tumor".equals(tumorOrNormal))
+                s.setOncoTreeCode(cmoInfo.getStringVal("TumorType", user));
+            s.setTissueLocation(cmoInfo.getStringVal("TissueLocation", user));
+            s.setSpecimenType(cmoInfo.getStringVal("SpecimenType", user));
+            s.setSampleOrigin(cmoInfo.getStringVal("SampleOrigin", user)); // formerly reported as Sample Type
+            s.setPreservation(cmoInfo.getStringVal("Preservation", user));
+            s.setCollectionYear(cmoInfo.getStringVal("CollectionYear", user));
+            s.setSex(cmoInfo.getStringVal("Gender", user));
+            s.setSpecies(cmoInfo.getStringVal("Species", user));
+            s.setCmoSampleName(cmoInfo.getStringVal("CorrectedCMOID", user));
+            String normalizedPatientId = cmoInfo.getStringVal("NormalizedPatientId", user);
+            s.getCmoSampleIdFields().setNormalizedPatientId(normalizedPatientId);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            e.printStackTrace();
         }
-        s.setSampleName(sampleName);
-        s.setEstimatedPurity(cmoInfo.getStringVal("EstimatedPurity", user));
-        s.setCmoSampleClass(cmoInfo.getStringVal("CMOSampleClass", user));
-        s.setInvestigatorSampleId(cmoInfo.getStringVal("UserSampleID", user));
-        String tumorOrNormal = cmoInfo.getStringVal("TumorOrNormal", user);
-        s.setTumorOrNormal(tumorOrNormal);
-        if ("Tumor".equals(tumorOrNormal))
-            s.setOncoTreeCode(cmoInfo.getStringVal("TumorType", user));
-        s.setTissueLocation(cmoInfo.getStringVal("TissueLocation", user));
-        s.setSpecimenType(cmoInfo.getStringVal("SpecimenType", user));
-        s.setSampleOrigin(cmoInfo.getStringVal("SampleOrigin", user)); // formerly reported as Sample Type
-        s.setPreservation(cmoInfo.getStringVal("Preservation", user));
-        s.setCollectionYear(cmoInfo.getStringVal("CollectionYear", user));
-        s.setSex(cmoInfo.getStringVal("Gender", user));
-        s.setSpecies(cmoInfo.getStringVal("Species", user));
-        s.setCmoSampleName(cmoInfo.getStringVal("CorrectedCMOID", user));
-        String normalizedPatientId = cmoInfo.getStringVal("NormalizedPatientId", user);
-        s.getCmoSampleIdFields().setNormalizedPatientId(normalizedPatientId);
+        log.info("Completed setSampleLevelFields");
         return s;
     }
 
