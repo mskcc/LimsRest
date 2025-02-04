@@ -8,9 +8,7 @@ import com.velox.sapioutils.client.standalone.VeloxConnection;
 import lombok.Setter;
 import org.mskcc.limsrest.ConnectionLIMS;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * A queued task that takes a pick list name and returns the possible values 
@@ -28,7 +26,7 @@ public class GetPickListTask {
     }
 
     public List<String> execute() {
-        List<String> values = new LinkedList<String>();
+        List<String> resultList = new LinkedList<String>();
         try {
             VeloxConnection vConn = conn.getConnection();
             User user = vConn.getUser();
@@ -36,16 +34,22 @@ public class GetPickListTask {
 
             PickListManager picklister = vConn.getDataMgmtServer().getPickListManager(user);
             PickListConfig pickConfig = picklister.getPickListConfig(picklist);
+
+
             if (pickConfig != null) {
-                values = pickConfig.getEntryList();
+                resultList = pickConfig.getEntryList();
             }
         } catch (Throwable e) {
         }
 
-        if (values.equals("Exemplar Sample Type")) {
+        if (resultList.equals("Exemplar Sample Type")) {
             String[] blacklist = {"cDNA", "DNA/cDNA Library", "Plasma"};
-            values.removeAll(Arrays.asList(blacklist));
+            resultList.removeAll(Arrays.asList(blacklist));
         }
-        return values;
+        if (picklist.startsWith("ddPCR")) {
+            System.out.println("Sorting picklist values for " + picklist);
+            resultList.sort(String.CASE_INSENSITIVE_ORDER);
+        }
+        return resultList;
     }
 }
