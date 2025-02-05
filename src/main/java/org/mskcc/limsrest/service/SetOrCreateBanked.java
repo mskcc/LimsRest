@@ -367,7 +367,7 @@ Other	                                Tumor	                        Tumor
                 } else {
                     return TumorNormalType.TUMOR.getValue();
                 }
-
+            // sample class 'Other' picklist was removed from the LIMS on Feb. 5, 2024
             case "Other":
                 // Normal, Other, blank or null
                 if (tumorType == null || tumorType.trim().isEmpty() || "Other".equalsIgnoreCase(tumorType) || "Normal".equalsIgnoreCase(tumorType)) {
@@ -377,7 +377,7 @@ Other	                                Tumor	                        Tumor
                 }
 
             default:
-                return TumorNormalType.NORMAL.getValue();
+                return "";
         }
     }
 }
