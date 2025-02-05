@@ -41,6 +41,8 @@ public class ToggleSampleQcStatusTask {
     private String analyst;
     private String note;
     private String fastqPath;
+    private boolean isSeq = true;
+    private boolean isOnt = false;
     private String airflow_pass;
 
     protected static void setSeqAnalysisSampleQcStatus(DataRecord seqQc, QcStatus qcStatus, String status, User user)
@@ -79,8 +81,12 @@ public class ToggleSampleQcStatusTask {
         this.analyst = analyst;
         this.note = note;
         this.fastqPath = fastqPath;
-        if ("Post".equals(qcType)) {
-            isSeqAnalysisSampleqc = false;
+//        if ("Post".equals(qcType)) {
+//            isSeqAnalysisSampleqc = false;
+//        }
+        if (qcType.equals("Ont")) {
+            isOnt = true;
+            isSeq = false;
         }
         this.conn = conn;
         this.airflow_pass = airflow_pass;
@@ -92,48 +98,74 @@ public class ToggleSampleQcStatusTask {
             VeloxConnection vConn = conn.getConnection();
             User user = vConn.getUser();
             DataRecordManager dataRecordManager = vConn.getDataRecordManager();
+            if (isSeq || isOnt) {
+                log.info("QC type is Seq or Ont");
+                if (isSeq) {
+                    log.info("SeqAnalysisSampleQC updating to " + status + " for record:" + recordId);
+                    DataRecord seqQc = dataRecordManager.querySystemForRecord(recordId, "SeqAnalysisSampleQC", user);
 
-            if (isSeqAnalysisSampleqc) {
-                log.info("SeqAnalysisSampleQC updating to " + status + " for record:" + recordId);
-                DataRecord seqQc = dataRecordManager.querySystemForRecord(recordId, "SeqAnalysisSampleQC", user);
+                    String currentStatusLIMS = (String) seqQc.getDataField("SeqQCStatus", user);
+                    // Failed status is terminal on Qc site and can't be changed.
+                    if (QcStatus.FAILED.getText().equals(currentStatusLIMS)) {
+                        log.info("QC status already failed and can't be updated from there via REST interface.");
+                        return QcStatus.FAILED.toString();
+                    }
 
-                String currentStatusLIMS = (String) seqQc.getDataField("SeqQCStatus", user);
-                // Failed status is terminal on Qc site and can't be changed.
-                if (QcStatus.FAILED.getText().equals(currentStatusLIMS)) {
-                    log.info("QC status already failed and can't be updated from there via REST interface.");
-                    return QcStatus.FAILED.toString();
-                }
+                    QcStatus qcStatus = QcStatus.fromString(status);
+                    setSeqAnalysisSampleQcStatus(seqQc, qcStatus, status, user);
 
-                QcStatus qcStatus = QcStatus.fromString(status);
-                setSeqAnalysisSampleQcStatus(seqQc, qcStatus, status, user);
+                    if (qcStatus == QcStatus.RESEQUENCE_POOL) {
+                        qcStatusAwareProcessAssigner.assign(dataRecordManager, user, seqQc, qcStatus);
+                    } else if (qcStatus == QcStatus.REPOOL_SAMPLE) {
+                        repoolByPoolingProtocol(seqQc, qcStatus, dataRecordManager, user);
+                    }
+                    dataRecordManager.storeAndCommit("SeqAnalysisSampleQC updated to " + status, null, user);
 
-                if (qcStatus == QcStatus.RESEQUENCE_POOL) {
-                    qcStatusAwareProcessAssigner.assign(dataRecordManager, user, seqQc, qcStatus);
-                } else if (qcStatus == QcStatus.REPOOL_SAMPLE) {
-                    repoolByPoolingProtocol(seqQc, qcStatus, dataRecordManager, user);
-                }
-                dataRecordManager.storeAndCommit("SeqAnalysisSampleQC updated to " + status, null, user);
+                    log.info("SeqAnalysisSampleQC updated to:" + status + " from:" + currentStatusLIMS);
 
-                log.info("SeqAnalysisSampleQC updated to:" + status + " from:" + currentStatusLIMS);
+                    // Call Airflow to move the fastq.gz files if failed
+                    if (qcStatus == QcStatus.FAILED) {
+                        if (airflow_pass == null || airflow_pass == "")
+                            log.error("Airflow password not initialized, can't move failed fastq.gz files.");
+                        else {
+                            String igoIdFromLims = (String) seqQc.getDataField("SampleId", user); // IGO ID
+                            String runFromLims = (String) seqQc.getDataField("SequencerRunFolder", user);
 
-                // Call Airflow to move the fastq.gz files if failed
-                if (qcStatus == QcStatus.FAILED) {
-                    if (airflow_pass == null || airflow_pass == "")
-                        log.error("Airflow password not initialized, can't move failed fastq.gz files.");
-                    else {
-                        String igoIdFromLims = (String) seqQc.getDataField("SampleId", user); // IGO ID
-                        String runFromLims = (String) seqQc.getDataField("SequencerRunFolder", user);
-
-                        Date execDate = new Date(System.currentTimeMillis() + 10000);
-                        String body = formatMoveFailedFastqJSON(igoIdFromLims, runFromLims, execDate);
-                        String cmd = "/bin/curl -X POST -d '" + body + "' \"http://igo-ln01:8080/api/v1/dags/move_failed_fastqs/dagRuns\" -H 'content-type: application/json' --user \"airflow-api:" + airflow_pass + "\"";
-                        log.info("Calling airflow pipeline to move failed fastq.gz files: " + cmd);
-                        ProcessBuilder processBuilder = new ProcessBuilder();
-                        processBuilder.command("bash", "-c", cmd);
-                        Process process = processBuilder.start();
+                            Date execDate = new Date(System.currentTimeMillis() + 10000);
+                            String body = formatMoveFailedFastqJSON(igoIdFromLims, runFromLims, execDate);
+                            String cmd = "/bin/curl -X POST -d '" + body + "' \"http://igo-ln01:8080/api/v1/dags/move_failed_fastqs/dagRuns\" -H 'content-type: application/json' --user \"airflow-api:" + airflow_pass + "\"";
+                            log.info("Calling airflow pipeline to move failed fastq.gz files: " + cmd);
+                            ProcessBuilder processBuilder = new ProcessBuilder();
+                            processBuilder.command("bash", "-c", cmd);
+                            Process process = processBuilder.start();
+                        }
                     }
                 }
-            } else {
+                else if (isOnt) {
+                    log.info("SequencingAnalysisONT updating to " + status + " for record:" + recordId);
+                    DataRecord ontQc = dataRecordManager.querySystemForRecord(recordId, "SequencingAnalysisONT", user);
+
+                    String currentStatusLIMS = (String) ontQc.getDataField("SeqQCStatus", user);
+                    // Failed status is terminal on Qc site and can't be changed.
+                    if (QcStatus.FAILED.getText().equals(currentStatusLIMS)) {
+                        log.info("QC status already failed and can't be updated from there via REST interface.");
+                        return QcStatus.FAILED.toString();
+                    }
+
+                    QcStatus qcStatus = QcStatus.fromString(status);
+                    setSeqAnalysisSampleQcStatus(ontQc, qcStatus, status, user);
+
+                    if (qcStatus == QcStatus.RESEQUENCE_POOL) {
+                        qcStatusAwareProcessAssigner.assign(dataRecordManager, user, ontQc, qcStatus);
+                    } else if (qcStatus == QcStatus.REPOOL_SAMPLE) {
+                        repoolByPoolingProtocol(ontQc, qcStatus, dataRecordManager, user);
+                    }
+                    dataRecordManager.storeAndCommit("SequencingAnalysisONT updated to " + status, null, user);
+
+                    log.info("SequencingAnalysisONT updated to:" + status + " from:" + currentStatusLIMS);
+                }
+            }
+            else { //qcType.equals("Post")
                 List<DataRecord> request = dataRecordManager.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
                 if (request.size() != 1) {
                     return "Invalid Request Id";

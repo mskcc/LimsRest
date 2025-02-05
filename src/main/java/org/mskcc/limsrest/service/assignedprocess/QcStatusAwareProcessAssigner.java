@@ -24,7 +24,6 @@ public class QcStatusAwareProcessAssigner {
             case REPOOL_SAMPLE:
                 return new RepoolSampleAssignedProcessConfig(sample);
             case CONTINUE_PROCESSING:
-                log.info("Here I am!");
                 return new InvestigatorDecisionAssignedProcessConfig(sample);
             default:
                 throw new RuntimeException(String.format("Not supported qc status: %s", qcStatus));

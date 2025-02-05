@@ -45,7 +45,7 @@ public class SetQcStatus {
         if (!Whitelists.filePathMatches(fastqPath)) {
             return "FAILURE: The fastq path is not using a valid format. " + Whitelists.filePathFormatText();
         }
-        if (!qcType.equals("Seq") && !qcType.equals("Post")) {
+        if (!qcType.equals("Seq") && !qcType.equals("Post") && !qcType.equals("Ont")) {
             return "ERROR: The only valid qc types for this service are Seq and Post";
         }
         if (qcType.equals("Seq") && recordId == null) {

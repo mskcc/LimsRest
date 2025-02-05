@@ -203,10 +203,10 @@ public class UpdateFromILabsTask {
                 }
 
                 if (field2val.containsKey("TREATMENT")) {
-                    if ((field2val.get("TREATMENT").toLowerCase().contains("cell") || (field2val.get("TREATMENT").toLowerCase().contains("hashing")) && field2val.get("TREATMENT").toLowerCase().contains("barcoding"))) {
+                    if ((field2val.get("TREATMENT").toLowerCase().contains("cell") || (field2val.get("TREATMENT").toLowerCase().contains("hashing")) && field2val.get("TREATMENT").toLowerCase().contains("barcod"))) {
                         requestFields.put("Treatment", "Cell Hashing, Feature Barcoding");
                     }
-                    else if (field2val.get("TREATMENT").toLowerCase().contains("barcoding")) {
+                    else if (field2val.get("TREATMENT").toLowerCase().contains("barcod")) {
                         requestFields.put("Treatment", "Feature Barcoding");
                     }
                     else  {
@@ -214,11 +214,11 @@ public class UpdateFromILabsTask {
                     }
                 }
 
-                if (field2val.containsKey("CELL_TYPES")) {
-                    if (field2val.get("CELL_TYPES").contains("TCR") && field2val.get("CELL_TYPES").contains("BCR")) {
+                if (field2val.containsKey("CELL_TYPE")) {
+                    if (field2val.get("CELL_TYPE").contains("TCR") && field2val.get("CELL_TYPE").contains("BCR")) {
                         requestFields.put("CellTypes", "T Cells, B Cells");
                     }
-                    else if (field2val.get("CELL_TYPES").contains("TCR")) {
+                    else if (field2val.get("CELL_TYPE").contains("TCR")) {
                         requestFields.put("CellTypes", "T Cells");
                     }
                     else {
