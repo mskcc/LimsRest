@@ -26,9 +26,11 @@ import springfox.documentation.service.ApiInfo;
 import springfox.documentation.service.Contact;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
+import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 @SpringBootApplication(exclude = { SecurityAutoConfiguration.class })
 @PropertySource({"classpath:/connect.txt", "classpath:/app.properties"})
+@EnableSwagger2
 public class App extends SpringBootServletInitializer {
     private static Log log = LogFactory.getLog(App.class);
 
@@ -47,7 +49,7 @@ public class App extends SpringBootServletInitializer {
     @Autowired
     private Gateway messagingGateway;
 
-    @Value("${nats.url}")
+    //@Value("${nats.url}")
     private String natsUrl;
 
     @Bean
@@ -62,7 +64,7 @@ public class App extends SpringBootServletInitializer {
         return factory;
     }
 
-    @Bean
+    //@Bean
     public Gateway messagingGateway() throws Exception {
         messagingGateway.connect(natsUrl);
         log.info("Attempting to connecto to CMO MetaDB NATS server...");
