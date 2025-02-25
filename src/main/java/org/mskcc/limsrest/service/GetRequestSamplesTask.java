@@ -106,7 +106,8 @@ public class GetRequestSamplesTask {
             rsl.setRequestName(requestDataRecord.getStringVal("RequestName", user));
             rsl.setPiEmail(requestDataRecord.getStringVal("PIemail", user));
             rsl.setLabHeadName(requestDataRecord.getStringVal("LaboratoryHead", user));
-            rsl.setLabHeadEmail(requestDataRecord.getStringVal("LabHeadEmail", user));
+            String labHeadEmail = requestDataRecord.getStringVal("LabHeadEmail", user);
+            rsl.setLabHeadEmail(labHeadEmail);
             rsl.setProjectManagerName(requestDataRecord.getStringVal("ProjectManager", user));
             rsl.setInvestigatorName(requestDataRecord.getStringVal("Investigator", user));
             rsl.setInvestigatorEmail(requestDataRecord.getStringVal("Investigatoremail", user));
@@ -118,6 +119,11 @@ public class GetRequestSamplesTask {
             Object deliveryDate = requestDataRecord.getValue("RecentDeliveryDate", user);
             if (deliveryDate != null)
                 rsl.setDeliveryDate(requestDataRecord.getLongVal("RecentDeliveryDate", user));
+            if (labHeadEmail.contains("@")) {
+                String labHeadEmailHandle = labHeadEmail.substring(0, labHeadEmail.indexOf("@")).toLowerCase();
+                String deliveryPath = "/ifs/datadelivery/igo_core/share/" + labHeadEmailHandle;
+                rsl.setDeliveryPath(deliveryPath);
+            }
 
             // GetRequestPermissionsTask will set fastq.gz permissions based on whether or not BIC or CMO request so
             // return those values here too.

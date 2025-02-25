@@ -31,6 +31,7 @@ public class RequestSampleList implements Serializable {
     private Boolean isCmoRequest;
     private Boolean bicAnalysis;
     private Long deliveryDate = null;
+    private String deliveryPath;
 
     private List<RequestSample> samples;
     private List<String> pooledNormals;
