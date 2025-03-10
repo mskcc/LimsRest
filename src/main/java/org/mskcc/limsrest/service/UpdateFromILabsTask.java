@@ -313,8 +313,8 @@ public class UpdateFromILabsTask {
                     if (analysisType.toUpperCase().contains("NEOAG")) {
                         limsAnalysisTypes.add("NEOAG");
                         String dataAccessEmails = requestFields.get("DataAccessEmails").toString();
-                        if (!dataAccessEmails.toLowerCase().contains("")) {
-                            dataAccessEmails += "";
+                        if (!dataAccessEmails.toLowerCase().contains("lihmj@mskcc.org")) {
+                            dataAccessEmails += "lihmj@mskcc.org";
                             requestFields.put("DataAccessEmails", dataAccessEmails);
                         }
                     }
