@@ -534,20 +534,15 @@ public class GetSampleManifestTask {
 
     protected SampleManifest setSampleLevelFields(String igoId, String cmoInfoIgoId, DataRecord cmoInfo, User user) throws NotFound, RemoteException {
         SampleManifest s = new SampleManifest();
-        log.info("setSampleLevelFields");
+        log.info("setSampleLevelFields for :" + igoId);
         try {
             s.setIgoId(igoId);
             s.setAltid(cmoInfo.getStringVal("AltId", user));
             s.setCmoInfoIgoId(cmoInfoIgoId);
             s.setCmoPatientId(cmoInfo.getStringVal("CmoPatientId", user));
             // aka "Sample Name" in SampleCMOInfoRecords
-
             String sampleName = cmoInfo.getStringVal("OtherSampleId", user);
-            if (sampleName == null || "".equals(sampleName.trim())) { // for example 05304_O_4 Agilent 51MB or update DB so this is not necessary?
-                //sampleName = cmoInfo.getStringVal("UserSampleID", user);
-            }
             s.setSampleName(sampleName);
-            s.setEstimatedPurity(cmoInfo.getStringVal("EstimatedPurity", user));
             s.setCmoSampleClass(cmoInfo.getStringVal("CMOSampleClass", user));
             s.setInvestigatorSampleId(cmoInfo.getStringVal("UserSampleID", user));
             String tumorOrNormal = cmoInfo.getStringVal("TumorOrNormal", user);
@@ -564,6 +559,9 @@ public class GetSampleManifestTask {
             s.setCmoSampleName(cmoInfo.getStringVal("CorrectedCMOID", user));
             String normalizedPatientId = cmoInfo.getStringVal("NormalizedPatientId", user);
             s.getCmoSampleIdFields().setNormalizedPatientId(normalizedPatientId);
+            String estimatedPurity = cmoInfo.getStringVal("EstimatedPurity", user);
+            log.info("estimated purity: " + estimatedPurity);
+            s.setEstimatedPurity(estimatedPurity);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             e.printStackTrace();
