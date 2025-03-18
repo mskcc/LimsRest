@@ -115,7 +115,8 @@ public class UpdateLimsSampleLevelSequencingQcTask {
 
                     if (librarySample == null) {
                         log.error("Could not find related Library Sample for Sample with Stats SampleId: " + sampleId);
-                        continue;
+                        librarySample = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + sampleId+ "'", user).get(0);
+                        //continue;
                     }
                     String recipe = librarySample.getStringVal("Recipe", user);
                     // For TCRSeq samples split into alpha/beta aliquots attach we'll attach the QC record
