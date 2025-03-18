@@ -62,11 +62,15 @@ public class UpdateLimsSampleLevelSequencingQc {
                            @RequestParam(value = "estimatedCoverage", defaultValue = "0.0", required = false) Double estimatedCoverage,
                            @RequestParam(value = "bamCoverage", defaultValue = "0.0", required = false) Double bamCoverage,
                            @RequestParam(value = "sequencerName", defaultValue = "", required = false) String sequencerName,
-                           @RequestParam(value = "sequencerPosition") String sequencerPosition) {
+                           @RequestParam(value = "sequencerPosition") String sequencerPosition,
+                           @RequestParam(value = "flowCellType") String flowCellType,
+                           @RequestParam(value = "Chemistry") String chemistry,
+                           @RequestParam(value = "MinKNOWSoftwareVersion") String minKNOWSoftwareVersion) {
         log.info(String.format("Starting to Add/Update ONT stats in LIMS for IGO ID: %s", igoId));
 
         SampleSequencingQcONT statsONT = new SampleSequencingQcONT(igoId, flowcell, reads, bases, N50,
-                medianReadLength, estimatedCoverage, bamCoverage, sequencerName, sequencerPosition, "");
+                medianReadLength, estimatedCoverage, bamCoverage, sequencerName, sequencerPosition,
+                flowCellType, chemistry, minKNOWSoftwareVersion, "");
         SetStatsONTTask task = new SetStatsONTTask(statsONT, conn);
         try {
             return task.execute();

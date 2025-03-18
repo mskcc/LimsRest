@@ -84,9 +84,12 @@ public class GetSampleQcTask {
                             Double readLength = record.getDoubleVal("MedianReadLength", user);
                             Double estimatedCoverage = record.getDoubleVal("EstimatedCoverage", user);
                             String sequencerPosition = record.getStringVal("SequencerPosition", user);
+                            String flowCellType = record.getStringVal("flowCellType", user);
+                            String chemistry = record.getStringVal("Chemistry", user);
+                            String minKNOWSoftwareVersion = record.getStringVal("MinKNOWSoftwareVersion", user);
                             String qcStatus = record.getStringVal("qcStatus", user);
 
-                            SampleSequencingQcONT qcONT = new SampleSequencingQcONT(igoId, flowcell, reads, bases, n50, readLength, estimatedCoverage, 0.0, "", sequencerPosition, qcStatus);
+                            SampleSequencingQcONT qcONT = new SampleSequencingQcONT(igoId, flowcell, reads, bases, n50, readLength, estimatedCoverage, 0.0, "", sequencerPosition, flowCellType, chemistry, minKNOWSoftwareVersion, qcStatus);
                             log.info(qcONT);
                             samplesONT.add(qcONT);
                         }
