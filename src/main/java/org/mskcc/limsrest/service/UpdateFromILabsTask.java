@@ -314,7 +314,7 @@ public class UpdateFromILabsTask {
                         requestFields.put("NeoAg", Boolean.TRUE);
                         limsAnalysisTypes.add("NEOAG");
                         String dataAccessEmails = requestFields.get("DataAccessEmails").toString();
-                        if (!dataAccessEmails.toLowerCase().contains("lihmj@mskcc.org")) {
+                        if (!dataAccessEmails.toLowerCase().contains("lihmj@mskcc.org,moona2@mskcc.org")) {
                             dataAccessEmails += "lihmj@mskcc.org";
                             requestFields.put("DataAccessEmails", dataAccessEmails);
                         }
