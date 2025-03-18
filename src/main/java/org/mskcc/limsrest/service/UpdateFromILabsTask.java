@@ -311,6 +311,7 @@ public class UpdateFromILabsTask {
                         limsAnalysisTypes.add("FASTQ ONLY");
                     }
                     if (analysisType.toUpperCase().contains("NEOAG")) {
+                        requestFields.put("NeoAg", Boolean.TRUE);
                         limsAnalysisTypes.add("NEOAG");
                         String dataAccessEmails = requestFields.get("DataAccessEmails").toString();
                         if (!dataAccessEmails.toLowerCase().contains("lihmj@mskcc.org")) {
