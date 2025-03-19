@@ -58,6 +58,10 @@ public class SetStatsONTTask {
             dr.setDataField("N50", statsONT.getN50(), user);
             dr.setDataField("MedianReadLength", statsONT.getMedianReadLength(), user);
             dr.setDataField("EstimatedCoverage", statsONT.getEstimatedCoverage(), user);
+            dr.setDataField("flowCellType", statsONT.getFlowCellType(), user);
+            dr.setDataField("Chemistry", statsONT.getChemistry(), user);
+            dr.setDataField("MinKNOWSoftwareVersion", statsONT.getMinKNOWSoftwareVersion(), user);
+
             dr.setDataField("SeqQCStatus", "Under-Review", user);
 
             drm.storeAndCommit("Add/Update ONT Stats", null, user);
