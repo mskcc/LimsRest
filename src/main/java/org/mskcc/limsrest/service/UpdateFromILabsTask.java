@@ -310,7 +310,15 @@ public class UpdateFromILabsTask {
                     if (analysisType.toUpperCase().contains("RAW DATA")) {
                         limsAnalysisTypes.add("FASTQ ONLY");
                     }
-
+                    if (analysisType.toUpperCase().contains("NEOAG")) {
+                        requestFields.put("NeoAg", Boolean.TRUE);
+                        limsAnalysisTypes.add("NEOAG");
+                        String dataAccessEmails = requestFields.get("DataAccessEmails").toString();
+                        if (!dataAccessEmails.toLowerCase().contains("lihmj@mskcc.org,moona2@mskcc.org")) {
+                            dataAccessEmails += "lihmj@mskcc.org";
+                            requestFields.put("DataAccessEmails", dataAccessEmails);
+                        }
+                    }
                     if (limsAnalysisTypes.size() > 0) {
                         requestFields.put("AnalysisType", String.join(",", limsAnalysisTypes));
                     } else {
