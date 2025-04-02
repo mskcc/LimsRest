@@ -41,6 +41,7 @@ public class ToggleSampleQcStatusTask {
     private String analyst;
     private String note;
     private String fastqPath;
+    private String recipe;
     private boolean isSeq = true;
     private boolean isOnt = false;
     private String airflow_pass;
@@ -71,7 +72,7 @@ public class ToggleSampleQcStatusTask {
     }
 
     public ToggleSampleQcStatusTask(long recordId, String status, String requestId, String correctedSampleId,
-                                    String run, String qcType, String analyst, String note, String fastqPath,
+                                    String run, String qcType, String analyst, String note, String fastqPath, String recipe,
                                     ConnectionLIMS conn, String airflow_pass) {
         this.recordId = recordId;
         this.status = status;
@@ -81,6 +82,7 @@ public class ToggleSampleQcStatusTask {
         this.analyst = analyst;
         this.note = note;
         this.fastqPath = fastqPath;
+        this.recipe = recipe;
 //        if ("Post".equals(qcType)) {
 //            isSeqAnalysisSampleqc = false;
 //        }
