@@ -22,4 +22,5 @@ public class SampleSequencingQcONT {
     private String minKNOWSoftwareVersion;
 
     private String qcStatus;
+    private Long recordId;
 }

@@ -76,6 +76,7 @@ public class GetSampleQcTask {
                         qcRecords = dataRecordManager.queryDataRecords("SequencingAnalysisONT", "IGOID LIKE '" + project + "_%'", user);
                         log.info("Found ONT stats: " + qcRecords.size());
                         for (DataRecord record: qcRecords) {
+                            Long recordId = record.getLongVal("RecordId", user);
                             String igoId = record.getStringVal("IGOID", user);
                             String flowcell = record.getStringVal("Flowcell", user);
                             Integer reads = record.getIntegerVal("ReadsNumber", user);
@@ -89,7 +90,7 @@ public class GetSampleQcTask {
                             String minKNOWSoftwareVersion = record.getStringVal("MinKNOWSoftwareVersion", user);
                             String qcStatus = record.getStringVal("qcStatus", user);
 
-                            SampleSequencingQcONT qcONT = new SampleSequencingQcONT(igoId, flowcell, reads, bases, n50, readLength, estimatedCoverage, 0.0, "", sequencerPosition, flowCellType, chemistry, minKNOWSoftwareVersion, qcStatus);
+                            SampleSequencingQcONT qcONT = new SampleSequencingQcONT(igoId, flowcell, reads, bases, n50, readLength, estimatedCoverage, 0.0, "", sequencerPosition, flowCellType, chemistry, minKNOWSoftwareVersion, qcStatus, recordId);
                             log.info(qcONT);
                             samplesONT.add(qcONT);
                         }

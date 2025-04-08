@@ -70,7 +70,7 @@ public class UpdateLimsSampleLevelSequencingQc {
 
         SampleSequencingQcONT statsONT = new SampleSequencingQcONT(igoId, flowcell, reads, bases, N50,
                 medianReadLength, estimatedCoverage, bamCoverage, sequencerName, sequencerPosition,
-                flowCellType, chemistry, minKNOWSoftwareVersion, "");
+                flowCellType, chemistry, minKNOWSoftwareVersion, "", null);
         SetStatsONTTask task = new SetStatsONTTask(statsONT, conn);
         try {
             return task.execute();
