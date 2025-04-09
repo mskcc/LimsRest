@@ -15,6 +15,7 @@ public class SampleSequencingQcONT {
     private double estimatedCoverage; // EstimatedCoverage
     private double bamCoverage; // BAMCoverage
     private String sequencerName; // SequencerName
+    private String sampleName; // OtherSampleId
     private String sequencerPosition; // SequencerPosition
     // adding three new columns to ONT stats Mar. 2025
     private String flowCellType;
@@ -23,4 +24,5 @@ public class SampleSequencingQcONT {
 
     private String qcStatus;
     private Long recordId;
+    private String recipe;
 }

@@ -61,6 +61,8 @@ public class SetStatsONTTask {
             dr.setDataField("flowCellType", statsONT.getFlowCellType(), user);
             dr.setDataField("Chemistry", statsONT.getChemistry(), user);
             dr.setDataField("MinKNOWSoftwareVersion", statsONT.getMinKNOWSoftwareVersion(), user);
+            dr.setDataField("OtherSampleId", statsONT.getSampleName(), user);
+            dr.setDataField("Recipe", "Nanopore", user);
 
             dr.setDataField("SeqQCStatus", "Under-Review", user);
 
