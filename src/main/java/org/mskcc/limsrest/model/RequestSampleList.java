@@ -30,6 +30,7 @@ public class RequestSampleList implements Serializable {
     private String libraryType; // only for RNASeq
     private Boolean isCmoRequest;
     private Boolean bicAnalysis;
+    private Boolean neoAg;
     private Long deliveryDate = null;
     private String deliveryPath;
 

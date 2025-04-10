@@ -137,11 +137,17 @@ public class GetRequestSamplesTask {
                 bicAnalysis = requestDataRecord.getBooleanVal("BICAnalysis", user);
                 analysisType = requestDataRecord.getStringVal("AnalysisType", user);
             } catch (NullPointerException e) {
-                log.warn("Correct invalid null valid in database for request: " + requestId);
+                log.warn("Correct invalid null value in database for request: " + requestId);
             }
+
             Boolean isBicRequest = GetRequestPermissionsTask.isBicRequest(analysisType, bicAnalysis);
             rsl.setIsCmoRequest(isCmoRequest);
             rsl.setBicAnalysis(isBicRequest);
+            Object neoAgObj = requestDataRecord.getValue("NeoAg", user);
+            if (neoAgObj != null) {
+                rsl.setNeoAg(Boolean.parseBoolean(neoAgObj.toString()));
+            } else
+                rsl.setNeoAg(Boolean.FALSE);
 
             return rsl;
         } catch (Throwable e) {
