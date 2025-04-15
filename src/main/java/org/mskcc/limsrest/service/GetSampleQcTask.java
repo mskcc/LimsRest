@@ -89,7 +89,7 @@ public class GetSampleQcTask {
                             String flowCellType = record.getStringVal("flowCellType", user);
                             String chemistry = record.getStringVal("Chemistry", user);
                             String minKNOWSoftwareVersion = record.getStringVal("MinKNOWSoftwareVersion", user);
-                            String qcStatus = record.getStringVal("qcStatus", user);
+                            String qcStatus = record.getStringVal("SeqQCStatus", user);
 
                             SampleSequencingQcONT qcONT = new SampleSequencingQcONT(igoId, flowcell, reads, bases, n50, readLength, estimatedCoverage, 0.0, "", sampleName, sequencerPosition, flowCellType, chemistry, minKNOWSoftwareVersion, qcStatus, recordId, "Nanopore");
                             log.info(qcONT);
