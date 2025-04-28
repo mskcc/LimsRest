@@ -16,6 +16,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Pull ILabs request info and store it in the LIMS.
@@ -342,6 +344,10 @@ public class UpdateFromILabsTask {
                         requestFields.put("AnalysisType", "FIELD NOT IN ILABS");
                     }
                 }
+
+                requestFields.put("DataAccessEmails", cleanEmailList((String) requestFields.get("DataAccessEmails")));
+                requestFields.put("QcAccessEmails", cleanEmailList((String) requestFields.get("QcAccessEmails")));
+                requestFields.put("MailTo", cleanEmailList((String) requestFields.get("MailTo")));
             }
             System.out.println(updateList.toString());
             dataRecordManager.setFieldsForRecords(requestList, ilabsFields, user);
@@ -365,6 +371,34 @@ public class UpdateFromILabsTask {
             saveEmailToOutbox(info);
         }
         return updateStatuses;
+    }
+
+    /**
+     * Sometimes users paste email lists in the format "lastname, firstname <handle@mskcc.org>"
+     * Extract a valid email address list from a string like:
+     * "Hakimi, name <hakimin@mskcc.org>,Kuo, person <kuop@mskcc.org>, validemail@mskcc.org, anothervalidemail@mskcc.org
+     */
+    public static String cleanEmailList(String input) {
+        if (input == null || input.trim().isEmpty()) {
+            return "";
+        }
+
+        // Regular expression to match email addresses
+        // This pattern looks for strings that match standard email format
+        String emailRegex = "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\\b";
+
+        Pattern pattern = Pattern.compile(emailRegex);
+        Matcher matcher = pattern.matcher(input);
+
+        Set<String> uniqueEmails = new HashSet<>();
+
+        // Find all matches and add to set (to remove duplicates)
+        while (matcher.find()) {
+            uniqueEmails.add(matcher.group());
+        }
+
+        // Join the unique emails with commas
+        return String.join(",", uniqueEmails);
     }
 
     public void saveEmailToOutbox(String info) {
