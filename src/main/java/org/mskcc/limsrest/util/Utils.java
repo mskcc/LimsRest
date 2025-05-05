@@ -284,7 +284,7 @@ public class Utils {
      */
     public static String getRecordStringValue(DataRecord record, String key, User user) {
         try {
-            if (record.getValue(key, user) != null) {
+            if (record != null && record.getValue(key, user) != null) {
                 return record.getStringVal(key, user);
             }
         } catch (NotFound | RemoteException | NullPointerException e) {
