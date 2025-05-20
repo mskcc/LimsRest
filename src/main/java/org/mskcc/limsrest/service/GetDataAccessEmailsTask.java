@@ -28,7 +28,7 @@ public class GetDataAccessEmailsTask {
             DataRecordManager drm = vConn.getDataRecordManager();
 
             long fortyFiveDaysAgoMs = System.currentTimeMillis() - 45l*24*60*60*1000;
-            String query = "RECENTDELIVERYDATE IS NULL AND DATAACCESSEMAILS LIKE '%mskcc.org%' AND DATECREATED > " + fortyFiveDaysAgoMs;
+            String query = "RECENTDELIVERYDATE IS NULL AND DATECREATED > " + fortyFiveDaysAgoMs;
             /*
             Could restrict query to only requests that will receive data, therefore exclude requests with 'REQUESTNAME':
                 CellLineAuthentication
