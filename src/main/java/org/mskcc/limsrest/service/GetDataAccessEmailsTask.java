@@ -47,9 +47,9 @@ public class GetDataAccessEmailsTask {
             List<DataRecord> requestList = drm.queryDataRecords("Request", query, user);
             Set<String> emailSet = new HashSet<>();
             for (DataRecord request : requestList) {
-                String piEmail = request.getStringVal("PIemail", user);
-                if (piEmail != null && piEmail.endsWith("@mskcc.org"))
-                    emailSet.add(piEmail);
+                String investigatorEmail = request.getStringVal("Investigatoremail", user);
+                if (investigatorEmail != null && investigatorEmail.endsWith("@mskcc.org"))
+                    emailSet.add(investigatorEmail);
                 String dataAccessEmails = request.getStringVal("DataAccessEmails", user);
                 dataAccessEmails = dataAccessEmails.replace(' ',','); // replace spaces with commas
                 String [] emails = dataAccessEmails.split(",");
