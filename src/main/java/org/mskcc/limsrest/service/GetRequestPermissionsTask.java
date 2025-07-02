@@ -46,11 +46,13 @@ public class GetRequestPermissionsTask {
 
             Boolean isCmoRequest = Boolean.FALSE;
             Boolean bicAnalysis = Boolean.FALSE;
+            Boolean neoAgRequest = Boolean.FALSE;
             String analysisType = "";
             String requestName = "";
             try {
                 isCmoRequest = dataRecord.getBooleanVal("IsCmoRequest", user);
                 bicAnalysis = dataRecord.getBooleanVal("BICAnalysis", user);
+                neoAgRequest = dataRecord.getBooleanVal("NeoAg", user);
                 analysisType = dataRecord.getStringVal("AnalysisType", user);
                 requestName = dataRecord.getStringVal("RequestName", user);
             } catch (NullPointerException e) {
@@ -61,7 +63,7 @@ public class GetRequestPermissionsTask {
 
             String labName = labHeadEmailToLabName(labHeadEmail);
 
-            return new RequestPermissions(requestId, requestName, labName, labHeadEmail, investigatorEmail, isCmoRequest, isBicRequest, dataAccessEmails);
+            return new RequestPermissions(requestId, requestName, labName, labHeadEmail, investigatorEmail, isCmoRequest, isBicRequest, neoAgRequest, dataAccessEmails);
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
             return null;
@@ -121,6 +123,7 @@ public class GetRequestPermissionsTask {
         public String investigatorEmail;
         public Boolean isCmoRequest;
         public Boolean isBicRequest;
+        public Boolean isNeoAgRequest;
         public String dataAccessEmails;
     }
 }
