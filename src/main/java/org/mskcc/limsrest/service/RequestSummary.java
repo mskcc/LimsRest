@@ -27,6 +27,7 @@ public class RequestSummary {
     private String piEmail;
     private String projectManager;
     private String analysisType;
+    private Boolean isNeoAg;
     private boolean analysisRequested;
     private Boolean isCmoRequest = Boolean.FALSE;
     private long recordId;
@@ -193,6 +194,9 @@ public class RequestSummary {
     public String getRequestType() {
         return requestType;
     }
+
+    @JsonInclude(JsonInclude.Include.ALWAYS)
+    public Boolean getIsNeoAg() { return isNeoAg; }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getRecipe() {

@@ -135,6 +135,7 @@ public class GetDeliveredTask {
                 requestSummary.setPi(getRecordStringValue(request, RequestModel.LABORATORY_HEAD, user));
                 requestSummary.setAnalysisRequested(getRecordBooleanValue(request, RequestModel.BICANALYSIS, user));
                 requestSummary.setAnalysisType(getRecordStringValue(request, "AnalysisType", user));
+                requestSummary.setIsNeoAg(getRecordBooleanValue(request, "NeoAg", user));
                 requestSummary.setRequestType(getRecordStringValue(request, RequestModel.REQUEST_NAME, user));
                 requestSummary.setProjectManager(getRecordStringValue(request, RequestModel.PROJECT_MANAGER, user));
 
