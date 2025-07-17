@@ -130,7 +130,7 @@ public class CheckOrMarkCmoRequestsTask {
                 String sampleType = (String) getValueFromDataRecord(sample, SampleModel.EXEMPLAR_SAMPLE_TYPE, "String", user);
                 log.info("projectId: " + projectId);
                 log.info("bicAnalysis: " + bicAnalysis);
-                log.info("contactEnail: " + contactEmail);
+                log.info("contactEmail: " + contactEmail);
                 log.info("sampleName: "+ sampleName);
                 log.info("recipe: " + recipe);
                 log.info("sampleType: " + sampleType);
