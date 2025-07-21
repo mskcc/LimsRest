@@ -71,7 +71,7 @@ public class UpdateLimsSampleLevelSequencingQc {
         SampleSequencingQcONT statsONT = new SampleSequencingQcONT(igoId, flowcell, reads, bases, N50,
                 medianReadLength, estimatedCoverage, bamCoverage, null, sequencerName, sequencerPosition,
                 flowCellType, chemistry, minKNOWSoftwareVersion, "", null, "Nanopore");
-        SetStatsONTTask task = new SetStatsONTTask(statsONT, conn);
+        SetStatsONTTask task = new SetStatsONTTask(statsONT, igoId, conn);
         try {
             return task.execute();
         } catch (Exception e) {
