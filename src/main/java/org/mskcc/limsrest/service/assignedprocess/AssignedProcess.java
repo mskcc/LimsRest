@@ -5,7 +5,8 @@ public enum AssignedProcess {
     WHOLE_EXOME_CAPTURE("Whole Exome Capture", Workflow.CAPTURE_FROM_KAPA_LIBRARY),
     PRE_SEQUENCING_POOLING_OF_LIBRARIES("Pre-Sequencing Pooling of Libraries", Workflow.POOLING_OF_SAMPLE_LIBRARIES_FOR_SEQUENCING),
     IMPACT_HEMEPACT_OR_CUSTOM_CAPTURE("IMPACT/HemePACT or Custom Capture", Workflow.CAPTURE_HYBRIDIZATION),
-    ASSIGN_FROM_INVESTIGATOR_DECISION("Assign from Investigator Decision", Workflow.ASSIGN_FROM_INVESTIGATOR_DECISION);
+    ASSIGN_FROM_INVESTIGATOR_DECISION("Assign from Investigator Decision", Workflow.ASSIGN_FROM_INVESTIGATOR_DECISION),
+    ONT_LIBRARY_PREP_LIGATION("ONT Library Prep - Ligation", Workflow.ONT_LIBRARY_PREP_LIGATION);
 
 
     private final String name;

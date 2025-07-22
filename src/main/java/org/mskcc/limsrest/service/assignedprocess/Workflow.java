@@ -5,7 +5,9 @@ public enum Workflow {
     CAPTURE_FROM_KAPA_LIBRARY("Capture from KAPA Library", 1),
     LIBRARY_POOL_QUALITY_CONTROL("Library/Pool Quality Control", 1),
     CAPTURE_HYBRIDIZATION("Capture - Hybridization", 1),
-    ASSIGN_FROM_INVESTIGATOR_DECISION("Assign from Investigator Decisions", 1);
+    ASSIGN_FROM_INVESTIGATOR_DECISION("Assign from Investigator Decisions", 1),
+    ONT_LIBRARY_PREP_LIGATION("Ont Library Prep - Ligation",1);
+
 
     private final String name;
     private final int stepNumber;

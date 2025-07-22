@@ -115,9 +115,9 @@ public class ToggleSampleQcStatusTask {
                     setSeqAnalysisSampleQcStatus(seqQc, qcStatus, status, user);
 
                     if (qcStatus == QcStatus.RESEQUENCE_POOL) {
-                        qcStatusAwareProcessAssigner.assign(dataRecordManager, user, seqQc, qcStatus);
+                        qcStatusAwareProcessAssigner.assign(dataRecordManager, user, seqQc, qcStatus, false);
                     } else if (qcStatus == QcStatus.REPOOL_SAMPLE) {
-                        repoolByPoolingProtocol(seqQc, qcStatus, dataRecordManager, user);
+                        repoolByPoolingProtocol(seqQc, qcStatus, dataRecordManager, isOnt, user);
                     }
                     dataRecordManager.storeAndCommit("SeqAnalysisSampleQC updated to " + status, null, user);
 
@@ -156,9 +156,9 @@ public class ToggleSampleQcStatusTask {
                     setSeqAnalysisSampleQcStatus(ontQc, qcStatus, status, user);
 
                     if (qcStatus == QcStatus.RESEQUENCE_POOL) {
-                        qcStatusAwareProcessAssigner.assign(dataRecordManager, user, ontQc, qcStatus);
+                        qcStatusAwareProcessAssigner.assign(dataRecordManager, user, ontQc, qcStatus, true);
                     } else if (qcStatus == QcStatus.REPOOL_SAMPLE) {
-                        repoolByPoolingProtocol(ontQc, qcStatus, dataRecordManager, user);
+                        repoolByPoolingProtocol(ontQc, qcStatus, dataRecordManager, isOnt, user);
                     }
                     dataRecordManager.storeAndCommit("SequencingAnalysisONT updated to " + status, null, user);
 
@@ -261,7 +261,7 @@ public class ToggleSampleQcStatusTask {
      * @param seqQc
      * @param qcStatus
      */
-    private void repoolByPoolingProtocol(DataRecord seqQc, QcStatus qcStatus, DataRecordManager dataRecordManager, User user) {
+    private void repoolByPoolingProtocol(DataRecord seqQc, QcStatus qcStatus, DataRecordManager dataRecordManager, boolean isOnt, User user) {
         DataRecord[] childSamples = getParentsOfType(seqQc, SAMPLE, user);
         if (childSamples != null && childSamples.length > 0) {
             log.info(String.format("Found record %s. Searching for child sample with Protocol: %s",
@@ -272,7 +272,7 @@ public class ToggleSampleQcStatusTask {
                 if (isRecordForRepooling(record, user)) {
                     String pooledSampleRecord = Long.toString(record.getRecordId());
                     log.info(String.format("Found sample, %s, with Protocol: %s", pooledSampleRecord, POOLING_PROTOCOL));
-                    qcStatusAwareProcessAssigner.assign(dataRecordManager, user, record, qcStatus);
+                    qcStatusAwareProcessAssigner.assign(dataRecordManager, user, record, qcStatus, isOnt);
                     return;
                 }
                 childSamples = getChildrenOfType(record, SAMPLE, user);

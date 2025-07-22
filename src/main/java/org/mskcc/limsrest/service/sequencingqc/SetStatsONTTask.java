@@ -67,20 +67,6 @@ public class SetStatsONTTask {
             dr.setDataField("Recipe", "Nanopore", user);
             dr.setDataField("SeqQCStatus", "Under-Review", user);
 
-//            qcDataVals.put("IGOID", statsONT.getIgoId());
-//            qcDataVals.put("Flowcell", statsONT.getFlowcell());
-//            qcDataVals.put("ReadsNumber", statsONT.getReads());
-//            qcDataVals.put("Bases", statsONT.getBases());
-//            qcDataVals.put("N50", statsONT.getN50());
-//            qcDataVals.put("MedianReadLength", statsONT.getMedianReadLength());
-//            qcDataVals.put("EstimatedCoverage", statsONT.getEstimatedCoverage());
-//            qcDataVals.put("flowCellType", statsONT.getFlowCellType());
-//            qcDataVals.put("Chemistry", statsONT.getChemistry());
-//            qcDataVals.put("MinKNOWSoftwareVersion", statsONT.getMinKNOWSoftwareVersion());
-//            qcDataVals.put("OtherSampleId", statsONT.getSampleName());
-//            qcDataVals.put("Recipe", "Nanopore");
-//            qcDataVals.put("SeqQCStatus", "Under-Review");
-
             sample.get(0).addChild(dr, user);
             log.info("Added status" + dr.getStringVal("SeqQCStatus", user) + " to sample: " + sample.get(0).getStringVal("sampleId", user));
             drm.storeAndCommit("Add/Update ONT Stats", null, user);

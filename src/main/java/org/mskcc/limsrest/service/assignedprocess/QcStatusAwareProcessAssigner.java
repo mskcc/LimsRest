@@ -17,12 +17,17 @@ import java.util.Map;
 public class QcStatusAwareProcessAssigner {
     private final static Log log = LogFactory.getLog(QcStatusAwareProcessAssigner.class);
 
-    public static AssignedProcessConfig getProcessAssignerConfig(QcStatus qcStatus, DataRecord sample, User user) throws Exception {
+    public static AssignedProcessConfig getProcessAssignerConfig(QcStatus qcStatus, DataRecord sample, boolean isOnt, User user) throws Exception {
         switch (qcStatus) {
             case RESEQUENCE_POOL:
                 return new ResequencePoolAssignedProcessConfig(sample, user);
             case REPOOL_SAMPLE:
-                return new RepoolSampleAssignedProcessConfig(sample);
+                if (isOnt) {
+                    return new ONTRepoolSampleAssignProcessConfig(sample);
+                }
+                else {
+                    return new RepoolSampleAssignedProcessConfig(sample);
+                }
             case CONTINUE_PROCESSING:
                 return new InvestigatorDecisionAssignedProcessConfig(sample);
             default:
@@ -30,7 +35,7 @@ public class QcStatusAwareProcessAssigner {
         }
     }
 
-    public void assign(DataRecordManager dataRecordManager, User user, DataRecord seqQc, QcStatus status) {
+    public void assign(DataRecordManager dataRecordManager, User user, DataRecord seqQc, QcStatus status, boolean isOnt) {
         DataRecord sample = null;
         boolean isSetInvestigatorDecision = false;
         log.info("status is:" + status);
@@ -39,7 +44,7 @@ public class QcStatusAwareProcessAssigner {
                 log.info("Setting isSetInvestigatorDecision to true");
                 isSetInvestigatorDecision = true;
             }
-            AssignedProcessConfig assignedProcessConfig = getProcessAssignerConfig(status, seqQc, user);
+            AssignedProcessConfig assignedProcessConfig = getProcessAssignerConfig(status, seqQc, isOnt, user);
             sample = assignedProcessConfig.getSample();
             log.info("AssignedProcessConfig: sample id is: " + sample.getDataField("SampleId", user));
             DataRecord assignedProcess = addAssignedProcess(dataRecordManager, user, assignedProcessConfig, isSetInvestigatorDecision);

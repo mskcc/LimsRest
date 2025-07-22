@@ -81,8 +81,7 @@ public class SetQcInvestigatorDecisionTask {
                                         log.info("seqQc is assigned with a rna qc report record!");
                                     }
                                     log.info("qcStat igo id is:" + qcStat.getDataField("SampleId", user));
-                                    qcStatusAwareProcessAssigner.assign(drm, user, qcStat, QcStatus.fromString(newStatus));
-                                    log.info("After assign is completed!");
+                                    qcStatusAwareProcessAssigner.assign(drm, user, qcStat, QcStatus.fromString(newStatus), false);
                                 }
                             } else if (field.get("InvestigatorDecision").toString().toLowerCase().contains("stop processing")) {
                                 String newStatus = "Awaiting Processing";
