@@ -68,7 +68,7 @@ public class SetStatsONTTask {
             dr.setDataField("SeqQCStatus", "Under-Review", user);
 
             sample.get(0).addChild(dr, user);
-            log.info("Added status" + dr.getStringVal("SeqQCStatus", user) + " to sample: " + sample.get(0).getStringVal("sampleId", user));
+            log.info("Added status " + dr.getStringVal("SeqQCStatus", user) + " to sample: " + sample.get(0).getStringVal("sampleId", user));
             drm.storeAndCommit("Add/Update ONT Stats", null, user);
             return "Added/Updated " + statsONT;
         } catch (Throwable e) {

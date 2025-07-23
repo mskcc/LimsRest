@@ -10,7 +10,9 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.assignedprocess.QcStatus;
 import org.mskcc.limsrest.service.assignedprocess.QcStatusAwareProcessAssigner;
+import org.springframework.web.client.HttpClientErrorException;
 
+import java.io.IOError;
 import java.rmi.RemoteException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -269,9 +271,35 @@ public class ToggleSampleQcStatusTask {
             DataRecord record;
             while (childSamples != null && childSamples.length > 0) {
                 record = childSamples[0];
-                if (isRecordForRepooling(record, user)) {
+                if (!isOnt && isRecordForRepooling(record, user)) {
                     String pooledSampleRecord = Long.toString(record.getRecordId());
                     log.info(String.format("Found sample, %s, with Protocol: %s", pooledSampleRecord, POOLING_PROTOCOL));
+                    qcStatusAwareProcessAssigner.assign(dataRecordManager, user, record, qcStatus, isOnt);
+                    return;
+                }
+                else if (isOnt) {
+                    // record is a cDNA Library --> need to get to DNA or if it is from cDNA get to the parent RNA sample
+                    log.info("it's an ont sample!!!!");
+                    try {
+                        //if (record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("dna/cdna library")) {
+                            while (!record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("dna") &&
+                                    !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("cdna") &&
+                                    !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("rna") &&
+                                    !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().contains("hmwdna")) { // covering uhmwdna along with hmwdna
+                                    log.info("record igo id = " + record.getStringVal("SampleId", user));
+                                    record = record.getParentsOfType("Sample", user).get(0);
+                            }
+                            log.info("ont parent found record ID = " + record.getStringVal("SampleId", user));
+                        //}
+                    } catch (ServerException e) {
+                        log.error("Exception occurred while reading ONT sample type/reaching ONT sample parents ", e);
+                    } catch (RemoteException e) {
+                        log.error("Exception occurred while reading ONT sample type/reaching ONT sample parents ", e);
+                    } catch (IoError e) {
+                        log.error("Exception occurred while reading ONT sample type/reaching ONT sample parents ", e);
+                    } catch (NotFound e) {
+                        log.error("Exception occurred while reading ONT sample type/reaching ONT sample parents ", e);
+                    }
                     qcStatusAwareProcessAssigner.assign(dataRecordManager, user, record, qcStatus, isOnt);
                     return;
                 }
