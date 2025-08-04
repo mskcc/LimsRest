@@ -36,7 +36,6 @@ public class SetStatsONTTask {
     }
 
     public String execute() {
-        //Map<String, Object> qcDataVals = new HashMap<>();
         try {
             log.info("Adding/Updating ONT sequencing stats: " + statsONT);
             VeloxConnection vConn = conn.getConnection();

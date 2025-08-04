@@ -56,7 +56,6 @@ public class SetQcInvestigatorDecisionTask {
                                         .getStringVal("ExemplarSampleStatus", user).equals("Ready for - Pending User Decision")) {
                                     match.getParentsOfType("Sample", user).get(0).setDataField(DT_Sample.
                                             EXEMPLAR_SAMPLE_STATUS, newStatus, user);
-                                    log.info("After assigning sample status to " + newStatus + "!");
 
                                     DataRecord sample = match.getParentsOfType("Sample", user).get(0);
                                     String igoId = sample.getDataField("SampleId", user).toString();
@@ -89,7 +88,6 @@ public class SetQcInvestigatorDecisionTask {
                                         ("Sample", user).size() > 0) {
                                     match.getParentsOfType("Sample", user).get(0).setDataField(DT_Sample.
                                             EXEMPLAR_SAMPLE_STATUS, newStatus, user);
-                                    log.info("After assigning sample status to " + newStatus + "!");
                                 }
                             }
                             count++;
