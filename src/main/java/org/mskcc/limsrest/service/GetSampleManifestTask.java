@@ -211,7 +211,7 @@ public class GetSampleManifestTask {
         }
 
         Double dnaInputNg = null;  // leave null for WES & IMPACT
-        if (recipe.contains("ACCESS") || recipe.contains("CMO-CH")) {
+        if (recipe.contains("ACCESS") || recipe.contains("CMO-CH") || recipe.contains("CMOCH")) {
             dnaInputNg = setACCESS2dBarcode(user, dataRecordManager, sample, sampleManifest);
         }
 
@@ -222,45 +222,49 @@ public class GetSampleManifestTask {
             DataRecord aliquotParent = aliquotEntry.getValue().parent;
             log.info("Processing DNA library: " + libraryIgoId);
             SampleManifest.Library library;
-            if (recipe.contains("CMO-CH"))
-                library = getLibraryFields(user, libraryIgoId, aliquotParent, dnaInputNg);
-            else
+            if (recipe.contains("CMO-CH") || recipe.contains("CMOCH")) {
+                // Fallback to aliquot if parent is null
+                DataRecord librarySource = (aliquotParent != null) ? aliquotParent : aliquot;
+                library = getLibraryFields(user, libraryIgoId, librarySource, dnaInputNg);
+            } else {
                 library = getLibraryFields(user, libraryIgoId, aliquot, dnaInputNg);
+            }
 
-            if (recipe.contains("ACCESS") || recipe.contains("CMO-CH")) {
-                List<DataRecord> indexBarcodes = aliquot.getDescendantsOfType("IndexBarcode", user);
-                if (indexBarcodes == null || indexBarcodes.size() == 0) {
-                    List<DataRecord> parentList = aliquot.getParentsOfType("Sample", user);
-                    indexBarcodes = parentList.get(parentList.size() - 1).getDescendantsOfType("IndexBarcode", user);
-                    log.info("indexBarcodes == null");
-                }
-                if (indexBarcodes != null && indexBarcodes.size() > 0) {
-                    DataRecord bc = indexBarcodes.get(0);
+            if (recipe.contains("ACCESS") || recipe.contains("CMO-CH") || recipe.contains("CMOCH")) {
+                DataRecord bc = findIndexBarcodeRecursive(aliquot, user, new HashSet<>());
+                if (bc != null) {
                     library.setBarcodeId(bc.getStringVal("IndexId", user));
                     library.setBarcodeIndex(bc.getStringVal("IndexTag", user));
-                    log.info("indexBarcodes != null");
+                    log.info("indexBarcodes found recursively");
+                } else {
+                    log.warn("No IndexBarcode found recursively for aliquot: " + libraryIgoId);
                 }
             }
 
-            if (recipe.contains("CMO-CH")) { // capture info is in different protocol for CMO-CH
-                List<DataRecord> records = aliquotParent.getDescendantsOfType("KAPAAgilentCaptureProtocol1", user);
-                log.info("Found capture records: " + records.size());
-                for (DataRecord n : records) {
-                    Object valid = n.getValue("Valid", user); // 05359_B_1 null
-                    if (valid != null && new Boolean(valid.toString())) {
-                        String poolName = "";
-                        Object val = n.getValue("Aliq1TargetMass", user);
-                        if (val != null) {
-                            Double captureInput = n.getDoubleVal("Aliq1TargetMass", user);
-                            library.setCaptureInputNg(captureInput.toString());
-                            library.setCaptureName(poolName);
-                            Double captureVolume = n.getDoubleVal("Aliq1StartingConcentration", user);
-                            library.setCaptureConcentrationNm(captureVolume.toString());
-                            sampleManifest.addLibrary(library);
+            if (recipe.contains("CMO-CH") || recipe.contains("CMOCH")) { // capture info is in different protocol for CMO-CH
+                DataRecord captureSource = (aliquotParent != null) ? aliquotParent : aliquot;
+                if (captureSource != null) {
+                    List<DataRecord> records = captureSource.getDescendantsOfType("KAPAAgilentCaptureProtocol1", user);
+                    log.info("Found capture records: " + records.size());
+                    for (DataRecord n : records) {
+                        Object valid = n.getValue("Valid", user); // 05359_B_1 null
+                        if (valid != null && new Boolean(valid.toString())) {
+                            String poolName = "";
+                            Object val = n.getValue("Aliq1TargetMass", user);
+                            if (val != null) {
+                                Double captureInput = n.getDoubleVal("Aliq1TargetMass", user);
+                                library.setCaptureInputNg(captureInput.toString());
+                                library.setCaptureName(poolName);
+                                Double captureVolume = n.getDoubleVal("Aliq1StartingConcentration", user);
+                                library.setCaptureConcentrationNm(captureVolume.toString());
+                                sampleManifest.addLibrary(library);
+                            }
+                        } else {
+                            log.warn("Capture records not valid.");
                         }
-                    } else {
-                        log.warn("Capture records not valid.");
                     }
+                } else {
+                    log.warn("Both aliquotParent and aliquot are null for library: " + libraryIgoId);
                 }
             } else {
                 // bait set recipe, capture input, capture name
@@ -627,7 +631,32 @@ public class GetSampleManifestTask {
         return dnaLibrariesFinal;
     }
 
-    // compate 05500_A & 05500_B
+    /**
+     * Recursively search for the first IndexBarcode descendant in the sample or any of its ancestors.
+     */
+    private DataRecord findIndexBarcodeRecursive(DataRecord sample, User user, Set<Long> visited) throws Exception {
+        if (sample == null) return null;
+        if (visited == null) visited = new HashSet<>();
+        Long sampleId = sample.getRecordId();
+        if (visited.contains(sampleId)) return null; // avoid cycles
+        visited.add(sampleId);
+        // Check current sample
+        List<DataRecord> barcodes = sample.getDescendantsOfType("IndexBarcode", user);
+        if (barcodes != null && !barcodes.isEmpty()) {
+            return barcodes.get(0);
+        }
+        // Recurse through all parents
+        List<DataRecord> parents = sample.getParentsOfType("Sample", user);
+        for (DataRecord parent : parents) {
+            DataRecord found = findIndexBarcodeRecursive(parent, user, visited);
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
+    }
+
+    // compare 05500_A & 05500_B
     public static boolean sameRequest(String id1, String id2) {
         String [] parts1 = id1.split("_");
         String [] parts2 = id2.split("_");
