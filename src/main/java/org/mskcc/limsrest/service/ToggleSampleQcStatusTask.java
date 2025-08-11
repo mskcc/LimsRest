@@ -281,16 +281,15 @@ public class ToggleSampleQcStatusTask {
                     // record is a cDNA Library --> need to get to DNA or if it is from cDNA get to the parent RNA sample
                     log.info("it's an ont sample!!!!");
                     try {
-                        //if (record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("dna/cdna library")) {
-                            while (!record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("dna") &&
-                                    !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("cdna") &&
-                                    !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("rna") &&
-                                    !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().contains("hmwdna")) { // covering uhmwdna along with hmwdna
-                                    log.info("record igo id = " + record.getStringVal("SampleId", user));
-                                    record = record.getParentsOfType("Sample", user).get(0);
-                            }
-                            log.info("ont parent found record ID = " + record.getStringVal("SampleId", user));
-                        //}
+                        while ((!record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("dna") &&
+                                !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("cdna") &&
+                                !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("rna") &&
+                                !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().contains("hmwdna"))
+                                || record.getDoubleVal("Volume", user) == 0.0) {
+                                log.info("record igo id = " + record.getStringVal("SampleId", user));
+                                record = record.getParentsOfType("Sample", user).get(0);
+                        }
+                        log.info("ont parent found record ID = " + record.getStringVal("SampleId", user));
                     } catch (ServerException e) {
                         log.error("Exception occurred while reading ONT sample type/reaching ONT sample parents ", e);
                     } catch (RemoteException e) {
