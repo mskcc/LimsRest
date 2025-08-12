@@ -1,4 +1,3 @@
-
 package org.mskcc.limsrest.service;
 
 import com.velox.api.datarecord.DataRecord;
@@ -11,22 +10,19 @@ import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.model.SearchQcResult;
 import org.springframework.security.access.prepost.PreAuthorize;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-/**
- * A queued task that performs intelligent QC search with pattern detection.
- * Supports PI name, recipe, and recent run searches.
- */
 public class GetSearchQcTask {
-    private static Log log = LogFactory.getLog(GetSearchQcTask.class);
+    private static final Log log = LogFactory.getLog(GetSearchQcTask.class);
+    private static final Pattern RECENT_RUN_PATTERN = Pattern.compile("^[A-Za-z0-9]+_[0-9]+.*$");
     
     private final String search;
     private final int limit;
     private final int offset;
     private final ConnectionLIMS conn;
-    
-    private static final Pattern RECENT_RUN_PATTERN = Pattern.compile("^[A-Za-z]+_[0-9]+.*$");
 
     public GetSearchQcTask(String search, int limit, int offset, ConnectionLIMS conn) {
         this.search = search;
@@ -37,47 +33,26 @@ public class GetSearchQcTask {
     
     @PreAuthorize("hasRole('READ')")
     public SearchQcResponse execute() {
+        long startTime = System.currentTimeMillis();
         VeloxConnection vConn = conn.getConnection();
         User user = vConn.getUser();
         DataRecordManager drm = vConn.getDataRecordManager();
 
         try {
             Set<String> requestIds = new LinkedHashSet<>();
-            
-            SearchType searchType = detectSearchType(search);
-            log.info("Detected search type: " + searchType + " for search: '" + search + "'");
+            SearchType searchType = performSearch(drm, user, requestIds);
 
-            switch (searchType) {
-                case PI_NAME:
-                    searchByPiName(drm, user, search, requestIds);
-                    break;
-                case RECENT_RUN:
-                    searchByRecentRun(drm, user, search, requestIds);
-                    break;
-                case RECIPE:
-                    searchByRecipe(drm, user, search, requestIds);
-                    break;
-            }
+            List<SearchQcResult> allResults = buildResults(drm, user, requestIds, searchType);
+            sortResults(allResults);
 
-            log.info("Total unique request IDs found: " + requestIds.size());
-
-            List<SearchQcResult> allResults = buildSearchResults(drm, user, requestIds, searchType);
-            
-            allResults.sort((a, b) -> {
-                String dateA = a.getDateOfLatestStats();
-                String dateB = b.getDateOfLatestStats();
-                
-                if (dateA == null && dateB == null) return 0;
-                if (dateA == null) return 1;
-                if (dateB == null) return -1;
-                return dateB.compareTo(dateA);
-            });
-
+            // Apply pagination
             int totalResults = allResults.size();
             int start = Math.min(offset, totalResults);
             int end = Math.min(start + limit, totalResults);
-            
             List<SearchQcResult> paginatedResults = allResults.subList(start, end);
+            
+            long totalTime = System.currentTimeMillis() - startTime;
+            log.info("Search completed in " + totalTime + "ms: " + paginatedResults.size() + " returned, " + totalResults + " total");
             
             return SearchQcResponse.success(
                 paginatedResults,
@@ -94,151 +69,103 @@ public class GetSearchQcTask {
         }
     }
     
-    private SearchType detectSearchType(String searchTerm) {
-        String trimmed = searchTerm.trim();
+    private SearchType performSearch(DataRecordManager drm, User user, Set<String> requestIds) throws Exception {
+        String sanitizedFilter = search.replace("'", "''");
+        SearchType searchType = detectSearchType();
         
-        if (RECENT_RUN_PATTERN.matcher(trimmed).matches()) {
-            return SearchType.RECENT_RUN;
-        }
+        // Calculate smart limit - only fetch what we need for pagination
+        int smartLimit = Math.min(800, offset + limit + 100);
         
-        if (trimmed.contains("*")) {
-            return SearchType.RECIPE;
-        }
-        
-        return SearchType.PI_NAME;
-    }
-    
-    private void searchByPiName(DataRecordManager drm, User user, String piName, Set<String> requestIds) throws Exception {
-        long start = System.currentTimeMillis();
-        String sanitizedFilter = piName.replace("'", "''");
-        String query = "lower(Investigator) LIKE '%" + sanitizedFilter.toLowerCase() + "%' ORDER BY DateCreated DESC LIMIT 60";
-        List<DataRecord> requests = drm.queryDataRecords("Request", query, user);
-        
-        for (DataRecord r : requests) {
-            String requestId = (String) r.getValue("RequestId", user);
-            if (requestId != null && !requestId.trim().isEmpty()) {
-                requestIds.add(requestId);
+        if (searchType == SearchType.RECENT_RUN) {
+            String query = "lower(SequencerRunFolder) LIKE '%" + sanitizedFilter.toLowerCase() + 
+                          "%' ORDER BY DateCreated DESC LIMIT " + smartLimit;
+            
+            List<DataRecord> saqRecords = drm.queryDataRecords("SeqAnalysisSampleQC", query, user);
+            List<List<DataRecord>> parentSamples = drm.getParentsOfType(saqRecords, "Sample", user);
+            
+            for (List<DataRecord> parents : parentSamples) {
+                if (!parents.isEmpty()) {
+                    try {
+                        String requestId = (String) parents.get(0).getValue("RequestId", user);
+                        if (requestId != null && !requestId.trim().isEmpty()) {
+                            requestIds.add(requestId);
+                        }
+                    } catch (Exception e) {
+                    
+                    }
+                }
             }
-        }
-        log.info("PI search for '" + piName + "' found " + requests.size() + " requests in " + 
-                (System.currentTimeMillis() - start) + "ms");
-    }
-    
-    private void searchByRecentRun(DataRecordManager drm, User user, String runName, Set<String> requestIds) throws Exception {
-        long start = System.currentTimeMillis();
-        String sanitizedFilter = runName.replace("'", "''");
-        String query = "lower(SequencerRunFolder) LIKE '%" + sanitizedFilter.toLowerCase() + "%' ORDER BY DateCreated DESC LIMIT 60";
-        List<DataRecord> saqRecords = drm.queryDataRecords("SeqAnalysisSampleQC", query, user);
-        
-        for (DataRecord saq : saqRecords) {
-            List<DataRecord> parents = saq.getParentsOfType("Sample", user);
-            if (!parents.isEmpty()) {
-                DataRecord sample = parents.get(0);
-                String requestId = (String) sample.getValue("RequestId", user);
+        } else {
+            String query = "lower(LaboratoryHead) LIKE '%" + sanitizedFilter.toLowerCase() +
+                          "%' ORDER BY DateCreated DESC LIMIT " + smartLimit;
+            
+            List<DataRecord> requests = drm.queryDataRecords("Request", query, user);
+            List<Map<String, Object>> requestFields = drm.getFieldsForRecords(requests, user);
+            
+            for (Map<String, Object> fieldMap : requestFields) {
+                String requestId = (String) fieldMap.get("RequestId");
                 if (requestId != null && !requestId.trim().isEmpty()) {
                     requestIds.add(requestId);
                 }
             }
         }
-        log.info("Recent run search for '" + runName + "' found " + saqRecords.size() + " SAQ records in " + 
-                (System.currentTimeMillis() - start) + "ms");
+        
+        return searchType;
     }
     
-    private void searchByRecipe(DataRecordManager drm, User user, String recipe, Set<String> requestIds) throws Exception {
-        long start = System.currentTimeMillis();
-        String cleanRecipe = recipe.replace("*", "").replace("'", "''");
-        String query = "lower(Recipe) LIKE '%" + cleanRecipe.toLowerCase() + "%' ORDER BY DateCreated DESC LIMIT 60";
-        List<DataRecord> samples = drm.queryDataRecords("Sample", query, user);
-        
-        for (DataRecord s : samples) {
-            String requestId = (String) s.getValue("RequestId", user);
-            if (requestId != null && !requestId.trim().isEmpty()) {
-                requestIds.add(requestId);
-            }
+    private List<SearchQcResult> buildResults(DataRecordManager drm, User user, Set<String> requestIds, SearchType searchType) throws Exception {
+        if (requestIds.isEmpty()) {
+            return new ArrayList<>();
         }
-        log.info("Recipe search for '" + recipe + "' found " + samples.size() + " samples in " + 
-                (System.currentTimeMillis() - start) + "ms");
-    }
-    
-    private List<SearchQcResult> buildSearchResults(DataRecordManager drm, User user, Set<String> requestIds, SearchType searchType) throws Exception {
-        long summaryStart = System.currentTimeMillis();
-        List<SearchQcResult> allResults = new ArrayList<>();
         
-        int processedCount = 0;
-        int maxToProcess = Math.min(requestIds.size(), 50);
-
-        for (String requestId : requestIds) {
-            if (processedCount >= maxToProcess) {
-                log.info("Reached processing limit of " + maxToProcess + " projects for performance");
-                break;
-            }
-            
+        // Only process what we need for pagination
+        int maxToProcess = Math.min(requestIds.size(), offset + limit + 100);
+        List<String> requestIdsToProcess = new ArrayList<>(requestIds).subList(0, maxToProcess);
+        
+        // Single bulk query for requests
+        String requestQuery = "RequestId IN (" + 
+            requestIdsToProcess.stream()
+                .map(id -> "'" + id + "'")
+                .collect(Collectors.joining(",")) + ")";
+        
+        List<DataRecord> allRequests = drm.queryDataRecords("Request", requestQuery, user);
+        
+        // Bulk field operations
+        List<Map<String, Object>> requestFields = drm.getFieldsForRecords(allRequests, user);
+        List<List<Map<String, Object>>> childSampleFields = drm.getFieldsForChildrenOfType(allRequests, "Sample", user);
+        
+        // Bulk QC data fetch
+        Map<String, QcData> qcDataMap = fetchQcData(drm, user, requestIdsToProcess, searchType);
+        
+        // Build results
+        List<SearchQcResult> allResults = new ArrayList<>();
+        for (int i = 0; i < requestFields.size(); i++) {
             try {
-                List<DataRecord> reqs = drm.queryDataRecords("Request", "RequestId = '" + requestId + "'", user);
-                if (reqs.isEmpty()) continue;
+                Map<String, Object> requestFieldMap = requestFields.get(i);
+                List<Map<String, Object>> sampleFieldMaps = childSampleFields.get(i);
                 
-                DataRecord req = reqs.get(0);
-                String pi = (String) req.getValue("Investigator", user);
-                String type = (String) req.getValue("RequestName", user);
-
+                String requestId = (String) requestFieldMap.get("RequestId");
+                String pi = (String) requestFieldMap.get("LaboratoryHead");
+                String type = (String) requestFieldMap.get("RequestName");
+                
                 String recipe = null;
-                DataRecord[] childSamples = req.getChildrenOfType("Sample", user);
-                if (childSamples.length > 0) {
-                    recipe = (String) childSamples[0].getValue("Recipe", user);
+                if (!sampleFieldMaps.isEmpty()) {
+                    recipe = (String) sampleFieldMaps.get(0).get("Recipe");
                 }
-
+                
                 String latestDate = "No QC data";
                 String latestRecentRun = "No runs";
                 
-                if (childSamples.length > 0) {
-                    try {
-                        List<DataRecord> saqList = childSamples[0].getDescendantsOfType("SeqAnalysisSampleQC", user);
-                        if (!saqList.isEmpty()) {
-                            
-                            if (searchType == SearchType.RECENT_RUN) {
-                                DataRecord matchingQC = null;
-                                for (DataRecord saq : saqList) {
-                                    String folder = (String) saq.getValue("SequencerRunFolder", user);
-                                    if (folder != null && folder.toLowerCase().contains(search.toLowerCase())) {
-                                        matchingQC = saq;
-                                        break;
-                                    }
-                                }
-                                
-                                if (matchingQC != null) {
-                                    Long dateCreated = (Long) matchingQC.getValue("DateCreated", user);
-                                    if (dateCreated != null) {
-                                        latestDate = new Date(dateCreated).toString();
-                                    }
-                                    
-                                    String folder = (String) matchingQC.getValue("SequencerRunFolder", user);
-                                    if (folder != null && folder.contains("_")) {
-                                        String[] parts = folder.split("_");
-                                        if (parts.length >= 2) {
-                                            latestRecentRun = parts[0] + "_" + parts[1];
-                                        }
-                                    }
-                                } else {
-                                    continue;
-                                }
-                            } else {
-                                DataRecord mostRecent = saqList.get(saqList.size() - 1);
-                                Long dateCreated = (Long) mostRecent.getValue("DateCreated", user);
-                                if (dateCreated != null) {
-                                    latestDate = new Date(dateCreated).toString();
-                                }
-                                
-                                String folder = (String) mostRecent.getValue("SequencerRunFolder", user);
-                                if (folder != null && folder.contains("_")) {
-                                    String[] parts = folder.split("_");
-                                    if (parts.length >= 2) {
-                                        latestRecentRun = parts[0] + "_" + parts[1];
-                                    }
-                                }
-                            }
+                if (qcDataMap.containsKey(requestId)) {
+                    QcData qcData = qcDataMap.get(requestId);
+                    if (qcData.dateCreated != null) {
+                        latestDate = new Date(qcData.dateCreated).toString();
+                    }
+                    if (qcData.runFolder != null && qcData.runFolder.contains("_")) {
+                        String[] parts = qcData.runFolder.split("_");
+                        if (parts.length >= 2) {
+                            latestRecentRun = parts[0] + "_" + parts[1];
                         }
-                    } catch (Exception e) {
-                        log.debug("Could not retrieve QC data for request: " + requestId);
                     }
                 }
                 
@@ -251,22 +178,113 @@ public class GetSearchQcTask {
                 result.setDateOfLatestStats(latestDate);
                 
                 allResults.add(result);
-                processedCount++;
                 
             } catch (Exception e) {
-                log.warn("Error processing request " + requestId + ": " + e.getMessage());
+                
             }
         }
         
-        log.info("Built " + allResults.size() + " summaries from " + processedCount + " processed projects in " + 
-                (System.currentTimeMillis() - summaryStart) + "ms");
         return allResults;
     }
     
+    private Map<String, QcData> fetchQcData(DataRecordManager drm, User user, List<String> requestIds, SearchType searchType) throws Exception {
+        Map<String, QcData> qcDataMap = new HashMap<>();
+        
+        String qcQuery = "Request IN (" + 
+            requestIds.stream()
+                .map(id -> "'" + id + "'")
+                .collect(Collectors.joining(",")) + ")";
+        
+        if (searchType == SearchType.RECENT_RUN) {
+            qcQuery += " AND lower(SequencerRunFolder) LIKE '%" + search.toLowerCase() + "%'";
+        }
+        qcQuery += " ORDER BY DateCreated DESC";
+        
+        List<DataRecord> allQcRecords = drm.queryDataRecords("SeqAnalysisSampleQC", qcQuery, user);
+        List<Map<String, Object>> qcFields = drm.getFieldsForRecords(allQcRecords, user);
+        
+        // For PI_NAME: keep most recent QC per request
+        // For RECENT_RUN: keep matching QC records
+        for (Map<String, Object> qcFieldMap : qcFields) {
+            String request = (String) qcFieldMap.get("Request");
+            String folder = (String) qcFieldMap.get("SequencerRunFolder");
+            Long dateCreated = (Long) qcFieldMap.get("DateCreated");
+            
+            if (request != null && dateCreated != null) {
+                boolean shouldInclude = searchType == SearchType.PI_NAME ||
+                    (folder != null && folder.toLowerCase().contains(search.toLowerCase()));
+                
+                if (shouldInclude && !qcDataMap.containsKey(request)) {
+                    qcDataMap.put(request, new QcData(dateCreated, folder));
+                }
+            }
+        }
+        
+        return qcDataMap;
+    }
+    
+    private void sortResults(List<SearchQcResult> allResults) {
+        allResults.sort((a, b) -> {
+            String dateStringA = a.getDateOfLatestStats();
+            String dateStringB = b.getDateOfLatestStats();
+            
+            if ((dateStringA == null || "No QC data".equals(dateStringA)) && 
+                (dateStringB == null || "No QC data".equals(dateStringB))) return 0;
+            if (dateStringA == null || "No QC data".equals(dateStringA)) return 1;
+            if (dateStringB == null || "No QC data".equals(dateStringB)) return -1;
+            
+            Date dateA = parseDate(dateStringA);
+            Date dateB = parseDate(dateStringB);
+            
+            if (dateA != null && dateB != null) {
+                int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+                
+                Calendar calA = Calendar.getInstance();
+                Calendar calB = Calendar.getInstance();
+                calA.setTime(dateA);
+                calB.setTime(dateB);
+                int yearA = calA.get(Calendar.YEAR);
+                int yearB = calB.get(Calendar.YEAR);
+                
+                if (yearA == currentYear && yearB != currentYear) return -1;
+                if (yearB == currentYear && yearA != currentYear) return 1;
+                
+                return dateB.compareTo(dateA);
+            }
+            
+            return dateStringB.compareTo(dateStringA);
+        });
+    }
+    
+    private SearchType detectSearchType() {
+        return RECENT_RUN_PATTERN.matcher(search.trim()).matches() ? 
+               SearchType.RECENT_RUN : SearchType.PI_NAME;
+    }
+    
+    private Date parseDate(String dateString) {
+        if (dateString == null || "No QC data".equals(dateString)) {
+            return null;
+        }
+        
+        try {
+            SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH);
+            return formatter.parse(dateString);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    
+    private static class QcData {
+        final Long dateCreated;
+        final String runFolder;
+        
+        QcData(Long dateCreated, String runFolder) {
+            this.dateCreated = dateCreated;
+            this.runFolder = runFolder;
+        }
+    }
+    
     private enum SearchType {
-        PI_NAME,
-        RECENT_RUN,
-        RECIPE
+        PI_NAME, RECENT_RUN
     }
 }
-
