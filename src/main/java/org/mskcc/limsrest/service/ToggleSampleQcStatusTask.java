@@ -281,13 +281,23 @@ public class ToggleSampleQcStatusTask {
                     // record is a cDNA Library --> need to get to DNA or if it is from cDNA get to the parent RNA sample
                     log.info("it's an ont sample!!!!");
                     try {
-                        while ((!record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("dna") &&
-                                !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("cdna") &&
-                                !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("rna") &&
-                                !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().contains("hmwdna"))
-                                || record.getDoubleVal("Volume", user) == 0.0) {
+                        if (record.getDataField("Volume", user) != null) {
+                            while ((!record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("dna") &&
+                                    !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("cdna") &&
+                                    !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("rna") &&
+                                    !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().contains("hmwdna"))
+                                    || record.getDoubleVal("Volume", user) == 0.0) {
                                 log.info("record igo id = " + record.getStringVal("SampleId", user));
                                 record = record.getParentsOfType("Sample", user).get(0);
+                            }
+                        }
+                        else {
+                            while (!record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("dna") &&
+                                    !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("cdna") &&
+                                    !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("rna") &&
+                                    !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().contains("hmwdna")) {
+                                record = record.getParentsOfType("Sample", user).get(0);
+                            }
                         }
                         log.info("ont parent found record ID = " + record.getStringVal("SampleId", user));
                     } catch (ServerException e) {
@@ -310,7 +320,7 @@ public class ToggleSampleQcStatusTask {
     }
 
     /**
-     * Determines if the Sample DataRecord is the one that should have its status set. This is determiend by whether
+     * Determines if the Sample DataRecord is the one that should have its status set. This is determined by whether
      * record has a child type with @POOLING_PROTOCOL
      *
      * @param record
