@@ -279,7 +279,6 @@ public class ToggleSampleQcStatusTask {
                 }
                 else if (isOnt) {
                     // record is a cDNA Library --> need to get to DNA or if it is from cDNA get to the parent RNA sample
-                    log.info("it's an ont sample!!!!");
                     try {
                         if (record.getDataField("Volume", user) != null) {
                             while ((!record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("dna") &&
