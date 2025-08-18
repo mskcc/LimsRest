@@ -10,7 +10,9 @@ import org.apache.commons.logging.LogFactory;
 import org.mskcc.limsrest.ConnectionLIMS;
 import org.mskcc.limsrest.service.assignedprocess.QcStatus;
 import org.mskcc.limsrest.service.assignedprocess.QcStatusAwareProcessAssigner;
+import org.springframework.web.client.HttpClientErrorException;
 
+import java.io.IOError;
 import java.rmi.RemoteException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -115,9 +117,9 @@ public class ToggleSampleQcStatusTask {
                     setSeqAnalysisSampleQcStatus(seqQc, qcStatus, status, user);
 
                     if (qcStatus == QcStatus.RESEQUENCE_POOL) {
-                        qcStatusAwareProcessAssigner.assign(dataRecordManager, user, seqQc, qcStatus);
+                        qcStatusAwareProcessAssigner.assign(dataRecordManager, user, seqQc, qcStatus, false);
                     } else if (qcStatus == QcStatus.REPOOL_SAMPLE) {
-                        repoolByPoolingProtocol(seqQc, qcStatus, dataRecordManager, user);
+                        repoolByPoolingProtocol(seqQc, qcStatus, dataRecordManager, isOnt, user);
                     }
                     dataRecordManager.storeAndCommit("SeqAnalysisSampleQC updated to " + status, null, user);
 
@@ -156,9 +158,9 @@ public class ToggleSampleQcStatusTask {
                     setSeqAnalysisSampleQcStatus(ontQc, qcStatus, status, user);
 
                     if (qcStatus == QcStatus.RESEQUENCE_POOL) {
-                        qcStatusAwareProcessAssigner.assign(dataRecordManager, user, ontQc, qcStatus);
+                        qcStatusAwareProcessAssigner.assign(dataRecordManager, user, ontQc, qcStatus, true);
                     } else if (qcStatus == QcStatus.REPOOL_SAMPLE) {
-                        repoolByPoolingProtocol(ontQc, qcStatus, dataRecordManager, user);
+                        repoolByPoolingProtocol(ontQc, qcStatus, dataRecordManager, isOnt, user);
                     }
                     dataRecordManager.storeAndCommit("SequencingAnalysisONT updated to " + status, null, user);
 
@@ -261,7 +263,7 @@ public class ToggleSampleQcStatusTask {
      * @param seqQc
      * @param qcStatus
      */
-    private void repoolByPoolingProtocol(DataRecord seqQc, QcStatus qcStatus, DataRecordManager dataRecordManager, User user) {
+    private void repoolByPoolingProtocol(DataRecord seqQc, QcStatus qcStatus, DataRecordManager dataRecordManager, boolean isOnt, User user) {
         DataRecord[] childSamples = getParentsOfType(seqQc, SAMPLE, user);
         if (childSamples != null && childSamples.length > 0) {
             log.info(String.format("Found record %s. Searching for child sample with Protocol: %s",
@@ -269,10 +271,44 @@ public class ToggleSampleQcStatusTask {
             DataRecord record;
             while (childSamples != null && childSamples.length > 0) {
                 record = childSamples[0];
-                if (isRecordForRepooling(record, user)) {
+                if (!isOnt && isRecordForRepooling(record, user)) {
                     String pooledSampleRecord = Long.toString(record.getRecordId());
                     log.info(String.format("Found sample, %s, with Protocol: %s", pooledSampleRecord, POOLING_PROTOCOL));
-                    qcStatusAwareProcessAssigner.assign(dataRecordManager, user, record, qcStatus);
+                    qcStatusAwareProcessAssigner.assign(dataRecordManager, user, record, qcStatus, isOnt);
+                    return;
+                }
+                else if (isOnt) {
+                    // record is a cDNA Library --> need to get to DNA or if it is from cDNA get to the parent RNA sample
+                    try {
+                        if (record.getDataField("Volume", user) != null) {
+                            while ((!record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("dna") &&
+                                    !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("cdna") &&
+                                    !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("rna") &&
+                                    !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().contains("hmwdna"))
+                                    || record.getDoubleVal("Volume", user) == 0.0) {
+                                log.info("record igo id = " + record.getStringVal("SampleId", user));
+                                record = record.getParentsOfType("Sample", user).get(0);
+                            }
+                        }
+                        else {
+                            while (!record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("dna") &&
+                                    !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("cdna") &&
+                                    !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().equals("rna") &&
+                                    !record.getStringVal("ExemplarSampleType", user).trim().toLowerCase().contains("hmwdna")) {
+                                record = record.getParentsOfType("Sample", user).get(0);
+                            }
+                        }
+                        log.info("ont parent found record ID = " + record.getStringVal("SampleId", user));
+                    } catch (ServerException e) {
+                        log.error("Exception occurred while reading ONT sample type/reaching ONT sample parents ", e);
+                    } catch (RemoteException e) {
+                        log.error("Exception occurred while reading ONT sample type/reaching ONT sample parents ", e);
+                    } catch (IoError e) {
+                        log.error("Exception occurred while reading ONT sample type/reaching ONT sample parents ", e);
+                    } catch (NotFound e) {
+                        log.error("Exception occurred while reading ONT sample type/reaching ONT sample parents ", e);
+                    }
+                    qcStatusAwareProcessAssigner.assign(dataRecordManager, user, record, qcStatus, isOnt);
                     return;
                 }
                 childSamples = getChildrenOfType(record, SAMPLE, user);
@@ -283,7 +319,7 @@ public class ToggleSampleQcStatusTask {
     }
 
     /**
-     * Determines if the Sample DataRecord is the one that should have its status set. This is determiend by whether
+     * Determines if the Sample DataRecord is the one that should have its status set. This is determined by whether
      * record has a child type with @POOLING_PROTOCOL
      *
      * @param record

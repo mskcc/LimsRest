@@ -56,7 +56,6 @@ public class SetQcInvestigatorDecisionTask {
                                         .getStringVal("ExemplarSampleStatus", user).equals("Ready for - Pending User Decision")) {
                                     match.getParentsOfType("Sample", user).get(0).setDataField(DT_Sample.
                                             EXEMPLAR_SAMPLE_STATUS, newStatus, user);
-                                    log.info("After assigning sample status to " + newStatus + "!");
 
                                     DataRecord sample = match.getParentsOfType("Sample", user).get(0);
                                     String igoId = sample.getDataField("SampleId", user).toString();
@@ -81,8 +80,7 @@ public class SetQcInvestigatorDecisionTask {
                                         log.info("seqQc is assigned with a rna qc report record!");
                                     }
                                     log.info("qcStat igo id is:" + qcStat.getDataField("SampleId", user));
-                                    qcStatusAwareProcessAssigner.assign(drm, user, qcStat, QcStatus.fromString(newStatus));
-                                    log.info("After assign is completed!");
+                                    qcStatusAwareProcessAssigner.assign(drm, user, qcStat, QcStatus.fromString(newStatus), false);
                                 }
                             } else if (field.get("InvestigatorDecision").toString().toLowerCase().contains("stop processing")) {
                                 String newStatus = "Awaiting Processing";
@@ -90,7 +88,6 @@ public class SetQcInvestigatorDecisionTask {
                                         ("Sample", user).size() > 0) {
                                     match.getParentsOfType("Sample", user).get(0).setDataField(DT_Sample.
                                             EXEMPLAR_SAMPLE_STATUS, newStatus, user);
-                                    log.info("After assigning sample status to " + newStatus + "!");
                                 }
                             }
                             count++;
