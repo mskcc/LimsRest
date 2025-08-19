@@ -14,16 +14,37 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletRequest;
 
+/**
+ * REST controller for QC search operations.
+ * Provides endpoints for searching quality control data by PI name or sequencer run folders.
+ */
 @RestController
 @RequestMapping("/")
 public class GetSearchQc {
     private static Log log = LogFactory.getLog(GetSearchQc.class);
     private final ConnectionLIMS conn;
 
+    /**
+     * Constructs the controller with LIMS connection dependency.
+     *
+     * @param conn the LIMS database connection
+     */
     public GetSearchQc(ConnectionLIMS conn) {
         this.conn = conn;
     }
 
+    /**
+     * Handles QC search requests with pagination support.
+     * Searches for QC data based on search term, automatically detecting whether
+     * to search by PI name or sequencer run folder pattern.
+     *
+     * @param search the search term (PI name or run folder pattern)
+     * @param limit maximum number of results to return (default: 100)
+     * @param offset number of results to skip for pagination (default: 0)
+     * @param request HTTP request object for logging client information
+     * @return SearchQcResponse containing search results and pagination metadata
+     * @throws ResponseStatusException if search parameter is invalid or search fails
+     */
     @GetMapping("/searchQc")
     public SearchQcResponse getContent(
             @RequestParam(value = "search", required = true) String search,
@@ -37,7 +58,7 @@ public class GetSearchQc {
             log.error("FAILURE: search parameter is required and cannot be empty.");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "FAILURE: search parameter is required and cannot be empty.");
         }
-        
+
         int validatedLimit = Math.max(limit, 1);
         int validatedOffset = Math.max(offset, 0);
 
