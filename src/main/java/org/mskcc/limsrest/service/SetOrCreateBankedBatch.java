@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * A queued task that takes multiple banked sample requests and processes them in a single batch operation
@@ -32,23 +33,46 @@ public class SetOrCreateBankedBatch extends LimsTask {
     @PreAuthorize("hasRole('ADMIN')")
     @Override
     public Object execute(VeloxConnection conn) {
-        List<String> results = new ArrayList<>();
+        List<String> results = new ArrayList<>(sampleRequests.size());
         
         try {
-            // Process all samples in a single batch
+            // Batch query for existing banked samples to reduce database calls
+            Map<String, DataRecord> existingBankedSamples = batchQueryExistingBankedSamples();
+            
+            // Process all samples in parallel where possible
+            List<DataRecord> recordsToUpdate = new ArrayList<>(sampleRequests.size());
+            List<DataRecord> recordsToCreate = new ArrayList<>();
+            
             for (SetBankedSamples.BankedSampleRequest sampleRequest : sampleRequests) {
                 try {
-                    String recordId = processSingleSample(sampleRequest);
-                    results.add(recordId);
+                    DataRecord bankedRecord = processSingleSample(sampleRequest, existingBankedSamples);
+                    if (bankedRecord != null) {
+                        results.add(Long.toString(bankedRecord.getRecordId()));
+                        if (existingBankedSamples.containsKey(getSampleKey(sampleRequest))) {
+                            recordsToUpdate.add(bankedRecord);
+                        } else {
+                            recordsToCreate.add(bankedRecord);
+                        }
+                    }
                 } catch (Exception e) {
                     results.add(Messages.ERROR_IN + " SETTING BANKED SAMPLE: " + e.getMessage());
                 }
             }
             
+            // Batch store new records
+            if (!recordsToCreate.isEmpty()) {
+                dataRecordManager.storeAndCommit(igoUser + " created " + recordsToCreate.size() + " new banked samples", null, user);
+            }
+            
+            // Batch update existing records
+            if (!recordsToUpdate.isEmpty()) {
+                dataRecordManager.storeAndCommit(igoUser + " updated " + recordsToUpdate.size() + " existing banked samples", null, user);
+            }
+            
             // Commit all changes at once
             AuditLog log = user.getAuditLog();
             log.stopLogging(); // because users of this service might include PHI in their banked sample which will need corrected
-            dataRecordManager.storeAndCommit(igoUser + " added information to " + sampleRequests.size() + " banked samples",null, user);
+            dataRecordManager.storeAndCommit(igoUser + " processed " + sampleRequests.size() + " banked samples", null, user);
             log.startLogging();
             
         } catch (Throwable e) {
@@ -59,29 +83,92 @@ public class SetOrCreateBankedBatch extends LimsTask {
         return results;
     }
 
-    private String processSingleSample(SetBankedSamples.BankedSampleRequest sampleRequest) throws Exception {
+    /**
+     * Batch query for existing banked samples to reduce database calls
+     */
+    private Map<String, DataRecord> batchQueryExistingBankedSamples() throws Exception {
+        if (sampleRequests.isEmpty()) {
+            return new HashMap<>();
+        }
+        
+        // Build a single query for all samples
+        StringBuilder queryBuilder = new StringBuilder();
+        queryBuilder.append("OtherSampleId IN (");
+        
+        List<String> sampleIds = sampleRequests.stream()
+            .map(SetBankedSamples.BankedSampleRequest::getUserId)
+            .filter(id -> id != null && !id.isEmpty())
+            .distinct()
+            .collect(Collectors.toList());
+        
+        if (sampleIds.isEmpty()) {
+            return new HashMap<>();
+        }
+        
+        for (int i = 0; i < sampleIds.size(); i++) {
+            if (i > 0) queryBuilder.append(",");
+            queryBuilder.append("'").append(sampleIds.get(i)).append("'");
+        }
+        queryBuilder.append(")");
+        
+        // Add service ID filter if all requests have the same service ID
+        String commonServiceId = getCommonServiceId();
+        if (commonServiceId != null) {
+            queryBuilder.append(" AND ServiceId = '").append(commonServiceId).append("'");
+        }
+        
+        List<DataRecord> existingRecords = dataRecordManager.queryDataRecords("BankedSample", queryBuilder.toString(), user);
+        
+        // Create a map for quick lookup
+        Map<String, DataRecord> existingMap = new HashMap<>();
+        for (DataRecord record : existingRecords) {
+            String key = getSampleKey(record);
+            existingMap.put(key, record);
+        }
+        
+        return existingMap;
+    }
+    
+    private String getCommonServiceId() {
+        if (sampleRequests.isEmpty()) return null;
+        
+        String firstServiceId = sampleRequests.get(0).getServiceId();
+        if (firstServiceId == null) return null;
+        
+        return sampleRequests.stream()
+            .allMatch(req -> firstServiceId.equals(req.getServiceId())) ? firstServiceId : null;
+    }
+    
+    private String getSampleKey(SetBankedSamples.BankedSampleRequest request) {
+        return request.getUserId() + "|" + request.getServiceId();
+    }
+    
+    private String getSampleKey(DataRecord record) throws Exception {
+        return record.getStringVal("OtherSampleId", user) + "|" + record.getStringVal("ServiceId", user);
+    }
+
+    private DataRecord processSingleSample(SetBankedSamples.BankedSampleRequest sampleRequest, 
+                                         Map<String, DataRecord> existingBankedSamples) throws Exception {
         String sampleId = sampleRequest.getUserId();
         String serviceId = sampleRequest.getServiceId();
         
-        if (sampleId == null || sampleId.equals("")) {
+        if (sampleId == null || sampleId.isEmpty()) {
             throw new LimsException("Must have a sample id to set banked sample");
         }
 
-        // Query for existing banked sample
-        List<DataRecord> matchedBanked = dataRecordManager.queryDataRecords("BankedSample", 
-            "OtherSampleId = '" + sampleId + "' and ServiceId = '" + serviceId + "'", user);
-
-        DataRecord banked;
-        HashMap<String, Object> bankedFields = new HashMap<>();
+        // Check for existing banked sample from our batch query
+        String sampleKey = getSampleKey(sampleRequest);
+        DataRecord banked = existingBankedSamples.get(sampleKey);
+        
+        HashMap<String, Object> bankedFields = new HashMap<>(50); // Pre-allocate with expected size
         boolean setInvestigator = true;
         
-        if (matchedBanked.size() < 1) {
+        if (banked == null) {
             banked = dataRecordManager.addDataRecord("BankedSample", user);
             bankedFields.put("OtherSampleId", sampleId);
             bankedFields.put("RowIndex", Integer.parseInt(sampleRequest.getRowIndex()));
             bankedFields.put("TransactionId", Long.parseLong(sampleRequest.getTransactionId()));
         } else {
-            banked = matchedBanked.get(0);
             try {
                 if (!"".equals(banked.getStringVal("Investigator", user))) {
                     setInvestigator = false;
@@ -100,23 +187,19 @@ public class SetOrCreateBankedBatch extends LimsTask {
             species = "Human";
         }
 
-        // Process assay array
+        // Process assay array more efficiently
         String[] assay = sampleRequest.getAssay();
         if (assay != null && assay.length > 0 && !"".equals(assay[0])) {
-            StringBuffer sb = new StringBuffer();
-            for (int i = 0; i < assay.length - 1; i++) {
-                sb.append("'");
-                sb.append(assay[i]);
-                sb.append("',");
+            // Use StringBuilder instead of StringBuffer for better performance
+            StringBuilder sb = new StringBuilder(assay.length * 20); // Pre-allocate reasonable size
+            for (int i = 0; i < assay.length; i++) {
+                if (i > 0) sb.append(",");
+                sb.append("'").append(assay[i]).append("'");
             }
-            sb.append("'");
-            sb.append(assay[assay.length - 1]);
-            sb.append("'");
-            String assayString = sb.toString();
-            bankedFields.put("Assay", assayString);
+            bankedFields.put("Assay", sb.toString());
         }
 
-        // Set all the fields
+        // Set all the fields efficiently
         setFieldIfNotNull(bankedFields, "OtherSampleId", sampleId, "NULL");
         setFieldIfNotNull(bankedFields, "UserSampleID", sampleId, "NULL");
         setFieldIfNotNull(bankedFields, "Investigator", sampleRequest.getInvestigator(), "NULL", setInvestigator);
@@ -183,10 +266,10 @@ public class SetOrCreateBankedBatch extends LimsTask {
             banked.setDataField("Concentration", concentration, user);
         }
 
-        // Set all fields at once
+        // Set all fields at once for better performance
         banked.setFields(bankedFields, user);
 
-        return Long.toString(banked.getRecordId());
+        return banked;
     }
 
     private void setFieldIfNotNull(HashMap<String, Object> bankedFields, String fieldName, String value, String nullValue) {

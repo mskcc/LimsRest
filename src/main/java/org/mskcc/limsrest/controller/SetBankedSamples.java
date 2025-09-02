@@ -376,6 +376,7 @@ public class SetBankedSamples {
         // Process each sample
         // Validate all samples first and collect valid ones
         List<BankedSampleRequest> validSamples = new ArrayList<>();
+        int numSamples = (request.getSamples() != null) ? request.getSamples().size() : 0;
         for (BankedSampleRequest sampleRequest : request.getSamples()) {
             boolean valid = true;
             if (sampleRequest.getUserId() == null || sampleRequest.getUserId().trim().isEmpty()) {
@@ -419,7 +420,7 @@ public class SetBankedSamples {
             }
         }
 
-                if (!validSamples.isEmpty()) {
+        if (!validSamples.isEmpty()) {
             try {
                 // Submit all valid samples in one batch task
                 SetOrCreateBankedBatch batchTask = new SetOrCreateBankedBatch(validSamples, validSamples.get(0).getIgoUser());
