@@ -28,6 +28,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import org.mskcc.limsrest.util.illuminaseq.BarcodeMismatch;
+import org.mskcc.limsrest.util.illuminaseq.NovaSeqXSamplesheetGenerator;
 import org.mskcc.limsrest.util.illuminaseq.SampleData;
 import org.mskcc.limsrest.util.illuminaseq.SampleSheetParser;
 import javax.xml.parsers.DocumentBuilder;
@@ -46,7 +47,7 @@ import java.rmi.RemoteException;
 import java.text.ParseException;
 import java.lang.ProcessBuilder;
 import java.lang.Process;
-import org.mskcc.limsrest.util.NovaSeqXSamplesheetGenerator;
+
 import org.mskcc.limsrest.util.illuminaseq.Barcode;
 
 public class GetSampleSheetTask {
@@ -156,11 +157,12 @@ public class GetSampleSheetTask {
 
             // get the flow cell lanes
             // XXX get samples differently, depending on the invocation of this plugin
-            assignedLanes = getLanesFromExperiment(experiment);
+            assignedLanes = getLanesFromExperiment(experiment).subList(5, 6);
             // get the experiments samples
             List<DataRecord> samples_RecList = new ArrayList<DataRecord>();
             //TODO: Remove this once testing is
             //Only Get Third Lane
+            
 
             for (DataRecord assignedLane : assignedLanes) {
                 samples_RecList.addAll((assignedLane.getParentsOfType(DT_Sample.DATA_TYPE, user)));
@@ -452,16 +454,6 @@ public class GetSampleSheetTask {
                     sampleInfo.put("REQUEST_ID", requestFromIgoId(igoId));
                     sampleInfo.put("IGO_ID", baseIgoID);
                     System.out.println("Put " + baseIgoID + " for tcrseq sample ID.");
-                    // append _alpha or _beta to the sampleID for the sample sheet
-                    if ("TCR_IGO-alpha".equals(recipe)) {
-                        otherSampleId += "_alpha";
-                    }
-                    if ("TCR_IGO-beta".equals(recipe))
-                        otherSampleId += "_beta";
-                    sampleInfo.put("OTHER_ID", otherSampleId);
-
-                    // Don't add SmartSeq Pooled Library to sampleInfo if it's a pooled sample:
-                    // IT has a request, but don't need it!
 
                 }
 
@@ -524,6 +516,8 @@ public class GetSampleSheetTask {
                     System.out.print("," + s.getStringVal("SampleId", user));
                 }
                 System.out.println("");
+
+
                 next.addAll(0, sampleList);
 
                 if (sample.getStringVal("SampleId", user).startsWith("Pool-")) {
@@ -553,10 +547,18 @@ public class GetSampleSheetTask {
                         }
     
                         if (sampleFields != null && sampleFields.containsKey("OtherSampleId")) {
-                            sampleInfo.put("OTHER_ID", (String) sampleFields.get("OtherSampleId"));
+                            String otherSampleID = (String) sampleFields.get("OtherSampleId");
+                                                                     // append _alpha or _beta to the sampleID for the sample sheet
+                            if ("TCR_IGO-alpha".equals(recipe)) {
+                                otherSampleID += "_alpha";
+                            }
+                            if ("TCR_IGO-beta".equals(recipe))
+                                otherSampleID += "_beta";
+
+                            sampleInfo.put("OTHER_ID", otherSampleID);
                         }
-                    }
                         
+                    }
 
                     allAdditional.add(sampleInfo);
 
