@@ -3,6 +3,8 @@
 target
 .vscode/
 
+bin/
+
 # Log file
 *.log
 
