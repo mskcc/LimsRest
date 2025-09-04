@@ -1,11 +1,6 @@
 # Compiled class file
 *.class
 
-target/
-
-.vscode/*
-
-bin/*
 
 # Log file
 *.log
@@ -19,6 +14,12 @@ bin/*
 .idea/
 
 build/*
+
+target/
+
+.vscode/*
+
+bin/*
 
 logs/
 
