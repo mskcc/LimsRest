@@ -133,13 +133,11 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                         DataRecord correctLibrarySample = null;
                         for (DataRecord tcrIndex : tcrSeqIndices) {
                             try {
-                                // Get the index barcode information from the TCRSeq record
-                                String indexBarcode = tcrIndex.getStringVal("IndexBarcode", user);
+                                // Get the index ID information from the TCRSeq record
                                 String indexId = tcrIndex.getStringVal("IndexId", user);
                                 
                                 // Check if this TCRSeq index matches the sampleName from QC data
-                                if (sampleName.contains("alpha") && (indexBarcode != null && indexBarcode.toLowerCase().contains("alpha") || 
-                                    indexId != null && indexId.toLowerCase().contains("alpha"))) {
+                                if (sampleName.contains("alpha") && (indexId != null && indexId.toLowerCase().contains("acj"))) {
                                     // Get the DNA library sample associated with this alpha TCRSeq index
                                     List<DataRecord> parents = tcrIndex.getParentsOfType("Sample", user);
                                     if (!parents.isEmpty()) {
@@ -153,8 +151,7 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                                         }
                                     }
                                     break;
-                                } else if (sampleName.contains("beta") && (indexBarcode != null && indexBarcode.toLowerCase().contains("beta") || 
-                                           indexId != null && indexId.toLowerCase().contains("beta"))) {
+                                } else if (sampleName.contains("beta") && (indexId != null && indexId.toLowerCase().contains("bcj"))) {
                                     // Get the DNA library sample associated with this beta TCRSeq index
                                     List<DataRecord> parents = tcrIndex.getParentsOfType("Sample", user);
                                     if (!parents.isEmpty()) {
