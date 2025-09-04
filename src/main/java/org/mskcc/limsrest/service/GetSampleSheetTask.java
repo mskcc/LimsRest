@@ -28,6 +28,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import org.mskcc.limsrest.util.illuminaseq.BarcodeMismatch;
+import org.mskcc.limsrest.util.illuminaseq.NovaSeqXSamplesheetGenerator;
 import org.mskcc.limsrest.util.illuminaseq.SampleData;
 import org.mskcc.limsrest.util.illuminaseq.SampleSheetParser;
 import javax.xml.parsers.DocumentBuilder;
@@ -46,7 +47,7 @@ import java.rmi.RemoteException;
 import java.text.ParseException;
 import java.lang.ProcessBuilder;
 import java.lang.Process;
-import org.mskcc.limsrest.util.NovaSeqXSamplesheetGenerator;
+
 import org.mskcc.limsrest.util.illuminaseq.Barcode;
 
 public class GetSampleSheetTask {
