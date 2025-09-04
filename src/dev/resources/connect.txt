@@ -1,4 +1,4 @@
-lims.host=igo-lims03.mskcc.org
+lims.host=igo-lims04.mskcc.org
 lims.port=1099
 lims.guid=fe74d8e1-c94b-4002-a04c-eb5c492704ba
 
