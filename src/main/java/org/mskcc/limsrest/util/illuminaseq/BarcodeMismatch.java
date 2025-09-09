@@ -5,6 +5,7 @@ import java.util.*;
 public class BarcodeMismatch {
     public static Integer[] determineBarcodeMismatches(List<Set<Barcode>> barcodes, boolean isDualBarcode) {
         List<Integer[]> mismatchesToTry = new ArrayList<Integer[]>();
+        
         if (isDualBarcode) {
             Integer[] one = {1, 1};
             Integer[] two = {1, 0};
@@ -20,6 +21,7 @@ public class BarcodeMismatch {
             mismatchesToTry.add(one);
             mismatchesToTry.add(four);
         }
+        
 
         for (Integer[] mismatch : mismatchesToTry) { // try the mismatch list from least stringent to 0 mismatches
             System.out.println("Trying:" + Arrays.toString(mismatch));

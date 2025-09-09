@@ -91,11 +91,6 @@ dependencies {
     implementation group: 'commons-logging', name: 'commons-logging', version: '1.2'
     implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.13'
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'
-    
-    // Log4j2 dependencies for Velox plugin compatibility
-    implementation 'org.apache.logging.log4j:log4j-core:2.17.2'
-    implementation 'org.apache.logging.log4j:log4j-api:2.17.2'
-    // Removed log4j-slf4j-impl to avoid conflict with Spring Boot's SLF4J setup
 
     implementation 'junit:junit:4.13.1'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'

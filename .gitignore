@@ -18,6 +18,14 @@ bin/
 
 build/*
 
+target/
+
+/.vscode/
+.vscode/*
+
+bin
+bin/*
+
 logs/
 
 out/*
