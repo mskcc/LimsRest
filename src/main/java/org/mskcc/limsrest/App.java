@@ -46,7 +46,6 @@ public class App extends SpringBootServletInitializer {
     @Value("#{'${human.recipes}'.split(',')}")
     List<String> humanRecipes;
 
-    @Autowired
     private Gateway messagingGateway;
 
     @Value("${nats.url}")
@@ -64,7 +63,6 @@ public class App extends SpringBootServletInitializer {
         return factory;
     }
 
-    @Bean
     public Gateway messagingGateway() throws Exception {
         messagingGateway.connect(natsUrl);
         log.info("Attempting to connecto to CMO MetaDB NATS server...");
