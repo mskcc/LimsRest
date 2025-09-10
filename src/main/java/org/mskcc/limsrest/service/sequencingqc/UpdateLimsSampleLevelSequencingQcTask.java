@@ -128,20 +128,70 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                         // should return two items, one for alpha and one for beta
                         List<DataRecord> tcrSeqIndices = baseSample.getDescendantsOfType("IgoTcrSeqIndexBarcode", user);
                         log.info("Found descendants of base sample " + tcrSeqIndices.size());
-                        List<DataRecord> dnaLibSamples = new LinkedList<>();
-                        for (int startIndex = 0; startIndex < tcrSeqIndices.size(); startIndex++) {
-                            DataRecord dnaLibrarySample = tcrSeqIndices.get(startIndex).getParentsOfType("Sample", user)
-                                    .get(0).getChildrenOfType("Sample", user)[0];
-                            if (dnaLibrarySample.getStringVal("ExemplarSampleStatus", user).equals("Completed - Pooling of Sample Libraries for Sequencing")) {
-                                dnaLibSamples.add(dnaLibrarySample);
+                        
+                        // Find the correct alpha/beta sample by matching the TCRSeq index barcode
+                        DataRecord correctLibrarySample = null;
+                        for (DataRecord tcrIndex : tcrSeqIndices) {
+                            try {
+                                // Get the index ID information from the TCRSeq record
+                                String indexId = tcrIndex.getStringVal("IndexId", user);
+                                
+                                // Check if this TCRSeq index matches the sampleName from QC data
+                                if (sampleName.contains("alpha") && (indexId != null && indexId.toLowerCase().contains("acj"))) {
+                                    // Get the DNA library sample associated with this alpha TCRSeq index
+                                    List<DataRecord> parents = tcrIndex.getParentsOfType("Sample", user);
+                                    if (!parents.isEmpty()) {
+                                        DataRecord[] children = parents.get(0).getChildrenOfType("Sample", user);
+                                        for (DataRecord child : children) {
+                                            if (child.getStringVal("ExemplarSampleStatus", user).equals("Completed - Pooling of Sample Libraries for Sequencing")) {
+                                                correctLibrarySample = child;
+                                                log.info("Found alpha library sample: " + child.getStringVal("SampleId", user));
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    break;
+                                } else if (sampleName.contains("beta") && (indexId != null && indexId.toLowerCase().contains("bcj"))) {
+                                    // Get the DNA library sample associated with this beta TCRSeq index
+                                    List<DataRecord> parents = tcrIndex.getParentsOfType("Sample", user);
+                                    if (!parents.isEmpty()) {
+                                        DataRecord[] children = parents.get(0).getChildrenOfType("Sample", user);
+                                        for (DataRecord child : children) {
+                                            if (child.getStringVal("ExemplarSampleStatus", user).equals("Completed - Pooling of Sample Libraries for Sequencing")) {
+                                                correctLibrarySample = child;
+                                                log.info("Found beta library sample: " + child.getStringVal("SampleId", user));
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    break;
+                                }
+                            } catch (Exception e) {
+                                log.error("Error processing TCRSeq index: " + e.getMessage());
                             }
                         }
+                        
+                        // If we found the correct library sample, use it; otherwise fall back to original logic
+                        if (correctLibrarySample != null) {
+                            librarySample = correctLibrarySample;
+                        } else {
+                            log.warn("Could not find matching alpha/beta sample for TCRSeq, falling back to original logic");
+                            // Fallback to original logic as backup
+                            List<DataRecord> dnaLibSamples = new LinkedList<>();
+                            for (int startIndex = 0; startIndex < tcrSeqIndices.size(); startIndex++) {
+                                DataRecord dnaLibrarySample = tcrSeqIndices.get(startIndex).getParentsOfType("Sample", user)
+                                        .get(0).getChildrenOfType("Sample", user)[0];
+                                if (dnaLibrarySample.getStringVal("ExemplarSampleStatus", user).equals("Completed - Pooling of Sample Libraries for Sequencing")) {
+                                    dnaLibSamples.add(dnaLibrarySample);
+                                }
+                            }
 
-                        for (DataRecord sample: dnaLibSamples) {
-                            if (sampleName.contains("alpha") && sample.getStringVal("Recipe", user).toLowerCase().contains("alpha")) {
-                                librarySample = sample;
-                            } else if (sampleName.contains("beta") && sample.getStringVal("Recipe", user).toLowerCase().contains("beta")) {
-                                librarySample = sample;
+                            for (DataRecord sample: dnaLibSamples) {
+                                if (sampleName.contains("alpha") && sample.getStringVal("Recipe", user).toLowerCase().contains("alpha")) {
+                                    librarySample = sample;
+                                } else if (sampleName.contains("beta") && sample.getStringVal("Recipe", user).toLowerCase().contains("beta")) {
+                                    librarySample = sample;
+                                }
                             }
                         }
                     }
