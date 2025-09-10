@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  * A queued task that takes multiple banked sample requests and processes them in a single batch operation
  * This is more efficient than processing samples individually
  *
- * @author Generated
+ * @author Rajiev Timal
  */
 public class SetOrCreateBankedBatch extends LimsTask {
     private List<SetBankedSamples.BankedSampleRequest> sampleRequests;

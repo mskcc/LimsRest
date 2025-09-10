@@ -30,7 +30,7 @@ import java.util.Map;
  * Example usage:
  * GET /getSampleSheet?runId=RUNID_123&flowCellId=FLOWCELL_456
  * 
- * @author Generated from CreateSampleSheetSubmit plugin
+ * @author Rajiev Timal
  */
 @RestController
 @RequestMapping("/")
