@@ -157,7 +157,7 @@ public class GetSampleSheetTask {
 
             // get the flow cell lanes
             // XXX get samples differently, depending on the invocation of this plugin
-            assignedLanes = getLanesFromExperiment(experiment);
+            assignedLanes = getLanesFromExperiment(experiment).subList(4,5);
             // get the experiments samples
             List<DataRecord> samples_RecList = new ArrayList<DataRecord>();
             //TODO: Remove this once testing is
@@ -545,20 +545,20 @@ public class GetSampleSheetTask {
                                 sampleInfo.put("REQUEST_ID", (String) requestFields.get("RequestId"));
                             }
                         }
-    
-                        if (sampleFields != null && sampleFields.containsKey("OtherSampleId")) {
-                            String otherSampleID = (String) sampleFields.get("OtherSampleId");
-                                                                     // append _alpha or _beta to the sampleID for the sample sheet
-                            if ("TCR_IGO-alpha".equals(recipe)) {
-                                otherSampleID += "_alpha";
-                            }
-                            if ("TCR_IGO-beta".equals(recipe))
-                                otherSampleID += "_beta";
-
-                            sampleInfo.put("OTHER_ID", otherSampleID);
-                        }
-                        
                     }
+                        
+                    if (sampleFields != null && sampleFields.containsKey("OtherSampleId")) {
+                        String otherSampleID = (String) sampleFields.get("OtherSampleId");
+                                                                 // append _alpha or _beta to the sampleID for the sample sheet
+                        if ("TCR_IGO-alpha".equals(recipe)) {
+                            otherSampleID += "_alpha";
+                        }
+                        if ("TCR_IGO-beta".equals(recipe))
+                            otherSampleID += "_beta";
+
+                        sampleInfo.put("OTHER_ID", otherSampleID);
+                    }
+                    
 
                     allAdditional.add(sampleInfo);
 
