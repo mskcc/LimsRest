@@ -157,7 +157,7 @@ public class GetSampleSheetTask {
 
             // get the flow cell lanes
             // XXX get samples differently, depending on the invocation of this plugin
-            assignedLanes = getLanesFromExperiment(experiment).subList(4,5);
+            assignedLanes = getLanesFromExperiment(experiment);
             // get the experiments samples
             List<DataRecord> samples_RecList = new ArrayList<DataRecord>();
             //TODO: Remove this once testing is
