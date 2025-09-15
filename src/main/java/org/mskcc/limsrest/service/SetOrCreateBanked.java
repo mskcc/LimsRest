@@ -248,9 +248,7 @@ public class SetOrCreateBanked extends LimsTask {
             if (!"NULL".equals(tissueType)) {
                 bankedFields.put("TissueSite", tissueType);
             }
-            if (!"NULL".equals(micronicTubeBarcode)) {
-                bankedFields.put("MicronicTubeBarcode", micronicTubeBarcode);
-            }
+          
             if (!"NULL".equals(barcodeId)) {
                 bankedFields.put("BarcodeId", barcodeId);
             }
@@ -268,6 +266,7 @@ public class SetOrCreateBanked extends LimsTask {
             }
             if (!"NULL".equals(tubeId)) {
                 bankedFields.put("TubeBarcode", tubeId);
+                bankedFields.put("MicronicTubeBarcode", tubeId);
             }
             if (!"NULL".equals(patientId)) {
                 bankedFields.put("PatientId", patientId);
