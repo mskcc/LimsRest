@@ -83,6 +83,9 @@ public class UpdateLimsSampleLevelSequencingQcTask {
             List<DataRecord> relatedLibrarySamples = getRelatedLibrarySamples(runId);
             log.info(String.format("Total Related Library Samples for run %s: %d", runId, relatedLibrarySamples.size()));
             //loop through stats data and add/update lims SeqAnalysisSampleQc records
+            List<DataRecord> recordsToUpdate = new ArrayList<>();
+            List<Map<String, Object>> fieldUpdates = new ArrayList<>();
+            
             for (String key : data.keySet()) {
                 qcDataVals = getQcValues(data.getJSONObject(key));
                 String sampleName = String.valueOf(qcDataVals.get("OtherSampleId"));
@@ -227,15 +230,12 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                     qcDataVals.remove("SeqQCStatus");
                     qcDataVals.put(SampleModel.SAMPLE_ID, igoId);
                     // TODO - else has same logic. Remove duplication and move after else?
-                    try {
-                        existingQc.setFields(qcDataVals, user);
-                        stats.putIfAbsent(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), "");
-                        stats.put(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), qcDataVals.toString());
-                    } catch (Exception e) {
-                        String error = String.format("Failed to modify %s DataRecord: %s. ERROR: %s%s", SampleModel.OTHER_SAMPLE_ID, igoId,
-                                ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
-                        log.error(error);
-                    }
+                    
+                    // Collect for bulk update instead of individual update
+                    recordsToUpdate.add(existingQc);
+                    fieldUpdates.add(new HashMap<>(qcDataVals));
+                    stats.putIfAbsent(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), "");
+                    stats.put(qcDataVals.get(SampleModel.SAMPLE_ID).toString(), qcDataVals.toString());
                 } else { //if there is no existing SeqAnalysisSampleQc record, create a new one on Library Sample
                     qcDataVals.put(SampleModel.SAMPLE_ID, igoId);
                     log.info(String.format("Adding new %s child record to %s with SampleId %s, values are : %s",
@@ -254,6 +254,22 @@ public class UpdateLimsSampleLevelSequencingQcTask {
                                 ExceptionUtils.getMessage(e), ExceptionUtils.getStackTrace(e));
                         log.error(error);
                     }
+                }
+            }
+            
+            // Perform bulk update for all existing QC records
+            if (!recordsToUpdate.isEmpty()) {
+                try {
+                    log.info(String.format("Performing bulk update for %d existing QC records", recordsToUpdate.size()));
+                    for (int i = 0; i < recordsToUpdate.size(); i++) {
+                        DataRecord record = recordsToUpdate.get(i);
+                        Map<String, Object> fields = fieldUpdates.get(i);
+                        record.setFields(fields, user);
+                    }
+                    log.info("Bulk update completed successfully");
+                } catch (Exception e) {
+                    log.error("Error during bulk update: " + e.getMessage());
+                    e.printStackTrace();
                 }
             }
         } else {
