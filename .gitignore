@@ -34,7 +34,6 @@ out/*
 
 src/test-site-res/
 src/webapp/
-src/production/resources/
 src/main/resources/
 src/dev/resources/
 src/local/resources/
