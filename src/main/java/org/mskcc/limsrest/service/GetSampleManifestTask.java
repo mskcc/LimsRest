@@ -229,11 +229,7 @@ public class GetSampleManifestTask {
 
                 //Poppulate library volume if it's missing
                 if(library.libraryVolume == null){
-                    //use origSampleName  to find a record in DNALibraryPrepProtocol3
-                    DataRecord[] libPrepProtocols = dataRecordManager.queryDataRecords("DNALibraryPrepProtocol3", "OtherSampleID = '" + origSampleName + "'", user).toArray(new DataRecord[0]);
-                    if (libPrepProtocols.length > 0) {
-                        library.libraryVolume = libPrepProtocols[0].getDoubleVal("ElutionVol", user);
-                    }
+                    library.libraryVolume = aliquot.getDoubleVal("Volume", user);
                 }
 
             } else {
@@ -552,6 +548,7 @@ public class GetSampleManifestTask {
         log.info("setSampleLevelFields for :" + igoId);
         try {
             s.setIgoId(igoId);
+            s.setDIN(cmoInfo.getStringVal("DIN", user));
             s.setAltid(cmoInfo.getStringVal("AltId", user));
             s.setCmoInfoIgoId(cmoInfoIgoId);
             s.setCmoPatientId(cmoInfo.getStringVal("CmoPatientId", user));
