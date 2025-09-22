@@ -226,6 +226,16 @@ public class GetSampleManifestTask {
                 // Fallback to aliquot if parent is null
                 DataRecord librarySource = (aliquotParent != null) ? aliquotParent : aliquot;
                 library = getLibraryFields(user, libraryIgoId, librarySource, dnaInputNg);
+
+                //Poppulate library volume if it's missing
+                if(library.libraryVolume == null){
+                    //use otherSampleName to find a record in DNALibraryPrepProtocol3
+                    DataRecord[] libPrepProtocols = dataRecordManager.queryDataRecords("DNALibraryPrepProtocol3", "OtherSampleID = '" + origSampleName + "'", user).toArray(new DataRecord[0]);
+                    if (libPrepProtocols.length > 0) {
+                        library.libraryVolume = libPrepProtocols[0].getDoubleVal("ElutionVol", user);
+                    }
+                }
+
             } else {
                 library = getLibraryFields(user, libraryIgoId, aliquot, dnaInputNg);
             }
@@ -525,6 +535,7 @@ public class GetSampleManifestTask {
 
     private SampleManifest.Library getLibraryFields(User user, String libraryIgoId, DataRecord aliquot, Double dnaInputNg) throws IoError, RemoteException, NotFound, UnrecoverableServerException {
         DataRecord[] libPrepProtocols = aliquot.getChildrenOfType("DNALibraryPrepProtocol3", user);
+        
         Double libraryVolume = null;
         if (libPrepProtocols != null && libPrepProtocols.length == 1)
             libraryVolume = libPrepProtocols[0].getDoubleVal("ElutionVol", user);
