@@ -8,6 +8,8 @@ import org.mskcc.domain.sample.TumorNormalType;
 import org.mskcc.limsrest.util.Messages;
 import org.springframework.security.access.prepost.PreAuthorize;
 
+
+
 import java.util.HashMap;
 import java.util.List;
 
@@ -268,6 +270,9 @@ public class SetOrCreateBanked extends LimsTask {
             }
             if (!"NULL".equals(tubeId)) {
                 bankedFields.put("TubeBarcode", tubeId);
+                  if ("Curls/Punches".equals(sampleType)) {
+              bankedFields.put("MicronicTubeBarcode", tubeId);
+    }
             }
             if (!"NULL".equals(patientId)) {
                 bankedFields.put("PatientId", patientId);
