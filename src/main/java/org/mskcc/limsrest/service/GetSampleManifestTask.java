@@ -461,8 +461,11 @@ public class GetSampleManifestTask {
                 DataRecord qcRecord = qcRecords.get(0);
                 String igoQcRecommendation = qcRecord.getStringVal("IgoQcRecommendation", user);
                 String comments = qcRecord.getStringVal("Comments", user);
+                String DIN = qcRecord.getStringVal("DIN", user);
                 String id = qcRecord.getStringVal("InvestigatorDecision", user);
-                SampleManifest.QcReport r = new SampleManifest.QcReport(SampleManifest.QcReportType.DNA, igoQcRecommendation, comments, id);
+                SampleManifest.QcReport r = new SampleManifest.QcReport(SampleManifest.QcReportType.DNA, igoQcRecommendation, comments, id, DIN);
+                
+
                 sampleManifest.addQcReport(r);
             }
 
@@ -477,7 +480,7 @@ public class GetSampleManifestTask {
                 String igoQcRecommendation = qcRecord.getStringVal("IgoQcRecommendation", user);
                 String comments = qcRecord.getStringVal("Comments", user);
                 String id = qcRecord.getStringVal("InvestigatorDecision", user);
-                SampleManifest.QcReport r = new SampleManifest.QcReport(SampleManifest.QcReportType.LIBRARY, igoQcRecommendation, comments, id);
+                SampleManifest.QcReport r = new SampleManifest.QcReport(SampleManifest.QcReportType.LIBRARY, igoQcRecommendation, comments, id, null);
                 sampleManifest.addQcReport(r);
             }
         } catch (RemoteException | NotFound | IoError | UnrecoverableServerException e) {
@@ -548,7 +551,6 @@ public class GetSampleManifestTask {
         log.info("setSampleLevelFields for :" + igoId);
         try {
             s.setIgoId(igoId);
-            s.setDIN(cmoInfo.getStringVal("DIN", user));
             s.setAltid(cmoInfo.getStringVal("AltId", user));
             s.setCmoInfoIgoId(cmoInfoIgoId);
             s.setCmoPatientId(cmoInfo.getStringVal("CmoPatientId", user));
