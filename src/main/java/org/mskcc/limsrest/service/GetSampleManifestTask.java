@@ -226,6 +226,12 @@ public class GetSampleManifestTask {
                 // Fallback to aliquot if parent is null
                 DataRecord librarySource = (aliquotParent != null) ? aliquotParent : aliquot;
                 library = getLibraryFields(user, libraryIgoId, librarySource, dnaInputNg);
+
+                //Poppulate library volume if it's missing
+                if(library.libraryVolume == null){
+                    library.libraryVolume = aliquot.getDoubleVal("Volume", user);
+                }
+
             } else {
                 library = getLibraryFields(user, libraryIgoId, aliquot, dnaInputNg);
             }
@@ -455,8 +461,11 @@ public class GetSampleManifestTask {
                 DataRecord qcRecord = qcRecords.get(0);
                 String igoQcRecommendation = qcRecord.getStringVal("IgoQcRecommendation", user);
                 String comments = qcRecord.getStringVal("Comments", user);
+                String DIN = qcRecord.getStringVal("DIN", user);
                 String id = qcRecord.getStringVal("InvestigatorDecision", user);
-                SampleManifest.QcReport r = new SampleManifest.QcReport(SampleManifest.QcReportType.DNA, igoQcRecommendation, comments, id);
+                SampleManifest.QcReport r = new SampleManifest.QcReport(SampleManifest.QcReportType.DNA, igoQcRecommendation, comments, id, DIN);
+                
+
                 sampleManifest.addQcReport(r);
             }
 
@@ -471,7 +480,7 @@ public class GetSampleManifestTask {
                 String igoQcRecommendation = qcRecord.getStringVal("IgoQcRecommendation", user);
                 String comments = qcRecord.getStringVal("Comments", user);
                 String id = qcRecord.getStringVal("InvestigatorDecision", user);
-                SampleManifest.QcReport r = new SampleManifest.QcReport(SampleManifest.QcReportType.LIBRARY, igoQcRecommendation, comments, id);
+                SampleManifest.QcReport r = new SampleManifest.QcReport(SampleManifest.QcReportType.LIBRARY, igoQcRecommendation, comments, id, null);
                 sampleManifest.addQcReport(r);
             }
         } catch (RemoteException | NotFound | IoError | UnrecoverableServerException e) {
@@ -525,6 +534,7 @@ public class GetSampleManifestTask {
 
     private SampleManifest.Library getLibraryFields(User user, String libraryIgoId, DataRecord aliquot, Double dnaInputNg) throws IoError, RemoteException, NotFound, UnrecoverableServerException {
         DataRecord[] libPrepProtocols = aliquot.getChildrenOfType("DNALibraryPrepProtocol3", user);
+        
         Double libraryVolume = null;
         if (libPrepProtocols != null && libPrepProtocols.length == 1)
             libraryVolume = libPrepProtocols[0].getDoubleVal("ElutionVol", user);

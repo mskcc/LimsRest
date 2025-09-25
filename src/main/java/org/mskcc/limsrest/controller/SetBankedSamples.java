@@ -33,6 +33,7 @@ public class SetBankedSamples {
         @JsonProperty("userId")
         private String userId;
         
+        
         @JsonProperty("user")
         private String user;
         
@@ -64,7 +65,7 @@ public class SetBankedSamples {
         private String numTubes;
         
         @JsonProperty("assay")
-        private String[] assay;
+        private String assay;
         
         @JsonProperty("clinicalInfo")
         private String clinicalInfo;
@@ -138,7 +139,7 @@ public class SetBankedSamples {
         @JsonProperty("cellCount")
         private String cellCount;
         
-        @JsonProperty("naToExtract")
+        @JsonProperty("nucleicAcidTypeToExtract")
         private String naToExtract;
         
         @JsonProperty("serviceId")
@@ -208,9 +209,14 @@ public class SetBankedSamples {
         public String getNumTubes() { return numTubes != null ? numTubes : "NULL"; }
         public void setNumTubes(String numTubes) { this.numTubes = numTubes; }
         
-        public String[] getAssay() { return assay; }
-        public void setAssay(String[] assay) { this.assay = assay; }
+        public String getAssay() { 
+            return assay != null ? assay : "NULL";
+        }
         
+        public void setAssay(String assay) { 
+            this.assay = assay != null ? assay.replace(";", ",") : "NULL";
+        }
+
         public String getClinicalInfo() { return clinicalInfo != null ? clinicalInfo : "NULL"; }
         public void setClinicalInfo(String clinicalInfo) { this.clinicalInfo = clinicalInfo; }
         
@@ -283,7 +289,9 @@ public class SetBankedSamples {
         public String getCellCount() { return cellCount != null ? cellCount : "NULL"; }
         public void setCellCount(String cellCount) { this.cellCount = cellCount; }
         
-        public String getNaToExtract() { return naToExtract != null ? naToExtract : "NULL"; }
+        public String getNaToExtract() { 
+            return naToExtract != null ? naToExtract : "NULL";
+         }
         public void setNaToExtract(String naToExtract) { this.naToExtract = naToExtract; }
         
         public String getServiceId() { return serviceId; }
@@ -402,7 +410,7 @@ public class SetBankedSamples {
             if (valid) {
                 // Set default values for assay if null
                 if (sampleRequest.getAssay() == null) {
-                    sampleRequest.setAssay(new String[] { "NULL" });
+                    sampleRequest.setAssay("NULL");
                 }
                 // Set species default
                 if (sampleRequest.getSpecies() == null || "NULL".equals(sampleRequest.getSpecies())) {

@@ -187,19 +187,20 @@ public class SetOrCreateBankedBatch extends LimsTask {
             species = "Human";
         }
 
-        // Process assay array more efficiently
-        String[] assay = sampleRequest.getAssay();
-        if (assay != null && assay.length > 0 && !"".equals(assay[0])) {
-            // Use StringBuilder instead of StringBuffer for better performance
-            StringBuilder sb = new StringBuilder(assay.length * 20); // Pre-allocate reasonable size
-            for (int i = 0; i < assay.length; i++) {
-                if (i > 0) sb.append(",");
-                sb.append("'").append(assay[i]).append("'");
-            }
-            bankedFields.put("Assay", sb.toString());
-        }
+        // // Process assay array more efficiently
+        // String[] assay = sampleRequest.getAssay();
+        // if (assay != null && assay.length > 0 && !"".equals(assay[0])) {
+        //     // Use StringBuilder instead of StringBuffer for better performance
+        //     StringBuilder sb = new StringBuilder(assay.length * 20); // Pre-allocate reasonable size
+        //     for (int i = 0; i < assay.length; i++) {
+        //         if (i > 0) sb.append(",");
+        //         sb.append("'").append(assay[i]).append("'");
+        //     }
+        //     bankedFields.put("Assay", sb.toString());
+        // }
 
-        // Set all the fields efficiently
+        setFieldIfNotNull(bankedFields, "SequencingReadLength", sampleRequest.getSequencingReadLength(), "NULL");
+        setFieldIfNotNull(bankedFields, "Assay", sampleRequest.getAssay(), "NULL");
         setFieldIfNotNull(bankedFields, "OtherSampleId", sampleId, "NULL");
         setFieldIfNotNull(bankedFields, "UserSampleID", sampleId, "NULL");
         setFieldIfNotNull(bankedFields, "Investigator", sampleRequest.getInvestigator(), "NULL", setInvestigator);

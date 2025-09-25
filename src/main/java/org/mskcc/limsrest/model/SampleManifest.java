@@ -63,17 +63,20 @@ public class SampleManifest implements Serializable {
     public static class QcReport {
         public QcReport() {}
 
-        public QcReport(QcReportType qcReportType, String IGORecommendation, String comments, String investigatorDecision) {
+        public QcReport(QcReportType qcReportType, 
+        String IGORecommendation, String comments, String investigatorDecision, String DIN) {
             this.qcReportType = qcReportType;
             this.IGORecommendation = IGORecommendation;
             this.comments = comments;
             this.investigatorDecision = investigatorDecision;
+            this.din = DIN;
         }
 
         public QcReportType qcReportType;
         public String IGORecommendation;
         public String comments;
         public String investigatorDecision;
+        public String din;
     }
     @NoArgsConstructor @ToString
     @Getter @Setter
