@@ -357,6 +357,15 @@ Other	                                Normal, Other, blank or null	Normal
 Other	                                Tumor	                        Tumor
      */
     public String setTumorOrNormal(String sampleClass, String tumorType, String sampleId) throws IllegalArgumentException {
+            if (sampleClass == null || sampleClass.trim().isEmpty()) {
+        if (tumorType == null || tumorType.trim().isEmpty()) {
+            return "";
+        } else if ("Normal".equalsIgnoreCase(tumorType)) {
+            return TumorNormalType.NORMAL.getValue();
+        } else {
+            return TumorNormalType.TUMOR.getValue();
+        }
+    }
         switch (sampleClass) {
             case "Normal":
             case "Adjacent Normal":
