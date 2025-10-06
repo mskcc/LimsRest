@@ -458,15 +458,22 @@ public class GetSampleManifestTask {
             log.info("Searching for QcReportDna report");
             List<DataRecord> qcRecords = sample.getDescendantsOfType("QcReportDna", user);
             if (qcRecords.size() > 0) {
-                DataRecord qcRecord = qcRecords.get(0);
-                String igoQcRecommendation = qcRecord.getStringVal("IgoQcRecommendation", user);
-                String comments = qcRecord.getStringVal("Comments", user);
-                String DIN = qcRecord.getStringVal("DIN", user);
-                String id = qcRecord.getStringVal("InvestigatorDecision", user);
-                SampleManifest.QcReport r = new SampleManifest.QcReport(SampleManifest.QcReportType.DNA, igoQcRecommendation, comments, id, DIN);
-                
-
-                sampleManifest.addQcReport(r);
+                try {
+                    DataRecord qcRecord = qcRecords.get(0);
+                    String igoQcRecommendation = qcRecord.getStringVal("IgoQcRecommendation", user);
+                    String comments = qcRecord.getStringVal("Comments", user);
+                    String DIN = null;
+                    try {
+                        DIN = qcRecord.getStringVal("DIN", user);
+                    } catch (Exception dinException) {
+                        log.warn("Failed to retrieve DIN value: " + dinException.getMessage());
+                    }
+                    String id = qcRecord.getStringVal("InvestigatorDecision", user);
+                    SampleManifest.QcReport r = new SampleManifest.QcReport(SampleManifest.QcReportType.DNA, igoQcRecommendation, comments, id, DIN);
+                    sampleManifest.addQcReport(r);
+            } catch (Exception e) {
+                    log.warn("Failed to retrieve QC Record value: " + e.getMessage());
+                }
             }
 
             log.info("Searching for QcReportLibrary");
