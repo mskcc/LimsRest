@@ -295,7 +295,19 @@ public class SetOrCreateBankedBatch extends LimsTask {
      * Other	                                Normal, Other, blank or null	Normal
      * Other	                                Tumor	                        Tumor
      */
+
     private String setTumorOrNormal(String sampleClass, String tumorType, String sampleId) throws IllegalArgumentException {
+        // Handle empty or "NULL" sampleClass - check tumorType instead
+        if (sampleClass == null || sampleClass.trim().isEmpty() || "NULL".equals(sampleClass)) {
+            if (tumorType == null || tumorType.trim().isEmpty() || "NULL".equals(tumorType)) {
+                return "";
+            } else if ("Normal".equalsIgnoreCase(tumorType)) {
+                return TumorNormalType.NORMAL.getValue();
+            } else {
+                return TumorNormalType.TUMOR.getValue();
+            }
+        }
+        
         switch (sampleClass) {
             case "Normal":
             case "Adjacent Normal":
@@ -311,6 +323,7 @@ public class SetOrCreateBankedBatch extends LimsTask {
                 } else {
                     return TumorNormalType.TUMOR.getValue();
                 }
+            
             // sample class 'Other' picklist was removed from the LIMS on Feb. 5, 2024
             case "Other":
                 // Normal, Other, blank or null
