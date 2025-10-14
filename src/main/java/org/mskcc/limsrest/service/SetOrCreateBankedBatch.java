@@ -296,45 +296,40 @@ public class SetOrCreateBankedBatch extends LimsTask {
      * Other	                                Tumor	                        Tumor
      */
 
-    private String setTumorOrNormal(String sampleClass, String tumorType, String sampleId) throws IllegalArgumentException {
-        // Handle empty or "NULL" sampleClass - check tumorType instead
-        if (sampleClass == null || sampleClass.trim().isEmpty() || "NULL".equals(sampleClass)) {
-            if (tumorType == null || tumorType.trim().isEmpty() || "NULL".equals(tumorType)) {
-                return "";
-            } else if ("Normal".equalsIgnoreCase(tumorType)) {
+   private String setTumorOrNormal(String sampleClass, String tumorType, String sampleId) throws IllegalArgumentException {
+    // Handle empty or "NULL" sampleClass - check tumorType instead
+    if (sampleClass == null || sampleClass.trim().isEmpty() || "NULL".equals(sampleClass)) {
+        if (tumorType == null || tumorType.trim().isEmpty() || "NULL".equals(tumorType)) {
+            return "";
+        } else if ("Normal".equalsIgnoreCase(tumorType)) {
+            return TumorNormalType.NORMAL.getValue();
+        } else {
+            return TumorNormalType.TUMOR.getValue();
+        }
+    }
+    
+    // When sampleClass has a value, it takes priority
+    switch (sampleClass) {
+        case "Normal":
+        case "Adjacent Normal":
+            return TumorNormalType.NORMAL.getValue();
+
+        case "Unknown Tumor":
+        case "Primary":
+        case "Metastasis":
+        case "Adjacent Tissue":
+        case "Local Recurrence":
+            return TumorNormalType.TUMOR.getValue();
+        
+        case "Other":
+            if (tumorType == null || tumorType.trim().isEmpty() || "Other".equalsIgnoreCase(tumorType) || "Normal".equalsIgnoreCase(tumorType)) {
                 return TumorNormalType.NORMAL.getValue();
             } else {
                 return TumorNormalType.TUMOR.getValue();
             }
-        }
-        
-        switch (sampleClass) {
-            case "Normal":
-            case "Adjacent Normal":
-                return TumorNormalType.NORMAL.getValue();
 
-            case "Unknown Tumor":
-            case "Primary":
-            case "Metastasis":
-            case "Adjacent Tissue":
-            case "Local Recurrence":
-                if ("Normal".equalsIgnoreCase(tumorType)) {
-                    throw new IllegalArgumentException(String.format("Tumor Type (%s) Inconsistent With Sample Class (%s) for SampleID: %s.", tumorType, sampleClass, sampleId));
-                } else {
-                    return TumorNormalType.TUMOR.getValue();
-                }
-            
-            // sample class 'Other' picklist was removed from the LIMS on Feb. 5, 2024
-            case "Other":
-                // Normal, Other, blank or null
-                if (tumorType == null || tumorType.trim().isEmpty() || "Other".equalsIgnoreCase(tumorType) || "Normal".equalsIgnoreCase(tumorType)) {
-                    return TumorNormalType.NORMAL.getValue();
-                } else {
-                    return TumorNormalType.TUMOR.getValue();
-                }
-
-            default:
-                return "";
-        }
+        default:
+            return "";
     }
+}
 }
