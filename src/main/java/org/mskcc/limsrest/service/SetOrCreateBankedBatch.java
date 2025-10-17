@@ -7,7 +7,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.mskcc.domain.sample.TumorNormalType;
 import org.mskcc.limsrest.controller.SetBankedSamples;
 import org.mskcc.limsrest.util.Messages;
+
 import org.springframework.security.access.prepost.PreAuthorize;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
  * @author Rajiev Timal
  */
 public class SetOrCreateBankedBatch extends LimsTask {
+    private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(SetOrCreateBankedBatch.class);
     private List<SetBankedSamples.BankedSampleRequest> sampleRequests;
     private String igoUser;
 
@@ -177,6 +180,39 @@ public class SetOrCreateBankedBatch extends LimsTask {
                 // Ignore NPE
             }
         }
+       // Handle TubeBarcode and MicronicTubeBarcode with logging
+String tubeId = sampleRequest.getTubeId();
+String sampleType = sampleRequest.getSampleType();
+
+log.info("Processing sample: " + sampleId + " | SampleType: " + sampleType + " | TubeId: " + tubeId);
+
+if (tubeId != null && !"NULL".equals(tubeId)) {
+    bankedFields.put("TubeBarcode", tubeId);
+    log.info("Set TubeBarcode to: " + tubeId + " for sample: " + sampleId);
+    
+    // Auto-populate MicronicTubeBarcode for Curls/Punches
+    if ("Curls/Punches".equals(sampleType)) {
+        bankedFields.put("MicronicTubeBarcode", tubeId);
+        log.info("AUTO-POPULATED MicronicTubeBarcode to: " + tubeId + " for Curls/Punches sample: " + sampleId);
+    } else {
+        log.debug("Sample type is '" + sampleType + "' (not Curls/Punches), skipping MicronicTubeBarcode auto-population for sample: " + sampleId);
+    }
+} else {
+    log.warn("TubeId is null or 'NULL', skipping TubeBarcode and auto-population for sample: " + sampleId);
+}
+
+// Then handle explicit MicronicTubeBarcode only if not already set
+if (!bankedFields.containsKey("MicronicTubeBarcode")) {
+    String explicitMicronicBarcode = sampleRequest.getMicronicTubeBarcode();
+    if (explicitMicronicBarcode != null && !"NULL".equals(explicitMicronicBarcode)) {
+        bankedFields.put("MicronicTubeBarcode", explicitMicronicBarcode);
+        log.info("Set explicit MicronicTubeBarcode to: " + explicitMicronicBarcode + " for sample: " + sampleId);
+    } else {
+        log.debug("No explicit MicronicTubeBarcode provided for sample: " + sampleId);
+    }
+} else {
+    log.debug("MicronicTubeBarcode already set (auto-populated), skipping explicit value for sample: " + sampleId);
+}
 
         // Set species defaults based on recipe
         String species = sampleRequest.getSpecies();
@@ -216,13 +252,11 @@ public class SetOrCreateBankedBatch extends LimsTask {
         setFieldIfNotNull(bankedFields, "Species", species, "NULL");
         setFieldIfNotNull(bankedFields, "SpikeInGenes", sampleRequest.getSpikeInGenes(), "NULL");
         setFieldIfNotNull(bankedFields, "TissueSite", sampleRequest.getTissueType(), "NULL");
-        setFieldIfNotNull(bankedFields, "MicronicTubeBarcode", sampleRequest.getMicronicTubeBarcode(), "NULL");
         setFieldIfNotNull(bankedFields, "BarcodeId", sampleRequest.getBarcodeId(), "NULL");
         setFieldIfNotNull(bankedFields, "Recipe", sampleRequest.getRecipe(), "NULL");
         setFieldIfNotNull(bankedFields, "CapturePanel", sampleRequest.getCapturePanel(), "NULL");
         setFieldIfNotNull(bankedFields, "RunType", sampleRequest.getSequencingReadLength(), "NULL");
         setFieldIfNotNull(bankedFields, "ServiceId", sampleRequest.getServiceId(), "NULL");
-        setFieldIfNotNull(bankedFields, "TubeBarcode", sampleRequest.getTubeId(), "NULL");
         setFieldIfNotNull(bankedFields, "PatientId", sampleRequest.getPatientId(), "NULL");
         setFieldIfNotNull(bankedFields, "NormalizedPatientId", sampleRequest.getNormalizedPatientId(), "NULL");
         setFieldIfNotNull(bankedFields, "CMOPatientId", sampleRequest.getCmoPatientId(), "NULL");
