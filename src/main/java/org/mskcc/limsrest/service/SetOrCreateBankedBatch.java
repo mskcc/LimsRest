@@ -223,6 +223,19 @@ public class SetOrCreateBankedBatch extends LimsTask {
         setFieldIfNotNull(bankedFields, "RunType", sampleRequest.getSequencingReadLength(), "NULL");
         setFieldIfNotNull(bankedFields, "ServiceId", sampleRequest.getServiceId(), "NULL");
         setFieldIfNotNull(bankedFields, "TubeBarcode", sampleRequest.getTubeId(), "NULL");
+          String tubeId = sampleRequest.getTubeId();
+        String sampleType = sampleRequest.getSampleType();
+        String micronicBarcode = sampleRequest.getMicronicTubeBarcode();
+        
+        if (tubeId != null && !"NULL".equals(tubeId) && sampleType != null) {
+            if ("Curls/Punches".equals(sampleType) || 
+                "Buffy Coat".equals(sampleType) || 
+                "Plasma".equals(sampleType)) {
+                if (micronicBarcode == null || "NULL".equals(micronicBarcode) || micronicBarcode.trim().isEmpty()) {
+                    bankedFields.put("MicronicTubeBarcode", tubeId);
+                }
+            }
+        }
         setFieldIfNotNull(bankedFields, "PatientId", sampleRequest.getPatientId(), "NULL");
         setFieldIfNotNull(bankedFields, "NormalizedPatientId", sampleRequest.getNormalizedPatientId(), "NULL");
         setFieldIfNotNull(bankedFields, "CMOPatientId", sampleRequest.getCmoPatientId(), "NULL");
