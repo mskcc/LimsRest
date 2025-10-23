@@ -177,7 +177,6 @@ public class SetOrCreateBankedBatch extends LimsTask {
                 // Ignore NPE
             }
         }
-
         // Set species defaults based on recipe
         String species = sampleRequest.getSpecies();
         String recipe = sampleRequest.getRecipe();
@@ -217,12 +216,15 @@ public class SetOrCreateBankedBatch extends LimsTask {
         setFieldIfNotNull(bankedFields, "SpikeInGenes", sampleRequest.getSpikeInGenes(), "NULL");
         setFieldIfNotNull(bankedFields, "TissueSite", sampleRequest.getTissueType(), "NULL");
         setFieldIfNotNull(bankedFields, "MicronicTubeBarcode", sampleRequest.getMicronicTubeBarcode(), "NULL");
+        setFieldIfNotNull(bankedFields, "TubeBarcode", sampleRequest.getTubeId(), "NULL");
+        if (sampleRequest.getSampleType().equals("Curls/Punches")) {
+            setFieldIfNotNull(bankedFields, "MicronicTubeBarcode", sampleRequest.getTubeId(), "NULL");
+        }
         setFieldIfNotNull(bankedFields, "BarcodeId", sampleRequest.getBarcodeId(), "NULL");
         setFieldIfNotNull(bankedFields, "Recipe", sampleRequest.getRecipe(), "NULL");
         setFieldIfNotNull(bankedFields, "CapturePanel", sampleRequest.getCapturePanel(), "NULL");
         setFieldIfNotNull(bankedFields, "RunType", sampleRequest.getSequencingReadLength(), "NULL");
         setFieldIfNotNull(bankedFields, "ServiceId", sampleRequest.getServiceId(), "NULL");
-        setFieldIfNotNull(bankedFields, "TubeBarcode", sampleRequest.getTubeId(), "NULL");
         setFieldIfNotNull(bankedFields, "PatientId", sampleRequest.getPatientId(), "NULL");
         setFieldIfNotNull(bankedFields, "NormalizedPatientId", sampleRequest.getNormalizedPatientId(), "NULL");
         setFieldIfNotNull(bankedFields, "CMOPatientId", sampleRequest.getCmoPatientId(), "NULL");
