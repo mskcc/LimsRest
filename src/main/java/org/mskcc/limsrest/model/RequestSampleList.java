@@ -13,6 +13,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 public class RequestSampleList implements Serializable {
+    private String ilabRequestId;
     private String requestId;
     private String requestName;
     private String recipe;
@@ -44,6 +45,11 @@ public class RequestSampleList implements Serializable {
     public RequestSampleList(String requestId, List<RequestSample> samples) {
         this.requestId = requestId;
         this.samples = samples;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getIlabRequestId() {
+        return ilabRequestId;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
