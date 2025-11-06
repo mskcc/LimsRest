@@ -16,6 +16,12 @@ public class RequestSample implements Serializable {
     private String investigatorSampleId;
     private String igoSampleId;
     private boolean igoComplete;
+    private String sampleStatus;
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getSampleStatus() {
+        return sampleStatus;
+    }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getInvestigatorSampleId() {
