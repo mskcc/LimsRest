@@ -277,15 +277,16 @@ public class UpdateFromILabsTask {
                         requestFields.put("MailTo", Filter.toAscii(field2val.get("PIEMAIL")) + "," + Filter.toAscii(field2val.get("INVESTEMAIL")));
                     }
                 }
+                System.out.println("ILab project name is: " + requestFields.get("ProjectName").toString());
                 if (requestFields.get("ProjectName").toString().toLowerCase().contains("hybridcapture")) {
-                    String currentQCEmails = requestFields.get("QcAccessEmails").toString();
+                    String currentQCEmails = field2val.get("QC_ACCESS_EMAILS").toString();
                     if (!currentQCEmails.toLowerCase().contains("skicmopm")) {
                         currentQCEmails += "skicmopm@mskcc.org";
                         requestFields.put("QcAccessEmails", currentQCEmails);
                     }
                 }
                 if (requestFields.get("ProjectName").toString().toLowerCase().contains("tcr")) {
-                    String currentQCEmails = requestFields.get("QcAccessEmails").toString();
+                    String currentQCEmails = field2val.get("QC_ACCESS_EMAILS").toString();
                     if (!currentQCEmails.toLowerCase().contains("elhanaty")) {
                         currentQCEmails += "elhanaty@mskcc.org";
                         requestFields.put("QcAccessEmails", currentQCEmails);
@@ -308,7 +309,7 @@ public class UpdateFromILabsTask {
                     if (analysisType.toUpperCase().contains("CCS")) {
                         limsAnalysisTypes.add("CCS");
                         if (requestFields.get("ProjectName").toString().toLowerCase().contains("wholeexome")) {
-                            String currentQCEmails = requestFields.get("QcAccessEmails").toString();
+                            String currentQCEmails = field2val.get("QC_ACCESS_EMAILS").toString();
                             if (!currentQCEmails.toLowerCase().contains("skicmopm")) {
                                 currentQCEmails += "skicmopm@mskcc.org";
                                 requestFields.put("QcAccessEmails", currentQCEmails);
