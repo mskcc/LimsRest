@@ -284,6 +284,18 @@ public class UpdateFromILabsTask {
                         requestFields.put("QcAccessEmails", currentQCEmails);
                     }
                 }
+                if (requestFields.get("ProjectName").toString().toLowerCase().contains("tcr")) {
+                    String currentQCEmails = requestFields.get("QcAccessEmails").toString();
+                    if (!currentQCEmails.toLowerCase().contains("elhanaty")) {
+                        currentQCEmails += "elhanaty@mskcc.org";
+                        requestFields.put("QcAccessEmails", currentQCEmails);
+                    }
+                    else if (!currentQCEmails.toLowerCase().contains("mckerrw")) {
+                        currentQCEmails += "mckerrw@mskcc.org";
+                        requestFields.put("QcAccessEmails", currentQCEmails);
+                    }
+                }
+
 //                IF new field analysis type present, set old fields according to that
                 if (!field2val.get("ANALYSIS_TYPE").equals("FIELD NOT IN ILABS")) {
                     requestFields.put("FASTQ", Boolean.TRUE);
