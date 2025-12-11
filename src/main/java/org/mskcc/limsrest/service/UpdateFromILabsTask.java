@@ -282,18 +282,33 @@ public class UpdateFromILabsTask {
                 if (requestName.toLowerCase().contains("hybridcapture")) {
                     String currentQCEmails = field2val.get("QC_ACCESS_EMAILS").toString();
                     if (!currentQCEmails.toLowerCase().contains("skicmopm")) {
-                        currentQCEmails += ",skicmopm@mskcc.org";
+                        if (!currentQCEmails.isEmpty()) {
+                            currentQCEmails += ",skicmopm@mskcc.org";
+                        }
+                        else {
+                            currentQCEmails += "skicmopm@mskcc.org";
+                        }
                         requestFields.put("QcAccessEmails", currentQCEmails);
                     }
                 }
                 if (requestName.toLowerCase().contains("tcr")) {
                     String currentQCEmails = field2val.get("QC_ACCESS_EMAILS").toString();
                     if (!currentQCEmails.toLowerCase().contains("elhanaty")) {
-                        currentQCEmails += ",elhanaty@mskcc.org";
+                        if (!currentQCEmails.isEmpty()) {
+                            currentQCEmails += ",elhanaty@mskcc.org";
+                        }
+                        else {
+                            currentQCEmails += "elhanaty@mskcc.org";
+                        }
                         requestFields.put("QcAccessEmails", currentQCEmails);
                     }
                     if (!currentQCEmails.toLowerCase().contains("mckerrw")) {
-                        currentQCEmails += ",mckerrw@mskcc.org";
+                        if (!currentQCEmails.isEmpty()) {
+                            currentQCEmails += ",mckerrw@mskcc.org";
+                        }
+                        else {
+                            currentQCEmails += "mckerrw@mskcc.org";
+                        }
                         requestFields.put("QcAccessEmails", currentQCEmails);
                     }
                 }
@@ -312,7 +327,12 @@ public class UpdateFromILabsTask {
                         if (requestName.toLowerCase().contains("wholeexome")) {
                             String currentQCEmails = field2val.get("QC_ACCESS_EMAILS").toString();
                             if (!currentQCEmails.toLowerCase().contains("skicmopm")) {
-                                currentQCEmails += ",skicmopm@mskcc.org";
+                                if (!currentQCEmails.isEmpty()) {
+                                    currentQCEmails += ",skicmopm@mskcc.org";
+                                }
+                                else {
+                                    currentQCEmails += "skicmopm@mskcc.org";
+                                }
                                 requestFields.put("QcAccessEmails", currentQCEmails);
                             }
                         }
@@ -331,10 +351,15 @@ public class UpdateFromILabsTask {
                         limsAnalysisTypes.add("NEOAG");
                         String dataAccessEmails = requestFields.get("DataAccessEmails").toString();
                         if (!dataAccessEmails.toLowerCase().contains("lihmj")) {
-                            dataAccessEmails += ",lihmj@mskcc.org";
+                            if (!dataAccessEmails.isEmpty()) {
+                                dataAccessEmails += ",lihmj@mskcc.org";
+                            }
+                            else {
+                                dataAccessEmails += "lihmj@mskcc.org";
+                            }
                         }
                         if (!dataAccessEmails.toLowerCase().contains("moona2")) {
-                            dataAccessEmails += ",moona2@mskcc.org";
+                                dataAccessEmails += "moona2@mskcc.org"; // not empty for sure
                         }
                         requestFields.put("DataAccessEmails", dataAccessEmails);
                     }
