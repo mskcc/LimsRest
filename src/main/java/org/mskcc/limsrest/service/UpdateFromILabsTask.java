@@ -277,22 +277,23 @@ public class UpdateFromILabsTask {
                         requestFields.put("MailTo", Filter.toAscii(field2val.get("PIEMAIL")) + "," + Filter.toAscii(field2val.get("INVESTEMAIL")));
                     }
                 }
-                System.out.println("ILab project name is: " + requestFields.get("ProjectName").toString());
-                if (requestFields.get("ProjectName").toString().toLowerCase().contains("hybridcapture")) {
+                String requestName = requestFields.get("ProjectName").toString();
+                System.out.println("ILab project name is: " + requestName);
+                if (requestName.toLowerCase().contains("hybridcapture")) {
                     String currentQCEmails = field2val.get("QC_ACCESS_EMAILS").toString();
                     if (!currentQCEmails.toLowerCase().contains("skicmopm")) {
-                        currentQCEmails += "skicmopm@mskcc.org";
+                        currentQCEmails += ",skicmopm@mskcc.org";
                         requestFields.put("QcAccessEmails", currentQCEmails);
                     }
                 }
-                if (requestFields.get("ProjectName").toString().toLowerCase().contains("tcr")) {
+                if (requestName.toLowerCase().contains("tcr")) {
                     String currentQCEmails = field2val.get("QC_ACCESS_EMAILS").toString();
                     if (!currentQCEmails.toLowerCase().contains("elhanaty")) {
                         currentQCEmails += "elhanaty@mskcc.org";
                         requestFields.put("QcAccessEmails", currentQCEmails);
                     }
-                    else if (!currentQCEmails.toLowerCase().contains("mckerrw")) {
-                        currentQCEmails += "mckerrw@mskcc.org";
+                    if (!currentQCEmails.toLowerCase().contains("mckerrw")) {
+                        currentQCEmails += ",mckerrw@mskcc.org";
                         requestFields.put("QcAccessEmails", currentQCEmails);
                     }
                 }
@@ -308,10 +309,10 @@ public class UpdateFromILabsTask {
                     }
                     if (analysisType.toUpperCase().contains("CCS")) {
                         limsAnalysisTypes.add("CCS");
-                        if (requestFields.get("ProjectName").toString().toLowerCase().contains("wholeexome")) {
+                        if (requestName.toLowerCase().contains("wholeexome")) {
                             String currentQCEmails = field2val.get("QC_ACCESS_EMAILS").toString();
                             if (!currentQCEmails.toLowerCase().contains("skicmopm")) {
-                                currentQCEmails += "skicmopm@mskcc.org";
+                                currentQCEmails += ",skicmopm@mskcc.org";
                                 requestFields.put("QcAccessEmails", currentQCEmails);
                             }
                         }
@@ -329,10 +330,13 @@ public class UpdateFromILabsTask {
                         requestFields.put("NeoAg", Boolean.TRUE);
                         limsAnalysisTypes.add("NEOAG");
                         String dataAccessEmails = requestFields.get("DataAccessEmails").toString();
-                        if (!dataAccessEmails.toLowerCase().contains("lihmj@mskcc.org,moona2@mskcc.org")) {
-                            dataAccessEmails += "lihmj@mskcc.org";
-                            requestFields.put("DataAccessEmails", dataAccessEmails);
+                        if (!dataAccessEmails.toLowerCase().contains("lihmj")) {
+                            dataAccessEmails += ",lihmj@mskcc.org";
                         }
+                        if (!dataAccessEmails.toLowerCase().contains("moona2")) {
+                            dataAccessEmails += ",moona2@mskcc.org";
+                        }
+                        requestFields.put("DataAccessEmails", dataAccessEmails);
                     }
                     if (limsAnalysisTypes.size() > 0) {
                         requestFields.put("AnalysisType", String.join(",", limsAnalysisTypes));
