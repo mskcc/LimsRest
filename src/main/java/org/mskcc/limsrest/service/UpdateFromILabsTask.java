@@ -281,29 +281,13 @@ public class UpdateFromILabsTask {
                 System.out.println("ILab project name is: " + requestName);
                 if (requestName.toLowerCase().contains("hybridcapture")) {
                     String currentQCEmails = field2val.get("QC_ACCESS_EMAILS").toString();
-                    if (!currentQCEmails.toLowerCase().contains("skicmopm")) {
-                        if (!currentQCEmails.isEmpty()) {
-                            currentQCEmails += ",skicmopm@mskcc.org";
-                        }
-                        else {
-                            currentQCEmails += "skicmopm@mskcc.org";
-                        }
-                        requestFields.put("QcAccessEmails", currentQCEmails);
-                    }
+                    currentQCEmails = addEmail("skicmopm@mskcc.org", currentQCEmails);
+                    requestFields.put("QcAccessEmails", currentQCEmails);
                 }
                 if (requestName.toLowerCase().contains("tcr")) {
                     String currentQCEmails = field2val.get("QC_ACCESS_EMAILS").toString();
-                    if (!currentQCEmails.toLowerCase().contains("elhanaty")) {
-                        if (!currentQCEmails.isEmpty()) {
-                            currentQCEmails += ",elhanaty@mskcc.org";
-                        }
-                        else {
-                            currentQCEmails += "elhanaty@mskcc.org";
-                        }
-                    }
-                    if (!currentQCEmails.toLowerCase().contains("mckerrw")) {
-                        currentQCEmails += ",mckerrw@mskcc.org"; // not empty for sure
-                    }
+                    currentQCEmails = addEmail("elhanaty@mskcc.org", currentQCEmails);
+                    currentQCEmails = addEmail("mckerrw@mskcc.org", currentQCEmails);
                     requestFields.put("QcAccessEmails", currentQCEmails);
                 }
 
@@ -320,15 +304,8 @@ public class UpdateFromILabsTask {
                         limsAnalysisTypes.add("CCS");
                         if (requestName.toLowerCase().contains("wholeexome")) {
                             String currentQCEmails = field2val.get("QC_ACCESS_EMAILS").toString();
-                            if (!currentQCEmails.toLowerCase().contains("skicmopm")) {
-                                if (!currentQCEmails.isEmpty()) {
-                                    currentQCEmails += ",skicmopm@mskcc.org";
-                                }
-                                else {
-                                    currentQCEmails += "skicmopm@mskcc.org";
-                                }
-                                requestFields.put("QcAccessEmails", currentQCEmails);
-                            }
+                            currentQCEmails = addEmail("skicmopm@mskcc.org", currentQCEmails);
+                            requestFields.put("QcAccessEmails", currentQCEmails);
                         }
                     }
                     if (analysisType.toUpperCase().contains("CAS")) {
@@ -344,17 +321,8 @@ public class UpdateFromILabsTask {
                         requestFields.put("NeoAg", Boolean.TRUE);
                         limsAnalysisTypes.add("NEOAG");
                         String dataAccessEmails = requestFields.get("DataAccessEmails").toString();
-                        if (!dataAccessEmails.toLowerCase().contains("lihmj")) {
-                            if (!dataAccessEmails.isEmpty()) {
-                                dataAccessEmails += ",lihmj@mskcc.org";
-                            }
-                            else {
-                                dataAccessEmails += "lihmj@mskcc.org";
-                            }
-                        }
-                        if (!dataAccessEmails.toLowerCase().contains("moona2")) {
-                                dataAccessEmails += "moona2@mskcc.org"; // not empty for sure
-                        }
+                        dataAccessEmails = addEmail("lihmj@mskcc.org", dataAccessEmails);
+                        dataAccessEmails = addEmail("moona2@mskcc.org", dataAccessEmails);
                         requestFields.put("DataAccessEmails", dataAccessEmails);
                     }
                     if (limsAnalysisTypes.size() > 0) {
@@ -409,6 +377,15 @@ public class UpdateFromILabsTask {
         return updateStatuses;
     }
 
+    public static String addEmail (String newEmail, String existingEmailsField) {
+        if (existingEmailsField == null || existingEmailsField.isEmpty()) {
+            existingEmailsField += newEmail;
+        }
+        else if (!existingEmailsField.contains(newEmail)) {
+            existingEmailsField += "," + newEmail;
+        }
+        return existingEmailsField;
+    }
     /**
      * Sometimes users paste email lists in the format "lastname, firstname <handle@mskcc.org>"
      * Extract a valid email address list from a string like:
