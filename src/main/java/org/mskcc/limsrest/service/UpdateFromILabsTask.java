@@ -289,7 +289,7 @@ public class UpdateFromILabsTask {
                 if (requestName.toLowerCase().contains("tcr")) {
                     String currentQCEmails = field2val.get("QC_ACCESS_EMAILS").toString();
                     if (!currentQCEmails.toLowerCase().contains("elhanaty")) {
-                        currentQCEmails += "elhanaty@mskcc.org";
+                        currentQCEmails += ",elhanaty@mskcc.org";
                         requestFields.put("QcAccessEmails", currentQCEmails);
                     }
                     if (!currentQCEmails.toLowerCase().contains("mckerrw")) {
