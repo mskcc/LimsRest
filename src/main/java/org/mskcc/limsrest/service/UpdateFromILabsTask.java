@@ -300,17 +300,11 @@ public class UpdateFromILabsTask {
                         else {
                             currentQCEmails += "elhanaty@mskcc.org";
                         }
-                        requestFields.put("QcAccessEmails", currentQCEmails);
                     }
                     if (!currentQCEmails.toLowerCase().contains("mckerrw")) {
-                        if (!currentQCEmails.isEmpty()) {
-                            currentQCEmails += ",mckerrw@mskcc.org";
-                        }
-                        else {
-                            currentQCEmails += "mckerrw@mskcc.org";
-                        }
-                        requestFields.put("QcAccessEmails", currentQCEmails);
+                        currentQCEmails += ",mckerrw@mskcc.org"; // not empty for sure
                     }
+                    requestFields.put("QcAccessEmails", currentQCEmails);
                 }
 
 //                IF new field analysis type present, set old fields according to that
