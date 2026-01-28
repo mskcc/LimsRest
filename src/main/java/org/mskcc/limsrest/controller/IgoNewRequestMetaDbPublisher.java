@@ -169,10 +169,12 @@ public class IgoNewRequestMetaDbPublisher {
         List<RequestSample> requestSamples = sl.getSamples();
         String[] igoIds = new String[requestSamples.size()];
         Map<String, Boolean> igoCompleteMap = new HashMap<>();
+        Map<String, String> sampleStatusMap = new HashMap<>();
         for (int i = 0; i < requestSamples.size(); i++) {
             RequestSample rs = requestSamples.get(i);
             igoIds[i] = rs.getIgoSampleId();
             igoCompleteMap.put(rs.getIgoSampleId(), rs.isIgoComplete());
+            sampleStatusMap.put(rs.getIgoSampleId(), rs.getSampleStatus());
         }
 
         // fetch list of sample manifests for request sample (igo)ids
@@ -194,6 +196,7 @@ public class IgoNewRequestMetaDbPublisher {
         for (SampleManifest sm : sampleManifestList) {
             Map<String, Object> smMap = gson.fromJson(gson.toJson(sm), Map.class);
             smMap.put("igoComplete", igoCompleteMap.get(sm.getIgoId()));
+            smMap.put("sampleStatus", sampleStatusMap.get(sm.getIgoId()));
             toReturn.add(smMap);
         }
 
