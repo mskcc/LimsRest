@@ -277,6 +277,11 @@ public class UpdateFromILabsTask {
                         requestFields.put("MailTo", Filter.toAscii(field2val.get("PIEMAIL")) + "," + Filter.toAscii(field2val.get("INVESTEMAIL")));
                     }
                 }
+                String piEmail = Filter.toAscii(field2val.get("PIEMAIL"));
+                if (piEmail.equalsIgnoreCase("elenitk@mskcc.org")) {
+                    requestFields.put("BICAnalysis", Boolean.TRUE);
+                }
+
                 String requestName = requestFields.get("ProjectName").toString();
                 String currentQCEmails = field2val.get("QC_ACCESS_EMAILS").toString();
                 String dataAccessEmails = requestFields.get("DataAccessEmails").toString();
