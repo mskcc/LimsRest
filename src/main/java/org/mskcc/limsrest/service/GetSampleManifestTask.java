@@ -504,6 +504,10 @@ public class GetSampleManifestTask {
             log.info("Searching for DNA Library Input Mass (ng).");
             List<DataRecord> records = sample.getChildListOfType(KAPALibPlateSetupProtocol1Model.DATA_TYPE_NAME, user);
             log.info("Found child records:" + records.size());
+            if (records.size() == 0) {
+                log.info("No Childs records found:");
+                return 0.0; 
+            }
             return records.get(records.size() - 1).getDoubleVal(KAPALibPlateSetupProtocol1Model.TARGET_MASS_ALIQ_1, user);
         } catch (Exception e) {
             log.error(e);
