@@ -90,11 +90,8 @@ public class SampleManifest implements Serializable {
         public String IGORecommendation;
         public String comments;
         public String investigatorDecision;
-        /** DNA QC: Digital Integrity Number (string in LIMS). */
         public String din;
-        /** RNA QC: RIN (or equivalent) from {@code QcReportRna}. */
         public String rin;
-        /** RNA QC: total mass from {@code QcReportRna} (ng). */
         public Double totalMass;
     }
     @NoArgsConstructor @ToString
