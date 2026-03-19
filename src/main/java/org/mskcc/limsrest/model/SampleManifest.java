@@ -63,20 +63,39 @@ public class SampleManifest implements Serializable {
     public static class QcReport {
         public QcReport() {}
 
-        public QcReport(QcReportType qcReportType, 
-        String IGORecommendation, String comments, String investigatorDecision, String DIN) {
+        /**
+         * DNA / Library QC (and RNA when rin/totalMass are not needed): {@code rin} and {@code totalMass} are null.
+         */
+        public QcReport(QcReportType qcReportType,
+                String IGORecommendation, String comments, String investigatorDecision, String DIN) {
+            this(qcReportType, IGORecommendation, comments, investigatorDecision, DIN, null, null);
+        }
+
+        /**
+         * Full QC report; use {@code rin} and {@code totalMass} for {@link QcReportType#RNA}.
+         */
+        public QcReport(QcReportType qcReportType,
+                String IGORecommendation, String comments, String investigatorDecision, String DIN,
+                String RIN, Double totalMass) {
             this.qcReportType = qcReportType;
             this.IGORecommendation = IGORecommendation;
             this.comments = comments;
             this.investigatorDecision = investigatorDecision;
             this.din = DIN;
+            this.rin = RIN;
+            this.totalMass = totalMass;
         }
 
         public QcReportType qcReportType;
         public String IGORecommendation;
         public String comments;
         public String investigatorDecision;
+        /** DNA QC: Digital Integrity Number (string in LIMS). */
         public String din;
+        /** RNA QC: RIN (or equivalent) from {@code QcReportRna}. */
+        public String rin;
+        /** RNA QC: total mass from {@code QcReportRna} (ng). */
+        public Double totalMass;
     }
     @NoArgsConstructor @ToString
     @Getter @Setter
