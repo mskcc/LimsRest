@@ -478,7 +478,7 @@ public class GetSampleManifestTask {
 
             log.info("Searching for QcReportRna report");
             List<DataRecord> qcRecordsRna = sample.getDescendantsOfType("QcReportRna", user);
-            if (qcRecordsRna.size() > 0) {
+            if (qcRecordsRna != null && !qcRecordsRna.isEmpty()) {
                 try {
                     DataRecord qcRecord = qcRecordsRna.get(0);
                     int i = 1;
