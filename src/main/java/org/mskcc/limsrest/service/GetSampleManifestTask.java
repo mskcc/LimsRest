@@ -235,7 +235,7 @@ public class GetSampleManifestTask {
                             library.libraryVolume = aliquot.getDoubleVal("Volume", user);
                         }
                     } catch (Exception ex) {
-                        log.warn("Could not read Volume for CMO-CH library {}: {}", libraryIgoId, ex.getMessage());
+                        log.warn("Could not read Volume for CMO-CH library " + libraryIgoId + ": " + ex.getMessage());
                     }
                 }
 
@@ -289,7 +289,7 @@ public class GetSampleManifestTask {
                 log.info("Found nimbleGen records: " + nimbleGen.size());
                 for (DataRecord n : nimbleGen) {
                     Object valid = n.getValue("Valid", user); // 05359_B_1 null
-                    if (valid != null && new Boolean(valid.toString())) {
+                    if (valid != null && Boolean.parseBoolean(valid.toString())) {
                         String poolName = n.getStringVal("Protocol2Sample", user);
                         String baitSetRecipe = n.getStringVal("Recipe", user); // LIMS display name "bait set"
                         Object val = n.getValue("SourceMassToUse", user);
@@ -324,12 +324,17 @@ public class GetSampleManifestTask {
                     reqLanes = aliquotParent.getDescendantsOfType("FlowCellLane", user);
             }
             for (DataRecord flowCellLane : reqLanes) {
-                Long laneNumObj = flowCellLane.getLongVal("LaneNum", user);
-                if (laneNumObj == null) {
-                    log.warn("FlowCellLane missing LaneNum; skipping lane record.");
+                // FlowCellLane.LaneNum is long integer in LIMS; read as Number to accept Long/Integer from Velox.
+                Long laneNumLong = readFlowCellLaneNumLong(flowCellLane, user);
+                if (laneNumLong == null) {
+                    log.warn("FlowCellLane missing or unreadable LaneNum (long integer); skipping lane record.");
                     continue;
                 }
-                int laneNum = laneNumObj.intValue();
+                if (laneNumLong > Integer.MAX_VALUE || laneNumLong < Integer.MIN_VALUE) {
+                    log.warn("FlowCellLane LaneNum out of int range: " + laneNumLong + "; skipping.");
+                    continue;
+                }
+                int laneNum = laneNumLong.intValue();
                 log.info("Reviewing flow cell lane: " + laneNum);
                 List<DataRecord> flowcell = flowCellLane.getParentsOfType("FlowCell", user);
                 if (flowcell.size() > 0) {
@@ -572,7 +577,7 @@ public class GetSampleManifestTask {
             try {
                 libraryVolume = libPrepProtocols[0].getDoubleVal("ElutionVol", user);
             } catch (Exception e) {
-                log.warn("Could not read ElutionVol from DNALibraryPrepProtocol3: {}", e.getMessage());
+                log.warn("Could not read ElutionVol from DNALibraryPrepProtocol3: " + e.getMessage());
             }
         }
         Double libraryConcentration = null;
@@ -635,7 +640,34 @@ public class GetSampleManifestTask {
             String s = v.toString();
             return s.isEmpty() ? null : s;
         } catch (Exception e) {
-            log.warn("Could not read field {} on record: {}", dataFieldName, e.getMessage());
+            log.warn("Could not read field " + dataFieldName + " on record: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * {@code FlowCellLane.LaneNum} is a long integer in LIMS. Prefer {@link DataRecord#getValue} as {@link Number}
+     * so both {@code Long} and {@code Integer} boxed values work; fall back to {@link DataRecord#getLongVal}.
+     */
+    private Long readFlowCellLaneNumLong(DataRecord flowCellLane, User user) {
+        try {
+            Object v = flowCellLane.getValue("LaneNum", user);
+            if (v instanceof Number) {
+                return ((Number) v).longValue();
+            }
+            if (v != null) {
+                String s = v.toString().trim();
+                if (!s.isEmpty()) {
+                    return Long.parseLong(s);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("LaneNum getValue failed, trying getLongVal: " + e.getMessage());
+        }
+        try {
+            return flowCellLane.getLongVal("LaneNum", user);
+        } catch (Exception e) {
+            log.warn("LaneNum getLongVal failed: " + e.getMessage());
             return null;
         }
     }
