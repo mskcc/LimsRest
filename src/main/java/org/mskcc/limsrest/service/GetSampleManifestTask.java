@@ -227,9 +227,16 @@ public class GetSampleManifestTask {
                 DataRecord librarySource = (aliquotParent != null) ? aliquotParent : aliquot;
                 library = getLibraryFields(user, libraryIgoId, librarySource, dnaInputNg);
 
-                //Poppulate library volume if it's missing
-                if(library.libraryVolume == null){
-                    library.libraryVolume = aliquot.getDoubleVal("Volume", user);
+                // Populate library volume if it's missing
+                if (library.libraryVolume == null) {
+                    try {
+                        Object volObj = aliquot.getValue("Volume", user);
+                        if (volObj != null) {
+                            library.libraryVolume = aliquot.getDoubleVal("Volume", user);
+                        }
+                    } catch (Exception ex) {
+                        log.warn("Could not read Volume for CMO-CH library " + libraryIgoId + ": " + ex.getMessage());
+                    }
                 }
 
             } else {
@@ -254,22 +261,26 @@ public class GetSampleManifestTask {
                     log.info("Found capture records: " + records.size());
                     for (DataRecord n : records) {
                         Object valid = n.getValue("Valid", user); // 05359_B_1 null
-                        if (valid != null && new Boolean(valid.toString())) {
+                        if (valid != null && Boolean.parseBoolean(valid.toString())) {
                             String poolName = "";
                             Object val = n.getValue("Aliq1TargetMass", user);
                             if (val != null) {
                                 Double captureInput = n.getDoubleVal("Aliq1TargetMass", user);
-                                library.setCaptureInputNg(captureInput.toString());
+                                if (captureInput != null) {
+                                    library.setCaptureInputNg(captureInput.toString());
+                                }
                                 library.setCaptureName(poolName);
                                 Double captureVolume = n.getDoubleVal("Aliq1StartingConcentration", user);
-                                library.setCaptureConcentrationNm(captureVolume.toString());
+                                if (captureVolume != null) {
+                                    library.setCaptureConcentrationNm(captureVolume.toString());
+                                }
                                 sampleManifest.addLibrary(library);
                             }
                         } else {
                             log.warn("Capture records not valid.");
+                        }
                     }
-                } 
-            } else {
+                } else {
                     log.warn("Both aliquotParent and aliquot are null for library: " + libraryIgoId);
                 }
             } else {
@@ -278,16 +289,20 @@ public class GetSampleManifestTask {
                 log.info("Found nimbleGen records: " + nimbleGen.size());
                 for (DataRecord n : nimbleGen) {
                     Object valid = n.getValue("Valid", user); // 05359_B_1 null
-                    if (valid != null && new Boolean(valid.toString())) {
+                    if (valid != null && Boolean.parseBoolean(valid.toString())) {
                         String poolName = n.getStringVal("Protocol2Sample", user);
                         String baitSetRecipe = n.getStringVal("Recipe", user); // LIMS display name "bait set"
                         Object val = n.getValue("SourceMassToUse", user);
                         if (val != null) {
                             Double captureInput = n.getDoubleVal("SourceMassToUse", user);
-                            library.setCaptureInputNg(captureInput.toString());
+                            if (captureInput != null) {
+                                library.setCaptureInputNg(captureInput.toString());
+                            }
                             library.setCaptureName(poolName);
                             Double captureVolume = n.getDoubleVal("VolumeToUse", user);
-                            library.setCaptureConcentrationNm(captureVolume.toString());
+                            if (captureVolume != null) {
+                                library.setCaptureConcentrationNm(captureVolume.toString());
+                            }
                             sampleManifest.addLibrary(library);
                         }
                     } else {
@@ -309,7 +324,17 @@ public class GetSampleManifestTask {
                     reqLanes = aliquotParent.getDescendantsOfType("FlowCellLane", user);
             }
             for (DataRecord flowCellLane : reqLanes) {
-                Integer laneNum = ((Long) flowCellLane.getLongVal("LaneNum", user)).intValue();
+                // FlowCellLane.LaneNum is long integer in LIMS; read as Number to accept Long/Integer from Velox.
+                Long laneNumLong = readFlowCellLaneNumLong(flowCellLane, user);
+                if (laneNumLong == null) {
+                    log.warn("FlowCellLane missing or unreadable LaneNum (long integer); skipping lane record.");
+                    continue;
+                }
+                if (laneNumLong > Integer.MAX_VALUE || laneNumLong < Integer.MIN_VALUE) {
+                    log.warn("FlowCellLane LaneNum out of int range: " + laneNumLong + "; skipping.");
+                    continue;
+                }
+                int laneNum = laneNumLong.intValue();
                 log.info("Reviewing flow cell lane: " + laneNum);
                 List<DataRecord> flowcell = flowCellLane.getParentsOfType("FlowCell", user);
                 if (flowcell.size() > 0) {
@@ -342,7 +367,8 @@ public class GetSampleManifestTask {
                         } else { // lookup fastq paths for this run, currently making extra queries for 06260_N_9 KIM & others
                             //06938_J_86 was demuxed by lane on 2017-06-16 16:49:08
                             List<String> fastqs = FastQPathFinder.search(runId, origSampleName, sampleManifest.getIgoId(), true, runPassedQC);
-                            if (fastqs == null && aliquot.getLongVal("DateCreated", user) < 1455132132000L) { // try search again with pre-Jan 2016 naming convention, 06184_4
+                            Long aliquotCreated = aliquot.getLongVal("DateCreated", user);
+                            if (fastqs == null && aliquotCreated != null && aliquotCreated < 1455132132000L) { // try search again with pre-Jan 2016 naming convention, 06184_4
                                 log.info("Searching fastq database again for pre-Jan. 2016 sample.");
                                 fastqs = FastQPathFinder.search(runId, origSampleName, null, false, runPassedQC);
                             }
@@ -547,8 +573,13 @@ public class GetSampleManifestTask {
         DataRecord[] libPrepProtocols = aliquot.getChildrenOfType("DNALibraryPrepProtocol3", user);
         
         Double libraryVolume = null;
-        if (libPrepProtocols != null && libPrepProtocols.length == 1)
-            libraryVolume = libPrepProtocols[0].getDoubleVal("ElutionVol", user);
+        if (libPrepProtocols != null && libPrepProtocols.length == 1) {
+            try {
+                libraryVolume = libPrepProtocols[0].getDoubleVal("ElutionVol", user);
+            } catch (Exception e) {
+                log.warn("Could not read ElutionVol from DNALibraryPrepProtocol3: " + e.getMessage());
+            }
+        }
         Double libraryConcentration = null;
         Object libraryConcentrationObj = aliquot.getValue("Concentration", user);
         if (libraryConcentrationObj != null)  // for example 06449_1 concentration is null
@@ -562,29 +593,30 @@ public class GetSampleManifestTask {
         log.info("setSampleLevelFields for :" + igoId);
         try {
             s.setIgoId(igoId);
-            s.setAltid(cmoInfo.getStringVal("AltId", user));
+            s.setAltid(safeCmoStringField(cmoInfo, "AltId", user));
             s.setCmoInfoIgoId(cmoInfoIgoId);
-            s.setCmoPatientId(cmoInfo.getStringVal("CmoPatientId", user));
+            s.setCmoPatientId(safeCmoStringField(cmoInfo, "CmoPatientId", user));
             // aka "Sample Name" in SampleCMOInfoRecords
-            String sampleName = cmoInfo.getStringVal("OtherSampleId", user);
+            String sampleName = safeCmoStringField(cmoInfo, "OtherSampleId", user);
             s.setSampleName(sampleName);
-            s.setCmoSampleClass(cmoInfo.getStringVal("CMOSampleClass", user));
-            s.setInvestigatorSampleId(cmoInfo.getStringVal("UserSampleID", user));
-            String tumorOrNormal = cmoInfo.getStringVal("TumorOrNormal", user);
+            s.setCmoSampleClass(safeCmoStringField(cmoInfo, "CMOSampleClass", user));
+            s.setInvestigatorSampleId(safeCmoStringField(cmoInfo, "UserSampleID", user));
+            String tumorOrNormal = safeCmoStringField(cmoInfo, "TumorOrNormal", user);
             s.setTumorOrNormal(tumorOrNormal);
-            if ("Tumor".equals(tumorOrNormal))
-                s.setOncoTreeCode(cmoInfo.getStringVal("TumorType", user));
-            s.setTissueLocation(cmoInfo.getStringVal("TissueLocation", user));
-            s.setSpecimenType(cmoInfo.getStringVal("SpecimenType", user));
-            s.setSampleOrigin(cmoInfo.getStringVal("SampleOrigin", user)); // formerly reported as Sample Type
-            s.setPreservation(cmoInfo.getStringVal("Preservation", user));
-            s.setCollectionYear(cmoInfo.getStringVal("CollectionYear", user));
-            s.setSex(cmoInfo.getStringVal("Gender", user));
-            s.setSpecies(cmoInfo.getStringVal("Species", user));
-            s.setCmoSampleName(cmoInfo.getStringVal("CorrectedCMOID", user));
-            String normalizedPatientId = cmoInfo.getStringVal("NormalizedPatientId", user);
+            if ("Tumor".equals(tumorOrNormal)) {
+                s.setOncoTreeCode(safeCmoStringField(cmoInfo, "TumorType", user));
+            }
+            s.setTissueLocation(safeCmoStringField(cmoInfo, "TissueLocation", user));
+            s.setSpecimenType(safeCmoStringField(cmoInfo, "SpecimenType", user));
+            s.setSampleOrigin(safeCmoStringField(cmoInfo, "SampleOrigin", user)); // formerly reported as Sample Type
+            s.setPreservation(safeCmoStringField(cmoInfo, "Preservation", user));
+            s.setCollectionYear(safeCmoStringField(cmoInfo, "CollectionYear", user));
+            s.setSex(safeCmoStringField(cmoInfo, "Gender", user));
+            s.setSpecies(safeCmoStringField(cmoInfo, "Species", user));
+            s.setCmoSampleName(safeCmoStringField(cmoInfo, "CorrectedCMOID", user));
+            String normalizedPatientId = safeCmoStringField(cmoInfo, "NormalizedPatientId", user);
             s.getCmoSampleIdFields().setNormalizedPatientId(normalizedPatientId);
-            String estimatedPurity = cmoInfo.getStringVal("EstimatedPurity", user);
+            String estimatedPurity = safeCmoStringField(cmoInfo, "EstimatedPurity", user);
             log.info("estimated purity: " + estimatedPurity);
             s.setEstimatedPurity(estimatedPurity);
         } catch (Exception e) {
@@ -593,6 +625,51 @@ public class GetSampleManifestTask {
         }
         log.info("Completed setSampleLevelFields");
         return s;
+    }
+
+    /**
+     * Read CMO/Sample string fields without {@link DataRecord#getStringVal} throwing {@link ClassCastException}
+     * when LIMS stores null or a non-string type (seen on some CMO-CH samples).
+     */
+    private String safeCmoStringField(DataRecord record, String dataFieldName, User user) {
+        try {
+            Object v = record.getValue(dataFieldName, user);
+            if (v == null) {
+                return null;
+            }
+            String s = v.toString();
+            return s.isEmpty() ? null : s;
+        } catch (Exception e) {
+            log.warn("Could not read field " + dataFieldName + " on record: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * {@code FlowCellLane.LaneNum} is a long integer in LIMS. Prefer {@link DataRecord#getValue} as {@link Number}
+     * so both {@code Long} and {@code Integer} boxed values work; fall back to {@link DataRecord#getLongVal}.
+     */
+    private Long readFlowCellLaneNumLong(DataRecord flowCellLane, User user) {
+        try {
+            Object v = flowCellLane.getValue("LaneNum", user);
+            if (v instanceof Number) {
+                return ((Number) v).longValue();
+            }
+            if (v != null) {
+                String s = v.toString().trim();
+                if (!s.isEmpty()) {
+                    return Long.parseLong(s);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("LaneNum getValue failed, trying getLongVal: " + e.getMessage());
+        }
+        try {
+            return flowCellLane.getLongVal("LaneNum", user);
+        } catch (Exception e) {
+            log.warn("LaneNum getLongVal failed: " + e.getMessage());
+            return null;
+        }
     }
 
     public static class LibraryDataRecord {
