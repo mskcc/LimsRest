@@ -63,7 +63,14 @@ public class SetStatsONTTask {
             dr.setDataField("Chemistry", statsONT.getChemistry(), user);
             dr.setDataField("MinKNOWSoftwareVersion", statsONT.getMinKNOWSoftwareVersion(), user);
             dr.setDataField("OtherSampleId", statsONT.getSampleName(), user);
-            dr.setDataField("Recipe", "Nanopore", user);
+            String recipe = "Nanopore";
+            if (sample != null && !sample.isEmpty()) {
+                String r = sample.get(0).getStringVal("Recipe", user);
+                if (r != null && !r.trim().isEmpty()) {
+                    recipe = r;
+                }
+            }
+            dr.setDataField("Recipe", recipe, user);
             dr.setDataField("SeqQCStatus", "Under-Review", user);
 
             sample.get(0).addChild(dr, user);
