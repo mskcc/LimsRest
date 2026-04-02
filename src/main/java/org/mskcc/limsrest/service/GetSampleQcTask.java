@@ -75,6 +75,7 @@ public class GetSampleQcTask {
                         List<SampleSequencingQcONT> samplesONT = new ArrayList<>();
                         qcRecords = dataRecordManager.queryDataRecords("SequencingAnalysisONT", "IGOID LIKE '" + project + "_%'", user);
                         log.info("Found ONT stats: " + qcRecords.size());
+                        Map<String, String> ontSampleRecipeCache = new HashMap<>();
                         for (DataRecord record: qcRecords) {
                             Long recordId = record.getLongVal("RecordId", user);
                             String igoId = record.getStringVal("IGOID", user);
@@ -90,8 +91,25 @@ public class GetSampleQcTask {
                             String chemistry = record.getStringVal("Chemistry", user);
                             String minKNOWSoftwareVersion = record.getStringVal("MinKNOWSoftwareVersion", user);
                             String qcStatus = record.getStringVal("SeqQCStatus", user);
+                            String recipe = record.getStringVal("Recipe", user);
+                            if (recipe == null || recipe.trim().isEmpty()) {
+                                recipe = ontSampleRecipeCache.computeIfAbsent(igoId, id -> {
+                                    try {
+                                        List<DataRecord> samples = dataRecordManager.queryDataRecords("Sample", "SampleId = '" + id + "'", user);
+                                        if (samples != null && !samples.isEmpty()) {
+                                            String r = samples.get(0).getStringVal("Recipe", user);
+                                            if (r != null && !r.trim().isEmpty()) {
+                                                return r;
+                                            }
+                                        }
+                                    } catch (Exception e) {
+                                        log.warn("Could not load Recipe for Sample " + id + ": " + e.getMessage());
+                                    }
+                                    return "Nanopore";
+                                });
+                            }
 
-                            SampleSequencingQcONT qcONT = new SampleSequencingQcONT(igoId, flowcell, reads, bases, n50, readLength, estimatedCoverage, 0.0, "", sampleName, sequencerPosition, flowCellType, chemistry, minKNOWSoftwareVersion, qcStatus, recordId, "Nanopore");
+                            SampleSequencingQcONT qcONT = new SampleSequencingQcONT(igoId, flowcell, reads, bases, n50, readLength, estimatedCoverage, 0.0, "", sampleName, sequencerPosition, flowCellType, chemistry, minKNOWSoftwareVersion, qcStatus, recordId, recipe);
                             log.info(qcONT);
                             samplesONT.add(qcONT);
                         }
