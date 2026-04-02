@@ -504,29 +504,31 @@ public class GetSampleManifestTask {
 
             log.info("Searching for QcReportRna report");
             List<DataRecord> qcRecordsRna = sample.getDescendantsOfType("QcReportRna", user);
-            if (qcRecordsRna != null && !qcRecordsRna.isEmpty() && qcRecordsRna.size() > 0) {
+            if (qcRecordsRna != null && !qcRecordsRna.isEmpty()) {
                 try {
                     DataRecord qcRecord = qcRecordsRna.get(0);
-                    if (!qcRecord.getBooleanVal("HideFromSampleQC", user)) {
-                        String igoQcRecommendation = qcRecord.getStringVal("IgoQcRecommendation", user);
-                        String comments = qcRecord.getStringVal("Comments", user);
-                        String id = qcRecord.getStringVal("InvestigatorDecision", user);
-                        String rin = null;
-                        try {
-                            rin = qcRecord.getStringVal("RIN", user);
-                        } catch (Exception rinEx) {
-                            log.warn("Failed to retrieve RIN value: " + rinEx.getMessage());
-                        }
-                        Double totalMass = null;
-                        try {
-                            totalMass = qcRecord.getDoubleVal("TotalMass", user);
-                        } catch (Exception massEx) {
-                            log.warn("Failed to retrieve TotalMass value: " + massEx.getMessage());
-                        }
-                        SampleManifest.QcReport r = new SampleManifest.QcReport(
-                                SampleManifest.QcReportType.RNA, igoQcRecommendation, comments, id, null, rin, totalMass);
-                        sampleManifest.addQcReport(r);
+                    int i = 1;
+                    while (qcRecord.getBooleanVal("HideFromSampleQC", user) && i < qcRecordsRna.size()) {
+                        qcRecord = qcRecordsRna.get(i++);
                     }
+                    String igoQcRecommendation = qcRecord.getStringVal("IgoQcRecommendation", user);
+                    String comments = qcRecord.getStringVal("Comments", user);
+                    String id = qcRecord.getStringVal("InvestigatorDecision", user);
+                    String rin = null;
+                    try {
+                        rin = qcRecord.getStringVal("RIN", user);
+                    } catch (Exception rinEx) {
+                        log.warn("Failed to retrieve RIN value: " + rinEx.getMessage());
+                    }
+                    Double totalMass = null;
+                    try {
+                        totalMass = qcRecord.getDoubleVal("TotalMass", user);
+                    } catch (Exception massEx) {
+                        log.warn("Failed to retrieve TotalMass value: " + massEx.getMessage());
+                    }
+                    SampleManifest.QcReport r = new SampleManifest.QcReport(
+                            SampleManifest.QcReportType.RNA, igoQcRecommendation, comments, id, null, rin, totalMass);
+                    sampleManifest.addQcReport(r);
                 } catch (Exception e) {
                     log.warn("Failed to retrieve RNA QC Record value: " + e.getMessage());
                 }
