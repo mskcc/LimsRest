@@ -234,11 +234,17 @@ public class UpdateFromILabsTask {
                             field2val.get("FASTQ").startsWith("BIC") || field2val.get("FASTQ").contains("institutional support")) {
                         requestFields.put("FASTQ", Boolean.TRUE);
                         requestFields.put("BICAnalysis", Boolean.TRUE);
+                        
+                    } else if (field2val.get("FASTQ").toUpperCase().contains("CCS")) {
+                        requestFields.put("IsCmoRequest", Boolean.TRUE);
+                    } else if (field2val.get("FASTQ").contains("NeoQual")) {
+                        requestFields.put("NeoAg", Boolean.TRUE);
                     } else {
                         requestFields.put("FASTQ", Boolean.TRUE);
                         requestFields.put("BICAnalysis", Boolean.FALSE);
                     }
                 }
+
                 if ((field2val.get("PI").startsWith("FIELD NOT IN ILABS") ||
                         field2val.get("PI").startsWith("PROJECT NOT IN ILABS")) &&
                         (System.currentTimeMillis() - (Long) currentFields.get("DateCreated") > 1000 * 60 * 60 * 2)) { //complain after two hours
@@ -277,7 +283,7 @@ public class UpdateFromILabsTask {
                         requestFields.put("MailTo", Filter.toAscii(field2val.get("PIEMAIL")) + "," + Filter.toAscii(field2val.get("INVESTEMAIL")));
                     }
                 }
-                String requestName = requestFields.get("ProjectName").toString();
+                String requestName = requestFields.get("RequestName").toString();
                 String currentQCEmails = field2val.get("QC_ACCESS_EMAILS").toString();
                 String dataAccessEmails = requestFields.get("DataAccessEmails").toString();
                 System.out.println("ILab project name is: " + requestName);
@@ -294,12 +300,13 @@ public class UpdateFromILabsTask {
                     requestFields.put("FASTQ", Boolean.TRUE);
                     String analysisType = Filter.toAscii(field2val.get("ANALYSIS_TYPE"));
                     List<String> limsAnalysisTypes = new ArrayList<>();
-                    if (analysisType.toUpperCase().contains("BIC")) {
+                    if (analysisType.toUpperCase().contains("BIC") || field2val.get("FASTQ").toUpperCase().contains("BIC")) {
                         requestFields.put("BICAnalysis", Boolean.TRUE);
                         limsAnalysisTypes.add("BIC");
                     }
-                    if (analysisType.toUpperCase().contains("CCS")) {
+                    if (analysisType.toUpperCase().contains("CCS") || field2val.get("FASTQ").toUpperCase().contains("CCS")) {
                         limsAnalysisTypes.add("CCS");
+                        requestFields.put("IsCmoRequest", Boolean.TRUE);
                         if (requestName.toLowerCase().contains("wholeexome")) {
                             currentQCEmails = addEmail("skicmopm@mskcc.org", currentQCEmails);
                         }
@@ -313,9 +320,8 @@ public class UpdateFromILabsTask {
                     if (analysisType.toUpperCase().contains("RAW DATA")) {
                         limsAnalysisTypes.add("FASTQ ONLY");
                     }
-                    if (analysisType.toUpperCase().contains("NEOAG")) {
+                    if (analysisType.toUpperCase().contains("NEOQUAL") || field2val.get("FASTQ").toUpperCase().contains("NEOQUAL")) {
                         requestFields.put("NeoAg", Boolean.TRUE);
-                        limsAnalysisTypes.add("NEOAG");
                         dataAccessEmails = addEmail("lihmj@mskcc.org", dataAccessEmails);
                         dataAccessEmails = addEmail("moona2@mskcc.org", dataAccessEmails);
                     }
