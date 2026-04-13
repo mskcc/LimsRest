@@ -334,11 +334,11 @@ public class UpdateFromILabsTask {
 //                IF new field analysis type NOT present, set new fields according to old
                 if (field2val.get("ANALYSIS_TYPE").equals("FIELD NOT IN ILABS") && !field2val.get("FASTQ").equals("FIELD NOT IN ILABS")) {
                     List<String> limsAnalysisTypes = new ArrayList<>();
-                    if ((Boolean) requestFields.get("FASTQ")) {
+                    if (Boolean.TRUE.equals(requestFields.get("FASTQ"))) {
                         limsAnalysisTypes.add("FASTQ ONLY");
                     }
 
-                    if ((Boolean) requestFields.get("BICAnalysis")) {
+                    if (Boolean.TRUE.equals(requestFields.get("BICAnalysis"))) {
                         limsAnalysisTypes.add("BIC");
                     }
 
