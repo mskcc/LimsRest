@@ -676,16 +676,34 @@ void createAirtableCard(String requestId) {
         String dueDate = sdf.format(new Date(System.currentTimeMillis() + fourWeeksInMillis));
 
         // STEP 9: Build JSON body 
+        // Build application array only if value exists
+        String applicationField = (recipe != null && !recipe.trim().isEmpty())
+                ? "\"Application\": [\"" + recipe.replace("\"", "\\\"") + "\"],"
+                : "";
+
+        // Build material array only if value exists
+        String materialField = (materials != null && !materials.trim().isEmpty())
+                ? "\"Material\": [\"" + materials.replace("\"", "\\\"") + "\"],"
+                : "";
+        
+        // Build tags - add iLab Comment tag if comment exists
+        String tagsField = (iLabComment != null && !iLabComment.trim().isEmpty())
+                ? "\"Tags\": [\"iLab Comment\"],"
+                : "";
+
         String jsonBody = String.format(
             "{\"records\": [{\"fields\": {" +
-            "\"Project ID\": \"%s\"," +       // title
-            "\"iLab Comment\": \"%s\"," +     // description
-            "\"Recipe\": \"%s\"," +           // tag
+            "\"Task Name\": \"%s\"," +        // card title: requestId (numOfSamples)
+            "\"iLab Comment\": \"%s\"," +     // comment from iLab form
+            "%s" +      // recipe from iLab form
+            "%s" +         // from LIMS class variable
             "\"Due Date\": \"%s\""  +         // 4 weeks from today
             "}}]}",
             cardTitle,
             iLabComment != null ? iLabComment.replace("\"", "\\\"") : "",
-            recipe != null ? recipe : "",
+            applicationField,
+            materialField,
+            tagsField,
             dueDate
         );
 
