@@ -31,6 +31,7 @@ public class SampleManifest implements Serializable {
     private String sampleOrigin;
     private String preservation;
     private String collectionYear;
+    private String clinicalInfo;
     private String sex;
     private String species;
     private String tubeId;

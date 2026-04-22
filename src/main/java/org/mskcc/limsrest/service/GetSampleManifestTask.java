@@ -643,6 +643,7 @@ public class GetSampleManifestTask {
             s.setSampleOrigin(safeCmoStringField(cmoInfo, "SampleOrigin", user)); // formerly reported as Sample Type
             s.setPreservation(safeCmoStringField(cmoInfo, "Preservation", user));
             s.setCollectionYear(safeCmoStringField(cmoInfo, "CollectionYear", user));
+            s.setClinicalInfo(safeCmoStringField(cmoInfo, "ClinicalInfo", user));
             s.setSex(safeCmoStringField(cmoInfo, "Gender", user));
             s.setSpecies(safeCmoStringField(cmoInfo, "Species", user));
             s.setCmoSampleName(safeCmoStringField(cmoInfo, "CorrectedCMOID", user));
