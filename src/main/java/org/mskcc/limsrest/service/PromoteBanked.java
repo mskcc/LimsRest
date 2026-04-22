@@ -61,6 +61,7 @@ public class PromoteBanked extends LimsTask {
     String projectId;
     String igoUser;
     String materials;
+    String recipe = "";
     boolean dryrun = false;
     private Multimap<String, String> errors = HashMultimap.create();
     private List<Object> samplesWithDifferentNewIgoIdAndRowIndex = new LinkedList<>();
@@ -262,7 +263,7 @@ public class PromoteBanked extends LimsTask {
                 headers.add(Constants.WARNINGS, getErrors());
                 headers.add(Constants.STATUS, Messages.SUCCESS);
 
-                sendEmailToTeamwork();
+                // sendEmailToTeamwork();
                 createAirtableCard(requestId); // call airtable method
 
                 if (iLabAbsent) {
@@ -426,6 +427,7 @@ public class PromoteBanked extends LimsTask {
             seqRequirementMap.put("SampleId", newIgoId);
             seqRequirementMap.put("SequencingRunType", runType);
             String recipe = (String) bankedFields.getOrDefault("Recipe", "");
+            this.recipe = recipe;
             String tumorOrNormal = (String)bankedFields.getOrDefault("TumorOrNormal", null);
             Object capturePanel = bankedFields.getOrDefault("CapturePanel", null);
             Object species = bankedFields.getOrDefault("Species", null);
@@ -627,32 +629,22 @@ void createAirtableCard(String requestId) {
 
         // STEP 6: Extract comment, numOfSamples, recipe 
         Pattern commentPattern    = Pattern.compile("comment", Pattern.CASE_INSENSITIVE);
-        Pattern numOfSamplePattern = Pattern.compile("number of samples|how many samples", Pattern.CASE_INSENSITIVE);
-        Pattern recipePattern     = Pattern.compile("recipe|application|assay", Pattern.CASE_INSENSITIVE);
 
         String iLabComment = "";
-        String numOfSamples = "";
-        String recipe = "";
 
         for (String field : customForm.getFields().keySet()) {
             Matcher commentMatcher    = commentPattern.matcher(field);
-            Matcher numOfSampleMatcher = numOfSamplePattern.matcher(field);
-            Matcher recipeMatcher     = recipePattern.matcher(field);
 
             if (commentMatcher.find()) {
                 iLabComment = customForm.getFields().get(field);
             }
-            if (numOfSampleMatcher.find()) {
-                numOfSamples = customForm.getFields().get(field);
-            }
-            if (recipeMatcher.find()) {
-                recipe = customForm.getFields().get(field);
-            }
         }
 
-        log.info("Airtable - iLab comment: " + iLabComment);
-        log.info("Airtable - num of samples: " + numOfSamples);
-        log.info("Airtable - recipe: " + recipe);
+        log.info("Airtable - iLab comment (from iLab): " + iLabComment);
+        log.info("Airtable - recipe (from LIMS): " + this.recipe);
+        log.info("Airtable - materials (from LIMS): " + materials);
+        log.info("Airtable - num of samples (from LIMS): " + bankedIds.length);
+        log.info("Airtable - requestId (from LIMS): " + requestId);
 
         // STEP 7: Get Airtable credentials 
         String airtableToken = System.getenv("AIRTABLE_API_TOKEN");
@@ -668,7 +660,7 @@ void createAirtableCard(String requestId) {
                 baseId, tableId);
 
         // STEP 8: Build card fields for IGO Kanban board
-        String cardTitle = requestId + " (" + numOfSamples + ")";
+        String cardTitle = requestId + " (" + bankedIds.length + ")";
 
         // Due date: today + 4 weeks in yyyy-MM-dd format (required by Airtable)
         long fourWeeksInMillis = 28L * 24 * 60 * 60 * 1000;
@@ -677,8 +669,8 @@ void createAirtableCard(String requestId) {
 
         // STEP 9: Build JSON body 
         // Build application array only if value exists
-        String applicationField = (recipe != null && !recipe.trim().isEmpty())
-                ? "\"Application\": [\"" + recipe.replace("\"", "\\\"") + "\"],"
+        String applicationField = (this.recipe != null && !this.recipe.trim().isEmpty())
+                ? "\"Application\": [\"" + this.recipe.replace("\"", "\\\"") + "\"],"
                 : "";
 
         // Build material array only if value exists
@@ -693,11 +685,12 @@ void createAirtableCard(String requestId) {
 
         String jsonBody = String.format(
             "{\"records\": [{\"fields\": {" +
-            "\"Task Name\": \"%s\"," +        // card title: requestId (numOfSamples)
+            "\"Task Name\": \"%s\"," +        // requestId (bankedIds.length) from LIMS
             "\"iLab Comment\": \"%s\"," +     // comment from iLab form
-            "%s" +      // recipe from iLab form
-            "%s" +         // from LIMS class variable
-            "\"Due Date\": \"%s\""  +         // 4 weeks from today
+            "%s" +                            //Application from LIMS recipe
+            "%s" +                            // Material from LIMS
+            "%s" +                             // Tags if comment exists
+            "\"Due Date\": \"%s\""  +         // 4 weeks from today *temporary*
             "}}]}",
             cardTitle,
             iLabComment != null ? iLabComment.replace("\"", "\\\"") : "",
