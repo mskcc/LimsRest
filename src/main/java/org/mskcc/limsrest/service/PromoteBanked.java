@@ -93,6 +93,7 @@ public class PromoteBanked extends LimsTask {
     @Override
     public ResponseEntity<String> execute(VeloxConnection conn) {
         log.info("Executing...dryrun=" + dryrun);
+        String cardStatus = "";
         if (dryrun) {
             String nextRequest = "";
             if (requestId.equals("NULL") && projectId.equals("NULL")) {
@@ -267,11 +268,10 @@ public class PromoteBanked extends LimsTask {
                 headers.add(Constants.STATUS, Messages.SUCCESS);
 
                 // sendEmailToTeamwork();
-                createAirtableCard(requestId); // call airtable method
-
-                if (iLabAbsent) {
-                    return new ResponseEntity<>("No iLab request found. Successfully promoted sample(s) into " + requestId, headers, HttpStatus.OK );
-                }
+                boolean cardCreated = createAirtableCard(requestId);
+                cardStatus = cardCreated
+                        ? " Airtable card created successfully."
+                        : " WARNING: Airtable card creation failed.";
             } catch (Exception e) {
                 log.error("CAUGHT EXCEPTION: " + e);
                 log.error(e);
@@ -300,11 +300,11 @@ public class PromoteBanked extends LimsTask {
                 warningMessage += samplesWithDifferentNewIgoIdAndRowIndex.get(i).toString() + ", ";
             }
             warningMessage += samplesWithDifferentNewIgoIdAndRowIndex.get(samplesWithDifferentNewIgoIdAndRowIndex.size() - 1).toString();
-            warningMessage += "\n Successfully promoted sample(s) into " + requestId;
+            warningMessage += "\n Successfully promoted sample(s) into " + requestId + cardStatus;
 
             return new ResponseEntity<>(warningMessage, headers, HttpStatus.OK );
         }
-        return new ResponseEntity<>("Successfully promoted sample(s) into " + requestId, headers, HttpStatus.OK );
+        return new ResponseEntity<>("Successfully promoted sample(s) into " + requestId + cardStatus, headers, HttpStatus.OK );
     }
 
     private String getErrors() {
@@ -572,7 +572,7 @@ public Map<String, String> getAirtableConfig() {
 }
 
 // Airtable Card Creation method:
-void createAirtableCard(String requestId) {
+boolean createAirtableCard(String requestId) {
     try {
         // ── iLab comment extraction
         // Try to get iLab comment if an iLab request exists
@@ -683,7 +683,7 @@ void createAirtableCard(String requestId) {
         Map<String, String> airtableConfig = getAirtableConfig();
         if (airtableConfig == null) {
             log.warn("Airtable: .env file not found - skipping card creation");
-            return;
+            return false;
         }
         String airtableToken = airtableConfig.get("AIRTABLE_API_TOKEN");
         String baseId        = airtableConfig.get("AIRTABLE_BASE_ID");
@@ -691,7 +691,7 @@ void createAirtableCard(String requestId) {
 
         if (airtableToken == null || baseId == null || tableId == null) {
             log.warn("Airtable: missing credentials in .env - skipping card creation");
-            return;
+            return false;
         }
         log.info("Airtable: credentials loaded successfully from .env file");
 
@@ -735,6 +735,9 @@ void createAirtableCard(String requestId) {
         // Due Date - calculated
         fields.put("Due Date", dueDate);
 
+        // Board Column - default to Uncategorized
+        fields.put("Board Column", "Sample Receiving");
+
         ObjectNode record = mapper.createObjectNode();
         record.set("fields", fields);
         ArrayNode records = mapper.createArrayNode();
@@ -760,11 +763,13 @@ void createAirtableCard(String requestId) {
             airtableUrl, entity, String.class);
 
         log.info("Airtable card created successfully: " + response.getBody());
+        return true;
 
     } catch (Exception e) {
         // Never let Airtable failure break the sample promotion
         log.error("Failed to create Airtable card for request "
                 + requestId + ": " + e.getMessage());
+        return false;
     }
 }
 // airtable method end
