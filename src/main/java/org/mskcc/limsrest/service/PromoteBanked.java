@@ -1,6 +1,8 @@
 package org.mskcc.limsrest.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -61,6 +63,7 @@ public class PromoteBanked extends LimsTask {
     String projectId;
     String igoUser;
     String materials;
+    String recipe = "";
     boolean dryrun = false;
     private Multimap<String, String> errors = HashMultimap.create();
     private List<Object> samplesWithDifferentNewIgoIdAndRowIndex = new LinkedList<>();
@@ -69,6 +72,7 @@ public class PromoteBanked extends LimsTask {
     private RestTemplate restTemplateCMO;
     private static final String baseUrl = "https://api.ilabsolutions.com/v1/cores";
     private static final String ILABS_CONFIG = "/srv/www/sapio/lims/lims-scripts/ilabs/ilabs.yml";
+    private static final String AIRTABLE_ENV = "/srv/www/sapio/lims/lims-scripts/airtable/.env"; // added Airtable config file path
     private static final String OUTBOX = "/rtssdc/mohibullahlab/LIMS/AutomatedEmails/teamworkCard/";
     private boolean iLabAbsent = false;
 
@@ -89,6 +93,7 @@ public class PromoteBanked extends LimsTask {
     @Override
     public ResponseEntity<String> execute(VeloxConnection conn) {
         log.info("Executing...dryrun=" + dryrun);
+        String cardStatus = "";
         if (dryrun) {
             String nextRequest = "";
             if (requestId.equals("NULL") && projectId.equals("NULL")) {
@@ -262,10 +267,11 @@ public class PromoteBanked extends LimsTask {
                 headers.add(Constants.WARNINGS, getErrors());
                 headers.add(Constants.STATUS, Messages.SUCCESS);
 
-                sendEmailToTeamwork();
-                if (iLabAbsent) {
-                    return new ResponseEntity<>("No iLab request found. Successfully promoted sample(s) into " + requestId, headers, HttpStatus.OK );
-                }
+                // sendEmailToTeamwork();
+                boolean cardCreated = createAirtableCard(requestId);
+                cardStatus = cardCreated
+                        ? " Airtable card created successfully."
+                        : " WARNING: Airtable card creation failed.";
             } catch (Exception e) {
                 log.error("CAUGHT EXCEPTION: " + e);
                 log.error(e);
@@ -294,11 +300,11 @@ public class PromoteBanked extends LimsTask {
                 warningMessage += samplesWithDifferentNewIgoIdAndRowIndex.get(i).toString() + ", ";
             }
             warningMessage += samplesWithDifferentNewIgoIdAndRowIndex.get(samplesWithDifferentNewIgoIdAndRowIndex.size() - 1).toString();
-            warningMessage += "\n Successfully promoted sample(s) into " + requestId;
+            warningMessage += "\n Successfully promoted sample(s) into " + requestId + cardStatus;
 
             return new ResponseEntity<>(warningMessage, headers, HttpStatus.OK );
         }
-        return new ResponseEntity<>("Successfully promoted sample(s) into " + requestId, headers, HttpStatus.OK );
+        return new ResponseEntity<>("Successfully promoted sample(s) into " + requestId + cardStatus, headers, HttpStatus.OK );
     }
 
     private String getErrors() {
@@ -424,6 +430,7 @@ public class PromoteBanked extends LimsTask {
             seqRequirementMap.put("SampleId", newIgoId);
             seqRequirementMap.put("SequencingRunType", runType);
             String recipe = (String) bankedFields.getOrDefault("Recipe", "");
+            this.recipe = recipe;
             String tumorOrNormal = (String)bankedFields.getOrDefault("TumorOrNormal", null);
             Object capturePanel = bankedFields.getOrDefault("CapturePanel", null);
             Object species = bankedFields.getOrDefault("Species", null);
@@ -463,7 +470,7 @@ public class PromoteBanked extends LimsTask {
             promotedSampleRecord.addChild("SeqRequirement", seqRequirementMap, user);
             log.info(String.format("Requested Coverage: %s ", requestedCoverage));
         } catch (NullPointerException npe) {
-            log.error(npe.getStackTrace().toString());
+            log.error(npe);
         }
     }
 
@@ -537,6 +544,235 @@ public class PromoteBanked extends LimsTask {
         }
         return sampleName.replaceFirst("(_[0-9]+)[0-9_]*$", endMatch.group(1));
     }
+//airtable method start
+// Method for getting Airtable config:
+public Map<String, String> getAirtableConfig() {
+    Map<String, String> config = new HashMap<>();
+    try {
+        BufferedReader reader = new BufferedReader(
+            new FileReader(new File(AIRTABLE_ENV)));
+        String line;
+        while ((line = reader.readLine()) != null) {
+            line = line.trim();
+            if (line.isEmpty() || line.startsWith("#")) continue;
+            String[] parts = line.split("=", 2);
+            if (parts.length == 2) {
+                config.put(parts[0].trim(), parts[1].trim());
+            }
+        }
+        reader.close();
+    } catch (FileNotFoundException e) {
+        log.warn("Airtable .env file not found at: " + AIRTABLE_ENV);
+        return null;
+    } catch (IOException e) {
+        log.warn("Error reading Airtable .env file: " + e.getMessage());
+        return null;
+    }
+    return config;
+}
+
+// Airtable Card Creation method:
+boolean createAirtableCard(String requestId) {
+    try {
+        // ── iLab comment extraction
+        // Try to get iLab comment if an iLab request exists
+        // If no iLab request or anything fails → card still gets created
+        // with empty comment
+        String iLabComment = "";
+
+        try {
+            // STEP 1: Get iLab credentials
+            org.apache.commons.lang3.tuple.Pair<String, String> ilabsConfigIGO = getIlabConfig("IGO");
+            String token_igo = ilabsConfigIGO.getValue();
+            String core_id_igo = ilabsConfigIGO.getKey();
+            this.restTemplateIGO = restTemplate(token_igo);
+
+            org.apache.commons.lang3.tuple.Pair<String, String> ilabsConfigCMO = getIlabConfig("CMO");
+            String token_cmo = ilabsConfigCMO.getValue();
+            String core_id_cmo = ilabsConfigCMO.getKey();
+            this.restTemplateCMO = restTemplate(token_cmo);
+
+            // STEP 2: Call iLab API to find the service request
+            String iLabUrl = String.format("%s/%s/service_requests.json?name=%s",
+                    baseUrl, core_id_igo, serviceId);
+            ObjectNode res = restTemplateIGO.getForObject(iLabUrl, ObjectNode.class);
+
+            // STEP 3: Check if iLab returned anything
+            if (res == null || res.equals("")) {
+                log.info("Airtable: no iLab response - card will be created without comment");
+                // does NOT return - falls through to card creation
+            } else {
+                JsonNode arrayNode = res.get("ilab_response").get("service_requests");
+
+                if (arrayNode == null || arrayNode.equals("") || arrayNode.size() == 0) {
+                    log.info("Airtable: no iLab service requests found - card will be created without comment");
+                    // does NOT return - falls through to card creation
+                } else {
+                    JsonNode serviceRequest = arrayNode.get(0);
+                    String serviceRequestId = serviceRequest.get("id").asText();
+                    String coreInfo = serviceRequest.get("actions").get("show_request").get("url").asText();
+
+                    if (serviceRequestId == null || serviceRequestId.equals("")) {
+                        // ✅ Changed - was "return" before, now just logs and continues
+                        log.warn("Airtable: serviceRequestId is empty - card will be created without comment");
+                        // does NOT return - falls through to card creation
+                    } else {
+                        // STEP 4: Check for custom form
+                        boolean hasCustomForm = false;
+                        JsonNode serviceRows = serviceRequest.get("service_rows");
+                        if (!ObjectUtils.isEmpty(serviceRows)) {
+                            Iterator<JsonNode> iterator = serviceRows.iterator();
+                            while (iterator.hasNext()) {
+                                JsonNode node = iterator.next();
+                                String type = node.get("type").asText();
+                                if ("CustomForm".equalsIgnoreCase(type)) {
+                                    hasCustomForm = true;
+                                }
+                            }
+                        }
+
+                        // STEP 5: Parse custom form - IGO first, then CMO
+                        if (hasCustomForm) {
+                            List<CustomForm> customForms = new ArrayList<>();
+                            if (coreInfo.contains(core_id_igo)) {
+                                customForms = parseCustomForms(
+                                    String.format("%s/%s/service_requests/%s/custom_forms.json",
+                                        baseUrl, core_id_igo, serviceRequestId),
+                                    restTemplateIGO);
+                            } else if (coreInfo.contains(core_id_cmo)) {
+                                customForms = parseCustomForms(
+                                    String.format("%s/%s/service_requests/%s/custom_forms.json",
+                                        baseUrl, core_id_cmo, serviceRequestId),
+                                    restTemplateCMO);
+                            }
+
+                            // STEP 6: Extract ONLY comment from iLab form
+                            if (!customForms.isEmpty()) {
+                                CustomForm customForm = customForms.get(0);
+                                Pattern commentPattern = Pattern.compile("comment",
+                                        Pattern.CASE_INSENSITIVE);
+                                for (String field : customForm.getFields().keySet()) {
+                                    Matcher commentMatcher = commentPattern.matcher(field);
+                                    if (commentMatcher.find()) {
+                                        iLabComment = customForm.getFields().get(field);
+                                    }
+                                }
+                            } else {
+                                log.warn("Airtable: no custom forms found - card will be created without comment");
+                            }
+                        } else {
+                            log.info("Airtable: no custom form in iLab request - card will be created without comment");
+                        }
+                    }
+                }
+            }
+        } catch (Exception iLabException) {
+            // iLab call failed entirely - log but continue creating card
+            log.warn("Airtable: iLab call failed - card will be created without comment: "
+                    + iLabException.getMessage());
+        }
+
+        // ── Log all data sources ───────────────────────────────────────
+        log.info("Airtable - iLab comment (from iLab): " + iLabComment);
+        log.info("Airtable - recipe (from LIMS): " + this.recipe);
+        log.info("Airtable - materials (from LIMS): " + materials);
+        log.info("Airtable - num of samples (from LIMS): " + bankedIds.length);
+        log.info("Airtable - requestId (from LIMS): " + requestId);
+
+        // STEP 7: Get Airtable credentials from .env file
+        Map<String, String> airtableConfig = getAirtableConfig();
+        if (airtableConfig == null) {
+            log.warn("Airtable: .env file not found - skipping card creation");
+            return false;
+        }
+        String airtableToken = airtableConfig.get("AIRTABLE_API_TOKEN");
+        String baseId        = airtableConfig.get("AIRTABLE_BASE_ID");
+        String tableId       = airtableConfig.get("AIRTABLE_TABLE_ID");
+
+        if (airtableToken == null || baseId == null || tableId == null) {
+            log.warn("Airtable: missing credentials in .env - skipping card creation");
+            return false;
+        }
+        log.info("Airtable: credentials loaded successfully from .env file");
+
+        String airtableUrl = String.format("https://api.airtable.com/v0/%s/%s",
+                baseId, tableId);
+
+        // STEP 8: Build card fields - all from LIMS except iLabComment
+        String cardTitle = requestId + " (" + bankedIds.length + ")";
+
+        long fourWeeksInMillis = 28L * 24 * 60 * 60 * 1000;
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String dueDate = sdf.format(new Date(System.currentTimeMillis() + fourWeeksInMillis));
+
+        // STEP 9: Build JSON body using ObjectMapper
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode fields = mapper.createObjectNode();
+
+        // Task Name - from LIMS
+        fields.put("Task Name", cardTitle);
+
+        // iLab Comment - from iLab (empty string if no iLab request)
+        fields.put("iLab Comment", iLabComment);
+
+        // Application - from LIMS recipe (only if not empty or NULL)
+        if (this.recipe != null && !this.recipe.trim().isEmpty()
+                && !this.recipe.equalsIgnoreCase("NULL")) {
+            fields.set("Application", mapper.createArrayNode().add(this.recipe));
+        }
+
+        // Material - from LIMS (only if not empty or NULL)
+        if (materials != null && !materials.trim().isEmpty()
+                && !materials.equalsIgnoreCase("NULL")) {
+            fields.set("Material", mapper.createArrayNode().add(materials));
+        }
+
+        // Tags - only add iLab Comment tag if comment actually exists
+        if (iLabComment != null && !iLabComment.trim().isEmpty()) {
+            fields.set("Tags", mapper.createArrayNode().add("iLab Comment"));
+        }
+
+        // Due Date - calculated
+        fields.put("Due Date", dueDate);
+
+        // Board Column - default to Uncategorized
+        fields.put("Board Column", "Sample Receiving");
+
+        ObjectNode record = mapper.createObjectNode();
+        record.set("fields", fields);
+        ArrayNode records = mapper.createArrayNode();
+        records.add(record);
+        ObjectNode body = mapper.createObjectNode();
+        body.set("records", records);
+        String jsonBody = mapper.writeValueAsString(body);
+
+        log.info("Airtable JSON body: " + jsonBody);
+
+        // STEP 10: Send to Airtable API
+        RestTemplate restTemplateAirtable = new RestTemplate();
+        restTemplateAirtable.getInterceptors().add(
+                getBearerTokenInterceptor(airtableToken));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Content-Type", "application/json");
+
+        org.springframework.http.HttpEntity<String> entity =
+            new org.springframework.http.HttpEntity<>(jsonBody, headers);
+
+        ResponseEntity<String> response = restTemplateAirtable.postForEntity(
+            airtableUrl, entity, String.class);
+
+        log.info("Airtable card created successfully: " + response.getBody());
+        return true;
+
+    } catch (Exception e) {
+        // Never let Airtable failure break the sample promotion
+        log.error("Failed to create Airtable card for request "
+                + requestId + ": " + e.getMessage());
+        return false;
+    }
+}
+// airtable method end
 
     public void sendEmailToTeamwork() {
         String recipient = "348494_786768@tasks.teamwork.com"; // Updated with IGO VMB list | Data team board list address: "348494_786768@tasks.teamwork.com"
@@ -592,7 +828,6 @@ public class PromoteBanked extends LimsTask {
                 log.info("IGO/CMO iLabAbsent2: " + iLabAbsent);
                 return;
             }
-
             JsonNode serviceRequest = arrayNode.get(0);
             String serviceRequestId = serviceRequest.get("id").asText();
             String coreInfo = serviceRequest.get("actions").get("show_request").get("url").asText();
@@ -632,7 +867,7 @@ public class PromoteBanked extends LimsTask {
             log.info("customForm name is:" + customForm.getName());
 
             Pattern commentPattern = Pattern.compile("comment", Pattern.CASE_INSENSITIVE);
-            Pattern numOfSamplePattern = Pattern.compile("number of samples", Pattern.CASE_INSENSITIVE);
+            Pattern numOfSamplePattern = Pattern.compile("number of samples|how many samples", Pattern.CASE_INSENSITIVE);
             String iLabComment = "";
             String numOfSamples = "";
             for (String field : customForm.getFields().keySet()) {
@@ -752,4 +987,4 @@ public class PromoteBanked extends LimsTask {
         }
         return parsedCustomForms;
     }
-}
+    }
